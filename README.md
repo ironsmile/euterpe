@@ -12,7 +12,7 @@ No more!
 
 Requirements
 ======
-If you want to install it from source (from here) you will need [Go 1.1.2](http://golang.org/) or later [installed and properly configured](http://golang.org/doc/install). For the moment I do not plan to distribute it any other way.
+If you want to install it from source (from here) you will need [Go](http://golang.org/) 1.1.2 or later [installed and properly configured](http://golang.org/doc/install). For the moment I do not plan to distribute it any other way.
 
 
 Install
@@ -20,7 +20,7 @@ Install
 
 1. Run ```go get https://github.com/ironsmile/httpms```
 
-2. Create config.json (or copy config.json.example) to <gopath>/github.com/ironsmile/httpms/config.json and [edit it to your](https://github.com/ironsmile/httpms/wiki/HTTPMS-configuration) liking
+2. Create config.json (or copy config.example.json) to <gopath>/github.com/ironsmile/httpms/config.json and [edit it to your](https://github.com/ironsmile/httpms/wiki/HTTPMS-configuration) liking
 
 3. Start it with ```httpms```
 
