@@ -1,0 +1,12 @@
+#!/bin/bash
+
+cd $(dirname `readlink -f $0`)
+
+tests=( webserver config )
+
+for test in $tests
+do
+    cd $test
+    go test
+    cd -
+done
