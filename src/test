@@ -2,10 +2,9 @@
 
 cd $(dirname `readlink -f $0`)
 
-tests=( webserver config )
-
-for test in $tests
+for test in webserver config library
 do
+    echo "Testing module $test..."
     cd $test
     go test
     cd -

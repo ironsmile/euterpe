@@ -11,12 +11,15 @@ import (
 )
 
 type ServerConfig struct {
-	Address   string
-	Root      string
-	SSL       bool
-	SSLCert   string
-	SSLKey    string
-	WaitGroup *sync.WaitGroup
+	Address      string
+	Root         string
+	SSL          bool
+	SSLCert      string
+	SSLKey       string
+	WaitGroup    *sync.WaitGroup
+	Authenticate bool
+	AuthUser     string
+	AuthPass     string
 }
 
 type SearchHandler struct{}
