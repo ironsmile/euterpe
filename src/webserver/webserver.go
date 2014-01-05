@@ -69,7 +69,7 @@ func (sh SearchHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request)
 	}
 }
 
-// Represends the webserver. It should be controlled from here
+// Represends our webserver. It will be controlled from here
 type Server struct {
 	cfg      ServerConfig   // Configuration of this server
 	wg       sync.WaitGroup // WG used in Server.Wait to sync with server's end
@@ -89,12 +89,14 @@ func (srv *Server) serveGoroutine() {
 		srv.wg.Done()
 	}()
 
-	http.Handle("/", http.FileServer(http.Dir(srv.cfg.Root)))
-	http.Handle("/search/", SearchHandler{})
+	mux := http.NewServeMux()
+
+	mux.Handle("/", http.FileServer(http.Dir(srv.cfg.Root)))
+	mux.Handle("/search/", SearchHandler{})
 
 	srv.httpSrv = &http.Server{
 		Addr:           srv.cfg.Address,
-		Handler:        nil,
+		Handler:        mux,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
@@ -108,7 +110,9 @@ func (srv *Server) serveGoroutine() {
 		reason = srv.listenAndServe()
 	}
 
-	if reason != nil {
+	// When the listener is nil it is probably a scheduled stop. I can't be sure though
+	//!TODO: make sure listener == nil is only possible after Server.Stop()
+	if reason != nil && srv.listener != nil {
 		log.Print(reason)
 	}
 }
@@ -125,8 +129,7 @@ func (srv *Server) listenAndServe() error {
 		return err
 	}
 	srv.listener = lsn
-	srv.httpSrv.Serve(lsn)
-	return nil
+	return srv.httpSrv.Serve(lsn)
 }
 
 // Uses our own listener to make our server stoppable. Similar to
