@@ -1,3 +1,5 @@
+// This module contains the webserver whcih deals with processing requests
+// from the user, presenting him with the interface of the application.
 package webserver
 
 import (
@@ -10,20 +12,24 @@ import (
 	"time"
 )
 
+// The configuration which should be supplied to the webserver
 type ServerConfig struct {
-	Address      string
-	Root         string
-	SSL          bool
-	SSLCert      string
-	SSLKey       string
-	WaitGroup    *sync.WaitGroup
-	Authenticate bool
-	AuthUser     string
-	AuthPass     string
+	Address   string          // Address on which the server will listen. See http/Server.Addr
+	Root      string          // The http root directory containing the interface files
+	SSL       bool            // Should it use SSL when serving
+	SSLCert   string          // The SSL certificate. Only makes sens if SSL is true
+	SSLKey    string          // The SSL key. Only makes sense if SSL is true
+	WaitGroup *sync.WaitGroup // Should someone needs to sych with the server's stop
+	Auth      bool            // Should the server require HTTP auth
+	AuthUser  string          // HTTP basic authenticate username
+	AuthPass  string          // HTTP basic authenticate password
 }
 
+// Handler responsible for search requests. It will use the Library to
+// return a list of matched files to the interface.
 type SearchHandler struct{}
 
+// This method is required by the http.Handler's interface
 func (sh SearchHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 
 	fullPath := fmt.Sprintf("%s?%s", req.URL.Path, req.URL.RawQuery)
@@ -62,6 +68,8 @@ func (sh SearchHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request)
 	}
 }
 
+// The function that actually starts the webserver. It attaches all the handlers
+// and starts the webserver while consulting the ServerConfig supplied.
 func Serve(cfg ServerConfig) {
 
 	http.Handle("/", http.FileServer(http.Dir(cfg.Root)))

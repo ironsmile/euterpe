@@ -15,3 +15,11 @@ func TestSearchUrl(t *testing.T) {
 func TestGetFileUrl(t *testing.T) {
 
 }
+
+func TestSSL(t *testing.T) {
+
+}
+
+func TestUserAuthentication(t *testing.T) {
+
+}
