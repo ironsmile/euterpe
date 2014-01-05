@@ -23,3 +23,7 @@ func TestSSL(t *testing.T) {
 func TestUserAuthentication(t *testing.T) {
 
 }
+
+func TestDefaultPorts(t *testing.T) {
+
+}

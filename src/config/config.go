@@ -10,8 +10,29 @@ package config
 type Config struct {
 }
 
-// Actually finds the configuration file, parsing it and merging in on top the default
+// Actually finds the configuration file, parsing it and merging it on top the default
 // configuration.
 func (cfg *Config) FindAndParse() error {
+	return nil
+}
+
+// Returns the full path to the place where the user's configuration file should be
+func (cfg *Config) UserPath() string {
+	return ""
+}
+
+// Returns the full path to the default configuration file
+func (cfg *Config) DefaultPath() string {
+	return ""
+}
+
+// Returns true if the user configuration is present and in order. Otherwise false.
+func (cfg *Config) UserConfigExists() bool {
+	return false
+}
+
+// Will create (or replace if neccessery) the user configuration using the default
+// config file supplied with the installation.
+func (cfg *Config) CopyDefaultOverUser() error {
 	return nil
 }
