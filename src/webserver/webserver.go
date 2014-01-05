@@ -3,6 +3,7 @@
 package webserver
 
 import (
+	"crypto/tls"
 	"fmt"
 	"html/template"
 	"log"
@@ -11,43 +12,7 @@ import (
 	"os"
 	"sync"
 	"time"
-	// "errors"
 )
-
-// A wrapper around net.Listener made that it can be stopped. When something is
-// received in the stopChan channel it is iterpreted as a signal to stop the
-// listener.
-type StoppableListener struct {
-	listener net.Listener // The actual listener we are wrapping around
-	stopChan chan string  // A channel used to tell us "STOP LISTENING YOU DUMP ASS"
-}
-
-// Required by the net.Listener interface. This function is the one reading from the
-// stopChan channel.
-func (lsn StoppableListener) Accept() (net.Conn, error) {
-	return lsn.listener.Accept()
-}
-
-// Required by the net.Listener interface.
-func (lsn StoppableListener) Close() error {
-	return lsn.listener.Close()
-}
-
-// Required by the net.Listener interface.
-func (lsn StoppableListener) Addr() net.Addr {
-	return lsn.listener.Addr()
-}
-
-// It will create a TCP net.Listener and give it to our StoppableListener for
-// wrapping around it. Requires the network addres to listen to and a stop channel
-// which is used to stop the created listener.
-func CreateStoppableListener(addr string, stopChan chan string) (net.Listener, error) {
-	tcp_listener, err := net.Listen("tcp", addr)
-	if err != nil {
-		return nil, err
-	}
-	return StoppableListener{tcp_listener, stopChan}, nil
-}
 
 // The configuration which should be supplied to the webserver
 type ServerConfig struct {
@@ -107,9 +72,9 @@ func (sh SearchHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request)
 // Represends the webserver. It should be controlled from here
 type Server struct {
 	cfg      ServerConfig   // Configuration of this server
-	wg       sync.WaitGroup // Waiting Group used in Server.Wait to sync with server's end
+	wg       sync.WaitGroup // WG used in Server.Wait to sync with server's end
 	httpSrv  *http.Server   // The actual http.Server doing the HTTP work
-	listener net.Listener
+	listener net.Listener   // The server's net.Listener. Used in the Server.Stop func
 }
 
 // The function that actually starts the webserver. It attaches all the handlers
@@ -145,8 +110,6 @@ func (srv *Server) serveGoroutine() {
 
 	if reason != nil {
 		log.Print(reason)
-	} else {
-		log.Print("Normal exit")
 	}
 }
 
@@ -169,7 +132,33 @@ func (srv *Server) listenAndServe() error {
 // Uses our own listener to make our server stoppable. Similar to
 // net.http.Server.ListenAndServerTLS
 func (srv *Server) listenAndServeTLS(certFile, keyFile string) error {
-	return srv.httpSrv.ListenAndServeTLS(certFile, keyFile)
+	addr := srv.httpSrv.Addr
+	if addr == "" {
+		addr = ":https"
+	}
+	config := &tls.Config{}
+	if srv.httpSrv.TLSConfig != nil {
+		*config = *srv.httpSrv.TLSConfig
+	}
+	if config.NextProtos == nil {
+		config.NextProtos = []string{"http/1.1"}
+	}
+
+	var err error
+	config.Certificates = make([]tls.Certificate, 1)
+	config.Certificates[0], err = tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return err
+	}
+
+	conn, err := net.Listen("tcp", addr)
+	if err != nil {
+		return err
+	}
+
+	tlsListener := tls.NewListener(conn, config)
+	srv.listener = tlsListener
+	return srv.httpSrv.Serve(tlsListener)
 }
 
 // Stops the webserver
