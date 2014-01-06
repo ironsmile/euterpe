@@ -61,7 +61,7 @@ func tearDownServer(srv *Server) {
 }
 
 func getProjectRoot() (string, error) {
-	path, err := filepath.Abs("../..")
+	path, err := filepath.Abs(filepath.FromSlash("../.."))
 	if err != nil {
 		return "", err
 	}
@@ -135,16 +135,6 @@ func TestStaticFilesServing(t *testing.T) {
 	testUrl(url, "Second static file")
 }
 
-//!TODO:
-func TestSearchUrl(t *testing.T) {
-
-}
-
-//!TODO:
-func TestGetFileUrl(t *testing.T) {
-
-}
-
 func TestSSL(t *testing.T) {
 
 	projectRoot, err := getProjectRoot()
@@ -210,13 +200,37 @@ func TestUserAuthentication(t *testing.T) {
 	if err != nil {
 		t.Errorf(err.Error())
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		t.Errorf("Expected 200 but got: %d", resp.StatusCode)
+	}
+
+	req, err = http.NewRequest("GET", url, nil)
+	req.SetBasicAuth("wronguser", "wrongpass")
+	resp, err = client.Do(req)
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 401 {
+		t.Errorf("Expected 401 but got: %d", resp.StatusCode)
 	}
 }
 
 //!TODO:
 func TestDefaultPorts(t *testing.T) {
+
+}
+
+//!TODO:
+func TestSearchUrl(t *testing.T) {
+
+}
+
+//!TODO:
+func TestGetFileUrl(t *testing.T) {
 
 }

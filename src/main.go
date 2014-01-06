@@ -15,6 +15,9 @@ func Main() {
 	var wsCfg webserver.ServerConfig
 	wsCfg.Address = ":8080"
 	wsCfg.Root = "http_root"
+	wsCfg.Auth = true
+	wsCfg.AuthUser = "user"
+	wsCfg.AuthPass = "pass"
 
 	srv := webserver.NewServer(wsCfg)
 
