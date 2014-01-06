@@ -32,8 +32,12 @@ type Server struct {
 }
 
 // The function that actually starts the webserver. It attaches all the handlers
-// and starts the webserver while consulting the ServerConfig supplied.
+// and starts the webserver while consulting the ServerConfig supplied. Trying to call
+// this method more than once for the same server will result in panic.
 func (srv *Server) Serve() {
+	if srv.listener != nil {
+		panic("Second Server.Serve call for the same server")
+	}
 	srv.wg.Add(1)
 	go srv.serveGoroutine()
 }
