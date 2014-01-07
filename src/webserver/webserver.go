@@ -16,7 +16,7 @@ type ServerConfig struct {
 	Address  string // Address on which the server will listen. See http/Server.Addr
 	Root     string // The http root directory containing the interface files
 	SSL      bool   // Should it use SSL when serving
-	SSLCert  string // The SSL certificate. Only makes sens if SSL is true
+	SSLCert  string // The SSL certificate. Only makes sense if SSL is true
 	SSLKey   string // The SSL key. Only makes sense if SSL is true
 	Auth     bool   // Should the server require HTTP auth
 	AuthUser string // HTTP basic auth username. Considered only when Auth is true

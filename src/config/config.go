@@ -1,6 +1,6 @@
-// The module is resposible for findig, parsing and merging the HTTPMS configuration
-// with the default. Configuration locations should be different depending on the
-// host OS.
+// The module is resposible for finding, parsing and merging the HTTPMS user
+// configuration  with the default. Configuration locations should be different
+// depending on the host OS.
 //
 // Linux/BSD configurations should be in $HOME/.httpms/config.json
 // Windows configurations should be in %APPDATA%/httpms/config.json

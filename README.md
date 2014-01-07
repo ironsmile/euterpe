@@ -36,11 +36,11 @@ Features
 Configuration
 ======
 
-HTTPS configuration is saved in a json file, deifferent for every user in the system. Its
+HTTPS configuration is saved in a json file, different for every user in the system. Its
 location is as follows:
 
 * Linux or BSD: ```$HOME/.httpms/config.json```
-* Windows: ```%APPDATA%%/httpms/config.json```
+* Windows: ```%APPDATA%/httpms/config.json```
 
 When started for the first time HTTPMS will create one for you. It will be a copy of the
 default configuration with all possible fields in it. Example with all the fields explained follows:
