@@ -8,11 +8,11 @@ package config
 
 // The configuration type. Should contain representation for everything in config.json
 type Config struct {
-	Listen         string                `json:"listen"`
-	SSL            bool                  `json:"ssl"`
-	SSLCertificate map[string]ConfigCert `json:"ssl_certificate"`
-	Authenticate   map[string]ConfigAuth `json:"authenticates"`
-	Libraries      []string              `json:"libraries"`
+	Listen         string     `json:"listen"`
+	SSL            bool       `json:"ssl"`
+	SSLCertificate ConfigCert `json:"ssl_certificate"`
+	Authenticate   ConfigAuth `json:"authenticates"`
+	Libraries      []string   `json:"libraries"`
 }
 
 type ConfigCert struct {
