@@ -1,13 +1,14 @@
 package webserver
 
 import (
+	"encoding/base64"
 	"fmt"
-	"html/template"
 	"net/http"
-	"os"
+	"strings"
 )
 
-// Handler wrapper
+// Handler wrapper used for basic authenticate. Its only job is to do the
+// authentication and then pass the work to the Handler it wraps around
 type BasicAuthHandler struct {
 	wrapped  http.Handler // The actual handler that does the APP Logic job
 	username string       // Username to be used for basic authenticate
@@ -34,15 +35,49 @@ func (hl BasicAuthHandler) ServeHTTP(writer http.ResponseWriter, req *http.Reque
 
 // Sends 401 and authentication challenge in the writer
 func (hl BasicAuthHandler) challengeAuthentication(writer http.ResponseWriter) {
+	tmpl, err := getTemplate("unauthorized.html")
+
+	if err != nil {
+		writer.WriteHeader(http.StatusInternalServerError)
+		writer.Write([]byte(err.Error()))
+		return
+	}
+
 	writer.Header().Set("WWW-Authenticate", `Basic realm="HTTPMS"`)
 	writer.WriteHeader(http.StatusUnauthorized)
-	writer.Write([]byte("Authentication required"))
+
+	err = tmpl.Execute(writer, nil)
+
+	if err != nil {
+		writer.WriteHeader(http.StatusInternalServerError)
+		writer.Write([]byte(err.Error()))
+		return
+	}
 }
 
 // Compares the authentication header with the stored user and passwords
-// and returns true if they pass
+// and returns true if they pass.
 func (hl BasicAuthHandler) authenticate(auth string) bool {
-	return false
+
+	s := strings.SplitN(auth, " ", 2)
+
+	if len(s) != 2 || s[0] != "Basic" {
+		return false
+	}
+
+	b, err := base64.StdEncoding.DecodeString(s[1])
+
+	if err != nil {
+		return false
+	}
+
+	pair := strings.SplitN(string(b), ":", 2)
+
+	if len(pair) != 2 {
+		return false
+	}
+
+	return pair[0] == hl.username && pair[1] == hl.password
 }
 
 // Handler responsible for search requests. It will use the Library to
@@ -54,36 +89,24 @@ func (sh SearchHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request)
 
 	fullPath := fmt.Sprintf("%s?%s", req.URL.Path, req.URL.RawQuery)
 
-	templateDir := fmt.Sprintf("%s/src/github.com/ironsmile/httpms/templates",
-		os.ExpandEnv("$GOPATH"))
-	templateFile := fmt.Sprintf("%s/test.html", templateDir)
-
-	_, err := os.Stat(templateFile)
+	tmpl, err := getTemplate("test.html")
 
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
-		writer.Write([]byte(fmt.Sprintf("%s does not exist", templateFile)))
-		return
-	}
-
-	tmpl, err := template.ParseFiles(templateFile)
-
-	if err != nil {
-		writer.WriteHeader(http.StatusInternalServerError)
-		writer.Write([]byte(fmt.Sprintf("Error parsing template %s", templateFile)))
+		writer.Write([]byte(err.Error()))
 		return
 	}
 
 	variables := map[string]string{
 		"FullPath":     fullPath,
-		"TemplateFile": templateFile,
+		"TemplateFile": "test.html",
 	}
 
 	err = tmpl.Execute(writer, variables)
 
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
-		writer.Write([]byte("Error executing template"))
+		writer.Write([]byte(err.Error()))
 		return
 	}
 }

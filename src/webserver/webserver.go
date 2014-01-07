@@ -84,7 +84,7 @@ func (srv *Server) serveGoroutine() {
 }
 
 // Uses our own listener to make our server stoppable. Similar to
-// net.http.Server.ListenAndServer
+// net.http.Server.ListenAndServer only this version saves a reference to the listener
 func (srv *Server) listenAndServe() error {
 	addr := srv.httpSrv.Addr
 	if addr == "" {
@@ -99,7 +99,8 @@ func (srv *Server) listenAndServe() error {
 }
 
 // Uses our own listener to make our server stoppable. Similar to
-// net.http.Server.ListenAndServerTLS
+// net.http.Server.ListenAndServerTLS only this version saves a reference
+// to the listener
 func (srv *Server) listenAndServeTLS(certFile, keyFile string) error {
 	addr := srv.httpSrv.Addr
 	if addr == "" {

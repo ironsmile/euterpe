@@ -169,9 +169,15 @@ func TestSSL(t *testing.T) {
 func TestUserAuthentication(t *testing.T) {
 	url := fmt.Sprintf("http://127.0.0.1:%d/static", TestPort)
 
+	projRoot, err := getProjectRoot()
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
 	var wsCfg ServerConfig
 	wsCfg.Address = fmt.Sprintf(":%d", TestPort)
-	wsCfg.Root = TestRoot
+	wsCfg.Root = filepath.Join(projRoot, "test_files", TestRoot)
 	wsCfg.Auth = true
 	wsCfg.AuthUser = "testuser"
 	wsCfg.AuthPass = "testpass"
@@ -193,7 +199,7 @@ func TestUserAuthentication(t *testing.T) {
 	}
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
+	req, _ := http.NewRequest("GET", url, nil)
 	req.SetBasicAuth("testuser", "testpass")
 	resp, err = client.Do(req)
 
@@ -206,7 +212,7 @@ func TestUserAuthentication(t *testing.T) {
 		t.Errorf("Expected 200 but got: %d", resp.StatusCode)
 	}
 
-	req, err = http.NewRequest("GET", url, nil)
+	req, _ = http.NewRequest("GET", url, nil)
 	req.SetBasicAuth("wronguser", "wrongpass")
 	resp, err = client.Do(req)
 
