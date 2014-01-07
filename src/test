@@ -2,7 +2,7 @@
 
 cd $(dirname `readlink -f $0`)
 
-for test in webserver config library
+for test in webserver config library daemon
 do
     echo "Testing module $test..."
     cd $test

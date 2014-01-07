@@ -1,4 +1,4 @@
-httpms
+HTTP Media Server
 ======
 
 A way to listen your music library everywhere. Once set up you won't need anything but a browser.
