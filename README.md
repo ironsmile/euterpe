@@ -51,7 +51,7 @@ default configuration with all possible fields in it. Example with all the field
     // For exact explaination see the Addr field in the Go [Server type](http://golang.org/pkg/net/http/#Server)
     // Make sure the user running HTTPMS have permission to bind on the specified
     // port number
-    "listen": "*:443",
+    "listen": ":443",
 
     // true if you want to access HTTPMS over HTTPS or false for plain HTTP.
     // If set to true the "ssl_certificate" field must be configured as well.
