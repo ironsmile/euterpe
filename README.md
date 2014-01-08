@@ -48,7 +48,7 @@ default configuration with all possible fields in it. Example with all the field
 ```javascript
 {
     // Address and port on which HTTPMS will listen. It is in the form hostname[:port]
-    // For exact explaination see the Addr field in the Go [Server type](http://golang.org/pkg/net/http/#Server)
+    // For exact explaination see the Addr field in the Go's net.http.Server
     // Make sure the user running HTTPMS have permission to bind on the specified
     // port number
     "listen": ":443",
