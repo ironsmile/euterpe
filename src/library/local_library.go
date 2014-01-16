@@ -3,7 +3,9 @@ package library
 import (
 	"database/sql"
 	"errors"
-	"io"
+	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,14 +35,74 @@ func (lib LocalLibrary) AddLibraryPath(path string) {
 }
 
 func (lib LocalLibrary) Search(searchTerm string) []SearchResult {
-	return []SearchResult{}
+	var output []SearchResult
+
+	query := fmt.Sprintf(`
+		SELECT
+			t.id as track_id,
+			t.name as track,
+			al.name as album,
+			at.name as artist,
+			t.number as track_number
+		FROM
+			tracks as t
+				LEFT JOIN albums as al ON al.id = t.album_id
+				LEFT JOIN artists as at ON at.id = t.artist_id
+		WHERE
+			t.name LIKE "%%%s%%" OR
+			al.name LIKE "%%%s%%" OR
+			at.name LIKE "%%%s%%"
+	`, searchTerm, searchTerm, searchTerm)
+
+	rows, err := lib.db.Query(query)
+
+	//log.Printf("Search query: %s\n", query)
+
+	if err != nil {
+		log.Printf("Query not successful: %s\n", err.Error())
+		return output
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var res SearchResult
+		rows.Scan(&res.ID, &res.Title, &res.Album, &res.Artist, &res.TrackNumber)
+		output = append(output, res)
+	}
+
+	return output
 }
 
 func (lib LocalLibrary) GetFilePath(ID int64) string {
-	return ""
+	smt, err := lib.db.Prepare(`
+		SELECT
+			fs_path
+		FROM
+			tracks
+		WHERE
+			id = ?
+	`)
+
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+
+	defer smt.Close()
+
+	var filePath string
+	err = smt.QueryRow(ID).Scan(&filePath)
+
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+
+	return filePath
 }
 
 func (lib LocalLibrary) Scan() error {
+	//!TODO
 	return nil
 }
 
@@ -59,19 +121,20 @@ func (lib LocalLibrary) AddMedia(filename string) error {
 
 	defer file.Close()
 
-	artistID, err := lib.getArtistID(file.Artist())
+	artistID, err := lib.setArtistID(file.Artist())
 
 	if err != nil {
 		return err
 	}
 
-	albumID, err := lib.getAlbumID(file.Album(), artistID)
+	albumID, err := lib.setAlbumID(file.Album(), artistID)
 
 	if err != nil {
 		return err
 	}
 
-	err = lib.insertTrack(file.Title(), filename, artistID, albumID)
+	_, err = lib.setTrackID(file.Title(), filename, int64(file.Track()),
+		artistID, albumID)
 
 	if err != nil {
 		return err
@@ -80,37 +143,187 @@ func (lib LocalLibrary) AddMedia(filename string) error {
 	return nil
 }
 
-func (lib LocalLibrary) getArtistID(artist string) (int64, error) {
-	return 4, nil
-}
-
-func (lib LocalLibrary) getAlbumID(album string, artistID int64) (int64, error) {
-	return 4, nil
-}
-
-func (lib LocalLibrary) insertTrack(title, fs_path string,
-	artistID, albumID int64) error {
-
-	stmt, err := lib.db.Prepare(`
-		INSERT INTO
-			tracks (name, album_id, artist_id, fs_path)
-		VALUES
-			(?, ?, ?, ?)
+func (lib LocalLibrary) GetArtistID(artist string) (int64, error) {
+	smt, err := lib.db.Prepare(`
+		SELECT
+			id
+		FROM
+			artists
+		WHERE
+			name = ?
 	`)
 
 	if err != nil {
-		return err
+		return 0, err
+	}
+
+	defer smt.Close()
+
+	var id int64
+	err = smt.QueryRow(artist).Scan(&id)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func (lib LocalLibrary) setArtistID(artist string) (int64, error) {
+	id, err := lib.GetArtistID(artist)
+
+	if err == nil {
+		return id, nil
+	}
+
+	stmt, err := lib.db.Prepare(`
+			INSERT INTO
+				artists (name)
+			VALUES
+				(?)
+	`)
+
+	if err != nil {
+		return 0, err
 	}
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(title, albumID, artistID, fs_path)
+	_, err = stmt.Exec(artist)
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	return lib.lastInsertID()
+}
+
+func (lib LocalLibrary) GetAlbumID(album string, artistID int64) (int64, error) {
+	smt, err := lib.db.Prepare(`
+		SELECT
+			id
+		FROM
+			albums
+		WHERE
+			name = ? AND
+			artist_id = ?
+	`)
+
+	if err != nil {
+		return 0, err
+	}
+
+	defer smt.Close()
+
+	var id int64
+	err = smt.QueryRow(album, artistID).Scan(&id)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func (lib LocalLibrary) setAlbumID(album string, artistID int64) (int64, error) {
+	id, err := lib.GetAlbumID(album, artistID)
+
+	if err == nil {
+		return id, nil
+	}
+
+	stmt, err := lib.db.Prepare(`
+			INSERT INTO
+				albums (name, artist_id)
+			VALUES
+				(?, ?)
+	`)
+
+	if err != nil {
+		return 0, err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(album, artistID)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return lib.lastInsertID()
+}
+
+func (lib LocalLibrary) GetTrackID(title string,
+	artistID, albumID int64) (int64, error) {
+	smt, err := lib.db.Prepare(`
+		SELECT
+			id
+		FROM
+			tracks
+		WHERE
+			name = ? AND
+			artist_id = ? AND
+			album_id = ?
+	`)
+
+	if err != nil {
+		return 0, err
+	}
+
+	defer smt.Close()
+
+	var id int64
+	err = smt.QueryRow(title, artistID, albumID).Scan(&id)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func (lib LocalLibrary) setTrackID(title, fs_path string,
+	trackNumber, artistID, albumID int64) (int64, error) {
+
+	id, err := lib.GetTrackID(title, artistID, albumID)
+
+	if err == nil {
+		return id, nil
+	}
+
+	stmt, err := lib.db.Prepare(`
+		INSERT INTO
+			tracks (name, album_id, artist_id, fs_path, number)
+		VALUES
+			(?, ?, ?, ?, ?)
+	`)
+
+	if err != nil {
+		return 0, err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(title, albumID, artistID, fs_path, trackNumber)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return lib.lastInsertID()
+}
+
+func (lib LocalLibrary) lastInsertID() (int64, error) {
+	var id int64
+
+	err := lib.db.QueryRow("select last_insert_rowid();").Scan(&id)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }
 
 func (lib LocalLibrary) Initialize() error {
@@ -127,7 +340,7 @@ func (lib LocalLibrary) Initialize() error {
 	}
 
 	if lib.db == nil {
-		return errors.New("Library is not opened")
+		return errors.New("Library is not opened. Call its Open method first.")
 	}
 
 	queries := strings.Split(sqlSchema, ";")
@@ -157,28 +370,13 @@ func (lib LocalLibrary) readSchema() (string, error) {
 	}
 	sqlSchemaPath := filepath.Join(projRoot, "sqls", "library_schema.sql")
 
-	fp, err := os.Open(sqlSchemaPath)
+	outBytes, err := ioutil.ReadFile(sqlSchemaPath)
 
 	if err != nil {
 		return "", err
 	}
-	defer fp.Close()
 
-	var out string
-	buf := make([]byte, 10*1024)
-
-	for {
-		_, err := fp.Read(buf)
-		if err != nil && err != io.EOF {
-			return "", err
-		}
-		if err == io.EOF {
-			break
-		}
-		out = out + string(buf)
-	}
-
-	out = strings.Trim(out, "\x00\n\t\r\f\v ")
+	out := string(outBytes)
 
 	if len(out) < 1 {
 		return "", errors.New("SQL schema was empty")
@@ -193,10 +391,6 @@ func (lib LocalLibrary) Truncate() error {
 }
 
 func NewLocalLibrary(databasePath string) (*LocalLibrary, error) {
-	if len(databasePath) < 1 {
-		return nil, errors.New("No database supplied to open")
-	}
-
 	lib := LocalLibrary{database: databasePath}
 
 	var err error

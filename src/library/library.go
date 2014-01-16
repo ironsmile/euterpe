@@ -10,7 +10,7 @@ package library
 type SearchResult struct {
 	ID          int64  // ID in the library for a media file
 	Artist      string // Meta info: Artist
-	Collection  string // Meta info: Album for music
+	Album       string // Meta info: Album for music
 	Title       string // Meta info: the title of this media file
 	TrackNumber int64  // Meta info: track number for music
 }
@@ -25,9 +25,9 @@ type Library interface {
 	// will be started.
 	AddLibraryPath(string)
 
-	// Search the library using a search string. It will match against Artist, Collection
+	// Search the library using a search string. It will match against Artist, Album
 	// and Title. Will OR the results. So it is "return anything whcih Artist maches or
-	// Collection matches or Title matches"
+	// Album matches or Title matches"
 	Search(string) []SearchResult
 
 	// Returns the real filesystem path. Requires the media ID.

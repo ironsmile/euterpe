@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -113,9 +114,7 @@ func TestTruncate(t *testing.T) {
 }
 
 func TestSearch(t *testing.T) {
-	lib := getLibrary(t, "/tmp/test.db")
-
-	defer lib.Close()
+	lib := getLibrary(t, "/tmp/test-search.db")
 	defer lib.Truncate()
 
 	found := lib.Search("Buggy")
@@ -126,7 +125,7 @@ func TestSearch(t *testing.T) {
 
 	expected := SearchResult{
 		Artist:      "Buggy Bugoff",
-		Collection:  "Return Of The Bugs",
+		Album:       "Return Of The Bugs",
 		Title:       "Payback",
 		TrackNumber: 1,
 	}
@@ -141,9 +140,9 @@ func TestSearch(t *testing.T) {
 			expected.Title, found[0].Title)
 	}
 
-	if found[0].Collection != expected.Collection {
-		t.Errorf("Expected Collection `%s` but found `%s`",
-			expected.Collection, found[0].Collection)
+	if found[0].Album != expected.Album {
+		t.Errorf("Expected Album `%s` but found `%s`",
+			expected.Album, found[0].Album)
 	}
 
 	if found[0].TrackNumber != expected.TrackNumber {
@@ -167,6 +166,35 @@ func TestAddigNewFiles(t *testing.T) {
 	library := getLibrary(t, "/tmp/test-new-files.db")
 	defer library.Truncate()
 
+	db, err := sql.Open("sqlite3", "/tmp/test-new-files.db")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	defer db.Close()
+
+	tracksCount := func() int {
+		rows, err := db.Query("SELECT count(id) as cnt FROM tracks")
+		if err != nil {
+			t.Fatalf(err.Error())
+			return 0
+		}
+		defer rows.Close()
+
+		var count int
+
+		for rows.Next() {
+			rows.Scan(&count)
+		}
+
+		return count
+	}
+
+	tracks := tracksCount()
+
+	if tracks != 2 {
+		t.Errorf("Expected to find 2 tracks but found %d", tracks)
+	}
+
 	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
 	absentFile := filepath.Join(testLibraryPath, "not_there")
 
@@ -184,30 +212,76 @@ func TestAddigNewFiles(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	db, err := sql.Open("sqlite3", "/tmp/test-new-files.db")
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-	defer db.Close()
+	tracks = tracksCount()
 
-	rows, err := db.Query("SELECT count(id) as cnt FROM tracks")
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-	defer rows.Close()
-
-	var count int
-
-	for rows.Next() {
-		rows.Scan(&count)
-	}
-
-	if count != 3 {
-		t.Errorf("Expected to find 3 track but found %d", count)
+	if tracks != 3 {
+		t.Errorf("Expected to find 3 tracks but found %d", tracks)
 	}
 
 }
 
-func TestGettingAFile(t *testing.T) {
+func TestPreAddedFiles(t *testing.T) {
+	library := getLibrary(t, "/tmp/test-preadded-files.db")
+	defer library.Truncate()
 
+	_, err := library.GetArtistID("doycho")
+
+	if err == nil {
+		t.Errorf("Was not expecting to find artist doycho")
+	}
+
+	artistID, err := library.GetArtistID("Artist Testoff")
+
+	if err != nil {
+		t.Fatalf("Was not able to find Artist Testoff: %s", err.Error())
+	}
+
+	_, err = library.GetAlbumID("Album Of Not Being There", artistID)
+
+	if err == nil {
+		t.Errorf("Was not expecting to find Album Of Not Being There but found one")
+	}
+
+	albumID, err := library.GetAlbumID("Album Of Tests", artistID)
+
+	if err != nil {
+		t.Fatalf("Was not able to find Album Of Tests: %d", err.Error())
+	}
+
+	_, err = library.GetTrackID("404 Not Found", artistID, albumID)
+
+	if err == nil {
+		t.Errorf("Was not expecting to find 404 Not Found track but it was there")
+	}
+
+	_, err = library.GetTrackID("Another One", artistID, albumID)
+
+	if err != nil {
+		t.Fatalf("Was not able to find track Another One: %s", err.Error())
+	}
+}
+
+func TestGettingAFile(t *testing.T) {
+	library := getLibrary(t, "/tmp/test-getting-a-file.db")
+	defer library.Truncate()
+
+	artistID, _ := library.GetArtistID("Artist Testoff")
+	albumID, _ := library.GetAlbumID("Album Of Tests", artistID)
+	trackID, err := library.GetTrackID("Another One", artistID, albumID)
+
+	if err != nil {
+		t.Fatalf("File not found: %S", err.Error())
+	}
+
+	filePath := library.GetFilePath(trackID)
+
+	suffix := "/test_files/library/test_file_two.mp3"
+
+	if !strings.HasSuffix(filePath, filepath.FromSlash(suffix)) {
+		t.Errorf("Returned track file Another One did not have the proper file path")
+	}
+}
+
+func TestScaning(t *testing.T) {
+	//!TODO
 }
