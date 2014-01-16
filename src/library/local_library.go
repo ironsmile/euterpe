@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	taglib "github.com/landr0id/go-taglib"
 	_ "github.com/mattn/go-sqlite3"
@@ -18,23 +19,31 @@ import (
 
 // Implements the Library interface. Will represent files found on the local storage
 type LocalLibrary struct {
-	database string   // The location the library's database
-	paths    []string // Filesystem locations which contain the library's media files
-	db       *sql.DB
+	database string         // The location of the library's database
+	paths    []string       // Filesystem locations which contain the library's media files
+	db       *sql.DB        // Handler to the database file mentioned in database field
+	scanWait sync.WaitGroup // Used in WaitScan method
 }
 
-func (lib LocalLibrary) Close() {
+func (lib *LocalLibrary) Close() {
 	if lib.db != nil {
 		lib.db.Close()
 		lib.db = nil
 	}
 }
 
-func (lib LocalLibrary) AddLibraryPath(path string) {
+func (lib *LocalLibrary) AddLibraryPath(path string) {
+	_, err := os.Stat(path)
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
 	lib.paths = append(lib.paths, path)
 }
 
-func (lib LocalLibrary) Search(searchTerm string) []SearchResult {
+func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 	var output []SearchResult
 
 	//!TODO: ESCAPE ESCAPE ESCAPE!!! OR INJECTIONS AHEAD!
@@ -57,8 +66,6 @@ func (lib LocalLibrary) Search(searchTerm string) []SearchResult {
 
 	rows, err := lib.db.Query(query)
 
-	//log.Printf("Search query: %s\n", query)
-
 	if err != nil {
 		log.Printf("Query not successful: %s\n", err.Error())
 		return output
@@ -74,7 +81,7 @@ func (lib LocalLibrary) Search(searchTerm string) []SearchResult {
 	return output
 }
 
-func (lib LocalLibrary) GetFilePath(ID int64) string {
+func (lib *LocalLibrary) GetFilePath(ID int64) string {
 	smt, err := lib.db.Prepare(`
 		SELECT
 			fs_path
@@ -102,12 +109,43 @@ func (lib LocalLibrary) GetFilePath(ID int64) string {
 	return filePath
 }
 
-func (lib LocalLibrary) Scan() error {
-	//!TODO
-	return nil
+func (lib *LocalLibrary) Scan() {
+	for _, path := range lib.paths {
+		lib.scanWait.Add(1)
+		go lib.scanPath(path)
+	}
 }
 
-func (lib LocalLibrary) AddMedia(filename string) error {
+func (lib *LocalLibrary) WaitScan() {
+	lib.scanWait.Wait()
+}
+
+func (lib *LocalLibrary) scanPath(scannedPath string) {
+	defer lib.scanWait.Done()
+
+	walkFunc := func(path string, info os.FileInfo, err error) error {
+
+		if err != nil {
+			log.Println(err)
+			return nil
+		}
+
+		if !strings.HasSuffix(path, ".mp3") {
+			return nil
+		}
+
+		lib.AddMedia(path)
+		return nil
+	}
+
+	err := filepath.Walk(scannedPath, walkFunc)
+
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func (lib *LocalLibrary) AddMedia(filename string) error {
 	_, err := os.Stat(filename)
 
 	if err != nil {
@@ -144,7 +182,7 @@ func (lib LocalLibrary) AddMedia(filename string) error {
 	return nil
 }
 
-func (lib LocalLibrary) GetArtistID(artist string) (int64, error) {
+func (lib *LocalLibrary) GetArtistID(artist string) (int64, error) {
 	smt, err := lib.db.Prepare(`
 		SELECT
 			id
@@ -170,7 +208,7 @@ func (lib LocalLibrary) GetArtistID(artist string) (int64, error) {
 	return id, nil
 }
 
-func (lib LocalLibrary) setArtistID(artist string) (int64, error) {
+func (lib *LocalLibrary) setArtistID(artist string) (int64, error) {
 	id, err := lib.GetArtistID(artist)
 
 	if err == nil {
@@ -199,7 +237,7 @@ func (lib LocalLibrary) setArtistID(artist string) (int64, error) {
 	return lib.lastInsertID()
 }
 
-func (lib LocalLibrary) GetAlbumID(album string, artistID int64) (int64, error) {
+func (lib *LocalLibrary) GetAlbumID(album string, artistID int64) (int64, error) {
 	smt, err := lib.db.Prepare(`
 		SELECT
 			id
@@ -226,7 +264,7 @@ func (lib LocalLibrary) GetAlbumID(album string, artistID int64) (int64, error) 
 	return id, nil
 }
 
-func (lib LocalLibrary) setAlbumID(album string, artistID int64) (int64, error) {
+func (lib *LocalLibrary) setAlbumID(album string, artistID int64) (int64, error) {
 	id, err := lib.GetAlbumID(album, artistID)
 
 	if err == nil {
@@ -255,7 +293,7 @@ func (lib LocalLibrary) setAlbumID(album string, artistID int64) (int64, error) 
 	return lib.lastInsertID()
 }
 
-func (lib LocalLibrary) GetTrackID(title string,
+func (lib *LocalLibrary) GetTrackID(title string,
 	artistID, albumID int64) (int64, error) {
 	smt, err := lib.db.Prepare(`
 		SELECT
@@ -284,7 +322,7 @@ func (lib LocalLibrary) GetTrackID(title string,
 	return id, nil
 }
 
-func (lib LocalLibrary) setTrackID(title, fs_path string,
+func (lib *LocalLibrary) setTrackID(title, fs_path string,
 	trackNumber, artistID, albumID int64) (int64, error) {
 
 	id, err := lib.GetTrackID(title, artistID, albumID)
@@ -315,7 +353,7 @@ func (lib LocalLibrary) setTrackID(title, fs_path string,
 	return lib.lastInsertID()
 }
 
-func (lib LocalLibrary) lastInsertID() (int64, error) {
+func (lib *LocalLibrary) lastInsertID() (int64, error) {
 	var id int64
 
 	err := lib.db.QueryRow("select last_insert_rowid();").Scan(&id)
@@ -327,7 +365,7 @@ func (lib LocalLibrary) lastInsertID() (int64, error) {
 	return id, nil
 }
 
-func (lib LocalLibrary) Initialize() error {
+func (lib *LocalLibrary) Initialize() error {
 	_, err := os.Stat(lib.database)
 
 	if err == nil {
@@ -363,7 +401,7 @@ func (lib LocalLibrary) Initialize() error {
 	return nil
 }
 
-func (lib LocalLibrary) readSchema() (string, error) {
+func (lib *LocalLibrary) readSchema() (string, error) {
 	projRoot, err := helpers.ProjectRoot()
 
 	if err != nil {
@@ -386,7 +424,7 @@ func (lib LocalLibrary) readSchema() (string, error) {
 	return out, nil
 }
 
-func (lib LocalLibrary) Truncate() error {
+func (lib *LocalLibrary) Truncate() error {
 	lib.Close()
 	return os.Remove(lib.database)
 }

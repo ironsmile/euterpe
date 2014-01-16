@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 
@@ -41,6 +42,24 @@ func getLibrary(t *testing.T, dbFile string) *LocalLibrary {
 	_ = lib.AddMedia(filepath.Join(testLibraryPath, "folder_one", "third_file.mp3"))
 
 	return lib
+}
+
+func testErrorAfter(seconds time.Duration, message string) chan int {
+	ch := make(chan int)
+
+	go func() {
+		select {
+		case _ = <-ch:
+			close(ch)
+			return
+		case <-time.After(seconds * time.Second):
+			close(ch)
+			println(message)
+			os.Exit(1)
+		}
+	}()
+
+	return ch
 }
 
 func TestInitialize(t *testing.T) {
@@ -152,17 +171,7 @@ func TestSearch(t *testing.T) {
 
 }
 
-func TestDirectoryScan(t *testing.T) {
-
-}
-
 func TestAddigNewFiles(t *testing.T) {
-	projRoot, err := helpers.ProjectRoot()
-
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-
 	library := getLibrary(t, "/tmp/test-new-files.db")
 	defer library.Truncate()
 
@@ -195,6 +204,12 @@ func TestAddigNewFiles(t *testing.T) {
 		t.Errorf("Expected to find 2 tracks but found %d", tracks)
 	}
 
+	projRoot, err := helpers.ProjectRoot()
+
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
 	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
 	absentFile := filepath.Join(testLibraryPath, "not_there")
 
@@ -218,6 +233,17 @@ func TestAddigNewFiles(t *testing.T) {
 		t.Errorf("Expected to find 3 tracks but found %d", tracks)
 	}
 
+	found := library.Search("Tittled Track")
+
+	if len(found) != 1 {
+		t.Errorf("Expected to find one track but found %d", len(found))
+	}
+
+	track := found[0]
+
+	if track.Title != "Tittled Track" {
+		t.Errorf("Found track had the wrong title: %s", track.Title)
+	}
 }
 
 func TestPreAddedFiles(t *testing.T) {
@@ -282,6 +308,66 @@ func TestGettingAFile(t *testing.T) {
 	}
 }
 
+func getPathedLibrary(t *testing.T, dbFile string) *LocalLibrary {
+	projRoot, err := helpers.ProjectRoot()
+
+	if err != nil {
+		t.Fatalf("Was not able to find test_files directory.", err.Error())
+	}
+
+	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
+
+	lib, err := NewLocalLibrary(dbFile)
+
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	err = lib.Initialize()
+
+	if err != nil {
+		t.Fatalf("Initializing library: %s", err.Error())
+	}
+
+	lib.AddLibraryPath(testLibraryPath)
+
+	return lib
+}
+
+func TestAddingLibraryPaths(t *testing.T) {
+	lib := getPathedLibrary(t, "/tmp/test-library-paths.db")
+	defer lib.Truncate()
+
+	if len(lib.paths) != 1 {
+		t.Fatalf("Expected 1 library path but found %d", len(lib.paths))
+	}
+
+	notExistingPath := filepath.FromSlash("/hopefully/not/existing/path/")
+
+	lib.AddLibraryPath(notExistingPath)
+	lib.AddLibraryPath(filepath.FromSlash("/"))
+
+	if len(lib.paths) != 2 {
+		t.Fatalf("Expected 2 library path but found %d", len(lib.paths))
+	}
+}
+
 func TestScaning(t *testing.T) {
-	//!TODO
+	lib := getPathedLibrary(t, "/tmp/test-library-paths.db")
+	defer lib.Truncate()
+
+	lib.Scan()
+
+	ch := testErrorAfter(10, "Scanning library took too long")
+	lib.WaitScan()
+	ch <- 42
+
+	for _, track := range []string{"Another One", "Payback", "Tittled Track"} {
+		found := lib.Search(track)
+
+		if len(found) != 1 {
+			t.Errorf("%s was not found after the scan", track)
+		}
+	}
+
 }

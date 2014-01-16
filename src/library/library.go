@@ -34,8 +34,11 @@ type Library interface {
 	GetFilePath(int64) string
 
 	// Starts a background library scan. Will scan all paths if
-	// they are not scanned already
-	Scan() error
+	// they are not scanned already. Will return immediately.
+	Scan()
+
+	// Will sync with the Scan's end
+	WaitScan()
 
 	// Adds this media (file) to the library
 	AddMedia(string) error

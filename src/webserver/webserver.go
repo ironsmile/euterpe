@@ -146,7 +146,8 @@ func (srv *Server) Wait() {
 
 // Returns a new Server using the supplied configuration cfg. The returned server
 // is ready and calling its Serve method will start it.
-func NewServer(cfg ServerConfig) (srv Server) {
+func NewServer(cfg ServerConfig) (srv *Server) {
+	srv = new(Server)
 	srv.cfg = cfg
 	return
 }

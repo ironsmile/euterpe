@@ -38,7 +38,7 @@ func testErrorAfter(seconds time.Duration, message string) chan int {
 	return ch
 }
 
-func setUpServer() Server {
+func setUpServer() *Server {
 	projRoot, err := getProjectRoot()
 
 	if err != nil {
@@ -101,7 +101,7 @@ func TestStartAndStop(t *testing.T) {
 func TestStaticFilesServing(t *testing.T) {
 	srv := setUpServer()
 	srv.Serve()
-	defer tearDownServer(&srv)
+	defer tearDownServer(srv)
 
 	testUrl := func(url, expected string) {
 
@@ -153,7 +153,7 @@ func TestSSL(t *testing.T) {
 	srv := NewServer(wsCfg)
 	srv.Serve()
 
-	defer tearDownServer(&srv)
+	defer tearDownServer(srv)
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -184,7 +184,7 @@ func TestUserAuthentication(t *testing.T) {
 
 	srv := NewServer(wsCfg)
 	srv.Serve()
-	defer tearDownServer(&srv)
+	defer tearDownServer(srv)
 
 	resp, err := http.Get(url)
 
