@@ -6,6 +6,9 @@
 package src
 
 import (
+	"log"
+
+	"github.com/ironsmile/httpms/src/library"
 	"github.com/ironsmile/httpms/src/webserver"
 )
 
@@ -16,7 +19,25 @@ func Main() {
 	wsCfg.Address = ":8080"
 	wsCfg.Root = "http_root"
 
-	srv := webserver.NewServer(wsCfg)
+	lib, err := library.NewLocalLibrary("/tmp/httpms.db")
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	err = lib.Initialize()
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	defer lib.Truncate()
+
+	lib.AddLibraryPath("/home/iron4o/Music")
+	lib.Scan()
+
+	srv := webserver.NewServer(wsCfg, lib)
 
 	srv.Serve()
 

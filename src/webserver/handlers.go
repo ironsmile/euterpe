@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/ironsmile/httpms/src/library"
 )
 
 // Handler wrapper used for basic authenticate. Its only job is to do the
@@ -77,7 +79,9 @@ func (hl BasicAuthHandler) authenticate(auth string) bool {
 
 // Handler responsible for search requests. It will use the Library to
 // return a list of matched files to the interface.
-type SearchHandler struct{}
+type SearchHandler struct {
+	library library.Library
+}
 
 // This method is required by the http.Handler's interface
 func (sh SearchHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
@@ -104,4 +108,11 @@ func (sh SearchHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request)
 		writer.Write([]byte(err.Error()))
 		return
 	}
+}
+
+// Returns a new server object which will use the supplied library
+func NewSearchHandler(lib library.Library) *SearchHandler {
+	sh := new(SearchHandler)
+	sh.library = lib
+	return sh
 }

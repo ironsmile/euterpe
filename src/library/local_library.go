@@ -109,6 +109,7 @@ func (lib *LocalLibrary) GetFilePath(ID int64) string {
 	return filePath
 }
 
+//!TODO: make scan also remove files which have been deleted since the previous scan
 func (lib *LocalLibrary) Scan() {
 	for _, path := range lib.paths {
 		lib.scanWait.Add(1)
@@ -356,7 +357,7 @@ func (lib *LocalLibrary) setTrackID(title, fs_path string,
 func (lib *LocalLibrary) lastInsertID() (int64, error) {
 	var id int64
 
-	err := lib.db.QueryRow("select last_insert_rowid();").Scan(&id)
+	err := lib.db.QueryRow("SELECT last_insert_rowid();").Scan(&id)
 
 	if err != nil {
 		return 0, err
@@ -430,7 +431,8 @@ func (lib *LocalLibrary) Truncate() error {
 }
 
 func NewLocalLibrary(databasePath string) (*LocalLibrary, error) {
-	lib := LocalLibrary{database: databasePath}
+	lib := new(LocalLibrary)
+	lib.database = databasePath
 
 	var err error
 
@@ -440,5 +442,5 @@ func NewLocalLibrary(databasePath string) (*LocalLibrary, error) {
 		return nil, err
 	}
 
-	return &lib, nil
+	return lib, nil
 }

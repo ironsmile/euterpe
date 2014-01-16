@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/ironsmile/httpms/src/library"
 )
 
 // The configuration which should be supplied to the webserver
@@ -25,10 +27,24 @@ type ServerConfig struct {
 
 // Represends our webserver. It will be controlled from here
 type Server struct {
-	cfg      ServerConfig   // Configuration of this server
-	wg       sync.WaitGroup // WG used in Server.Wait to sync with server's end
-	httpSrv  *http.Server   // The actual http.Server doing the HTTP work
-	listener net.Listener   // The server's net.Listener. Used in the Server.Stop func
+
+	// Configuration of this server
+	cfg ServerConfig
+
+	// WG used in Server.Wait to sync with server's end
+	wg sync.WaitGroup
+
+	// Makes sure Serve does not return before all the starting work ha been finished
+	startWG sync.WaitGroup
+
+	// The actual http.Server doing the HTTP work
+	httpSrv *http.Server
+
+	// The server's net.Listener. Used in the Server.Stop func
+	listener net.Listener
+
+	// This server's library with media
+	library library.Library
 }
 
 // The function that actually starts the webserver. It attaches all the handlers
@@ -39,7 +55,9 @@ func (srv *Server) Serve() {
 		panic("Second Server.Serve call for the same server")
 	}
 	srv.wg.Add(1)
+	srv.startWG.Add(1)
 	go srv.serveGoroutine()
+	srv.startWG.Wait()
 }
 
 func (srv *Server) serveGoroutine() {
@@ -50,7 +68,7 @@ func (srv *Server) serveGoroutine() {
 	mux := http.NewServeMux()
 
 	mux.Handle("/", http.FileServer(http.Dir(srv.cfg.Root)))
-	mux.Handle("/search/", SearchHandler{})
+	mux.Handle("/search/", NewSearchHandler(srv.library))
 
 	var handler http.Handler
 
@@ -95,6 +113,8 @@ func (srv *Server) listenAndServe() error {
 		return err
 	}
 	srv.listener = lsn
+	log.Println("Webserver started.")
+	srv.startWG.Done()
 	return srv.httpSrv.Serve(lsn)
 }
 
@@ -128,6 +148,8 @@ func (srv *Server) listenAndServeTLS(certFile, keyFile string) error {
 
 	tlsListener := tls.NewListener(conn, config)
 	srv.listener = tlsListener
+	log.Println("Webserver started.")
+	srv.startWG.Done()
 	return srv.httpSrv.Serve(tlsListener)
 }
 
@@ -136,6 +158,7 @@ func (srv *Server) Stop() {
 	if srv.listener != nil {
 		srv.listener.Close()
 		srv.listener = nil
+		log.Println("Webserver listener stopped.")
 	}
 }
 
@@ -146,8 +169,9 @@ func (srv *Server) Wait() {
 
 // Returns a new Server using the supplied configuration cfg. The returned server
 // is ready and calling its Serve method will start it.
-func NewServer(cfg ServerConfig) (srv *Server) {
+func NewServer(cfg ServerConfig, lib library.Library) (srv *Server) {
 	srv = new(Server)
 	srv.cfg = cfg
+	srv.library = lib
 	return
 }

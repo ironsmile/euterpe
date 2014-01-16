@@ -8,11 +8,21 @@ package library
 // Contains a result for a search term. Contains all the neccessery information to
 // uniquely identify a media in the library.
 type SearchResult struct {
-	ID          int64  // ID in the library for a media file
-	Artist      string // Meta info: Artist
-	Album       string // Meta info: Album for music
-	Title       string // Meta info: the title of this media file
-	TrackNumber int64  // Meta info: track number for music
+
+	// ID in the library for a media file
+	ID int64 `json:"id"`
+
+	// Meta info: Artist
+	Artist string `json:"artist"`
+
+	// Meta info: Album for music
+	Album string `json:"album"`
+
+	// Meta info: the title of this media file
+	Title string `json:"title"`
+
+	// Meta info: track number for music
+	TrackNumber int64 `json:"track"`
 }
 
 // This type represents the media library which is played using the HTTPMS.
