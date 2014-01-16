@@ -37,6 +37,7 @@ func (lib LocalLibrary) AddLibraryPath(path string) {
 func (lib LocalLibrary) Search(searchTerm string) []SearchResult {
 	var output []SearchResult
 
+	//!TODO: ESCAPE ESCAPE ESCAPE!!! OR INJECTIONS AHEAD!
 	query := fmt.Sprintf(`
 		SELECT
 			t.id as track_id,
