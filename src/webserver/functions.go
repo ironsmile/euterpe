@@ -6,26 +6,31 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
-	"strings"
+
+	"github.com/ironsmile/httpms/src/helpers"
 )
 
 // Returns the root directory in which HTML templates reside
 func templateDir() (string, error) {
-	gopath := os.ExpandEnv("$GOPATH")
-	relPath := filepath.FromSlash("src/github.com/ironsmile/httpms/templates")
-	for _, path := range strings.Split(gopath, ":") {
-		tmplPath := filepath.Join(path, relPath)
-		entry, err := os.Stat(tmplPath)
-		if err != nil {
-			continue
-		}
+	projRoot, err := helpers.ProjectRoot()
 
-		if !entry.IsDir() {
-			return "", errors.New(fmt.Sprintf("%s is not a directory", tmplPath))
-		}
-		return tmplPath, nil
+	if err != nil {
+		return "", err
 	}
-	return "", errors.New("Template directory was not found")
+
+	theDirectory := filepath.Join(projRoot, "templates")
+
+	st, err := os.Stat(theDirectory)
+
+	if err != nil {
+		return "", err
+	}
+
+	if !st.IsDir() {
+		return "", errors.New(fmt.Sprintf("%s is not a directory", theDirectory))
+	}
+
+	return theDirectory, nil
 }
 
 // Returns a *template.Template 'object' by its file name

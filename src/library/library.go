@@ -19,29 +19,35 @@ type SearchResult struct {
 // It is responsible for scaning the library directories, watching for new files,
 // actually searching for a media by a search term and finding the exact file path
 // in the file system for a media.
-type Library struct {
-	paths []string // Filesystem locations which contain the library's media files
-}
+type Library interface {
 
-// Adds a new path to the library paths. If it hasn't been scanned yet a new scan
-// will be started.
-func (lib *Library) AddLibraryPath(path string) {
+	// Adds a new path to the library paths. If it hasn't been scanned yet a new scan
+	// will be started.
+	AddLibraryPath(string)
 
-}
+	// Search the library using a search string. It will match against Artist, Collection
+	// and Title. Will OR the results. So it is "return anything whcih Artist maches or
+	// Collection matches or Title matches"
+	Search(string) []SearchResult
 
-// Search the library using a search string. It will match against Artist, Collection
-// and Title. Will OR the results. So it is "return anything whcih Artist maches or
-// Collection matches or Title matches"
-func (lib *Library) Search(searchTerm string) []SearchResult {
-	return []SearchResult{}
-}
+	// Returns the real filesystem path. Requires the media ID.
+	GetFilePath(int64) string
 
-// Returns the real filesystem path. Requires the media ID.
-func (lib *Library) GetFilePath(ID int64) string {
-	return ""
-}
+	// Starts a background library scan. Will scan all paths if
+	// they are not scanned already
+	Scan() error
 
-// Starts a background library scan. Will scan all paths if they are not scanned already
-func (lib *Library) Scan() error {
-	return nil
+	// Adds this media (file) to the library
+	AddMedia(string) error
+
+	// Makes sure the library is initialied. This method will be called once on
+	// every start of the httpms
+	Initialize() error
+
+	// Makes the library forget everything. Also Closes the library.
+	Truncate() error
+
+	// Frees all resources this library object is using.
+	// Any operations (except Truncate) on closed library will result in panic.
+	Close()
 }
