@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -230,11 +231,6 @@ func TestUserAuthentication(t *testing.T) {
 	}
 }
 
-//!TODO:
-func TestDefaultPorts(t *testing.T) {
-
-}
-
 func TestSearchUrl(t *testing.T) {
 	projRoot, _ := getProjectRoot()
 
@@ -313,9 +309,107 @@ func TestSearchUrl(t *testing.T) {
 			t.Errorf("Wrong album in search results: %s", result.Album)
 		}
 	}
+
+	url = fmt.Sprintf("http://127.0.0.1:%d/search/Not+There", TestPort)
+	resp, err = http.Get(url)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
+	}
+
+	responseBody, err = ioutil.ReadAll(resp.Body)
+
+	var noResults []library.SearchResult
+
+	err = json.Unmarshal(responseBody, &noResults)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(noResults) != 0 {
+		t.Errorf("Expected no results from search but they were %d", len(noResults))
+	}
 }
 
-//!TODO:
 func TestGetFileUrl(t *testing.T) {
+	projRoot, _ := getProjectRoot()
 
+	lib, err := library.NewLocalLibrary("/tmp/test-web-file-get.db")
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = lib.Initialize()
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	defer lib.Truncate()
+
+	lib.AddLibraryPath(filepath.Join(projRoot, "test_files", "library"))
+	lib.Scan()
+
+	ch := testErrorAfter(5, "Library in TestGetFileUrl did not finish scaning on time")
+	lib.WaitScan()
+	ch <- 42
+
+	var wsCfg ServerConfig
+	wsCfg.Address = fmt.Sprintf(":%d", TestPort)
+	wsCfg.Root = filepath.Join(projRoot, "test_files", TestRoot)
+
+	srv := NewServer(wsCfg, lib)
+	srv.Serve()
+	defer tearDownServer(srv)
+
+	found := lib.Search("Buggy Bugoff")
+
+	if len(found) != 1 {
+		t.Fatalf("Was not able to find Buggy Bugoff test track")
+	}
+
+	trackID := found[0].ID
+
+	url := fmt.Sprintf("http://127.0.0.1:%d/file/%d", TestPort, trackID)
+
+	resp, err := http.Get(url)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
+	}
+
+	responseBody, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(responseBody) != 17314 {
+		t.Errorf("Track size was not as expected. It was %d", len(responseBody))
+	}
+
+	contentLenHeader := resp.Header.Get("Content-Length")
+	contentLenght, err := strconv.Atoi(contentLenHeader)
+
+	if err != nil {
+		t.Errorf("Content-Length was not correct. It was %s", contentLenHeader)
+	}
+
+	if contentLenght != 17314 {
+		t.Errorf("Content-Length was not correct. It was %d", contentLenght)
+	}
 }
