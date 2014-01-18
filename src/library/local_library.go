@@ -17,6 +17,8 @@ import (
 	"github.com/ironsmile/httpms/src/helpers"
 )
 
+const UNKNOWN_LABEL = "Unknown"
+
 // Implements the Library interface. Will represent files found on the local storage
 type LocalLibrary struct {
 	database string         // The location of the library's database
@@ -210,6 +212,10 @@ func (lib *LocalLibrary) GetArtistID(artist string) (int64, error) {
 }
 
 func (lib *LocalLibrary) setArtistID(artist string) (int64, error) {
+	if len(artist) < 1 {
+		artist = UNKNOWN_LABEL
+	}
+
 	id, err := lib.GetArtistID(artist)
 
 	if err == nil {
@@ -266,6 +272,10 @@ func (lib *LocalLibrary) GetAlbumID(album string, artistID int64) (int64, error)
 }
 
 func (lib *LocalLibrary) setAlbumID(album string, artistID int64) (int64, error) {
+	if len(album) < 1 {
+		album = UNKNOWN_LABEL
+	}
+
 	id, err := lib.GetAlbumID(album, artistID)
 
 	if err == nil {
@@ -325,6 +335,10 @@ func (lib *LocalLibrary) GetTrackID(title string,
 
 func (lib *LocalLibrary) setTrackID(title, fs_path string,
 	trackNumber, artistID, albumID int64) (int64, error) {
+
+	if len(title) < 1 {
+		title = UNKNOWN_LABEL
+	}
 
 	id, err := lib.GetTrackID(title, artistID, albumID)
 
