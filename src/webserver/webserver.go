@@ -79,6 +79,8 @@ func (srv *Server) serveGoroutine() {
 		handler = BasicAuthHandler{mux, srv.cfg.AuthUser, srv.cfg.AuthPass}
 	}
 
+	handler = NewGzipHandler(handler)
+
 	srv.httpSrv = &http.Server{
 		Addr:           srv.cfg.Address,
 		Handler:        handler,

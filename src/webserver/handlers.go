@@ -1,8 +1,10 @@
 package webserver
 
 import (
+	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -154,6 +156,8 @@ func (sh SearchHandler) search(writer http.ResponseWriter, req *http.Request) er
 	return nil
 }
 
+// Used to wrap around handlers-like functions which just return error.
+// This function actually writes the HTTP error and renders the error in the html
 func InternalErrorOnErrorHandler(writer http.ResponseWriter, req *http.Request,
 	fnc func(http.ResponseWriter, *http.Request) error) {
 	err := fnc(writer, req)
@@ -161,6 +165,47 @@ func InternalErrorOnErrorHandler(writer http.ResponseWriter, req *http.Request,
 		writer.WriteHeader(http.StatusInternalServerError)
 		writer.Write([]byte(err.Error()))
 	}
+}
+
+// Custom writer to make our webserver gzip output when possible.
+type gzipResponseWriter struct {
+	io.Writer
+	http.ResponseWriter
+}
+
+func (w gzipResponseWriter) Write(b []byte) (int, error) {
+	if "" == w.Header().Get("Content-Type") {
+		// If no content type, apply sniffing algorithm to un-gzipped body.
+		w.Header().Set("Content-Type", http.DetectContentType(b))
+	}
+	return w.Writer.Write(b)
+}
+
+// Gzips our output using a custom Writer. It will check if gzip is amount the
+// accepted encodings and gzip if so. Otherwise it will do nothing.
+type GzipHandler struct {
+	wrapped http.Handler
+}
+
+func (gzh GzipHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
+	if !strings.Contains(req.Header.Get("Accept-Encoding"), "gzip") {
+		gzh.wrapped.ServeHTTP(writer, req)
+		return
+	}
+
+	writer.Header().Set("Content-Encoding", "gzip")
+	gz := gzip.NewWriter(writer)
+	defer gz.Close()
+	gzr := gzipResponseWriter{Writer: gz, ResponseWriter: writer}
+	gzh.wrapped.ServeHTTP(gzr, req)
+}
+
+// Returns GzipHandler which will gzip anything. written in the supplied handler.
+// Must be the last handler used.
+func NewGzipHandler(handler http.Handler) http.Handler {
+	gzh := new(GzipHandler)
+	gzh.wrapped = handler
+	return gzh
 }
 
 // Returns a new SearchHandler for processing search queries. They will be run
