@@ -161,7 +161,7 @@ if("undefined"==typeof jQuery)throw new Error("Bootstrap requires jQuery");+func
 */
 
 $(document).ready(function(){
-    
+
     var cssSelector = {
         jPlayer: "#jquery_jplayer_N",
         cssSelectorAncestor: "#jp_container_N"
@@ -265,12 +265,19 @@ found_songs = [];
 
 function load_filters(songs) {
     found_songs = songs;
-    var all_artists = {}
-    var all_albums = {}
+    var all_artists = {}, all_artists_list = []
+    var all_albums = {}, all_albums_list = []
 
     for (var i = 0; i < songs.length; i++) {
-        all_artists[songs[i].artist] = true;
-        all_albums[songs[i].album] = true;
+        if (all_artists[songs[i].artist] == undefined) {
+            all_artists[songs[i].artist] = true;
+            all_artists_list.push(songs[i].artist)    
+        };
+        
+        if (all_albums[songs[i].album] == undefined) {
+            all_albums[songs[i].album] = true;
+            all_albums_list.push(songs[i].album)    
+        };
     };
 
     $('#artist').empty();
@@ -279,17 +286,22 @@ function load_filters(songs) {
     $('#artist').append($('<option></option>').html("All").attr("selected", 1).val(""));
     $('#album').append($('<option></option>').html("All").attr("selected", 1).val(""));
 
-    for (artist in all_artists) {
+    all_artists_list.sort(alpha_sort)
+    all_albums_list.sort(alpha_sort)
+
+    for (var i = 0; i < all_artists_list.length; i++) {
+        var artist = all_artists_list[i];
         var option = $('<option></option>');
         option.html(artist).val(artist);
         $('#artist').append(option);
-    }
+    };
 
-    for (album in all_albums) {
+    for (var i = 0; i < all_albums_list.length; i++) {
+        var album = all_albums_list[i];
         var option = $('<option></option>');
         option.html(album).val(album);
         $('#album').append(option);
-    }
+    };
 }
 
 function filter_playlist () {
@@ -331,4 +343,13 @@ function filter_playlist () {
     };
 
     load_playlist(to_load);
+}
+
+function alpha_sort (a, b) {
+    a = a.toLowerCase()
+    b = b.toLowerCase()
+    if (a == b) {
+        return 0;
+    };
+    return (a < b) ? -1 : 1;
 }
