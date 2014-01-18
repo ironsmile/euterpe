@@ -3,7 +3,7 @@ HTTP Media Server
 
 A way to listen your music library everywhere. Once set up you won't need anything but a browser.
 HTTPMS will let you browse through and listen to your music over HTTP.
-Up untill now I've had a really bad time listening to my music which is stored back home.
+Up until now I've had a really bad time listening to my music which is stored back home.
 I would create a mount over ftp, sshfs or something similar and point the local player to
 the mounted library. Every time it resulted in some upleasantries. Just imagine searching
 in a network mounted directory!
@@ -12,7 +12,15 @@ No more!
 
 Requirements
 ======
-If you want to install it from source (from here) you will need [Go](http://golang.org/) 1.1.2 or later [installed and properly configured](http://golang.org/doc/install). For the moment I do not plan to distribute it any other way.
+If you want to install it from source (from here) you will need:
+
+* [Go](http://golang.org/) 1.1.2 or later [installed and properly configured](http://golang.org/doc/install).
+
+* [go-taglib](https://github.com/landr0id/go-taglib) - Read the [install notes](https://github.com/landr0id/go-taglib#install)
+
+* [go-sqlite3](https://github.com/mattn/go-sqlite3) - `go get github.com/mattn/go-sqlite3`
+
+For the moment I do not plan to distribute it any other way.
 
 
 Install
@@ -28,6 +36,7 @@ Features
 ======
 
 * Uses [jplayer](https://github.com/happyworm/jPlayer) to play your music so it will probably work in every browser
+* jplayer supports mp3 and oga
 * Interface and media via HTTPS
 * HTTP Basic Authenticate
 * Playlists
@@ -48,7 +57,7 @@ default configuration with all possible fields in it. Example with all the field
 ```javascript
 {
     // Address and port on which HTTPMS will listen. It is in the form hostname[:port]
-    // For exact explaination see the Addr field in the Go's net.http.Server
+    // For exact explanation see the Addr field in the Go's net.http.Server
     // Make sure the user running HTTPMS have permission to bind on the specified
     // port number
     "listen": ":443",
@@ -81,3 +90,10 @@ default configuration with all possible fields in it. Example with all the field
     ]
 }
 ```
+
+Known Issues
+======
+
+* **Currently played song stops when new playlist is loaded** - it seems this is the designed behaviour of jplayer. No sign of option for this is in sight. If nothing changes soon I will probably patch it myself. But for now it is as it is.
+
+* **HTTPMS will not show/play media which does not have tags** - I honestly do not know what to do with this. I lean towards not doing anything about it since it will be a hassle. Just tag your music - title and artist are the bare minimum.
