@@ -91,6 +91,16 @@ function load_playlist (songs) {
         return 1;
     });
 
+    songs.sort(function (a, b) {
+        if (a.album == b.album) {
+            return 0;
+        };
+        if (a.album < b.album) {
+            return -1;
+        };
+        return 1;
+    });
+
     var new_playlist = []
     for (var i = 0; i < songs.length; i++) {
         new_playlist.push({
