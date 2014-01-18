@@ -2,17 +2,16 @@
 <html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
-        <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap-theme.min.css">
-        <link href="/css/screen.css" rel="stylesheet" type="text/css" media="all" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="/css/squashed.css" />
+        <link rel="stylesheet" href="/skin/blue.monday/jplayer.blue.monday.css" />
         <title>HTTPMS</title>
         
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+      <script src="/js/ie8/html5shiv.js"></script>
+      <script src="/js/ie8/respond.min.js"></script>
     <![endif]-->
     </head>
     <body>
@@ -20,6 +19,7 @@
             <div class="row">
                 <div class="col-md-12">
                     <input 
+                        id="search"
                         type="text"
                         class="form-control"
                         autofocus=""
@@ -33,7 +33,7 @@
                     <select name="artist"
                         id="artist"
                         class="form-control filter-list"
-                        size="6">
+                        size="10">
                         
                     </select>                    
                 </div>
@@ -42,7 +42,7 @@
                     <select name="album"
                         id="album"
                         class="form-control filter-list"
-                        size="6">
+                        size="10">
                         
                     </select>
                 </div>
@@ -50,12 +50,70 @@
             
             <div class="row">
                 <div class="col-md-12">
-                    <!-- Here is the player -->
+                    <!-- Here is the player -->                       
+                                                        
+                    <div id="jp_container_N" class="jp-video">
+                        <div class="jp-type-playlist">
+                            <div id="jquery_jplayer_N" class="jp-jplayer"></div>
+                            <div class="jp-gui">
+                                <div class="jp-video-play">
+                                    <a href="javascript:;" class="jp-video-play-icon" tabindex="1">play</a>
+                                </div>
+                                <div class="jp-interface">
+                                    <div class="jp-progress">
+                                        <div class="jp-seek-bar">
+                                            <div class="jp-play-bar"></div>
+                                        </div>
+                                    </div>
+                                    <div class="jp-current-time"></div>
+                                    <div class="jp-duration"></div>
+                                    <div class="jp-title">
+                                        <ul>
+                                            <li></li>
+                                        </ul>
+                                    </div>
+                                    <div class="jp-controls-holder">
+                                        <ul class="jp-controls">
+                                            <li><a href="javascript:;" class="jp-previous" tabindex="1">previous</a></li>
+                                            <li><a href="javascript:;" class="jp-play" tabindex="1">play</a></li>
+                                            <li><a href="javascript:;" class="jp-pause" tabindex="1">pause</a></li>
+                                            <li><a href="javascript:;" class="jp-next" tabindex="1">next</a></li>
+                                            <li><a href="javascript:;" class="jp-stop" tabindex="1">stop</a></li>
+                                            <li><a href="javascript:;" class="jp-mute" tabindex="1" title="mute">mute</a></li>
+                                            <li><a href="javascript:;" class="jp-unmute" tabindex="1" title="unmute">unmute</a></li>
+                                            <li><a href="javascript:;" class="jp-volume-max" tabindex="1" title="max volume">max volume</a></li>
+                                        </ul>
+                                        <div class="jp-volume-bar">
+                                            <div class="jp-volume-bar-value"></div>
+                                        </div>
+                                        <ul class="jp-toggles">
+                                            <li><a href="javascript:;" class="jp-full-screen" tabindex="1" title="full screen">full screen</a></li>
+                                            <li><a href="javascript:;" class="jp-restore-screen" tabindex="1" title="restore screen">restore screen</a></li>
+                                            <li><a href="javascript:;" class="jp-shuffle" tabindex="1" title="shuffle">shuffle</a></li>
+                                            <li><a href="javascript:;" class="jp-shuffle-off" tabindex="1" title="shuffle off">shuffle off</a></li>
+                                            <li><a href="javascript:;" class="jp-repeat" tabindex="1" title="repeat">repeat</a></li>
+                                            <li><a href="javascript:;" class="jp-repeat-off" tabindex="1" title="repeat off">repeat off</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="jp-playlist">
+                                <ul>
+                                    <!-- The method Playlist.displayPlaylist() uses this unordered list -->
+                                    <li></li>
+                                </ul>
+                            </div>
+                            <div class="jp-no-solution">
+                                <span>Update Required</span>
+                                To play the media you will need to either update your browser to a recent version or update your <a href="http://get.adobe.com/flashplayer/" target="_blank">Flash plugin</a>.
+                            </div>
+                        </div>
+                    </div>
+                
                 </div>
             </div>
         </div>
         
-        <script src="https://code.jquery.com/jquery.js"></script>
-        <script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="/js/squashed.js"></script>
     </body>
 </html>

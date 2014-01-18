@@ -379,7 +379,6 @@ func TestGetFileUrl(t *testing.T) {
 	trackID := found[0].ID
 
 	url := fmt.Sprintf("http://127.0.0.1:%d/file/%d", TestPort, trackID)
-
 	resp, err := http.Get(url)
 
 	if err != nil {

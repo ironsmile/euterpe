@@ -131,7 +131,7 @@ func (lib *LocalLibrary) scanPath(scannedPath string) {
 			return nil
 		}
 
-		if !strings.HasSuffix(path, ".mp3") {
+		if !strings.HasSuffix(path, ".mp3") && !strings.HasSuffix(path, ".oga") {
 			return nil
 		}
 

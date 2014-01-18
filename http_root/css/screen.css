@@ -1,7 +1,15 @@
+/*
+    Application CSS
+*/
+
 body {
     padding: 10px 0 10px 0;
 }
 
 .filter-list {
     
+}
+
+div.jp-video {
+    margin: 20px auto;
 }
