@@ -58,6 +58,7 @@ $(document).ready(function(){
         filter_playlist();
     });
 
+    search_database($('#search').val());
 });
 
 ajax_query = null;
