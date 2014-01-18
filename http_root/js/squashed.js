@@ -207,12 +207,13 @@ $(document).ready(function(){
         search_database($('#search').val());
     });
 
-    $('.filter-list').each(function (ind, el) {
+    $('#album').change(function () {
+        filter_playlist();
+    });
 
-        $(el).change(function () {
-            filter_playlist();
-        });
-
+    $('#artist').change(function () {
+        load_filters(found_songs, {selected_artist: $('#artist').val()});
+        filter_playlist();
     });
 
 });
@@ -263,8 +264,13 @@ function load_playlist (songs) {
 
 found_songs = [];
 
-function load_filters(songs) {
+function load_filters(songs, opts) {
     found_songs = songs;
+
+    opts = opts || {};
+    opts.selected_artist = opts.selected_artist || false;
+    opts.selected_album = opts.selected_album || false;
+
     var all_artists = {}, all_artists_list = []
     var all_albums = {}, all_albums_list = []
 
@@ -275,6 +281,9 @@ function load_filters(songs) {
         };
         
         if (all_albums[songs[i].album] == undefined) {
+            if (opts.selected_artist && opts.selected_artist != songs[i].artist) {
+                continue;
+            };
             all_albums[songs[i].album] = true;
             all_albums_list.push(songs[i].album)    
         };
@@ -283,8 +292,17 @@ function load_filters(songs) {
     $('#artist').empty();
     $('#album').empty();
 
-    $('#artist').append($('<option></option>').html("All").attr("selected", 1).val(""));
-    $('#album').append($('<option></option>').html("All").attr("selected", 1).val(""));
+    var all_artists_opt = $('<option></option>').html("All").val("");
+    if (!opts.selected_artist) {
+        all_artists_opt.attr("selected", 1);
+    };
+    $('#artist').append(all_artists_opt);
+
+    var all_albums_opt = $('<option></option>').html("All").val("");
+    if (!opts.selected_album) {
+        all_albums_opt.attr("selected", 1);
+    };
+    $('#album').append(all_albums_opt);
 
     all_artists_list.sort(alpha_sort)
     all_albums_list.sort(alpha_sort)
@@ -293,6 +311,9 @@ function load_filters(songs) {
         var artist = all_artists_list[i];
         var option = $('<option></option>');
         option.html(artist).val(artist);
+        if (opts.selected_artist && opts.selected_artist == artist) {
+            option.attr("selected", 1);
+        };
         $('#artist').append(option);
     };
 
@@ -300,6 +321,9 @@ function load_filters(songs) {
         var album = all_albums_list[i];
         var option = $('<option></option>');
         option.html(album).val(album);
+        if (opts.selected_album && opts.selected_album == album) {
+            option.attr("selected", 1);
+        };
         $('#album').append(option);
     };
 }
