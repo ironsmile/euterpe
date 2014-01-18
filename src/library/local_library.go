@@ -17,6 +17,9 @@ import (
 	"github.com/ironsmile/httpms/src/helpers"
 )
 
+// Will be used in case some media tag is missing. As a consequence
+// if there are many files with missing title, artist and album only
+// one of them will be saved in the library.
 const UNKNOWN_LABEL = "Unknown"
 
 // Implements the Library interface. Will represent files found on the local storage
@@ -27,6 +30,7 @@ type LocalLibrary struct {
 	scanWait sync.WaitGroup // Used in WaitScan method
 }
 
+// Closes the database connection. It is safe to call it as many times as you want.
 func (lib *LocalLibrary) Close() {
 	if lib.db != nil {
 		lib.db.Close()
@@ -123,6 +127,9 @@ func (lib *LocalLibrary) WaitScan() {
 	lib.scanWait.Wait()
 }
 
+// This is the goroutine which actually scans a library path.
+// For now it ignores everything but ".mp3" and ".oga" files. It is so
+// because jplayer cannot play anything else.
 func (lib *LocalLibrary) scanPath(scannedPath string) {
 	defer lib.scanWait.Done()
 
@@ -185,6 +192,7 @@ func (lib *LocalLibrary) AddMedia(filename string) error {
 	return nil
 }
 
+// Returns the id for this artist. When missing or on error returns that error.
 func (lib *LocalLibrary) GetArtistID(artist string) (int64, error) {
 	smt, err := lib.db.Prepare(`
 		SELECT
@@ -211,6 +219,8 @@ func (lib *LocalLibrary) GetArtistID(artist string) (int64, error) {
 	return id, nil
 }
 
+// Sets a new ID for this artist if it is new to the library. If not, returns
+// its current id.
 func (lib *LocalLibrary) setArtistID(artist string) (int64, error) {
 	if len(artist) < 1 {
 		artist = UNKNOWN_LABEL
@@ -244,6 +254,7 @@ func (lib *LocalLibrary) setArtistID(artist string) (int64, error) {
 	return lib.lastInsertID()
 }
 
+// Returns the id for this artist's album. When missing or on error returns that error.
 func (lib *LocalLibrary) GetAlbumID(album string, artistID int64) (int64, error) {
 	smt, err := lib.db.Prepare(`
 		SELECT
@@ -271,6 +282,9 @@ func (lib *LocalLibrary) GetAlbumID(album string, artistID int64) (int64, error)
 	return id, nil
 }
 
+// Sets a new ID for this album if it is new to the library. If not, returns
+// its current id. Albums with the same name but by different artists need to have
+// separate IDs hence the artistID parameter.
 func (lib *LocalLibrary) setAlbumID(album string, artistID int64) (int64, error) {
 	if len(album) < 1 {
 		album = UNKNOWN_LABEL
@@ -304,6 +318,7 @@ func (lib *LocalLibrary) setAlbumID(album string, artistID int64) (int64, error)
 	return lib.lastInsertID()
 }
 
+// Returns the id for this track. When missing or on error returns that error.
 func (lib *LocalLibrary) GetTrackID(title string,
 	artistID, albumID int64) (int64, error) {
 	smt, err := lib.db.Prepare(`
@@ -333,6 +348,11 @@ func (lib *LocalLibrary) GetTrackID(title string,
 	return id, nil
 }
 
+// Sets a new ID for this track if it is new to the library. If not, returns
+// its current id. Tracks with the same name but by different artists and/or album
+// need to have separate IDs hence the artistID and albumID parameters.
+// Additionally trackNumber and filesystem path (fs_path) are required. They are
+// used when retreiving this particular song for playing.
 func (lib *LocalLibrary) setTrackID(title, fs_path string,
 	trackNumber, artistID, albumID int64) (int64, error) {
 
@@ -368,6 +388,9 @@ func (lib *LocalLibrary) setTrackID(title, fs_path string,
 	return lib.lastInsertID()
 }
 
+// Returns the last ID insert in the database.
+//!TODO: make sure there are no race conditions. But I guess sqlite handles this
+// and different connections receive their respective ids.
 func (lib *LocalLibrary) lastInsertID() (int64, error) {
 	var id int64
 
@@ -416,6 +439,8 @@ func (lib *LocalLibrary) Initialize() error {
 	return nil
 }
 
+// Returns the SQL schema for the library. It is stored in the project root directory
+// under sqls/library_schema.sql
 func (lib *LocalLibrary) readSchema() (string, error) {
 	projRoot, err := helpers.ProjectRoot()
 
@@ -444,6 +469,9 @@ func (lib *LocalLibrary) Truncate() error {
 	return os.Remove(lib.database)
 }
 
+// Returns a new LocalLibrary which will use for database the file specified by
+// databasePath. Also creates the database connection so you does not need to
+// worry about that.
 func NewLocalLibrary(databasePath string) (*LocalLibrary, error) {
 	lib := new(LocalLibrary)
 	lib.database = databasePath
