@@ -84,8 +84,8 @@ func (srv *Server) serveGoroutine() {
 	srv.httpSrv = &http.Server{
 		Addr:           srv.cfg.Address,
 		Handler:        handler,
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
+		ReadTimeout:    4 * time.Hour,
+		WriteTimeout:   60 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
 

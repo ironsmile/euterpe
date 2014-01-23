@@ -181,7 +181,7 @@ func (w gzipResponseWriter) Write(b []byte) (int, error) {
 	return w.Writer.Write(b)
 }
 
-// Gzips our output using a custom Writer. It will check if gzip is amount the
+// Gzips our output using a custom Writer. It will check if gzip is among the
 // accepted encodings and gzip if so. Otherwise it will do nothing.
 type GzipHandler struct {
 	wrapped http.Handler
@@ -200,8 +200,8 @@ func (gzh GzipHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) 
 	gzh.wrapped.ServeHTTP(gzr, req)
 }
 
-// Returns GzipHandler which will gzip anything. written in the supplied handler.
-// Must be the last handler used.
+// Returns GzipHandler which will gzip anything written in the supplied handler.
+// Must be the main handler given to the net.Server
 func NewGzipHandler(handler http.Handler) http.Handler {
 	gzh := new(GzipHandler)
 	gzh.wrapped = handler

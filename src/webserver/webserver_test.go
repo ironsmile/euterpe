@@ -405,10 +405,24 @@ func TestGetFileUrl(t *testing.T) {
 	contentLenght, err := strconv.Atoi(contentLenHeader)
 
 	if err != nil {
-		t.Errorf("Content-Length was not correct. It was %s", contentLenHeader)
+		t.Errorf("Content-Length was not integer. It was %s", contentLenHeader)
 	}
 
 	if contentLenght != 17314 {
 		t.Errorf("Content-Length was not correct. It was %d", contentLenght)
 	}
+}
+
+func TestGzipEncoding(t *testing.T) {
+	//!TODO:
+	/*
+		On and off for
+			* files
+			* /search/
+			* /file/
+	*/
+}
+
+func TestRanges(t *testing.T) {
+	//!TODO
 }

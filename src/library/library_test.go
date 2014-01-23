@@ -371,3 +371,21 @@ func TestScaning(t *testing.T) {
 	}
 
 }
+
+func TestSQLInjections(t *testing.T) {
+	lib := getPathedLibrary(t, "/tmp/test-sql-injections.db")
+	defer lib.Truncate()
+
+	lib.Scan()
+
+	ch := testErrorAfter(10, "Scanning library took too long")
+	lib.WaitScan()
+	ch <- 42
+
+	found := lib.Search(`not-such-thing" OR 1=1 OR t.name="kleopatra`)
+
+	if len(found) != 0 {
+		t.Errorf("Successful sql injection in a single query")
+	}
+
+}

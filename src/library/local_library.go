@@ -52,8 +52,9 @@ func (lib *LocalLibrary) AddLibraryPath(path string) {
 func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 	var output []SearchResult
 
-	//!TODO: ESCAPE ESCAPE ESCAPE!!! OR INJECTIONS AHEAD!
-	query := fmt.Sprintf(`
+	searchTerm = fmt.Sprintf("%%%s%%", searchTerm)
+
+	rows, err := lib.db.Query(`
 		SELECT
 			t.id as track_id,
 			t.name as track,
@@ -65,12 +66,10 @@ func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 				LEFT JOIN albums as al ON al.id = t.album_id
 				LEFT JOIN artists as at ON at.id = t.artist_id
 		WHERE
-			t.name LIKE "%%%s%%" OR
-			al.name LIKE "%%%s%%" OR
-			at.name LIKE "%%%s%%"
+			t.name LIKE ? OR
+			al.name LIKE ? OR
+			at.name LIKE ?
 	`, searchTerm, searchTerm, searchTerm)
-
-	rows, err := lib.db.Query(query)
 
 	if err != nil {
 		log.Printf("Query not successful: %s\n", err.Error())
@@ -389,8 +388,6 @@ func (lib *LocalLibrary) setTrackID(title, fs_path string,
 }
 
 // Returns the last ID insert in the database.
-//!TODO: make sure there are no race conditions. But I guess sqlite handles this
-// and different connections receive their respective ids.
 func (lib *LocalLibrary) lastInsertID() (int64, error) {
 	var id int64
 
