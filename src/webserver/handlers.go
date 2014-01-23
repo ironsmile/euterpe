@@ -82,6 +82,7 @@ func (hl BasicAuthHandler) authenticate(auth string) bool {
 	return pair[0] == hl.username && pair[1] == hl.password
 }
 
+// Will find and serve a file by its ID
 type FileHandler struct {
 	library library.Library
 }

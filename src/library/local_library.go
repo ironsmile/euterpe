@@ -87,6 +87,7 @@ func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 }
 
 func (lib *LocalLibrary) GetFilePath(ID int64) string {
+
 	smt, err := lib.db.Prepare(`
 		SELECT
 			fs_path

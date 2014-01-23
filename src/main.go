@@ -8,6 +8,7 @@ package src
 import (
 	"log"
 
+	"github.com/ironsmile/httpms/src/helpers"
 	"github.com/ironsmile/httpms/src/library"
 	"github.com/ironsmile/httpms/src/webserver"
 )
@@ -15,6 +16,8 @@ import (
 // This function is the only thing run in the project's root main.go file.
 // For all intent and purposes this is the main function.
 func Main() {
+	helpers.SetLogsFile("/tmp/logfile")
+
 	var wsCfg webserver.ServerConfig
 	wsCfg.Address = ":8080"
 	wsCfg.Root = "http_root"

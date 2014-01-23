@@ -24,3 +24,5 @@ _testmain.go
 # Sublime project stuff
 *.sublime-project
 *.sublime-workspace
+
+logfile

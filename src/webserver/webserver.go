@@ -61,9 +61,7 @@ func (srv *Server) Serve() {
 }
 
 func (srv *Server) serveGoroutine() {
-	defer func() {
-		srv.wg.Done()
-	}()
+	defer srv.wg.Done()
 
 	mux := http.NewServeMux()
 
@@ -102,6 +100,8 @@ func (srv *Server) serveGoroutine() {
 	if reason != nil && srv.listener != nil {
 		log.Print(reason)
 	}
+
+	log.Println("Webserver stopped.")
 }
 
 // Uses our own listener to make our server stoppable. Similar to
@@ -161,7 +161,6 @@ func (srv *Server) Stop() {
 	if srv.listener != nil {
 		srv.listener.Close()
 		srv.listener = nil
-		log.Println("Webserver listener stopped.")
 	}
 }
 

@@ -3,6 +3,7 @@ package helpers
 
 import (
 	"errors"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -42,4 +43,14 @@ func ProjectRoot() (string, error) {
 	}
 
 	return abs, nil
+}
+
+// Sets the logfile of the server
+func SetLogsFile(logFilePath string) {
+	logFile, err := os.Create(logFilePath)
+	if err != nil {
+		log.Println("Could not open logfile")
+		os.Exit(1)
+	}
+	log.SetOutput(logFile)
 }

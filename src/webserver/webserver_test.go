@@ -63,6 +63,20 @@ func tearDownServer(srv *Server) {
 	ch := testErrorAfter(2, "Web server did not stop in time")
 	srv.Wait()
 	ch <- 42
+
+	proto := "http"
+	if srv.cfg.SSL {
+		proto = "https"
+	}
+	url := fmt.Sprintf("%s://127.0.0.1:%d", proto, TestPort)
+
+	_, err := http.Get(url)
+	_, err = http.Get(url)
+
+	if err == nil {
+		println("Web server did not stop")
+		os.Exit(1)
+	}
 }
 
 func getProjectRoot() (string, error) {
@@ -71,6 +85,43 @@ func getProjectRoot() (string, error) {
 		return "", err
 	}
 	return path, nil
+}
+
+func TestStaticFilesServing(t *testing.T) {
+	srv := setUpServer()
+	srv.Serve()
+	defer tearDownServer(srv)
+
+	testStaticFile := func(url, expected string) {
+
+		resp, err := http.Get(url)
+
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+
+		defer resp.Body.Close()
+
+		if resp.StatusCode != 200 {
+			t.Errorf("Unexpected response status code: %d", resp.StatusCode)
+		}
+
+		body, err := ioutil.ReadAll(resp.Body)
+
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+
+		if string(body) != expected {
+			t.Errorf("Wrong static file found: %s", string(body))
+		}
+	}
+
+	url := fmt.Sprintf("http://127.0.0.1:%d/static", TestPort)
+	testStaticFile(url, "This is a static file")
+
+	url = fmt.Sprintf("http://127.0.0.1:%d/second/static", TestPort)
+	testStaticFile(url, "Second static file")
 }
 
 func TestStartAndStop(t *testing.T) {
@@ -101,43 +152,6 @@ func TestStartAndStop(t *testing.T) {
 	if err == nil {
 		t.Errorf("The webserver was not stopped")
 	}
-}
-
-func TestStaticFilesServing(t *testing.T) {
-	srv := setUpServer()
-	srv.Serve()
-	defer tearDownServer(srv)
-
-	testUrl := func(url, expected string) {
-
-		resp, err := http.Get(url)
-
-		if err != nil {
-			t.Errorf(err.Error())
-		}
-
-		defer resp.Body.Close()
-
-		if resp.StatusCode != 200 {
-			t.Errorf("Unexpected response status code: %d", resp.StatusCode)
-		}
-
-		body, err := ioutil.ReadAll(resp.Body)
-
-		if err != nil {
-			t.Errorf(err.Error())
-		}
-
-		if string(body) != expected {
-			t.Errorf("Wrong static file found: %s", string(body))
-		}
-	}
-
-	url := fmt.Sprintf("http://127.0.0.1:%d/static", TestPort)
-	testUrl(url, "This is a static file")
-
-	url = fmt.Sprintf("http://127.0.0.1:%d/second/static", TestPort)
-	testUrl(url, "Second static file")
 }
 
 func TestSSL(t *testing.T) {
@@ -373,12 +387,13 @@ func TestGetFileUrl(t *testing.T) {
 	found := lib.Search("Buggy Bugoff")
 
 	if len(found) != 1 {
-		t.Fatalf("Was not able to find Buggy Bugoff test track")
+		t.Fatalf("Problem finding Buggy Bugoff test track")
 	}
 
 	trackID := found[0].ID
 
 	url := fmt.Sprintf("http://127.0.0.1:%d/file/%d", TestPort, trackID)
+
 	resp, err := http.Get(url)
 
 	if err != nil {
