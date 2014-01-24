@@ -73,11 +73,12 @@ func (srv *Server) serveGoroutine() {
 
 	handler = mux
 
-	if srv.cfg.Auth {
-		handler = BasicAuthHandler{mux, srv.cfg.AuthUser, srv.cfg.AuthPass}
-	}
-
 	handler = NewGzipHandler(handler)
+
+	if srv.cfg.Auth {
+		log.Println("Adding basic authenticate handler")
+		handler = BasicAuthHandler{handler, srv.cfg.AuthUser, srv.cfg.AuthPass}
+	}
 
 	srv.httpSrv = &http.Server{
 		Addr:           srv.cfg.Address,

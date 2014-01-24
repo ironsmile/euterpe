@@ -28,7 +28,7 @@ type BasicAuthHandler struct {
 func (hl BasicAuthHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	auth, err := req.Header["Authorization"]
 
-	if err == false || len(auth) != 1 || hl.authenticate(auth[0]) == false {
+	if err == false || len(auth) < 1 || hl.authenticate(auth[0]) == false {
 		InternalErrorOnErrorHandler(writer, req, hl.challengeAuthentication)
 		return
 	}

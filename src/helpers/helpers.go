@@ -3,6 +3,7 @@ package helpers
 
 import (
 	"errors"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -53,4 +54,24 @@ func SetLogsFile(logFilePath string) {
 		os.Exit(1)
 	}
 	log.SetOutput(logFile)
+}
+
+// Copies a file from src to dst
+func Copy(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	_, err = io.Copy(out, in)
+	cerr := out.Close()
+	if err != nil {
+		return err
+	}
+	return cerr
 }

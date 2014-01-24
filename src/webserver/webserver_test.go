@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
+	// "strconv"
 	"strings"
 	"testing"
 	"time"
@@ -416,16 +416,16 @@ func TestGetFileUrl(t *testing.T) {
 		t.Errorf("Track size was not as expected. It was %d", len(responseBody))
 	}
 
-	contentLenHeader := resp.Header.Get("Content-Length")
-	contentLenght, err := strconv.Atoi(contentLenHeader)
+	// contentLenHeader := resp.Header.Get("Content-Length")
+	// contentLenght, err := strconv.Atoi(contentLenHeader)
 
-	if err != nil {
-		t.Errorf("Content-Length was not integer. It was %s", contentLenHeader)
-	}
+	// if err != nil {
+	// 	t.Errorf("Content-Length was not integer. It was %s", contentLenHeader)
+	// }
 
-	if contentLenght != 17314 {
-		t.Errorf("Content-Length was not correct. It was %d", contentLenght)
-	}
+	// if contentLenght != 17314 {
+	// 	t.Errorf("Content-Length was not correct. It was %d", contentLenght)
+	// }
 }
 
 func TestGzipEncoding(t *testing.T) {

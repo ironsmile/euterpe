@@ -8,6 +8,8 @@
         "key": "/full/path/to/key/file.key"
     },
 
+    "basic_authenticate": true,
+
     "authenticate": {
         "user": "example",
         "password": "example"
