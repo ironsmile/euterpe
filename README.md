@@ -73,9 +73,12 @@ default configuration with all possible fields in it. Example with all the field
         "key": "/full/path/to/key/file.key"
     },
 
-    // User and password for the HTTP basic authentication. If removed no authentication
-    // will be used.
-    "authenticate": {
+    // true if you want the server to require HTTP basic authentication. Credentials
+    // are set by the 'authentication' field below.
+    "basic_authenticate": true,
+    
+    // User and password for the HTTP basic authentication.
+    "authentication": {
         "user": "example",
         "password": "example"
     },

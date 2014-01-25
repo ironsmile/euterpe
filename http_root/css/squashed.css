@@ -25,3 +25,7 @@ body {
 div.jp-video {
     margin: 20px auto;
 }
+
+footer {
+    text-align: center;
+}

@@ -10,7 +10,7 @@
 
     "basic_authenticate": true,
 
-    "authenticate": {
+    "authentication": {
         "user": "example",
         "password": "example"
     },

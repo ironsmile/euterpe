@@ -1,0 +1,13 @@
+{
+    "listen": ":9996",
+    "libraries": [],
+
+    "user_path": "",
+    "log_file": "logfile",
+    "sqlite_database": "httpms.db",
+    "gzip": true,
+    "read_timeout": 14400,
+    "write_timeout": 60,
+    "max_header_bytes": 1048576,
+    "http_root": "http_root"
+}
