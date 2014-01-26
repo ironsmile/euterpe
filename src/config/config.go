@@ -188,6 +188,7 @@ func (cfg *Config) UserConfigExists() bool {
 // config file supplied with the installation.
 func (cfg *Config) CopyDefaultOverUser() error {
 	userConfig := cfg.UserConfigPath()
-	defaultConfig := cfg.DefaultConfigPath()
+	defaultConfigDir := filepath.Dir(cfg.DefaultConfigPath())
+	defaultConfig := filepath.Join(defaultConfigDir, CONFIG_NAME)
 	return helpers.Copy(defaultConfig, userConfig)
 }

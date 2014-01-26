@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	taglib "github.com/landr0id/go-taglib"
 	_ "github.com/mattn/go-sqlite3"
@@ -123,6 +124,7 @@ func (lib *LocalLibrary) Scan() {
 	}
 }
 
+// Blocks the current goroutine until the scan has been finished
 func (lib *LocalLibrary) WaitScan() {
 	lib.scanWait.Wait()
 }
@@ -131,7 +133,13 @@ func (lib *LocalLibrary) WaitScan() {
 // For now it ignores everything but ".mp3" and ".oga" files. It is so
 // because jplayer cannot play anything else.
 func (lib *LocalLibrary) scanPath(scannedPath string) {
-	defer lib.scanWait.Done()
+	start := time.Now()
+
+	defer func() {
+		scanTime := time.Since(start)
+		log.Printf("Scaning %s took %s", scannedPath, scanTime)
+		lib.scanWait.Done()
+	}()
 
 	walkFunc := func(path string, info os.FileInfo, err error) error {
 
@@ -155,7 +163,13 @@ func (lib *LocalLibrary) scanPath(scannedPath string) {
 	}
 }
 
+// Adds a file specified by its filesystem name to the library. Will create the
+// needed Artist, Album if neccessery.
 func (lib *LocalLibrary) AddMedia(filename string) error {
+	if lib.MediaExistsInLibrary(filename) {
+		return nil
+	}
+
 	_, err := os.Stat(filename)
 
 	if err != nil {
@@ -190,6 +204,35 @@ func (lib *LocalLibrary) AddMedia(filename string) error {
 	}
 
 	return nil
+}
+
+// Checks if the media file with file system path "filename" has been added to the
+// library already.
+func (lib *LocalLibrary) MediaExistsInLibrary(filename string) bool {
+	smt, err := lib.db.Prepare(`
+		SELECT
+			count(id)
+		FROM
+			tracks
+		WHERE
+			fs_path = ?
+	`)
+
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	defer smt.Close()
+
+	var count int
+	err = smt.QueryRow(filename).Scan(&count)
+
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+
+	return count >= 1
 }
 
 // Returns the id for this artist. When missing or on error returns that error.

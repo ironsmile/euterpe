@@ -6,6 +6,4 @@
 
 package helpers
 
-func ProjectUserPath() (string, error) {
-	return "", nil
-}
+const HttpmsDir = "httpms"

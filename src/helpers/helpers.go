@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strings"
 )
@@ -37,7 +38,7 @@ func ProjectRoot() (string, error) {
 			"Cannot find the project root directory.")
 	}
 
-	abs, err := filepath.Abs(os.Args[0])
+	abs, err := filepath.Abs(filepath.Dir(os.Args[0]))
 
 	if err != nil {
 		return "", err
@@ -83,4 +84,30 @@ func AbsolutePath(path, relativeRoot string) string {
 		return path
 	}
 	return filepath.Join(relativeRoot, path)
+}
+
+// Returns the directory in which user files should be stored. Creates it is missing.
+// User files are thing such as sqlite files, logfiles and user configs
+func ProjectUserPath() (string, error) {
+	user, err := user.Current()
+
+	if err != nil {
+		return "", err
+	}
+
+	path := filepath.Join(user.HomeDir, HttpmsDir)
+
+	_, err = os.Stat(path)
+
+	if err == nil {
+		return path, nil
+	}
+
+	err = os.MkdirAll(path, os.ModeDir|0750)
+
+	if err != nil {
+		return "", err
+	}
+
+	return path, nil
 }
