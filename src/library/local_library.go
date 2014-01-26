@@ -400,7 +400,7 @@ func (lib *LocalLibrary) setTrackID(title, fs_path string,
 	trackNumber, artistID, albumID int64) (int64, error) {
 
 	if len(title) < 1 {
-		title = UNKNOWN_LABEL
+		title = fs_path
 	}
 
 	id, err := lib.GetTrackID(title, artistID, albumID)
