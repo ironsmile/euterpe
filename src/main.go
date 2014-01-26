@@ -8,6 +8,7 @@ package src
 import (
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/ironsmile/httpms/src/config"
 	"github.com/ironsmile/httpms/src/helpers"
@@ -18,7 +19,7 @@ import (
 // Returns a new Library object using the application config.
 // For the moment this is a LocalLibrary which will place its sqlite db file
 // in the UserPath directory
-func getLibrary(userPath string, cfg *config.Config) library.Library {
+func getLibrary(userPath string, cfg config.Config) library.Library {
 	dbPath := helpers.AbsolutePath(cfg.SqliteDatabase, userPath)
 	lib, err := library.NewLocalLibrary(dbPath)
 
@@ -47,28 +48,21 @@ func getLibrary(userPath string, cfg *config.Config) library.Library {
 // For all intent and purposes this is the main function.
 func Main() {
 
-	userPath, err := helpers.ProjectUserPath()
+	var cfg config.Config
+	err := cfg.FindAndParse()
 
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
 	}
 
-	cfg := new(config.Config)
-	err = cfg.FindAndParse()
-
-	if err != nil {
-		log.Println(err)
-		os.Exit(1)
-	}
+	userPath := filepath.Dir(cfg.UserConfigPath())
 
 	lib := getLibrary(userPath, cfg)
 
-	log.Printf("%#v\n", cfg)
-
 	helpers.SetLogsFile(helpers.AbsolutePath(cfg.LogFile, userPath))
 
-	srv := webserver.NewServer(*cfg, lib)
+	srv := webserver.NewServer(cfg, lib)
 
 	srv.Serve()
 
