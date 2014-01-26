@@ -98,5 +98,3 @@ Known Issues
 ======
 
 * **Currently played song stops when new playlist is loaded** - it seems this is the designed behaviour of jplayer. No sign of option for this is in sight. If nothing changes soon I will probably patch it myself. But for now it is as it is.
-
-* **HTTPMS will not show/play media which does not have tags** - I honestly do not know what to do with this. I lean towards not doing anything about it since it will be a hassle. Just tag your music - title and artist are the bare minimum.
