@@ -75,3 +75,12 @@ func Copy(src, dst string) error {
 	}
 	return cerr
 }
+
+// Returns absolute path. If path is already absolute leave it be. If not join it with
+// relativeRoot
+func AbsolutePath(path, relativeRoot string) string {
+	if filepath.IsAbs(path) {
+		return path
+	}
+	return filepath.Join(relativeRoot, path)
+}

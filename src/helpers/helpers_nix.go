@@ -1,7 +1,7 @@
 // +build linux darwin bsd
 
 /*
-   Helpers for windows machines
+   Helpers for all non-windows machines
 */
 
 package helpers
@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 )
 
+// Returns the directory in which user files should be stored. Creates it is missing.
+// User files are thing such as sqlite files, logfiles and user configs
 func ProjectUserPath() (string, error) {
 	home := os.ExpandEnv("$HOME")
 	if len(home) < 1 {

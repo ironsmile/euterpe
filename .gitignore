@@ -25,4 +25,9 @@ _testmain.go
 *.sublime-project
 *.sublime-workspace
 
+# Application logfiles
 logfile
+
+# CTags
+.tags
+.tags_sorted_by_file

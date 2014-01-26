@@ -8,7 +8,6 @@ package src
 import (
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/ironsmile/httpms/src/config"
 	"github.com/ironsmile/httpms/src/helpers"
@@ -16,32 +15,12 @@ import (
 	"github.com/ironsmile/httpms/src/webserver"
 )
 
-// Returns ServerConfig using the application Config
-func getServerConfig(cfg *config.Config) webserver.ServerConfig {
-	var wsCfg webserver.ServerConfig
-	wsCfg.Address = cfg.Listen
-	wsCfg.Root = "http_root"
-
-	if cfg.SSL {
-		wsCfg.SSL = true
-		wsCfg.SSLCert = cfg.SSLCertificate.Crt
-		wsCfg.SSLKey = cfg.SSLCertificate.Key
-	}
-
-	if cfg.Auth {
-		wsCfg.Auth = true
-		wsCfg.AuthUser = cfg.Authenticate.User
-		wsCfg.AuthPass = cfg.Authenticate.Password
-	}
-
-	return wsCfg
-}
-
 // Returns a new Library object using the application config.
 // For the moment this is a LocalLibrary which will place its sqlite db file
 // in the UserPath directory
 func getLibrary(userPath string, cfg *config.Config) library.Library {
-	lib, err := library.NewLocalLibrary(filepath.Join(userPath, "httpms.db"))
+	dbPath := helpers.AbsolutePath(cfg.SqliteDatabase, userPath)
+	lib, err := library.NewLocalLibrary(dbPath)
 
 	if err != nil {
 		log.Println(err)
@@ -83,15 +62,13 @@ func Main() {
 		os.Exit(1)
 	}
 
-	wsCfg := getServerConfig(cfg)
 	lib := getLibrary(userPath, cfg)
 
 	log.Printf("%#v\n", cfg)
-	log.Printf("%#v\n", wsCfg)
 
-	helpers.SetLogsFile(filepath.Join(userPath, "logfile"))
+	helpers.SetLogsFile(helpers.AbsolutePath(cfg.LogFile, userPath))
 
-	srv := webserver.NewServer(wsCfg, lib)
+	srv := webserver.NewServer(*cfg, lib)
 
 	srv.Serve()
 

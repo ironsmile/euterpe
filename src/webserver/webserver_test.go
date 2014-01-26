@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ironsmile/httpms/src/config"
 	"github.com/ironsmile/httpms/src/library"
 )
 
@@ -51,9 +52,10 @@ func setUpServer() *Server {
 		os.Exit(1)
 	}
 
-	var wsCfg ServerConfig
-	wsCfg.Address = fmt.Sprintf(":%d", TestPort)
-	wsCfg.Root = filepath.Join(projRoot, "test_files", TestRoot)
+	var wsCfg config.Config
+	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
+	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
+	wsCfg.Gzip = true
 
 	return NewServer(wsCfg, nil)
 }
@@ -162,12 +164,14 @@ func TestSSL(t *testing.T) {
 	}
 	certDir := filepath.Join(projectRoot, "test_files", "ssl")
 
-	var wsCfg ServerConfig
-	wsCfg.Address = fmt.Sprintf(":%d", TestPort)
-	wsCfg.Root = TestRoot
+	var wsCfg config.Config
+	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
+	wsCfg.HTTPRoot = TestRoot
 	wsCfg.SSL = true
-	wsCfg.SSLCert = filepath.Join(certDir, "cert.pem")
-	wsCfg.SSLKey = filepath.Join(certDir, "key.pem")
+	wsCfg.SSLCertificate = config.ConfigCert{
+		Crt: filepath.Join(certDir, "cert.pem"),
+		Key: filepath.Join(certDir, "key.pem"),
+	}
 
 	srv := NewServer(wsCfg, nil)
 	srv.Serve()
@@ -194,12 +198,14 @@ func TestUserAuthentication(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	var wsCfg ServerConfig
-	wsCfg.Address = fmt.Sprintf(":%d", TestPort)
-	wsCfg.Root = filepath.Join(projRoot, "test_files", TestRoot)
+	var wsCfg config.Config
+	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
+	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 	wsCfg.Auth = true
-	wsCfg.AuthUser = "testuser"
-	wsCfg.AuthPass = "testpass"
+	wsCfg.Authenticate = config.ConfigAuth{
+		User:     "testuser",
+		Password: "testpass",
+	}
 
 	srv := NewServer(wsCfg, nil)
 	srv.Serve()
@@ -264,9 +270,9 @@ func TestSearchUrl(t *testing.T) {
 	lib.WaitScan()
 	ch <- 42
 
-	var wsCfg ServerConfig
-	wsCfg.Address = fmt.Sprintf(":%d", TestPort)
-	wsCfg.Root = filepath.Join(projRoot, "test_files", TestRoot)
+	var wsCfg config.Config
+	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
+	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 
 	srv := NewServer(wsCfg, lib)
 	srv.Serve()
@@ -376,9 +382,9 @@ func TestGetFileUrl(t *testing.T) {
 	lib.WaitScan()
 	ch <- 42
 
-	var wsCfg ServerConfig
-	wsCfg.Address = fmt.Sprintf(":%d", TestPort)
-	wsCfg.Root = filepath.Join(projRoot, "test_files", TestRoot)
+	var wsCfg config.Config
+	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
+	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 
 	srv := NewServer(wsCfg, lib)
 	srv.Serve()

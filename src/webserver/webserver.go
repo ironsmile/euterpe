@@ -10,26 +10,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ironsmile/httpms/src/config"
 	"github.com/ironsmile/httpms/src/library"
 )
-
-// The configuration which should be supplied to the webserver
-type ServerConfig struct {
-	Address  string // Address on which the server will listen. See http/Server.Addr
-	Root     string // The http root directory containing the interface files
-	SSL      bool   // Should it use SSL when serving
-	SSLCert  string // The SSL certificate. Only makes sense if SSL is true
-	SSLKey   string // The SSL key. Only makes sense if SSL is true
-	Auth     bool   // Should the server require HTTP auth
-	AuthUser string // HTTP basic auth username. Considered only when Auth is true
-	AuthPass string // HTTP basic auth password. Considered only when Auth is true
-}
 
 // Represends our webserver. It will be controlled from here
 type Server struct {
 
 	// Configuration of this server
-	cfg ServerConfig
+	cfg config.Config
 
 	// WG used in Server.Wait to sync with server's end
 	wg sync.WaitGroup
@@ -65,7 +54,7 @@ func (srv *Server) serveGoroutine() {
 
 	mux := http.NewServeMux()
 
-	mux.Handle("/", http.FileServer(http.Dir(srv.cfg.Root)))
+	mux.Handle("/", http.FileServer(http.Dir(srv.cfg.HTTPRoot)))
 	mux.Handle("/search/", http.StripPrefix("/search/", NewSearchHandler(srv.library)))
 	mux.Handle("/file/", http.StripPrefix("/file/", NewFileHandler(srv.library)))
 
@@ -73,25 +62,33 @@ func (srv *Server) serveGoroutine() {
 
 	handler = mux
 
-	handler = NewGzipHandler(handler)
+	if srv.cfg.Gzip {
+		log.Println("Adding gzip handler")
+		handler = NewGzipHandler(handler)
+	}
 
 	if srv.cfg.Auth {
 		log.Println("Adding basic authenticate handler")
-		handler = BasicAuthHandler{handler, srv.cfg.AuthUser, srv.cfg.AuthPass}
+		handler = BasicAuthHandler{
+			handler,
+			srv.cfg.Authenticate.User,
+			srv.cfg.Authenticate.Password,
+		}
 	}
 
 	srv.httpSrv = &http.Server{
-		Addr:           srv.cfg.Address,
+		Addr:           srv.cfg.Listen,
 		Handler:        handler,
-		ReadTimeout:    4 * time.Hour,
-		WriteTimeout:   60 * time.Second,
-		MaxHeaderBytes: 1 << 20,
+		ReadTimeout:    time.Duration(srv.cfg.ReadTimeout) * time.Second,
+		WriteTimeout:   time.Duration(srv.cfg.WriteTimeout) * time.Second,
+		MaxHeaderBytes: srv.cfg.MaxHeadersSize,
 	}
 
 	var reason error
 
 	if srv.cfg.SSL {
-		reason = srv.listenAndServeTLS(srv.cfg.SSLCert, srv.cfg.SSLKey)
+		reason = srv.listenAndServeTLS(srv.cfg.SSLCertificate.Crt,
+			srv.cfg.SSLCertificate.Key)
 	} else {
 		reason = srv.listenAndServe()
 	}
@@ -172,7 +169,7 @@ func (srv *Server) Wait() {
 
 // Returns a new Server using the supplied configuration cfg. The returned server
 // is ready and calling its Serve method will start it.
-func NewServer(cfg ServerConfig, lib library.Library) (srv *Server) {
+func NewServer(cfg config.Config, lib library.Library) (srv *Server) {
 	srv = new(Server)
 	srv.cfg = cfg
 	srv.library = lib

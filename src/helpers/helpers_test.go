@@ -25,3 +25,17 @@ func TestProjectRoot(t *testing.T) {
 		t.Errorf(fmt.Sprintf("Expected `%s` but got `%s`", expected, path))
 	}
 }
+
+func TestAbsolutePathFunctin(t *testing.T) {
+	found := AbsolutePath("file", "/root/to/")
+	expected := "/root/to/file"
+	if found != expected {
+		t.Errorf("Expected %s but got %s", expected, found)
+	}
+
+	found = AbsolutePath("/file", "/root/to/")
+	expected = "/file"
+	if found != expected {
+		t.Errorf("Expected %s but got %s", expected, found)
+	}
+}
