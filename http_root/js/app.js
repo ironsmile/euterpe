@@ -13,8 +13,10 @@ $(document).ready(function(){
 
     var options = {
         swfPath: "/js",
-        supplied: "oga, mp3",
+        supplied: "mp3, oga, m4a, wav, fla",
+        preload: "none",
         playlistOptions: {
+            autoPlay: false,
             displayTime: 0,
             addTime: 0,
             removeTime: 0,
@@ -25,18 +27,25 @@ $(document).ready(function(){
     pagePlaylist = new jPlayerPlaylist(cssSelector, playlist, options);
 
     _search_timeout = null;
+    _last_search = null;
 
-    $('#search').keypress(function () {
+    var search_with_timeout = function () {
+        var search_query = $('#search').val();
+        if (search_query == _last_search) {
+           return;
+        }
+
         if (_search_timeout) {
             clearTimeout(_search_timeout);
         };
 
         _search_timeout = setTimeout(function() {
-            search_database($('#search').val())
+            search_database(search_query)
         }, 500);
-    });
+    };
 
-    $('#search').keypress(function (e) {
+    var search_immediately_on_enter = function (e) {
+        var search_query = $('#search').val();
         var code = e.keyCode || e.which;
         if(code != 13) {
            return;
@@ -46,8 +55,16 @@ $(document).ready(function(){
             clearTimeout(_search_timeout);
         };
 
-        search_database($('#search').val());
-    });
+        search_database(search_query);
+    };
+
+    // Used when typing in the search area - it should use timeout since more
+    // typing can follow immediately
+    $('#search').keyup(search_with_timeout);
+    $('#search').change(search_with_timeout);
+
+    // Used when Enter is clicked - it should immediately send a request
+    $('#search').keypress(search_immediately_on_enter);
 
     $('#album').change(function () {
         filter_playlist();
@@ -61,14 +78,16 @@ $(document).ready(function(){
     search_database($('#search').val());
 });
 
-ajax_query = null;
+_ajax_query = null;
 
 function search_database (query) {
-    if (ajax_query) {
-        ajax_query.abort();
+    if (_ajax_query) {
+        _ajax_query.abort();
     };
 
-    ajax_query = $.ajax({
+    _last_search = query;
+
+    _ajax_query = $.ajax({
         type: "GET",
         url: encodeURI("/search/" + query),
         success: function (msg) {
@@ -79,7 +98,6 @@ function search_database (query) {
 }
 
 function load_playlist (songs) {
-    pagePlaylist.remove();
 
     songs.sort(function (a, b) {
         if (a.track == b.track) {
@@ -124,6 +142,9 @@ function load_filters(songs, opts) {
     opts.selected_artist = opts.selected_artist || false;
     opts.selected_album = opts.selected_album || false;
 
+    var artist_elem = $('#artist');
+    var album_elem = $('#album');
+
     var all_artists = {}, all_artists_list = []
     var all_albums = {}, all_albums_list = []
 
@@ -142,24 +163,24 @@ function load_filters(songs, opts) {
         };
     };
 
-    $('#artist').empty();
-    $('#album').empty();
+    artist_elem.empty();
+    album_elem.empty();
 
     var all_artists_opt = $('<option></option>').html("All").val("");
     if (!opts.selected_artist) {
         all_artists_opt.attr("selected", 1);
     };
-    $('#artist').append(all_artists_opt);
+    artist_elem.append(all_artists_opt);
 
     var all_albums_opt = $('<option></option>').html("All").val("");
     if (!opts.selected_album) {
         all_albums_opt.attr("selected", 1);
     };
-    $('#album').append(all_albums_opt);
+    album_elem.append(all_albums_opt);
 
     all_artists_list.sort(alpha_sort)
     all_albums_list.sort(alpha_sort)
-
+    
     for (var i = 0; i < all_artists_list.length; i++) {
         var artist = all_artists_list[i];
         var option = $('<option></option>');
@@ -167,9 +188,9 @@ function load_filters(songs, opts) {
         if (opts.selected_artist && opts.selected_artist == artist) {
             option.attr("selected", 1);
         };
-        $('#artist').append(option);
+        artist_elem.append(option);
     };
-
+    
     for (var i = 0; i < all_albums_list.length; i++) {
         var album = all_albums_list[i];
         var option = $('<option></option>');
@@ -177,7 +198,7 @@ function load_filters(songs, opts) {
         if (opts.selected_album && opts.selected_album == album) {
             option.attr("selected", 1);
         };
-        $('#album').append(option);
+        album_elem.append(option);
     };
 }
 

@@ -70,6 +70,8 @@ func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 			t.name LIKE ? OR
 			al.name LIKE ? OR
 			at.name LIKE ?
+		ORDER BY
+			al.name, t.number
 	`, searchTerm, searchTerm, searchTerm)
 
 	if err != nil {
@@ -136,10 +138,18 @@ func (lib *LocalLibrary) scanPath(scannedPath string) {
 	start := time.Now()
 
 	defer func() {
-		scanTime := time.Since(start)
-		log.Printf("Scaning %s took %s", scannedPath, scanTime)
+		log.Printf("Scaning %s took %s", scannedPath, time.Since(start))
 		lib.scanWait.Done()
 	}()
+
+	supportedFormats := []string{
+		".mp3",
+		".ogg",
+		".oga",
+		".wav",
+		".fla",
+		".m4a",
+	}
 
 	walkFunc := func(path string, info os.FileInfo, err error) error {
 
@@ -148,11 +158,14 @@ func (lib *LocalLibrary) scanPath(scannedPath string) {
 			return nil
 		}
 
-		if !strings.HasSuffix(path, ".mp3") && !strings.HasSuffix(path, ".oga") {
-			return nil
+		for _, format := range supportedFormats {
+			if !strings.HasSuffix(path, format) {
+				continue
+			}
+			lib.AddMedia(path)
+			break
 		}
 
-		lib.AddMedia(path)
 		return nil
 	}
 
@@ -444,6 +457,9 @@ func (lib *LocalLibrary) lastInsertID() (int64, error) {
 	return id, nil
 }
 
+// Should be run once every time a library is created. It checks for the
+// sqlite database file and creates one if it is absent. If a file is found
+// it does nothing.
 func (lib *LocalLibrary) Initialize() error {
 	_, err := os.Stat(lib.database)
 

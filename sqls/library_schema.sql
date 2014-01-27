@@ -17,3 +17,8 @@ create table `tracks` (
     `number` integer,
     `fs_path` text
 );
+
+create index tracks_ids on `tracks` (`id`);
+create index tracks_paths on `tracks` (`fs_path`);
+create index albums_ids on `albums` (`id`);
+create index artists_ids on `artists` (`id`);
