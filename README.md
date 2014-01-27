@@ -93,8 +93,3 @@ default configuration with all possible fields in it. Example with all the field
     ]
 }
 ```
-
-Known Issues
-======
-
-* **Currently played song stops when new playlist is loaded** - it seems this is the designed behaviour of jplayer. No sign of option for this is in sight. If nothing changes soon I will probably patch it myself. But for now it is as it is.

@@ -4,6 +4,17 @@
 
 $(document).ready(function(){
 
+    // The default setPlaylist method was calling _init which did 
+    // jPlayerPlaylist.select for the first track. That resulted in jplayer stopping 
+    // the played song. Now we make it never select. We also set current = -1 so
+    // that it will not be equal to the song currently plaing since this is a new
+    // playlist after all.
+    jPlayerPlaylist.prototype.setPlaylist = function(playlist) {
+        this._initPlaylist(playlist);
+        this._refresh();
+        this.current = -1;
+    };
+
     var cssSelector = {
         jPlayer: "#jquery_jplayer_N",
         cssSelectorAncestor: "#jp_container_N"
