@@ -3,6 +3,7 @@ package helpers
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -110,4 +111,37 @@ func ProjectUserPath() (string, error) {
 	}
 
 	return path, nil
+}
+
+// Will create the pidfile and it will contain the processid of the current process
+func SetUpPidFile(PidFile string) {
+	_, err := os.Stat(PidFile)
+
+	if err == nil {
+		log.Printf("httpms is already running according to %s\n", PidFile)
+		os.Exit(1)
+	}
+
+	fh, err := os.Create(PidFile)
+
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+
+	_, err = fh.WriteString(fmt.Sprintf("%d", os.Getpid()))
+
+	if err != nil {
+		log.Println(err)
+		fh.Close()
+		_ = os.Remove(PidFile)
+		os.Exit(1)
+	}
+
+	fh.Close()
+}
+
+// Removes the pidfile
+func RemovePidFile(PidFile string) {
+	_ = os.Remove(PidFile)
 }
