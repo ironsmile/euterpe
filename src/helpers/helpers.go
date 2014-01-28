@@ -49,13 +49,13 @@ func ProjectRoot() (string, error) {
 }
 
 // Sets the logfile of the server
-func SetLogsFile(logFilePath string) {
+func SetLogsFile(logFilePath string) error {
 	logFile, err := os.Create(logFilePath)
 	if err != nil {
-		log.Println("Could not open logfile")
-		os.Exit(1)
+		return err
 	}
 	log.SetOutput(logFile)
+	return nil
 }
 
 // Copies a file from src to dst
