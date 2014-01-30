@@ -115,13 +115,6 @@ func ProjectUserPath() (string, error) {
 
 // Will create the pidfile and it will contain the processid of the current process
 func SetUpPidFile(PidFile string) {
-	_, err := os.Stat(PidFile)
-
-	if err == nil {
-		log.Printf("httpms is already running according to %s\n", PidFile)
-		os.Exit(1)
-	}
-
 	fh, err := os.Create(PidFile)
 
 	if err != nil {
