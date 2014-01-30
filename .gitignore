@@ -31,3 +31,7 @@ logfile
 # CTags
 .tags
 .tags_sorted_by_file
+
+# Build dir
+dist/*
+

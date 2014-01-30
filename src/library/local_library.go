@@ -26,9 +26,10 @@ const UNKNOWN_LABEL = "Unknown"
 // Implements the Library interface. Will represent files found on the local storage
 type LocalLibrary struct {
 	database string         // The location of the library's database
-	paths    []string       // Filesystem locations which contain the library's media files
+	paths    []string       // FS locations which contain the library's media files
 	db       *sql.DB        // Handler to the database file mentioned in database field
 	scanWait sync.WaitGroup // Used in WaitScan method
+	dbWait   sync.WaitGroup
 }
 
 // Closes the database connection. It is safe to call it as many times as you want.
@@ -119,26 +120,62 @@ func (lib *LocalLibrary) GetFilePath(ID int64) string {
 }
 
 //!TODO: make scan also remove files which have been deleted since the previous scan
+// Scans all of the folders in paths for media files. New files will be added to the
+// database.
 func (lib *LocalLibrary) Scan() {
+	// Make sure there are no other scans working at the moment
+	lib.WaitScan()
+
+	start := time.Now()
+	mediaChan := make(chan string, 100)
+
+	lib.dbWait.Add(1)
+	go lib.databaseWriter(mediaChan)
+
 	for _, path := range lib.paths {
 		lib.scanWait.Add(1)
-		go lib.scanPath(path)
+		go lib.scanPath(path, mediaChan)
+	}
+
+	lib.dbWait.Add(1)
+	go func() {
+		defer func() {
+			log.Printf("Walking took %s", time.Since(start))
+			lib.dbWait.Done()
+		}()
+		lib.scanWait.Wait()
+		close(mediaChan)
+	}()
+
+	go func() {
+		lib.dbWait.Wait()
+		log.Printf("Scaning took %s", time.Since(start))
+	}()
+}
+
+// Reads from the media channel and saves into the database every file
+// received.
+func (lib *LocalLibrary) databaseWriter(media <-chan string) {
+	defer lib.dbWait.Done()
+	for filename := range media {
+		lib.AddMedia(filename)
 	}
 }
 
 // Blocks the current goroutine until the scan has been finished
 func (lib *LocalLibrary) WaitScan() {
-	lib.scanWait.Wait()
+	lib.dbWait.Wait()
 }
 
 // This is the goroutine which actually scans a library path.
 // For now it ignores everything but ".mp3" and ".oga" files. It is so
-// because jplayer cannot play anything else.
-func (lib *LocalLibrary) scanPath(scannedPath string) {
+// because jplayer cannot play anything else. Sends every suitable
+// file into the media channel
+func (lib *LocalLibrary) scanPath(scannedPath string, media chan<- string) {
 	start := time.Now()
 
 	defer func() {
-		log.Printf("Scaning %s took %s", scannedPath, time.Since(start))
+		log.Printf("Walking %s took %s", scannedPath, time.Since(start))
 		lib.scanWait.Done()
 	}()
 
@@ -162,7 +199,7 @@ func (lib *LocalLibrary) scanPath(scannedPath string) {
 			if !strings.HasSuffix(path, format) {
 				continue
 			}
-			lib.AddMedia(path)
+			media <- path
 			break
 		}
 

@@ -1,4 +1,4 @@
-// +build linux darwin bsd
+// +build linux darwin freebsd
 
 /*
    Helpers for all non-windows machines

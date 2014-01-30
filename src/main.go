@@ -29,30 +29,6 @@ func init() {
 	flag.StringVar(&PidFile, "p", pidDefault, pidUsage)
 }
 
-// Returns a new Library object using the application config.
-// For the moment this is a LocalLibrary which will place its sqlite db file
-// in the UserPath directory
-func getLibrary(userPath string, cfg config.Config) (library.Library, error) {
-	dbPath := helpers.AbsolutePath(cfg.SqliteDatabase, userPath)
-	lib, err := library.NewLocalLibrary(dbPath)
-
-	if err != nil {
-		return nil, err
-	}
-
-	err = lib.Initialize()
-
-	if err != nil {
-		return nil, err
-	}
-
-	for _, path := range cfg.Libraries {
-		lib.AddLibraryPath(path)
-	}
-
-	return lib, nil
-}
-
 // This function is the only thing run in the project's root main.go file.
 // For all intent and purposes this is the main function.
 func Main() {
@@ -78,6 +54,30 @@ func Main() {
 		log.Println(err)
 		os.Exit(1)
 	}
+}
+
+// Returns a new Library object using the application config.
+// For the moment this is a LocalLibrary which will place its sqlite db file
+// in the UserPath directory
+func getLibrary(userPath string, cfg config.Config) (library.Library, error) {
+	dbPath := helpers.AbsolutePath(cfg.SqliteDatabase, userPath)
+	lib, err := library.NewLocalLibrary(dbPath)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = lib.Initialize()
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, path := range cfg.Libraries {
+		lib.AddLibraryPath(path)
+	}
+
+	return lib, nil
 }
 
 // Does what the name says
