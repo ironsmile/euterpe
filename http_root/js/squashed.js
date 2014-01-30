@@ -169,8 +169,62 @@ $(document).ready(function(){
     // playlist after all.
     jPlayerPlaylist.prototype.setPlaylist = function(playlist) {
         this._initPlaylist(playlist);
-        this._refresh();
+        this._refresh(true);
         this.current = undefined;
+    };
+
+    // The default implementation of _updateControls was making a show/hide
+    // on a class which is present in every entry in the playlist. This takes
+    // too much time if the palylist has many items.
+    jPlayerPlaylist.prototype._updateControls = function() {
+        if(this.shuffled) {
+            $(this.cssSelector.shuffleOff).show();
+            $(this.cssSelector.shuffle).hide();
+        } else {
+            $(this.cssSelector.shuffleOff).hide();
+            $(this.cssSelector.shuffle).show();
+        }
+    };
+
+    // This function was was making repetitive DOM searches.
+    // See my pull request for this: https://github.com/happyworm/jPlayer/pull/192
+    jPlayerPlaylist.prototype._refresh = function(instant) {
+        /* instant: Can be undefined, true or a function.
+         *  undefined -> use animation timings
+         *  true -> no animation
+         *  function -> use animation timings and excute function at half way point.
+         */
+        var self = this;
+        var playlist_ul = $(self.cssSelector.playlist + " ul");
+
+        if(instant && !$.isFunction(instant)) {
+            $(this.cssSelector.playlist + " ul").empty();
+            
+            $.each(this.playlist, function(i) {
+                playlist_ul.append(self._createListItem(self.playlist[i]));
+            });
+            this._updateControls();
+        } else {
+            var displayTime = playlist_ul.children().length ?
+                    this.options.playlistOptions.displayTime : 0;
+            playlist_ul.slideUp(displayTime, function() {
+                var $this = $(this);
+                $(this).empty();
+                
+                $.each(self.playlist, function(i) {
+                    $this.append(self._createListItem(self.playlist[i]));
+                });
+                self._updateControls();
+                if($.isFunction(instant)) {
+                    instant();
+                }
+                if(self.playlist.length) {
+                    $(this).slideDown(self.options.playlistOptions.displayTime);
+                } else {
+                    $(this).show();
+                }
+            });
+        }
     };
 
     var cssSelector = {
@@ -260,8 +314,8 @@ function search_database (query) {
         type: "GET",
         url: encodeURI("/search/" + query),
         success: function (msg) {
-            load_playlist(msg);
             load_filters(msg);
+            load_playlist(msg);
         }
     });
 }

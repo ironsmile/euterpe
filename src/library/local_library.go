@@ -35,6 +35,7 @@ type LocalLibrary struct {
 // Closes the database connection. It is safe to call it as many times as you want.
 func (lib *LocalLibrary) Close() {
 	if lib.db != nil {
+		lib.WaitScan()
 		lib.db.Close()
 		lib.db = nil
 	}
@@ -51,6 +52,7 @@ func (lib *LocalLibrary) AddLibraryPath(path string) {
 	lib.paths = append(lib.paths, path)
 }
 
+// Does a search in the library. Will match against the track's name, artist and album.
 func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 	var output []SearchResult
 
@@ -90,6 +92,7 @@ func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 	return output
 }
 
+// Returns the filsystem path for a file specified by its ID.
 func (lib *LocalLibrary) GetFilePath(ID int64) string {
 
 	smt, err := lib.db.Prepare(`
