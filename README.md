@@ -49,10 +49,9 @@ HTTPS configuration is saved in a json file, different for every user in the sys
 location is as follows:
 
 * Linux or BSD: ```$HOME/.httpms/config.json```
-* Windows: ```%APPDATA%/httpms/config.json```
+* Windows: ```%APPDATA%\httpms\config.json```
 
-When started for the first time HTTPMS will create one for you. It will be a copy of the
-default configuration with all possible fields in it. Example with all the fields explained follows:
+When started for the first time HTTPMS will create one for you. Here is an example:
 
 ```javascript
 {
@@ -93,3 +92,5 @@ default configuration with all possible fields in it. Example with all the field
     ]
 }
 ```
+
+List with all directives can be found in the [configration wiki](https://github.com/ironsmile/httpms/wiki/configuration#wiki-json-directives).
