@@ -96,3 +96,10 @@ When started for the first time HTTPMS will create one for you. Here is an examp
 ```
 
 List with all directives can be found in the [configration wiki](https://github.com/ironsmile/httpms/wiki/configuration#wiki-json-directives).
+
+Known Issues
+======
+
+* Search with non-ASCII characters does not work. You can still find your music in the list though.
+
+* Files added after HTTPMS is started will not be added to the library. You will need to restart it after adding new files.
