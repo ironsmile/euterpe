@@ -1,3 +1,5 @@
 language: go
 go:
   - 1.1.2
+before_install:
+  - sudo apt-get install libtagc0 libtagc0-dev
