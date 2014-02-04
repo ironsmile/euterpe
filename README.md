@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/ironsmile/httpms.png?branch=master)](https://travis-ci.org/ironsmile/httpms)
+
 HTTP Media Server
 ======
 
