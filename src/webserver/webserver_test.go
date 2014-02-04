@@ -1,6 +1,7 @@
 package webserver
 
 import (
+	"compress/gzip"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -8,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	// "strconv"
 	"strings"
 	"testing"
 	"time"
@@ -421,29 +421,91 @@ func TestGetFileUrl(t *testing.T) {
 	if len(responseBody) != 17314 {
 		t.Errorf("Track size was not as expected. It was %d", len(responseBody))
 	}
-
-	// contentLenHeader := resp.Header.Get("Content-Length")
-	// contentLenght, err := strconv.Atoi(contentLenHeader)
-
-	// if err != nil {
-	// 	t.Errorf("Content-Length was not integer. It was %s", contentLenHeader)
-	// }
-
-	// if contentLenght != 17314 {
-	// 	t.Errorf("Content-Length was not correct. It was %d", contentLenght)
-	// }
 }
 
 func TestGzipEncoding(t *testing.T) {
-	//!TODO:
-	/*
-		On and off for
-			* files
-			* /search/
-			* /file/
-	*/
-}
+	projRoot, err := getProjectRoot()
 
-func TestRanges(t *testing.T) {
-	//!TODO
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testGzipResponse := func(tests [][2]string) {
+		url := fmt.Sprintf("http://127.0.0.1:%d/static", TestPort)
+		for _, test := range tests {
+			header := test[0]
+			expected := test[1]
+			client := &http.Client{}
+			req, _ := http.NewRequest("GET", url, nil)
+			req.Header.Add("Accept-Encoding", header)
+			resp, err := client.Do(req)
+
+			if err != nil {
+				t.Errorf(err.Error())
+			}
+			defer resp.Body.Close()
+
+			contentEncoding := resp.Header.Get("Content-Encoding")
+			if contentEncoding != expected {
+				t.Errorf("Expected Content-Encoding `%s` but found `%s`", expected,
+					contentEncoding)
+			}
+
+			var responseBody []byte
+			if contentEncoding == "gzip" {
+				reader, err := gzip.NewReader(resp.Body)
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer reader.Close()
+				responseBody, err = ioutil.ReadAll(reader)
+			} else {
+				responseBody, err = ioutil.ReadAll(resp.Body)
+			}
+
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if len(responseBody) != 21 {
+				t.Errorf("Expected response size 21 but found %d", len(responseBody))
+			}
+
+			if string(responseBody) != "This is a static file" {
+				t.Errorf("Returned file was not the one expected")
+			}
+		}
+	}
+
+	var wsCfg config.Config
+	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
+	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
+	wsCfg.Gzip = true
+
+	srv := NewServer(wsCfg, nil)
+	srv.Serve()
+
+	tests := [][2]string{
+		{"gzip, deflate", "gzip"},
+		{"gzip", "gzip"},
+		{"identity", ""},
+	}
+
+	testGzipResponse(tests)
+
+	tearDownServer(srv)
+
+	wsCfg.Gzip = false
+	srv = NewServer(wsCfg, nil)
+	srv.Serve()
+	defer tearDownServer(srv)
+
+	tests = [][2]string{
+		{"gzip, deflate", ""},
+		{"gzip", ""},
+		{"identity", ""},
+	}
+
+	testGzipResponse(tests)
+
 }
