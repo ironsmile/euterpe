@@ -89,6 +89,38 @@ func getProjectRoot() (string, error) {
 	return path, nil
 }
 
+func getLibraryServer(t *testing.T) (*Server, library.Library) {
+	projRoot, _ := getProjectRoot()
+
+	lib, err := library.NewLocalLibrary("/tmp/test-web-file-get.db")
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = lib.Initialize()
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	lib.AddLibraryPath(filepath.Join(projRoot, "test_files", "library"))
+	lib.Scan()
+
+	ch := testErrorAfter(5, "Library in TestGetFileUrl did not finish scaning on time")
+	lib.WaitScan()
+	ch <- 42
+
+	var wsCfg config.Config
+	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
+	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
+
+	srv := NewServer(wsCfg, lib)
+	srv.Serve()
+
+	return srv, lib
+}
+
 func TestStaticFilesServing(t *testing.T) {
 	srv := setUpServer()
 	srv.Serve()
@@ -359,35 +391,8 @@ func TestSearchUrl(t *testing.T) {
 }
 
 func TestGetFileUrl(t *testing.T) {
-	projRoot, _ := getProjectRoot()
-
-	lib, err := library.NewLocalLibrary("/tmp/test-web-file-get.db")
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = lib.Initialize()
-
-	if err != nil {
-		t.Error(err)
-	}
-
+	srv, lib := getLibraryServer(t)
 	defer lib.Truncate()
-
-	lib.AddLibraryPath(filepath.Join(projRoot, "test_files", "library"))
-	lib.Scan()
-
-	ch := testErrorAfter(5, "Library in TestGetFileUrl did not finish scaning on time")
-	lib.WaitScan()
-	ch <- 42
-
-	var wsCfg config.Config
-	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
-	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
-
-	srv := NewServer(wsCfg, lib)
-	srv.Serve()
 	defer tearDownServer(srv)
 
 	found := lib.Search("Buggy Bugoff")
@@ -508,4 +513,39 @@ func TestGzipEncoding(t *testing.T) {
 
 	testGzipResponse(tests)
 
+}
+
+func TestFileNameHeaders(t *testing.T) {
+	srv, lib := getLibraryServer(t)
+	defer lib.Truncate()
+	defer tearDownServer(srv)
+
+	found := lib.Search("Buggy Bugoff")
+
+	if len(found) != 1 {
+		t.Fatalf("Problem finding Buggy Bugoff test track")
+	}
+
+	trackID := found[0].ID
+
+	url := fmt.Sprintf("http://127.0.0.1:%d/file/%d", TestPort, trackID)
+
+	resp, err := http.Get(url)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
+	}
+
+	expected := "filename=\"third_file.mp3\""
+	nameHeader := resp.Header.Get("Content-Disposition")
+
+	if nameHeader != expected {
+		t.Errorf("Expected filename `%s` but found `%s`", expected, nameHeader)
+	}
 }

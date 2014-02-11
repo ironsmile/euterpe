@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -101,6 +102,7 @@ func (fh FileHandler) find(writer http.ResponseWriter, req *http.Request) error 
 
 	if err != nil {
 		http.NotFoundHandler().ServeHTTP(writer, req)
+		return nil
 	}
 
 	filePath := fh.library.GetFilePath(int64(id))
@@ -112,7 +114,12 @@ func (fh FileHandler) find(writer http.ResponseWriter, req *http.Request) error 
 		return nil
 	}
 
-	req.URL.Path = "/" + filepath.Base(filePath)
+	baseName := filepath.Base(filePath)
+
+	writer.Header().Add("Content-Disposition",
+		fmt.Sprintf("filename=\"%s\"", baseName))
+
+	req.URL.Path = "/" + baseName
 	http.FileServer(http.Dir(filepath.Dir(filePath))).ServeHTTP(writer, req)
 
 	return nil
