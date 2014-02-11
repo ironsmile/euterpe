@@ -37,19 +37,19 @@ $(document).ready(function(){
          *  function -> use animation timings and excute function at half way point.
          */
         var self = this;
-        var playlist_ul = $(self.cssSelector.playlist + " ul");
+        var playlist_el = $(self.cssSelector.playlist + " ul");
 
         if(instant && !$.isFunction(instant)) {
-            $(this.cssSelector.playlist + " ul").empty();
+            $(playlist_el).empty();
             
             $.each(this.playlist, function(i) {
-                playlist_ul.append(self._createListItem(self.playlist[i]));
+                playlist_el.append(self._createListItem(self.playlist[i]));
             });
             this._updateControls();
         } else {
-            var displayTime = playlist_ul.children().length ?
+            var displayTime = playlist_el.children().length ?
                     this.options.playlistOptions.displayTime : 0;
-            playlist_ul.slideUp(displayTime, function() {
+            playlist_el.slideUp(displayTime, function() {
                 var $this = $(this);
                 $(this).empty();
                 
@@ -67,6 +67,53 @@ $(document).ready(function(){
                 }
             });
         }
+    };
+
+    /*
+    *   My own create list item. I am adding track number, album and an album
+    *   download button.
+    */
+    jPlayerPlaylist.prototype._createListItem = function(media) {
+        var self = this;
+        var options = this.options.playlistOptions;
+
+        // Wrap the <li> contents in a <div>
+        var listItem = "<li><div>";
+
+        // Create links to free media
+        if(media.free) {
+            var first = true;
+            listItem += "<span class='" + options.freeGroupClass;
+            listItem += "'>(";
+            $.each(media, function(property,value) {
+                // Check property is a media format.
+                if($.jPlayer.prototype.format[property]) {
+                    if(first) {
+                        first = false;
+                    } else {
+                        listItem += " | ";
+                    }
+                    listItem += "<a class='" + options.freeItemClass;
+                    listItem += "' href='" + value + "'>" + property + "</a>";
+                }
+            });
+            listItem += ")</span>";
+        }
+
+        listItem += (media.album ? 
+                        " <span class='" + options.freeGroupClass + "'>" + 
+                            media.album+"</span>" : "");
+
+        // The title is given next in the HTML otherwise the float:right on the
+        // free media corrupts in IE6/7
+        listItem += "<a href='javascript:;' class='" + options.itemClass;
+        listItem += "'>" + (media.number ? media.number + '. ' : "") + media.title;
+        listItem += (media.artist ? 
+                        " <span class='jp-artist'>by "+media.artist+"</span>" : "");
+        listItem += "</a>";
+        listItem += "</div></li>";
+
+        return listItem;
     };
 
     var cssSelector = {
@@ -189,8 +236,10 @@ function load_playlist (songs) {
         new_playlist.push({
             title: songs[i].title,
             artist: songs[i].artist,
+            album: songs[i].album,
             mp3: "/file/"+songs[i].id,
-            free: true
+            free: true,
+            number: songs[i].track
         })
         
     };
