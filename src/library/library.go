@@ -15,6 +15,9 @@ type SearchResult struct {
 	// Meta info: Artist
 	Artist string `json:"artist"`
 
+	// Meta info: Album ID
+	AlbumID int64 `json:"album_id"`
+
 	// Meta info: Album for music
 	Album string `json:"album"`
 

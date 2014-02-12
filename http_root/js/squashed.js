@@ -258,9 +258,13 @@ $(document).ready(function(){
             listItem += ")</span>";
         }
 
-        listItem += (media.album ? 
-                        " <span class='" + options.freeGroupClass + "'>" + 
-                            media.album+"</span>" : "");
+        if (media.album) {
+            listItem += " <span class='" + options.freeGroupClass + "'>" +
+                    "<a href='/album/"+media.album_id+"' target='_blank'>" +
+                     media.album +
+                    "</a></span>";
+        }
+        
 
         // The title is given next in the HTML otherwise the float:right on the
         // free media corrupts in IE6/7
@@ -397,9 +401,9 @@ function load_playlist (songs) {
             album: songs[i].album,
             mp3: "/file/"+songs[i].id,
             free: true,
-            number: songs[i].track
-        })
-        
+            number: songs[i].track,
+            album_id: songs[i].album_id
+        });
     };
 
     pagePlaylist.setPlaylist(new_playlist);

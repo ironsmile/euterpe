@@ -64,7 +64,8 @@ func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 			t.name as track,
 			al.name as album,
 			at.name as artist,
-			t.number as track_number
+			t.number as track_number,
+			t.album_id as album_id
 		FROM
 			tracks as t
 				LEFT JOIN albums as al ON al.id = t.album_id
@@ -85,7 +86,8 @@ func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 	defer rows.Close()
 	for rows.Next() {
 		var res SearchResult
-		rows.Scan(&res.ID, &res.Title, &res.Album, &res.Artist, &res.TrackNumber)
+		rows.Scan(&res.ID, &res.Title, &res.Album, &res.Artist,
+			&res.TrackNumber, &res.AlbumID)
 		output = append(output, res)
 	}
 

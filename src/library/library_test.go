@@ -169,6 +169,10 @@ func TestSearch(t *testing.T) {
 			expected.TrackNumber, found[0].TrackNumber)
 	}
 
+	if found[0].AlbumID < 1 {
+		t.Errorf("AlbumID was below 1: `%d`", found[0].AlbumID)
+	}
+
 }
 
 func TestAddigNewFiles(t *testing.T) {
