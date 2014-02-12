@@ -57,6 +57,7 @@ func (srv *Server) serveGoroutine() {
 	mux.Handle("/", http.FileServer(http.Dir(srv.cfg.HTTPRoot)))
 	mux.Handle("/search/", http.StripPrefix("/search/", NewSearchHandler(srv.library)))
 	mux.Handle("/file/", http.StripPrefix("/file/", NewFileHandler(srv.library)))
+	mux.Handle("/album/", http.StripPrefix("/album/", NewAlbumHandler(srv.library)))
 
 	var handler http.Handler
 

@@ -1,6 +1,8 @@
 package webserver
 
 import (
+	"archive/zip"
+	"bytes"
 	"compress/gzip"
 	"crypto/tls"
 	"encoding/json"
@@ -14,6 +16,7 @@ import (
 	"time"
 
 	"github.com/ironsmile/httpms/src/config"
+	"github.com/ironsmile/httpms/src/helpers"
 	"github.com/ironsmile/httpms/src/library"
 )
 
@@ -547,5 +550,107 @@ func TestFileNameHeaders(t *testing.T) {
 
 	if nameHeader != expected {
 		t.Errorf("Expected filename `%s` but found `%s`", expected, nameHeader)
+	}
+}
+
+func TestAlbumHandlerOverHttp(t *testing.T) {
+	srv, lib := getLibraryServer(t)
+	defer lib.Truncate()
+	defer tearDownServer(srv)
+
+	artistID, _ := lib.(*library.LocalLibrary).GetArtistID("Artist Testoff")
+	albumID, _ := lib.(*library.LocalLibrary).GetAlbumID("Album Of Tests", artistID)
+
+	albumURL := fmt.Sprintf("http://127.0.0.1:%d/album/%d", TestPort, albumID)
+
+	resp, err := http.Get(albumURL)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
+	}
+
+	headers := map[string]string{
+		"Content-Type":        "application/zip",
+		"Content-Disposition": `filename="Album Of Tests.zip"`,
+	}
+
+	for header := range headers {
+		expected := headers[header]
+		found := resp.Header.Get(header)
+		if found != expected {
+			t.Errorf("Expected %s: %s but it was `%s`", header, expected, found)
+		}
+	}
+
+	albumURL = fmt.Sprintf("http://127.0.0.1:%d/album/666", TestPort)
+
+	resp, err = http.Get(albumURL)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 404 {
+		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
+	}
+}
+
+func TestAlbumHandlerZipFunction(t *testing.T) {
+	buf := new(bytes.Buffer)
+
+	projRoot, err := helpers.ProjectRoot()
+
+	if err != nil {
+		t.Fatalf("Was not able to find test_files directory.", err.Error())
+	}
+
+	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
+
+	files := []string{
+		filepath.Join(testLibraryPath, "test_file_one.mp3"),
+		filepath.Join(testLibraryPath, "test_file_two.mp3"),
+	}
+
+	albumHandler := new(AlbumHandler)
+
+	err = albumHandler.writeZipContents(buf, files)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	reader, err := zip.NewReader(bytes.NewReader(buf.Bytes()), int64(buf.Len()))
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(reader.File) != 2 {
+		t.Errorf("Expected two files in the zip but found %d", len(reader.File))
+	}
+
+	for _, zippedFile := range reader.File {
+		fsPath := filepath.Join(testLibraryPath, zippedFile.Name)
+
+		st, err := os.Stat(fsPath)
+
+		if err != nil {
+			t.Errorf("zipped file %s not found on file system: %s", zippedFile.Name,
+				err.Error())
+			continue
+		}
+
+		if zippedFile.FileHeader.UncompressedSize != uint32(st.Size()) {
+			t.Errorf("Zipped file %s was incorect size: %d. Expected %d",
+				zippedFile.Name, zippedFile.FileHeader.UncompressedSize, st.Size())
+		}
 	}
 }

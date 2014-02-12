@@ -124,6 +124,44 @@ func (lib *LocalLibrary) GetFilePath(ID int64) string {
 	return filePath
 }
 
+// Satisfies the Library interface
+func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []SearchResult {
+	var output []SearchResult
+
+	rows, err := lib.db.Query(`
+		SELECT
+			t.id as track_id,
+			t.name as track,
+			al.name as album,
+			at.name as artist,
+			t.number as track_number,
+			t.album_id as album_id
+		FROM
+			tracks as t
+				LEFT JOIN albums as al ON al.id = t.album_id
+				LEFT JOIN artists as at ON at.id = t.artist_id
+		WHERE
+			t.album_id = ?
+		ORDER BY
+			al.name, t.number
+	`, albumID)
+
+	if err != nil {
+		log.Printf("Query not successful: %s\n", err.Error())
+		return output
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var res SearchResult
+		rows.Scan(&res.ID, &res.Title, &res.Album, &res.Artist,
+			&res.TrackNumber, &res.AlbumID)
+		output = append(output, res)
+	}
+
+	return output
+}
+
 //!TODO: make scan also remove files which have been deleted since the previous scan
 // Scans all of the folders in paths for media files. New files will be added to the
 // database.

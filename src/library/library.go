@@ -46,6 +46,9 @@ type Library interface {
 	// Returns the real filesystem path. Requires the media ID.
 	GetFilePath(int64) string
 
+	// Returns search result will all the files of this album
+	GetAlbumFiles(int64) []SearchResult
+
 	// Starts a background library scan. Will scan all paths if
 	// they are not scanned already. Will return immediately.
 	Scan()

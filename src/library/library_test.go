@@ -44,6 +44,44 @@ func getLibrary(t *testing.T, dbFile string) *LocalLibrary {
 	return lib
 }
 
+func getPathedLibrary(t *testing.T, dbFile string) *LocalLibrary {
+	projRoot, err := helpers.ProjectRoot()
+
+	if err != nil {
+		t.Fatalf("Was not able to find test_files directory.", err.Error())
+	}
+
+	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
+
+	lib, err := NewLocalLibrary(dbFile)
+
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	err = lib.Initialize()
+
+	if err != nil {
+		t.Fatalf("Initializing library: %s", err.Error())
+	}
+
+	lib.AddLibraryPath(testLibraryPath)
+
+	return lib
+}
+
+func getScannedLibrary(t *testing.T, dbFile string) *LocalLibrary {
+	lib := getPathedLibrary(t, dbFile)
+
+	lib.Scan()
+
+	ch := testErrorAfter(10, "Scanning library took too long")
+	lib.WaitScan()
+	ch <- 42
+
+	return lib
+}
+
 func testErrorAfter(seconds time.Duration, message string) chan int {
 	ch := make(chan int)
 
@@ -312,32 +350,6 @@ func TestGettingAFile(t *testing.T) {
 	}
 }
 
-func getPathedLibrary(t *testing.T, dbFile string) *LocalLibrary {
-	projRoot, err := helpers.ProjectRoot()
-
-	if err != nil {
-		t.Fatalf("Was not able to find test_files directory.", err.Error())
-	}
-
-	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
-
-	lib, err := NewLocalLibrary(dbFile)
-
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-
-	err = lib.Initialize()
-
-	if err != nil {
-		t.Fatalf("Initializing library: %s", err.Error())
-	}
-
-	lib.AddLibraryPath(testLibraryPath)
-
-	return lib
-}
-
 func TestAddingLibraryPaths(t *testing.T) {
 	lib := getPathedLibrary(t, "/tmp/test-library-paths.db")
 	defer lib.Truncate()
@@ -377,14 +389,8 @@ func TestScaning(t *testing.T) {
 }
 
 func TestSQLInjections(t *testing.T) {
-	lib := getPathedLibrary(t, "/tmp/test-sql-injections.db")
+	lib := getScannedLibrary(t, "/tmp/test-sql-injections.db")
 	defer lib.Truncate()
-
-	lib.Scan()
-
-	ch := testErrorAfter(10, "Scanning library took too long")
-	lib.WaitScan()
-	ch <- 42
 
 	found := lib.Search(`not-such-thing" OR 1=1 OR t.name="kleopatra`)
 
@@ -392,4 +398,44 @@ func TestSQLInjections(t *testing.T) {
 		t.Errorf("Successful sql injection in a single query")
 	}
 
+}
+
+func TestGetAlbumFiles(t *testing.T) {
+	lib := getScannedLibrary(t, "/tmp/test-sql-injections.db")
+	defer lib.Truncate()
+
+	artistID, _ := lib.GetArtistID("Artist Testoff")
+	albumID, _ := lib.GetAlbumID("Album Of Tests", artistID)
+
+	albumFiles := lib.GetAlbumFiles(albumID)
+
+	if len(albumFiles) != 2 {
+		t.Errorf("Expected 2 files in the album but found %d", len(albumFiles))
+	}
+
+	for _, track := range albumFiles {
+		if track.Album != "Album Of Tests" {
+			t.Errorf("GetAlbumFiles returned file in album `%s`", track.Album)
+		}
+
+		if track.Artist != "Artist Testoff" {
+			t.Errorf("GetAlbumFiles returned file from artist `%s`", track.Artist)
+		}
+	}
+
+	trackNames := []string{"Tittled Track", "Another One"}
+
+	for _, trackName := range trackNames {
+		found := false
+		for _, track := range albumFiles {
+			if track.Title == trackName {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			t.Errorf("Track `%s` was not among the results", trackName)
+		}
+	}
 }
