@@ -21,14 +21,15 @@ func ProjectRoot() (string, error) {
 	gopath := os.ExpandEnv("$GOPATH")
 	relPath := filepath.FromSlash("src/github.com/ironsmile/httpms")
 	for _, path := range strings.Split(gopath, ":") {
-		tmplPath := filepath.Join(path, relPath)
-		entry, err := os.Stat(tmplPath)
+		rootPath := filepath.Join(path, relPath)
+		entry, err := os.Stat(rootPath)
 		if err != nil {
 			continue
 		}
 
 		if entry.IsDir() {
-			return tmplPath, nil
+			log.Printf("Using %s as project root\n", rootPath)
+			return rootPath, nil
 		}
 	}
 
@@ -45,6 +46,7 @@ func ProjectRoot() (string, error) {
 		return "", err
 	}
 
+	log.Printf("Using %s as project root\n", abs)
 	return abs, nil
 }
 

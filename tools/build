@@ -1,0 +1,64 @@
+#!/bin/bash
+cd $(dirname `readlink -f $0`)
+cd ..
+
+arch="amd64"
+
+if [[ $# -lt 1 ]]; then
+    os="linux"
+else
+    os="$1"
+fi
+
+echo "OS: $os, ARCH: $arch"
+
+if [ -d dist/httpms ]
+then
+    echo "Removing old dist/httpms directory..."
+    rm -rf dist/httpms || exit 1
+fi
+
+echo "Making dist directory..."
+mkdir -p dist/httpms || exit 1
+
+echo "Building binary..."
+GOOS="$os" GOARCH="$arch" go build -o dist/httpms/httpms || exit 1
+
+for file in config.json config.default.json README.md
+do
+    echo "Copying $file..."
+    cp "$file" dist/httpms || exit 1
+done
+
+for directory in sqls templates
+do
+    echo "Copying $directory..."
+    cp -a "$directory" dist/httpms || exit 1
+done
+
+echo "Creating http_root js and css directories..."
+mkdir -p dist/httpms/http_root/js || exit 1
+mkdir -p dist/httpms/http_root/css  || exit 1
+
+echo "Copying files..."
+cp http_root/index.html dist/httpms/http_root || exit 1
+cp http_root/css/squashed.css dist/httpms/http_root/css || exit 1
+cp http_root/js/squashed.js dist/httpms/http_root/js || exit 1
+cp http_root/js/Jplayer.swf dist/httpms/http_root/js || exit 1
+
+cp -a http_root/skin dist/httpms/http_root || exit 1
+cp -a http_root/js/ie8 dist/httpms/http_root/js || exit 1
+
+archive="httpms_${os}_${arch}.tar.gz"
+
+echo "Creating archive..."
+cd dist
+tar cfzv "$archive" httpms || exit 1
+
+echo "dist/$archive created"
+
+echo "Cleaning up..."
+cd - || exit 1
+rm -rf dist/httpms || exit
+
+echo "Done"
