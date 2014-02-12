@@ -43,6 +43,7 @@ Features
 * HTTP Basic Authenticate
 * Playlists
 * Search by track name, artist or album
+* Download whole album in a zip file with one click
 
 Configuration
 ======
