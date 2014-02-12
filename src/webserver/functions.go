@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"net/http"
 	"os"
 	"path/filepath"
 
@@ -56,4 +57,15 @@ func getTemplate(templateFileName string) (*template.Template, error) {
 	}
 
 	return tmpl, nil
+}
+
+// Used to wrap around handlers-like functions which just return error.
+// This function actually writes the HTTP error and renders the error in the html
+func InternalErrorOnErrorHandler(writer http.ResponseWriter, req *http.Request,
+	fnc func(http.ResponseWriter, *http.Request) error) {
+	err := fnc(writer, req)
+	if err != nil {
+		writer.WriteHeader(http.StatusInternalServerError)
+		writer.Write([]byte(err.Error()))
+	}
 }
