@@ -14,6 +14,11 @@ import (
 
 var projectRoot string = ""
 
+func cacheProjRoot(path string) string {
+	projectRoot = path
+	return path
+}
+
 // Returns the root directory. This is the place where the app is installed
 // or the place where the source is stored if in development or installed
 // with go get
@@ -34,9 +39,16 @@ func ProjectRoot() (string, error) {
 		}
 
 		if entry.IsDir() {
-			projectRoot = rootPath
-			return rootPath, nil
+			return cacheProjRoot(rootPath), nil
 		}
+	}
+
+	etcPath := filepath.FromSlash("/etc/httpms")
+
+	st, err := os.Stat(etcPath)
+
+	if err == nil && st.IsDir() {
+		return cacheProjRoot(etcPath), nil
 	}
 
 	// now we try the directory of the binary
@@ -46,14 +58,19 @@ func ProjectRoot() (string, error) {
 			"Cannot find the project root directory.")
 	}
 
-	abs, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	noSymlinkPath, err := filepath.EvalSymlinks(os.Args[0])
 
 	if err != nil {
 		return "", err
 	}
 
-	projectRoot = abs
-	return abs, nil
+	abs, err := filepath.Abs(filepath.Dir(noSymlinkPath))
+
+	if err != nil {
+		return "", err
+	}
+
+	return cacheProjRoot(abs), nil
 }
 
 // Sets the logfile of the server

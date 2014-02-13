@@ -6,8 +6,10 @@ package main
 import (
 	"flag"
 	"log"
+	"log/syslog"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/ironsmile/httpms/src/daemon"
 )
@@ -25,19 +27,44 @@ func init() {
 func main() {
 	flag.Parse()
 
-	if err := daemon.Daemonize(); err != nil {
+	myPlace, err := filepath.EvalSymlinks(os.Args[0])
+
+	if err != nil {
 		log.Println(err)
 		os.Exit(1)
 	}
 
-	var cmd *exec.Cmd
+	myPlace, err = filepath.Abs(filepath.Dir(myPlace))
 
-	cmd = exec.Command("httpms", "-p", PidFile)
-
-	if out, err := cmd.Output(); err != nil {
+	if err != nil {
 		log.Println(err)
 		os.Exit(1)
+	}
+
+	path, err := exec.LookPath(filepath.Join(myPlace, "httpms"))
+	if err != nil {
+		path, err = exec.LookPath("httpms")
+		if err != nil {
+			log.Println("Was not able to find httpms binary")
+			os.Exit(1)
+		}
+	}
+
+	logger, err := syslog.NewLogger(syslog.LOG_ERR, 0)
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+
+	if err := daemon.Daemonize(); err != nil {
+		logger.Println(err)
+		os.Exit(1)
+	}
+
+	if out, err := exec.Command(path, "-p", PidFile).Output(); err != nil {
+		logger.Println(err)
+		os.Exit(1)
 	} else {
-		log.Print(out)
+		logger.Println(out)
 	}
 }
