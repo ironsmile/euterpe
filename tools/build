@@ -54,6 +54,10 @@ cp http_root/js/Jplayer.swf dist/httpms/http_root/js || exit 1
 cp -a http_root/skin dist/httpms/http_root || exit 1
 cp -a http_root/js/ie8 dist/httpms/http_root/js || exit 1
 
+echo "Copying install/uninstall scripts..."
+cp tools/install dist/httpms || exit 1
+cp tools/uninstall dist/httpms || exit 1
+
 archive="httpms_${os}_${arch}.tar.gz"
 
 echo "Creating archive..."

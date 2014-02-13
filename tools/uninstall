@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [ ! -d /etc/httpms ]; then
+    echo "HTTPMS is not installed. Aborting."
+    exit 0
+fi
+
+rm -rf /etc/httpms
+rm /usr/bin/httpms
+rm /usr/bin/httpms_daemon

@@ -1,0 +1,26 @@
+#!/bin/bash
+INSTALL_DIR=$(dirname `readlink -f $0`)
+cd "$INSTALL_DIR"
+cd ..
+
+if [ -d /etc/httpms ]; then
+    echo "HTTPMS is already installed. Aborting."
+    exit 0
+fi
+
+for binary in httpms httpms_daemon
+do
+    if [ -f "/usr/bin/${binary}" ]; then
+        echo "HTTPMS is already installed. Aborting."
+        exit 0
+    fi
+done
+
+echo "Installing httpms dir to /etc/..."
+cp -a "$INSTALL_DIR" /etc/httpms || exit 1
+
+echo "Copying binaries to /usr/bin/..."
+cp "${INSTALL_DIR}/httpms" /usr/bin/httpms || exit 1
+cp "${INSTALL_DIR}/httpms_daemon" /usr/bin/httpms_daemon || exit 1
+
+echo "Done"

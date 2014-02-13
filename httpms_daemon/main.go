@@ -27,14 +27,7 @@ func init() {
 func main() {
 	flag.Parse()
 
-	myPlace, err := filepath.EvalSymlinks(os.Args[0])
-
-	if err != nil {
-		log.Println(err)
-		os.Exit(1)
-	}
-
-	myPlace, err = filepath.Abs(filepath.Dir(myPlace))
+	myPlace, err := filepath.Abs(filepath.Dir(os.Args[0]))
 
 	if err != nil {
 		log.Println(err)
