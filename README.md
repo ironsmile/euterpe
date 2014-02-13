@@ -98,6 +98,11 @@ When started for the first time HTTPMS will create one for you. Here is an examp
 
 List with all directives can be found in the [configration wiki](https://github.com/ironsmile/httpms/wiki/configuration#wiki-json-directives).
 
+Daemon
+======
+HTTPMS comes with a separate daemonization binary. It is called ```httpms_daemon```. You can find it in the ```h`ttpms_daemon``` directory. Separate binary is required since Go's standar libraries fail miserably if you fork the main process. As far as I can tell when
+forking the ```notify``` library stops working along with the goroutine scheduler. The goroutine scheduler may work from time to time but it is by no means stable after forking.
+
 Known Issues
 ======
 

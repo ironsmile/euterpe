@@ -1,3 +1,6 @@
+// If you want to run httpms as a daemon use this binary. It assumes the httpms is
+// properly installed. The main binary should be in the $PATH.
+
 package main
 
 import (
@@ -33,7 +36,8 @@ func main() {
 
 	if out, err := cmd.Output(); err != nil {
 		log.Println(err)
+		os.Exit(1)
 	} else {
-		log.Println(out)
+		log.Print(out)
 	}
 }

@@ -28,6 +28,7 @@ func init() {
 	pidUsage := "Pidfile. Default is [user_path]/pidfile.pid"
 	pidDefault := "pidfile.pid"
 	flag.StringVar(&PidFile, "p", pidDefault, pidUsage)
+
 	flag.BoolVar(&Debug, "D", false, "Debug mode. Will log everything to the stdout.")
 }
 

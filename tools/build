@@ -21,8 +21,13 @@ fi
 echo "Making dist directory..."
 mkdir -p dist/httpms || exit 1
 
-echo "Building binary..."
+echo "Building binaries..."
 GOOS="$os" GOARCH="$arch" go build -o dist/httpms/httpms || exit 1
+
+cd httpms_daemon
+GOOS="$os" GOARCH="$arch" go build -o ../dist/httpms/httpms_daemon || exit 1
+cd -
+
 
 for file in config.json config.default.json README.md
 do
