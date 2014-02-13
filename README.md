@@ -34,6 +34,17 @@ Install
 
 3. [Edit the config.json](#configuration) and add your library paths to the "library" field
 
+
+Docker
+======
+
+Alternatively to installing everything in your environment you can use my [docker image](https://github.com/ironsmile/docker-httpms).
+```
+docker build -t ironsmile/httpms github.com/ironsmile/docker-httpms
+```
+It is ready for running or development.
+
+
 Features
 ======
 
