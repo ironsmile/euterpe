@@ -12,10 +12,16 @@ import (
 	"strings"
 )
 
+var projectRoot string = ""
+
 // Returns the root directory. This is the place where the app is installed
 // or the place where the source is stored if in development or installed
 // with go get
 func ProjectRoot() (string, error) {
+
+	if len(projectRoot) > 0 {
+		return projectRoot, nil
+	}
 
 	// first trying the gopath
 	gopath := os.ExpandEnv("$GOPATH")
@@ -28,7 +34,7 @@ func ProjectRoot() (string, error) {
 		}
 
 		if entry.IsDir() {
-			log.Printf("Using %s as project root\n", rootPath)
+			projectRoot = rootPath
 			return rootPath, nil
 		}
 	}
@@ -46,7 +52,7 @@ func ProjectRoot() (string, error) {
 		return "", err
 	}
 
-	log.Printf("Using %s as project root\n", abs)
+	projectRoot = abs
 	return abs, nil
 }
 

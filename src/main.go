@@ -1,5 +1,5 @@
-// The Main function of HTTPMS. It should set everything up, create a library, create
-// a webserver and daemonize itself.
+// The Main function of HTTPMS. It should set everything up, create a library and
+// create a webserver.
 //
 // At the moment it is in package src because I import it from the project's root
 // folder.
@@ -21,12 +21,14 @@ import (
 
 var (
 	PidFile string
+	Debug   bool
 )
 
 func init() {
 	pidUsage := "Pidfile. Default is [user_path]/pidfile.pid"
 	pidDefault := "pidfile.pid"
 	flag.StringVar(&PidFile, "p", pidDefault, pidUsage)
+	flag.BoolVar(&Debug, "D", false, "Debug mode. Will log everything to the stdout.")
 }
 
 // This function is the only thing run in the project's root main.go file.
@@ -40,20 +42,29 @@ func Main() {
 		os.Exit(1)
 	}
 
-	if !daemon.Debug {
-		err = daemon.Daemonize()
-		if err != nil {
-			log.Println(err)
-			os.Exit(1)
-		}
-	}
-
 	err = ParseConfigAndStartWebserver(projRoot)
 
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
 	}
+}
+
+// Creates a pidfile and starts a signal receiver goroutine
+func SetupPidFileAndSignals(pidFile string) {
+	helpers.SetUpPidFile(pidFile)
+
+	signalChannel := make(chan os.Signal, 2)
+	for _, sig := range daemon.StopSignals {
+		signal.Notify(signalChannel, sig)
+	}
+	go func() {
+		for _ = range signalChannel {
+			log.Println("Stop signal received. Removing pidfile and stopping.")
+			helpers.RemovePidFile(pidFile)
+			os.Exit(0)
+		}
+	}()
 }
 
 // Returns a new Library object using the application config.
@@ -80,7 +91,8 @@ func getLibrary(userPath string, cfg config.Config) (library.Library, error) {
 	return lib, nil
 }
 
-// Does what the name says
+// Parses the config, sets the logfile, setups the pidfile, and makes an
+// signal handler goroutine
 func ParseConfigAndStartWebserver(projRoot string) error {
 
 	var cfg config.Config
@@ -92,27 +104,16 @@ func ParseConfigAndStartWebserver(projRoot string) error {
 
 	userPath := filepath.Dir(cfg.UserConfigPath())
 
-	if !daemon.Debug {
+	if !Debug {
 		err = helpers.SetLogsFile(helpers.AbsolutePath(cfg.LogFile, userPath))
 		if err != nil {
 			return err
 		}
 	}
 
-	PidFile = helpers.AbsolutePath(PidFile, userPath)
-	helpers.SetUpPidFile(PidFile)
-	defer helpers.RemovePidFile(PidFile)
-
-	signalChannel := make(chan os.Signal, 2)
-	for _, sig := range daemon.StopSignals {
-		signal.Notify(signalChannel, sig)
-	}
-	go func() {
-		for _ = range signalChannel {
-			helpers.RemovePidFile(PidFile)
-			os.Exit(0)
-		}
-	}()
+	pidFile := helpers.AbsolutePath(PidFile, userPath)
+	SetupPidFileAndSignals(pidFile)
+	defer helpers.RemovePidFile(pidFile)
 
 	lib, err := getLibrary(userPath, cfg)
 	if err != nil {

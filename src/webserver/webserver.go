@@ -95,7 +95,6 @@ func (srv *Server) serveGoroutine() {
 	}
 
 	// When the listener is nil it is probably a scheduled stop. I can't be sure though
-	//!TODO: make sure listener == nil is only possible after Server.Stop()
 	if reason != nil && srv.listener != nil {
 		log.Print(reason)
 	}
