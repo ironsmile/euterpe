@@ -19,8 +19,11 @@ done
 echo "Installing httpms dir to /etc/..."
 cp -a "$INSTALL_DIR" /etc/httpms || exit 1
 
-echo "Copying binaries to /usr/bin/..."
-cp "${INSTALL_DIR}/httpms" /usr/bin/httpms || exit 1
-cp "${INSTALL_DIR}/httpms_daemon" /usr/bin/httpms_daemon || exit 1
+echo "Setting directory permissions..."
+find /etc/httpms -type d -exec chmod 755 "{}" \; || exit 1
+
+echo "Moving binaries to /usr/bin/..."
+mv /etc/httpms/httpms /usr/bin/httpms || exit 1
+mv /etc/httpms/httpms_daemon /usr/bin/httpms_daemon || exit 1
 
 echo "Done"

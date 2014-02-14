@@ -94,12 +94,11 @@ func (srv *Server) serveGoroutine() {
 		reason = srv.listenAndServe()
 	}
 
-	// When the listener is nil it is probably a scheduled stop. I can't be sure though
-	if reason != nil && srv.listener != nil {
-		log.Print(reason)
-	}
-
 	log.Println("Webserver stopped.")
+
+	if reason != nil {
+		log.Printf("Reason: %s\n", reason.Error())
+	}
 }
 
 // Uses our own listener to make our server stoppable. Similar to

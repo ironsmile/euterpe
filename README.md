@@ -49,7 +49,7 @@ Features
 ======
 
 * Uses [jplayer](https://github.com/happyworm/jPlayer) to play your music so it will probably work in every browser
-* jplayer supports mp3, oga, wav, flac and m4a audo formats
+* jplayer supports mp3, oga, wav, flac and m4a audio formats
 * Interface and media via HTTPS
 * HTTP Basic Authenticate
 * Playlists
