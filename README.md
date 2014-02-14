@@ -39,9 +39,9 @@ Docker
 ======
 
 Alternatively to installing everything in your environment you can use my [docker image](https://github.com/ironsmile/docker-httpms).
-```
-docker build -t ironsmile/httpms github.com/ironsmile/docker-httpms
-```
+
+```docker build -t ironsmile/httpms github.com/ironsmile/docker-httpms```
+
 It is ready for running or development.
 
 
@@ -109,15 +109,22 @@ When started for the first time HTTPMS will create one for you. Here is an examp
 
 List with all directives can be found in the [configration wiki](https://github.com/ironsmile/httpms/wiki/configuration#wiki-json-directives).
 
+
 Daemon
 ======
-HTTPMS comes with a separate daemonization binary. It is called ```httpms_daemon```. You can find it in the ```h`ttpms_daemon``` directory. Separate binary is required since Go's standar libraries fail miserably if you fork the main process. As far as I can tell when
+
+HTTPMS comes with a separate daemonization binary. It is called ```httpms_daemon```. You can find it in the ```httpms_daemon``` directory. Separate binary is required since Go's standar libraries fail miserably if you fork the main process. As far as I can tell when
 forking the ```notify``` library stops working along with the goroutine scheduler. The goroutine scheduler may work from time to time but it is by no means stable after forking.
 **Note**: You should always use the PID recorded in the pidfile for stopping httpms. Even if you use httpms_daemon.
+
 
 Known Issues
 ======
 
 * Non-ASCII searches are case sensitive. 
 
-* Files added after HTTPMS is started will not be added to the library. You will need to restart it after adding new files.
+
+Roadmap
+======
+
+* Directory watch for your libraries. HTTPMS would **not** need a restart to index new files in the library paths. At the moment it does.
