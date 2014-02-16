@@ -274,36 +274,26 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 
 	st, stErr := os.Stat(event.Name)
 
-	if stErr != nil && !event.IsRename() {
+	if stErr != nil && !event.IsRename() && !event.IsDelete() {
 		log.Printf("Watch event stat received error: %s\n", stErr.Error())
 		return
 	}
 
-	if st.IsDir() && event.IsCreate() {
+	if event.IsCreate() && st.IsDir() {
 		lib.watch.Watch(event.Name)
 		lib.walkWait.Add(1)
 		go lib.scanPath(event.Name, lib.watchChan)
 		return
 	}
 
-	if st.IsDir() && event.IsDelete() {
-		lib.watch.RemoveWatch(event.Name)
-		//!TODO: remove files which were in this directory
-		return
-	}
-
-	if st.IsDir() && event.IsRename() {
-		//!TODO: understand what this means
-	}
-
-	if !st.IsDir() && event.IsCreate() {
+	if event.IsCreate() && !st.IsDir() {
 		if lib.isSupportedFormat(event.Name) {
 			lib.watchChan <- event.Name
 		}
 		return
 	}
 
-	if !st.IsDir() && event.IsModify() {
+	if event.IsModify() && !st.IsDir() {
 		if lib.isSupportedFormat(event.Name) {
 			lib.removeFile(event.Name)
 			lib.watchChan <- event.Name
@@ -311,7 +301,10 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 		return
 	}
 
-	if !st.IsDir() && event.IsDelete() {
+	if event.IsDelete() || event.IsRename() {
+		//!TODO: remove files from the database if the removed or renamed was
+		// a directory.
+		lib.watch.RemoveWatch(event.Name)
 		if lib.isSupportedFormat(event.Name) {
 			lib.removeFile(event.Name)
 		}
