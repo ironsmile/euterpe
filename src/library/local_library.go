@@ -228,6 +228,7 @@ func (lib *LocalLibrary) scanPath(scannedPath string, media chan<- string) {
 		".oga",
 		".wav",
 		".fla",
+		".flac",
 		".m4a",
 	}
 
