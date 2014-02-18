@@ -29,12 +29,15 @@ type LocalLibrary struct {
 	database string         // The location of the library's database
 	paths    []string       // FS locations which contain the library's media files
 	db       *sql.DB        // Database handler
-	walkWait sync.WaitGroup // Used to log how much time scanning took
-	dbWait   sync.WaitGroup // Used in WaitScan to signal the end of scanning
+	walkWG   sync.WaitGroup // Used to log how much time scanning took
+	scanWG   sync.WaitGroup // Used in WaitScan to signal the end of scanning
 
 	// If something needs to be added to the database from the watcher
 	// it should use this channel
-	watchChan chan string
+	watchMediaChan chan string
+
+	// Used to sync the library's Close with the watcher event handling goroutine
+	watchClosedChan chan bool
 
 	// Directory watcher
 	watch *fsnotify.Watcher
@@ -42,17 +45,15 @@ type LocalLibrary struct {
 
 // Closes the database connection. It is safe to call it as many times as you want.
 func (lib *LocalLibrary) Close() {
+
+	lib.stopWatcher()
+
 	if lib.db != nil {
 		lib.WaitScan()
 		lib.db.Close()
 		lib.db = nil
 	}
 
-	if lib.watch != nil {
-		lib.watch.Close()
-		lib.watch = nil
-		close(lib.watchChan)
-	}
 }
 
 func (lib *LocalLibrary) AddLibraryPath(path string) {
@@ -186,23 +187,23 @@ func (lib *LocalLibrary) Scan() {
 	start := time.Now()
 	mediaChan := make(chan string, 100)
 
-	lib.dbWait.Add(1)
-	go lib.databaseWriter(mediaChan, &lib.dbWait)
+	lib.scanWG.Add(1)
+	go lib.databaseWriter(mediaChan, &lib.scanWG)
 
 	lib.initializeWatcher()
 
 	for _, path := range lib.paths {
-		lib.walkWait.Add(1)
+		lib.walkWG.Add(1)
 		go lib.scanPath(path, mediaChan)
 	}
 
-	lib.dbWait.Add(1)
+	lib.scanWG.Add(1)
 	go func() {
 		defer func() {
 			log.Printf("Walking took %s", time.Since(start))
-			lib.dbWait.Done()
+			lib.scanWG.Done()
 		}()
-		lib.walkWait.Wait()
+		lib.walkWG.Wait()
 		close(mediaChan)
 	}()
 
@@ -214,7 +215,7 @@ func (lib *LocalLibrary) Scan() {
 
 // Blocks the current goroutine until the scan has been finished
 func (lib *LocalLibrary) WaitScan() {
-	lib.dbWait.Wait()
+	lib.scanWG.Wait()
 }
 
 // Creates the directory watcher if none was created before. On failure logs the
@@ -232,34 +233,55 @@ func (lib *LocalLibrary) initializeWatcher() {
 		return
 	}
 	lib.watch = newWatcher
-	lib.watchChan = make(chan string, 100)
+	lib.watchMediaChan = make(chan string, 100)
+	lib.watchClosedChan = make(chan bool)
 
-	go lib.databaseWriter(lib.watchChan, nil)
+	go lib.databaseWriter(lib.watchMediaChan, nil)
 
-	go func() {
-		// To make sure we will not write in the database at the same time as the
-		// scanning goroutines we will wait them to end.
-		lib.WaitScan()
+	go lib.watchEventRoutine()
+}
 
-		if lib.watch == nil {
+// Stops the filesystem watching and all supporing it goroutines.
+func (lib *LocalLibrary) stopWatcher() {
+	if lib.watch != nil {
+		lib.watchClosedChan <- true
+		lib.watch.Close()
+		lib.watch = nil
+		close(lib.watchMediaChan)
+		close(lib.watchClosedChan)
+	}
+}
+
+// This function is resposible for selecting the watcher events
+func (lib *LocalLibrary) watchEventRoutine() {
+
+	// To make sure we will not write in the database at the same time as the
+	// scanning goroutines we will wait them to end.
+	lib.WaitScan()
+	defer func() {
+		log.Println("Directory watcher event receiver stopped.")
+	}()
+
+	if lib.watch == nil {
+		return
+	}
+
+	for {
+		select {
+		case ev := <-lib.watch.Event:
+			if ev == nil {
+				return
+			}
+			lib.handleWatchEvent(ev)
+		case err := <-lib.watch.Error:
+			if err == nil {
+				return
+			}
+			log.Println("Directory watcher error:", err)
+		case <-lib.watchClosedChan:
 			return
 		}
-
-		for {
-			select {
-			case ev := <-lib.watch.Event:
-				if ev == nil {
-					return
-				}
-				lib.handleWatchEvent(ev)
-			case err := <-lib.watch.Error:
-				if err == nil {
-					return
-				}
-				log.Println("Directory watcher error:", err)
-			}
-		}
-	}()
+	}
 }
 
 // Deals with the watcher events.
@@ -270,7 +292,7 @@ func (lib *LocalLibrary) initializeWatcher() {
 //  * modfied files should be updated in the database
 //  * renamed ...
 func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
-	log.Println("Watch event:", event)
+	// log.Println("Watch event:", event)
 
 	st, stErr := os.Stat(event.Name)
 
@@ -281,14 +303,14 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 
 	if event.IsCreate() && st.IsDir() {
 		lib.watch.Watch(event.Name)
-		lib.walkWait.Add(1)
-		go lib.scanPath(event.Name, lib.watchChan)
+		lib.walkWG.Add(1)
+		go lib.scanPath(event.Name, lib.watchMediaChan)
 		return
 	}
 
 	if event.IsCreate() && !st.IsDir() {
 		if lib.isSupportedFormat(event.Name) {
-			lib.watchChan <- event.Name
+			lib.watchMediaChan <- event.Name
 		}
 		return
 	}
@@ -296,7 +318,7 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 	if event.IsModify() && !st.IsDir() {
 		if lib.isSupportedFormat(event.Name) {
 			lib.removeFile(event.Name)
-			lib.watchChan <- event.Name
+			lib.watchMediaChan <- event.Name
 		}
 		return
 	}
@@ -304,9 +326,10 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 	if event.IsDelete() || event.IsRename() {
 		//!TODO: remove files from the database if the removed or renamed was
 		// a directory.
-		lib.watch.RemoveWatch(event.Name)
 		if lib.isSupportedFormat(event.Name) {
+			// This is a file
 			lib.removeFile(event.Name)
+			return
 		}
 		return
 	}
@@ -314,9 +337,16 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 
 // Removes the file from the library. That means finding it in the database and
 // removing it from there.
+// filePath argument should be absolute path.
 func (lib *LocalLibrary) removeFile(filePath string) {
-	//!TODO: implement this
-	log.Printf("Dummy removing `%s` from library\n", filePath)
+	_, err := lib.db.Exec(`
+		DELETE FROM tracks
+		WHERE fs_path = ?
+	`, filePath)
+
+	if err != nil {
+		log.Printf("Error removing %s: %s\n", filePath, err.Error())
+	}
 }
 
 // Reads from the media channel and saves into the database every file
@@ -339,7 +369,7 @@ func (lib *LocalLibrary) scanPath(scannedPath string, media chan<- string) {
 
 	defer func() {
 		log.Printf("Walking %s took %s", scannedPath, time.Since(start))
-		lib.walkWait.Done()
+		lib.walkWG.Done()
 	}()
 
 	walkFunc := func(path string, info os.FileInfo, err error) error {
@@ -354,7 +384,7 @@ func (lib *LocalLibrary) scanPath(scannedPath string, media chan<- string) {
 		}
 
 		if lib.watch != nil && info.IsDir() {
-			log.Printf("Adding watch for %s\n", path)
+			//log.Printf("Adding watch for %s\n", path)
 			lib.watch.Watch(path)
 		}
 
@@ -405,7 +435,7 @@ func (lib *LocalLibrary) AddMedia(filename string) error {
 	file, err := taglib.Read(filename)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("Taglib error for %s: %s", filename, err.Error())
 	}
 
 	defer file.Close()

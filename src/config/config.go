@@ -8,6 +8,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -82,16 +83,18 @@ func (cfg *Config) FindAndParse() error {
 		}
 	}
 
-	err := cfg.parse(cfg.DefaultConfigPath())
+	defaultPath := cfg.DefaultConfigPath()
+	err := cfg.parse(defaultPath)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("Parsing %s failed: %s", defaultPath, err.Error())
 	}
 
-	defaultConfig, err := ioutil.ReadFile(cfg.UserConfigPath())
+	userPath := cfg.UserConfigPath()
+	defaultConfig, err := ioutil.ReadFile(userPath)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("Parsing %s failed: %s", userPath, err.Error())
 	}
 
 	return cfg.mergeJSON(defaultConfig)

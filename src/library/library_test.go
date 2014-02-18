@@ -5,6 +5,7 @@ package library
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,6 +16,11 @@ import (
 
 	"github.com/ironsmile/httpms/src/helpers"
 )
+
+func init() {
+	devnull, _ := os.Create(os.DevNull)
+	log.SetOutput(devnull)
+}
 
 func getLibrary(t *testing.T, dbFile string) *LocalLibrary {
 
@@ -401,7 +407,7 @@ func TestSQLInjections(t *testing.T) {
 }
 
 func TestGetAlbumFiles(t *testing.T) {
-	lib := getScannedLibrary(t, "/tmp/test-sql-injections.db")
+	lib := getScannedLibrary(t, "/tmp/test-album-download.db")
 	defer lib.Truncate()
 
 	artistID, _ := lib.GetArtistID("Artist Testoff")
@@ -438,4 +444,271 @@ func TestGetAlbumFiles(t *testing.T) {
 			t.Errorf("Track `%s` was not among the results", trackName)
 		}
 	}
+}
+
+func TestRemoveFileFunction(t *testing.T) {
+	lib := getScannedLibrary(t, "/tmp/test-moving-files.db")
+	defer lib.Truncate()
+
+	found := lib.Search("Another One")
+
+	if len(found) != 1 {
+		t.Fatalf(`Expected searching for 'Another One' to return one `+
+			`result but they were %d`, len(found))
+	}
+
+	fs_path := lib.GetFilePath(found[0].ID)
+
+	lib.removeFile(fs_path)
+
+	found = lib.Search("Another One")
+
+	if len(found) != 0 {
+		t.Error(`Did not expect to find Another One but it was there.`)
+	}
+}
+
+func checkAddedSong(lib *LocalLibrary, t *testing.T) {
+	found := lib.Search("Added Song")
+
+	if len(found) != 1 {
+		t.Fatalf("Expected one result, got %d for Added Song", len(found))
+	}
+
+	track := found[0]
+
+	if track.Album != "Unexpected Album" {
+		t.Errorf("Wrong track album: %s", track.Album)
+	}
+
+	if track.Artist != "New Artist" {
+		t.Errorf("Wrong track artist: %s", track.Artist)
+	}
+
+	if track.Title != "Added Song" {
+		t.Errorf("Wrong track title: %s", track.Title)
+	}
+
+	if track.TrackNumber != 1 {
+		t.Errorf("Wrong track number: %d", track.TrackNumber)
+	}
+}
+
+func TestAddingNewFile(t *testing.T) {
+	lib := getScannedLibrary(t, "/tmp/test-new-files.db")
+	defer lib.Truncate()
+	projRoot, _ := helpers.ProjectRoot()
+	testFiles := filepath.Join(projRoot, "test_files")
+
+	testMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
+	newFile := filepath.Join(testFiles, "library", "folder_one", "test_file_added.mp3")
+
+	if err := helpers.Copy(testMp3, newFile); err != nil {
+		t.Fatalf("Copying file to library faild: %s", err.Error())
+	}
+
+	defer os.Remove(newFile)
+	time.Sleep(10 * time.Millisecond)
+
+	checkAddedSong(lib, t)
+}
+
+func TestMovingFileIntoLibrary(t *testing.T) {
+	lib := getScannedLibrary(t, "/tmp/test-moving-files.db")
+	defer lib.Truncate()
+	projRoot, _ := helpers.ProjectRoot()
+	testFiles := filepath.Join(projRoot, "test_files")
+
+	testMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
+	toBeMoved := filepath.Join(testFiles, "more_mp3s", "test_file_moved.mp3")
+	newFile := filepath.Join(testFiles, "library", "test_file_added.mp3")
+
+	if err := helpers.Copy(testMp3, toBeMoved); err != nil {
+		t.Fatalf("Copying file to library faild: %s", err.Error())
+	}
+
+	if err := os.Rename(toBeMoved, newFile); err != nil {
+		os.Remove(toBeMoved)
+		t.Fatalf("Was not able to move new file into library: %s", err.Error())
+	}
+
+	defer os.Remove(newFile)
+	time.Sleep(10 * time.Millisecond)
+
+	checkAddedSong(lib, t)
+}
+
+func TestAddingNonRelatedFile(t *testing.T) {
+	lib := getScannedLibrary(t, "/tmp/test-adding-nonrelated-files.db")
+	defer lib.Truncate()
+	projRoot, _ := helpers.ProjectRoot()
+	testFiles := filepath.Join(projRoot, "test_files")
+	newFile := filepath.Join(testFiles, "library", "not_related")
+
+	testLibFiles := func() {
+		results := lib.Search("")
+		if len(results) != 3 {
+			t.Errorf("Expected 3 files in the library but found %d", len(results))
+		}
+	}
+
+	fh, err := os.Create(newFile)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fh.WriteString("Some contents")
+	fh.Close()
+
+	time.Sleep(10 * time.Millisecond)
+	testLibFiles()
+
+	os.Remove(newFile)
+	time.Sleep(10 * time.Millisecond)
+	testLibFiles()
+
+}
+
+func TestRemovingFile(t *testing.T) {
+	projRoot, _ := helpers.ProjectRoot()
+	testFiles := filepath.Join(projRoot, "test_files")
+
+	testMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
+	newFile := filepath.Join(testFiles, "library", "test_file_added.mp3")
+
+	if err := helpers.Copy(testMp3, newFile); err != nil {
+		t.Fatalf("Copying file to library faild: %s", err.Error())
+	}
+
+	lib := getScannedLibrary(t, "/tmp/test-removing-files.db")
+	defer lib.Truncate()
+
+	results := lib.Search("")
+
+	if len(results) != 4 {
+		t.Errorf("Expected 4 files in the result set but found %d", len(results))
+	}
+
+	if err := os.Remove(newFile); err != nil {
+		t.Error(err)
+	}
+
+	time.Sleep(10 * time.Millisecond)
+
+	results = lib.Search("")
+	if len(results) != 3 {
+		t.Errorf("Expected 3 files in the result set but found %d", len(results))
+	}
+}
+
+func TestAddingAndRemovingDirectory(t *testing.T) {
+	lib := getScannedLibrary(t, "/tmp/test-moving-directory.db")
+	defer lib.Truncate()
+
+	projRoot, _ := helpers.ProjectRoot()
+	testFiles := filepath.Join(projRoot, "test_files")
+
+	testDir := filepath.Join(testFiles, "more_mp3s", "to_be_moved_directory")
+	movedDir := filepath.Join(testFiles, "library", "to_be_moved_directory")
+	srcTestMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
+	dstTestMp3 := filepath.Join(testFiles, "more_mp3s", "to_be_moved_directory",
+		"test_file_added.mp3")
+
+	if err := os.Mkdir(testDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	defer os.RemoveAll(testDir)
+
+	if err := helpers.Copy(srcTestMp3, dstTestMp3); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Rename(testDir, movedDir); err != nil {
+		t.Fatal(err)
+	}
+
+	time.Sleep(10 * time.Millisecond)
+
+	checkAddedSong(lib, t)
+
+	if err := os.RemoveAll(movedDir); err != nil {
+		t.Error(err)
+	}
+
+	results := lib.Search("")
+
+	if len(results) != 3 {
+		t.Errorf("Expected 3 songs but found %d", len(results))
+	}
+
+}
+
+func TestMovingDirectory(t *testing.T) {
+	projRoot, _ := helpers.ProjectRoot()
+	testFiles := filepath.Join(projRoot, "test_files")
+
+	testDir := filepath.Join(testFiles, "more_mp3s", "to_be_moved_directory")
+	movedDir := filepath.Join(testFiles, "library", "to_be_moved_directory")
+	secondPlace := filepath.Join(testFiles, "library", "second_place")
+	srcTestMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
+	dstTestMp3 := filepath.Join(testFiles, "more_mp3s", "to_be_moved_directory",
+		"test_file_added.mp3")
+
+	if err := os.Mkdir(testDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	defer os.RemoveAll(testDir)
+
+	if err := helpers.Copy(srcTestMp3, dstTestMp3); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Rename(testDir, movedDir); err != nil {
+		t.Fatal(err)
+	} else {
+		defer os.RemoveAll(movedDir)
+	}
+
+	lib := getScannedLibrary(t, "/tmp/test-moving-inner-directory.db")
+	defer lib.Truncate()
+
+	checkAddedSong(lib, t)
+
+	if err := os.Rename(movedDir, secondPlace); err != nil {
+		t.Error(err)
+	} else {
+		defer os.RemoveAll(secondPlace)
+	}
+
+	time.Sleep(10 * time.Millisecond)
+
+	checkAddedSong(lib, t)
+
+	found := lib.Search("")
+
+	if len(found) != 4 {
+		t.Errorf("Expected to find 4 tracks but found %s", len(found))
+	}
+
+	found = lib.Search("Added Song")
+
+	if len(found) != 1 {
+		t.Fatalf("Did not find exactly 'Added Song'. Found %d files", len(found))
+	}
+
+	foundPath := lib.GetFilePath(found[0].ID)
+	expectedPath := filepath.Join(secondPlace, "test_file_added.mp3")
+
+	if _, err := os.Stat(expectedPath); err != nil {
+		t.Errorf("File %s was not found: %s", expectedPath, err.Error())
+	}
+
+	if foundPath != expectedPath {
+		t.Errorf("File is in %s according library. But it is actually in %s",
+			foundPath, expectedPath)
+	}
+
 }
