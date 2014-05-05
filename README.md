@@ -121,10 +121,4 @@ forking the ```notify``` library stops working along with the goroutine schedule
 Known Issues
 ======
 
-* Non-ASCII searches are case sensitive. 
-
-
-Roadmap
-======
-
-* Directory watch for your libraries. HTTPMS would **not** need a restart to index new files in the library paths. At the moment it does.
+* Non-ASCII searches are case sensitive.
