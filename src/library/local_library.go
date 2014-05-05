@@ -294,6 +294,11 @@ func (lib *LocalLibrary) watchEventRoutine() {
 func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 	// log.Println("Watch event:", event)
 
+	if event.IsAttrib() {
+		// The event was just an attribute change
+		return
+	}
+
 	st, stErr := os.Stat(event.Name)
 
 	if stErr != nil && !event.IsRename() && !event.IsDelete() {
@@ -324,11 +329,14 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 	}
 
 	if event.IsDelete() || event.IsRename() {
-		//!TODO: remove files from the database if the removed or renamed was
-		// a directory.
 		if lib.isSupportedFormat(event.Name) {
 			// This is a file
 			lib.removeFile(event.Name)
+			return
+		} else {
+			// It was a directory... probably
+			lib.watch.RemoveWatch(event.Name)
+			lib.removeDirectory(event.Name)
 			return
 		}
 		return
@@ -349,6 +357,22 @@ func (lib *LocalLibrary) removeFile(filePath string) {
 	}
 }
 
+// Removes files which belong in this directory from the library.
+func (lib *LocalLibrary) removeDirectory(dirPath string) {
+
+	// Adding slash at the end to make sure we are always removing directories
+	deleteMatch := fmt.Sprintf("%s/%%", strings.TrimRight(dirPath, "/"))
+
+	_, err := lib.db.Exec(`
+		DELETE FROM tracks
+		WHERE fs_path LIKE ?
+	`, deleteMatch)
+
+	if err != nil {
+		log.Printf("Error removing %s: %s\n", dirPath, err.Error())
+	}
+}
+
 // Reads from the media channel and saves into the database every file
 // received.
 func (lib *LocalLibrary) databaseWriter(media <-chan string, wg *sync.WaitGroup) {
@@ -361,7 +385,7 @@ func (lib *LocalLibrary) databaseWriter(media <-chan string, wg *sync.WaitGroup)
 }
 
 // This is the goroutine which actually scans a library path.
-// For now it ignores everything but ".mp3" and ".oga" files. It is so
+// For now it ignores everything but the list of supported files. It is so
 // because jplayer cannot play anything else. Sends every suitable
 // file into the media channel
 func (lib *LocalLibrary) scanPath(scannedPath string, media chan<- string) {
@@ -398,6 +422,8 @@ func (lib *LocalLibrary) scanPath(scannedPath string, media chan<- string) {
 	}
 }
 
+// Determines if the file will be saved to the database. Only media files which
+// jplayer can use are saved.
 func (lib *LocalLibrary) isSupportedFormat(path string) bool {
 	supportedFormats := []string{
 		".mp3",
@@ -439,6 +465,9 @@ func (lib *LocalLibrary) AddMedia(filename string) error {
 	}
 
 	defer file.Close()
+
+	// log.Printf("New Song:\nArtist: %s\nAlbum: %s\nTitle: %s\nTrack: %d\n",
+	// 	file.Artist(), file.Album(), file.Title(), int(file.Track()))
 
 	artistID, err := lib.setArtistID(file.Artist())
 

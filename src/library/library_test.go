@@ -481,7 +481,7 @@ func checkAddedSong(lib *LocalLibrary, t *testing.T) {
 		t.Errorf("Wrong track album: %s", track.Album)
 	}
 
-	if track.Artist != "New Artist" {
+	if track.Artist != "New Artist 2" {
 		t.Errorf("Wrong track artist: %s", track.Artist)
 	}
 
@@ -637,12 +637,13 @@ func TestAddingAndRemovingDirectory(t *testing.T) {
 		t.Error(err)
 	}
 
+	time.Sleep(10 * time.Millisecond)
+
 	results := lib.Search("")
 
 	if len(results) != 3 {
 		t.Errorf("Expected 3 songs but found %d", len(results))
 	}
-
 }
 
 func TestMovingDirectory(t *testing.T) {
