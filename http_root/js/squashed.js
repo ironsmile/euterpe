@@ -340,9 +340,12 @@ $(document).ready(function(){
     // Show song title when one is playing
     $("#jquery_jplayer_N").bind($.jPlayer.event.play, function(event) {
         var media = event.jPlayer.status.media;
+
         if (!media) {
             return;
         };
+
+        _currently_playing = media.media_id;
 
         document.title = media.title + ' by ' + media.artist + ' | HTTPMS';
     });
@@ -377,6 +380,7 @@ $(document).ready(function(){
     restore_last_saved_search();
 });
 
+_currently_playing = null;
 _ajax_query = null;
 
 function search_database (query, opts) {
@@ -466,20 +470,33 @@ function load_playlist (songs) {
         return 1;
     });
 
+    var selected_index = null;
     var new_playlist = []
     for (var i = 0; i < songs.length; i++) {
+        var song_url = "/file/"+songs[i].id;
+
         new_playlist.push({
             title: songs[i].title,
             artist: songs[i].artist,
             album: songs[i].album,
-            mp3: "/file/"+songs[i].id,
+            mp3: song_url,
             free: true,
             number: songs[i].track,
-            album_id: songs[i].album_id
+            album_id: songs[i].album_id,
+            media_id: songs[i].id
         });
+
+        if (_currently_playing == songs[i].id) {
+            selected_index = i;
+        }
     };
 
     pagePlaylist.setPlaylist(new_playlist);
+
+    if (selected_index) {
+        pagePlaylist._highlight(selected_index);
+        pagePlaylist.current = selected_index;
+    };
 }
 
 found_songs = [];
