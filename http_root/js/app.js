@@ -94,7 +94,8 @@ $(document).ready(function(){
                         listItem += " | ";
                     }
                     listItem += "<a class='" + options.freeItemClass;
-                    listItem += "' href='" + value + "'>" + property + "</a>";
+                    listItem += "' href='" + value + "' title='download media' >" +
+                                    property + "</a>";
                 }
             });
             listItem += ")</span>";
@@ -102,9 +103,8 @@ $(document).ready(function(){
 
         if (media.album) {
             listItem += " <span class='" + options.freeGroupClass + "'>" +
-                    "<a href='/album/"+media.album_id+"' target='_blank'>" +
-                     media.album +
-                    "</a></span>";
+                    "<a href='/album/"+media.album_id+"' title='download album' "+
+                    "target='_blank'>" +  media.album + "</a></span>";
         }
         
 
@@ -147,12 +147,17 @@ $(document).ready(function(){
 
     var search_with_timeout = function () {
         var search_query = $('#search').val();
+
+        if (_search_timeout) {
+            clearTimeout(_search_timeout);
+        };
+
         if (search_query == _last_search) {
            return;
         }
 
-        if (_search_timeout) {
-            clearTimeout(_search_timeout);
+        if (search_query.length < 1) {
+            return;
         };
 
         _search_timeout = setTimeout(function() {
@@ -174,6 +179,24 @@ $(document).ready(function(){
         search_database(search_query);
     };
 
+    // Show song title when one is playing
+    $("#jquery_jplayer_N").bind($.jPlayer.event.play, function(event) {
+        var media = event.jPlayer.status.media;
+        if (!media) {
+            return;
+        };
+
+        document.title = media.title + ' by ' + media.artist + ' | HTTPMS';
+    });
+
+    // Restores the normal title when nothing is played
+    var restore_title = function(event) {
+        document.title = 'HTTPMS';
+    };
+
+    $("#jquery_jplayer_N").bind($.jPlayer.event.ended, restore_title);
+    $("#jquery_jplayer_N").bind($.jPlayer.event.pause, restore_title);
+
     // Used when typing in the search area - it should use timeout since more
     // typing can follow immediately
     $('#search').keyup(search_with_timeout);
@@ -183,34 +206,84 @@ $(document).ready(function(){
     $('#search').keypress(search_immediately_on_enter);
 
     $('#album').change(function () {
+        save_selected_album();
         filter_playlist();
     });
 
     $('#artist').change(function () {
+        save_selected_artist();
         load_filters(found_songs, {selected_artist: $('#artist').val()});
         filter_playlist();
     });
 
-    search_database($('#search').val());
+    restore_last_saved_search();
 });
 
 _ajax_query = null;
 
-function search_database (query) {
+function search_database (query, opts) {
     if (_ajax_query) {
         _ajax_query.abort();
     };
+
+    opts = opts || {};
+    if (opts.async == undefined) {
+        opts.async = true;    
+    };
+    
+
+    save_search_query(query);
 
     _last_search = query;
 
     _ajax_query = $.ajax({
         type: "GET",
+        async: opts.async,
         url: encodeURI("/search/" + query),
         success: function (msg) {
             load_filters(msg);
-            load_playlist(msg);
+            filter_playlist();
         }
     });
+}
+
+// Saves this search in the localStorage so that it can be used on the next
+// refresh of the page.
+function save_search_query (query) {
+    if (!localStorage) {
+        return;
+    };
+    localStorage.last_search = query;
+}
+
+// Saves the last selected album in the localStorage
+function save_selected_album () {
+    if (!localStorage) {
+        return;
+    };
+    localStorage.last_album = $('#album').val();
+}
+
+// Saves the last selected artist in the localStorage
+function save_selected_artist () {
+    if (!localStorage) {
+        return;
+    };
+    localStorage.last_artist = $('#artist').val();
+}
+
+// Restores the last search from the local storage. This should be used on startup.
+// It was uses the laste selected artist and album and then filters the playlist
+function restore_last_saved_search () {
+    if (!localStorage) {
+        return;
+    };
+    if (!localStorage.last_search || localStorage.last_search.length < 1) {
+        return;
+    };
+
+    $('#search').val(localStorage.last_search);
+    search_database(localStorage.last_search);
 }
 
 function load_playlist (songs) {
@@ -260,6 +333,16 @@ function load_filters(songs, opts) {
     opts.selected_artist = opts.selected_artist || false;
     opts.selected_album = opts.selected_album || false;
 
+    if (opts.selected_artist == false && localStorage.last_artist &&
+                                            localStorage.last_artist.length >= 1) {
+        opts.selected_artist = localStorage.last_artist;
+    };
+
+    if (opts.selected_album == false && localStorage.last_album &&
+                                            localStorage.last_album.length >= 1) {
+        opts.selected_album = localStorage.last_album;
+    };
+
     var artist_elem = $('#artist');
     var album_elem = $('#album');
 
@@ -299,24 +382,42 @@ function load_filters(songs, opts) {
     all_artists_list.sort(alpha_sort)
     all_albums_list.sort(alpha_sort)
     
+    var really_selected_artist = false;
     for (var i = 0; i < all_artists_list.length; i++) {
         var artist = all_artists_list[i];
         var option = $('<option></option>');
         option.html(artist).val(artist);
         if (opts.selected_artist && opts.selected_artist == artist) {
+            really_selected_artist = artist;
             option.attr("selected", 1);
         };
         artist_elem.append(option);
     };
     
+    var really_selected_album = false;
     for (var i = 0; i < all_albums_list.length; i++) {
         var album = all_albums_list[i];
         var option = $('<option></option>');
         option.html(album).val(album);
         if (opts.selected_album && opts.selected_album == album) {
+            really_selected_album = album;
             option.attr("selected", 1);
         };
         album_elem.append(option);
+    };
+
+    if (localStorage.last_artist && localStorage.last_artist.length >= 1 && 
+        really_selected_artist != localStorage.last_artist)
+    {
+        artist_elem.val('');
+        delete localStorage.last_artist;
+    };
+
+    if (localStorage.last_album && localStorage.last_album.length >= 1 &&
+        really_selected_album != localStorage.last_album)
+    {
+        album_elem.val('');
+        delete localStorage.last_album;
     };
 }
 
