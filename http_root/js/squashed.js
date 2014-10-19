@@ -451,23 +451,11 @@ function restore_last_saved_search () {
 function load_playlist (songs) {
 
     songs.sort(function (a, b) {
-        if (a.track == b.track) {
-            return 0;
-        };
-        if (a.track < b.track) {
-            return -1;
-        };
-        return 1;
-    });
-
-    songs.sort(function (a, b) {
         if (a.album == b.album) {
-            return 0;
-        };
-        if (a.album < b.album) {
-            return -1;
-        };
-        return 1;
+            return a.track < b.track ? -1 : 1;
+        } else {
+            return a.album < b.album ? -1 : 1;
+        }
     });
 
     var selected_index = null;
