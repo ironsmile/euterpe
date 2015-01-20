@@ -28,7 +28,7 @@ For the moment I do not plan to distribute it any other way.
 Install
 ======
 
-1. Run ```go get https://github.com/ironsmile/httpms```
+1. Run ```go get github.com/ironsmile/httpms```
 
 2. Start it with ```httpms```
 
