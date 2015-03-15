@@ -61,7 +61,7 @@ func (srv *Server) serveGoroutine() {
 
 	var handler http.Handler
 
-	handler = mux
+	handler = NewTerryHandler(mux)
 
 	if srv.cfg.Gzip {
 		log.Println("Adding gzip handler")
