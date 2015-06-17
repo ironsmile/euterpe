@@ -3,7 +3,7 @@
 HTTP Media Server
 ======
 
-A way to listen your music library everywhere. Once set up you won't need anything but a browser.
+A way to listen your music library from everywhere. Once set up you won't need anything but a browser.
 HTTPMS will let you browse through and listen to your music over HTTP.
 Up until now I've had a really bad time listening to my music which is stored back home.
 I would create a mount over ftp, sshfs or something similar and point the local player to
