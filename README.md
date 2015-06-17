@@ -12,6 +12,17 @@ in a network mounted directory!
 
 No more!
 
+Web UI
+======
+
+Have a taste of how its web interface looks like
+
+![HTTPMS Screenshot](images/screenshot.png)
+
+It comes with a custom [jPlayer](https://github.com/happyworm/jPlayer) which can handle playlists with thousands of songs.
+
+I feel obliged to say that the music on the screenshot is written and performed by my close friend [Velislav Ivanov](http://www.progarchives.com/artist.asp?id=4264).
+
 Requirements
 ======
 If you want to install it from source (from here) you will need:
@@ -116,6 +127,15 @@ Daemon
 HTTPMS comes with a separate daemonization binary. It is called ```httpms_daemon```. You can find it in the ```httpms_daemon``` directory. Separate binary is required since Go's standar libraries fail miserably if you fork the main process. As far as I can tell when
 forking the ```notify``` library stops working along with the goroutine scheduler. The goroutine scheduler may work from time to time but it is by no means stable after forking.
 **Note**: You should always use the PID recorded in the pidfile for stopping httpms. Even if you use httpms_daemon.
+
+
+Related Projects
+======
+
+You are not restricted to using the web UI. The server has a RESTful API which can easily be used from other clients. I will try to keep a list with all of the known clients here:
+
+* [httpms-android](https://github.com/ironsmile/httpms-android) is a Android client for HTTPMS
+* [httpms-rhythmbox](https://github.com/ironsmile/httpms-rhythmbox) is HTTPMS client plugin for Gnome's Rhythmbox
 
 
 Known Issues
