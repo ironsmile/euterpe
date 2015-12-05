@@ -20,8 +20,12 @@ import (
 )
 
 var (
+	// PidFile is populated by an command line argument. Will be a filesystem path.
+	// Nedomi will save its Process ID in this file.
 	PidFile string
-	Debug   bool
+
+	// Debug is populated by an command line argument.
+	Debug bool
 )
 
 func init() {
