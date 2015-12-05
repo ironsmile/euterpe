@@ -125,7 +125,22 @@ When started for the first time HTTPMS will create one for you. Here is an examp
     "libraries": [
         "/path/to/my/files",
         "/some/more/files/can/be/found/here"
-    ]
+    ],
+    
+    // Optional configuration on how to scan libraries. Note that this configuration
+    // is applied to each library separately.
+    "library_scan": {
+        // Will wait this mutch time before actually starting to scan a library.
+        // This might be useful when scanning is resource hungry operation and you
+        // want to postpone it on startup.
+        "initial_wait_duration": "1s",
+        
+        // With this option a "operation" is defined by this number of scanned files.
+        "files_per_operation": 1500,
+
+        // After each "operation", sleep this amount of time.
+        "sleep_after_operation": "15ms"
+    }
 }
 ```
 

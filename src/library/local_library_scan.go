@@ -60,6 +60,11 @@ func (lib *LocalLibrary) scanPath(scannedPath string, media chan<- string) {
 		lib.walkWG.Done()
 	}()
 
+	filesPerOperation := lib.ScanConfig.FilesPerOperation
+	sleepPerOperation := lib.ScanConfig.SleepPerOperation
+
+	var scannedFiles int64
+
 	walkFunc := func(path string, info os.FileInfo, err error) error {
 
 		if err != nil {
@@ -76,7 +81,27 @@ func (lib *LocalLibrary) scanPath(scannedPath string, media chan<- string) {
 			lib.watch.Watch(path)
 		}
 
+		scannedFiles += 1
+
+		if !LibraryFastScan && filesPerOperation > 0 &&
+			scannedFiles >= filesPerOperation && sleepPerOperation > 0 {
+
+			log.Printf("Scan limit of %d files reached for [%s], sleeping for %s",
+				filesPerOperation, scannedPath, sleepPerOperation)
+
+			time.Sleep(sleepPerOperation)
+			scannedFiles = 0
+		}
+
 		return nil
+	}
+
+	initialWait := lib.ScanConfig.InitialWait
+
+	if !LibraryFastScan && initialWait > 0 {
+		log.Printf("Pausing initial library [%s] scan for %s as configured",
+			scannedPath, initialWait)
+		time.Sleep(initialWait)
 	}
 
 	err := filepath.Walk(scannedPath, walkFunc)

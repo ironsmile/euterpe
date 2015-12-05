@@ -18,5 +18,11 @@
     "libraries": [
         "/path/to/my/files",
         "/some/more/files/can/be/found/here"
-    ]
+    ],
+
+    "library_scan": {
+        "files_per_operation": 1500,
+        "sleep_after_operation": "15ms",
+        "initial_wait_duration": "1s"
+    }
 }

@@ -3,6 +3,7 @@ package library
 import (
 	"database/sql"
 	"errors"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -15,6 +16,7 @@ import (
 	taglib "github.com/landr0id/go-taglib"
 	_ "github.com/mattn/go-sqlite3"
 
+	"github.com/ironsmile/httpms/src/config"
 	"github.com/ironsmile/httpms/src/helpers"
 )
 
@@ -23,8 +25,29 @@ import (
 // one of them will be saved in the library.
 const UNKNOWN_LABEL = "Unknown"
 
+var (
+	// LibraryFastScan is a flag, populated by the -fast-library-scan argument.
+	//
+	// When `false` (the default), scanning the local library will honour the
+	// configuration for occasional sleeping while scanning the file system.
+	//
+	// When `true`, scanning will be as fast as possible. This may generate high
+	// IO load for the duration of the scan.
+	LibraryFastScan bool
+)
+
+func init() {
+	flag.BoolVar(&LibraryFastScan, "fast-library-scan", false, "Do not honour"+
+		" the configuration set in 'library_scan'. With this flag,"+
+		" scanning will be done as fast as possible. This may be useful when"+
+		" running the daemon for the fists time with big libraries.")
+}
+
 // Implements the Library interface. Will represent files found on the local storage
 type LocalLibrary struct {
+	// The configuration for how to scan the libraries.
+	ScanConfig config.ScanSection
+
 	database string         // The location of the library's database
 	paths    []string       // FS locations which contain the library's media files
 	db       *sql.DB        // Database handler

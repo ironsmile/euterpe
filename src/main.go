@@ -83,6 +83,8 @@ func getLibrary(userPath string, cfg config.Config) (library.Library, error) {
 		return nil, err
 	}
 
+	lib.ScanConfig = cfg.LibraryScan
+
 	err = lib.Initialize()
 
 	if err != nil {
