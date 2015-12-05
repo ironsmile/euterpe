@@ -339,7 +339,6 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 			lib.removeDirectory(event.Name)
 			return
 		}
-		return
 	}
 }
 
@@ -440,7 +439,6 @@ func (lib *LocalLibrary) isSupportedFormat(path string) bool {
 			continue
 		}
 		return true
-		break
 	}
 	return false
 }

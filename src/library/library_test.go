@@ -33,13 +33,13 @@ func getLibrary(t *testing.T, dbFile string) *LocalLibrary {
 	err = lib.Initialize()
 
 	if err != nil {
-		t.Fatalf("Initializing library: %s", err.Error())
+		t.Fatalf("Initializing library: %s", err)
 	}
 
 	projRoot, err := helpers.ProjectRoot()
 
 	if err != nil {
-		t.Fatalf("Was not able to find test_files directory.", err.Error())
+		t.Fatalf("Was not able to find test_files directory: %s", err)
 	}
 
 	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
@@ -54,7 +54,7 @@ func getPathedLibrary(t *testing.T, dbFile string) *LocalLibrary {
 	projRoot, err := helpers.ProjectRoot()
 
 	if err != nil {
-		t.Fatalf("Was not able to find test_files directory.", err.Error())
+		t.Fatalf("Was not able to find test_files directory: %s", err)
 	}
 
 	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
@@ -62,13 +62,13 @@ func getPathedLibrary(t *testing.T, dbFile string) *LocalLibrary {
 	lib, err := NewLocalLibrary(dbFile)
 
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf(err)
 	}
 
 	err = lib.Initialize()
 
 	if err != nil {
-		t.Fatalf("Initializing library: %s", err.Error())
+		t.Fatalf("Initializing library: %s", err)
 	}
 
 	lib.AddLibraryPath(testLibraryPath)
@@ -110,7 +110,7 @@ func TestInitialize(t *testing.T) {
 	lib, err := NewLocalLibrary("/tmp/test-init.db")
 
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf(err)
 	}
 
 	defer lib.Close()
@@ -118,7 +118,7 @@ func TestInitialize(t *testing.T) {
 	err = lib.Initialize()
 
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf(err)
 	}
 
 	defer lib.Truncate()
@@ -129,7 +129,7 @@ func TestInitialize(t *testing.T) {
 	st, err := os.Stat("/tmp/test-init.db")
 
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf(err)
 	}
 
 	if st.Size() < 1 {
@@ -138,7 +138,7 @@ func TestInitialize(t *testing.T) {
 
 	db, err := sql.Open("sqlite3", "/tmp/test-init.db")
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf(err)
 	}
 	defer db.Close()
 
@@ -147,7 +147,7 @@ func TestInitialize(t *testing.T) {
 	for _, table := range tables {
 		row, err := db.Query(fmt.Sprintf("SELECT count(id) as cnt FROM %s", table))
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatalf(err)
 		}
 		defer row.Close()
 	}
@@ -157,13 +157,13 @@ func TestTruncate(t *testing.T) {
 	lib, err := NewLocalLibrary("/tmp/test-truncate.db")
 
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf(err)
 	}
 
 	err = lib.Initialize()
 
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf(err)
 	}
 
 	lib.Truncate()
@@ -225,14 +225,14 @@ func TestAddigNewFiles(t *testing.T) {
 
 	db, err := sql.Open("sqlite3", "/tmp/test-new-files.db")
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf(err)
 	}
 	defer db.Close()
 
 	tracksCount := func() int {
 		rows, err := db.Query("SELECT count(id) as cnt FROM tracks")
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatalf(err)
 			return 0
 		}
 		defer rows.Close()
@@ -255,7 +255,7 @@ func TestAddigNewFiles(t *testing.T) {
 	projRoot, err := helpers.ProjectRoot()
 
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf(err)
 	}
 
 	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
@@ -272,7 +272,7 @@ func TestAddigNewFiles(t *testing.T) {
 	err = library.AddMedia(realFile)
 
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Errorf(err)
 	}
 
 	tracks = tracksCount()
@@ -307,7 +307,7 @@ func TestPreAddedFiles(t *testing.T) {
 	artistID, err := library.GetArtistID("Artist Testoff")
 
 	if err != nil {
-		t.Fatalf("Was not able to find Artist Testoff: %s", err.Error())
+		t.Fatalf("Was not able to find Artist Testoff: %s", err)
 	}
 
 	_, err = library.GetAlbumID("Album Of Not Being There", artistID)
@@ -319,7 +319,7 @@ func TestPreAddedFiles(t *testing.T) {
 	albumID, err := library.GetAlbumID("Album Of Tests", artistID)
 
 	if err != nil {
-		t.Fatalf("Was not able to find Album Of Tests: %d", err.Error())
+		t.Fatalf("Was not able to find Album Of Tests: %s", err)
 	}
 
 	_, err = library.GetTrackID("404 Not Found", artistID, albumID)
@@ -331,7 +331,7 @@ func TestPreAddedFiles(t *testing.T) {
 	_, err = library.GetTrackID("Another One", artistID, albumID)
 
 	if err != nil {
-		t.Fatalf("Was not able to find track Another One: %s", err.Error())
+		t.Fatalf("Was not able to find track Another One: %s", err)
 	}
 }
 
@@ -344,7 +344,7 @@ func TestGettingAFile(t *testing.T) {
 	trackID, err := library.GetTrackID("Another One", artistID, albumID)
 
 	if err != nil {
-		t.Fatalf("File not found: %S", err.Error())
+		t.Fatalf("File not found: %s", err)
 	}
 
 	filePath := library.GetFilePath(trackID)
@@ -504,7 +504,7 @@ func TestAddingNewFile(t *testing.T) {
 	newFile := filepath.Join(testFiles, "library", "folder_one", "test_file_added.mp3")
 
 	if err := helpers.Copy(testMp3, newFile); err != nil {
-		t.Fatalf("Copying file to library faild: %s", err.Error())
+		t.Fatalf("Copying file to library faild: %s", err)
 	}
 
 	defer os.Remove(newFile)
@@ -524,12 +524,12 @@ func TestMovingFileIntoLibrary(t *testing.T) {
 	newFile := filepath.Join(testFiles, "library", "test_file_added.mp3")
 
 	if err := helpers.Copy(testMp3, toBeMoved); err != nil {
-		t.Fatalf("Copying file to library faild: %s", err.Error())
+		t.Fatalf("Copying file to library faild: %s", err)
 	}
 
 	if err := os.Rename(toBeMoved, newFile); err != nil {
 		os.Remove(toBeMoved)
-		t.Fatalf("Was not able to move new file into library: %s", err.Error())
+		t.Fatalf("Was not able to move new file into library: %s", err)
 	}
 
 	defer os.Remove(newFile)
@@ -578,7 +578,7 @@ func TestRemovingFile(t *testing.T) {
 	newFile := filepath.Join(testFiles, "library", "test_file_added.mp3")
 
 	if err := helpers.Copy(testMp3, newFile); err != nil {
-		t.Fatalf("Copying file to library faild: %s", err.Error())
+		t.Fatalf("Copying file to library faild: %s", err)
 	}
 
 	lib := getScannedLibrary(t, "/tmp/test-removing-files.db")
@@ -691,7 +691,7 @@ func TestMovingDirectory(t *testing.T) {
 	found := lib.Search("")
 
 	if len(found) != 4 {
-		t.Errorf("Expected to find 4 tracks but found %s", len(found))
+		t.Errorf("Expected to find 4 tracks but found %d", len(found))
 	}
 
 	found = lib.Search("Added Song")
@@ -704,7 +704,7 @@ func TestMovingDirectory(t *testing.T) {
 	expectedPath := filepath.Join(secondPlace, "test_file_added.mp3")
 
 	if _, err := os.Stat(expectedPath); err != nil {
-		t.Errorf("File %s was not found: %s", expectedPath, err.Error())
+		t.Errorf("File %s was not found: %s", expectedPath, err)
 	}
 
 	if foundPath != expectedPath {

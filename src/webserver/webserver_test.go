@@ -51,7 +51,7 @@ func setUpServer() *Server {
 	projRoot, err := getProjectRoot()
 
 	if err != nil {
-		println(err.Error())
+		println(err)
 		os.Exit(1)
 	}
 
@@ -134,7 +134,7 @@ func TestStaticFilesServing(t *testing.T) {
 		resp, err := http.Get(url)
 
 		if err != nil {
-			t.Errorf(err.Error())
+			t.Errorf(err)
 		}
 
 		defer resp.Body.Close()
@@ -146,7 +146,7 @@ func TestStaticFilesServing(t *testing.T) {
 		body, err := ioutil.ReadAll(resp.Body)
 
 		if err != nil {
-			t.Errorf(err.Error())
+			t.Errorf(err)
 		}
 
 		if string(body) != expected {
@@ -195,7 +195,7 @@ func TestSSL(t *testing.T) {
 
 	projectRoot, err := getProjectRoot()
 	if err != nil {
-		t.Fatalf("Could not determine project path: %s", err.Error())
+		t.Fatalf("Could not determine project path: %s", err)
 	}
 	certDir := filepath.Join(projectRoot, "test_files", "ssl")
 
@@ -220,7 +220,7 @@ func TestSSL(t *testing.T) {
 	_, err = client.Get(fmt.Sprintf("https://127.0.0.1:%d", TestPort))
 
 	if err != nil {
-		t.Errorf("Error GETing a SSL url: %s", err.Error())
+		t.Errorf("Error GETing a SSL url: %s", err)
 	}
 }
 
@@ -230,7 +230,7 @@ func TestUserAuthentication(t *testing.T) {
 	projRoot, err := getProjectRoot()
 
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Errorf(err)
 	}
 
 	var wsCfg config.Config
@@ -249,7 +249,7 @@ func TestUserAuthentication(t *testing.T) {
 	resp, err := http.Get(url)
 
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Errorf(err)
 	}
 
 	defer resp.Body.Close()
@@ -264,7 +264,7 @@ func TestUserAuthentication(t *testing.T) {
 	resp, err = client.Do(req)
 
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Errorf(err)
 	}
 	defer resp.Body.Close()
 
@@ -277,7 +277,7 @@ func TestUserAuthentication(t *testing.T) {
 	resp, err = client.Do(req)
 
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Errorf(err)
 	}
 	defer resp.Body.Close()
 
@@ -449,7 +449,7 @@ func TestGzipEncoding(t *testing.T) {
 			resp, err := client.Do(req)
 
 			if err != nil {
-				t.Errorf(err.Error())
+				t.Errorf(err)
 			}
 			defer resp.Body.Close()
 
@@ -609,7 +609,7 @@ func TestAlbumHandlerZipFunction(t *testing.T) {
 	projRoot, err := helpers.ProjectRoot()
 
 	if err != nil {
-		t.Fatalf("Was not able to find test_files directory.", err.Error())
+		t.Fatalf("Was not able to find test_files directory: %s", err)
 	}
 
 	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
@@ -644,7 +644,7 @@ func TestAlbumHandlerZipFunction(t *testing.T) {
 
 		if err != nil {
 			t.Errorf("zipped file %s not found on file system: %s", zippedFile.Name,
-				err.Error())
+				err)
 			continue
 		}
 
