@@ -1,0 +1,21 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"path": "github.com/howeyc/fsnotify",
+			"revision": "9c5eb19c2a353a043651d008b630b2e738d13652",
+			"revisionTime": "2014-02-09T15:49:45-06:00"
+		},
+		{
+			"path": "github.com/landr0id/go-taglib",
+			"revision": "d0372eb3377139aa2d40c250a26e25bbd5e0f68d",
+			"revisionTime": "2013-09-16T22:40:24-07:00"
+		},
+		{
+			"path": "github.com/mattn/go-sqlite3",
+			"revision": "afb81456924a13f8a8653ac8a8b8d017e8ba37f0",
+			"revisionTime": "2013-12-05T15:55:55-08:00"
+		}
+	]
+}
