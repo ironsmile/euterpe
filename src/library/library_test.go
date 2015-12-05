@@ -62,7 +62,7 @@ func getPathedLibrary(t *testing.T, dbFile string) *LocalLibrary {
 	lib, err := NewLocalLibrary(dbFile)
 
 	if err != nil {
-		t.Fatalf(err)
+		t.Fatal(err)
 	}
 
 	err = lib.Initialize()
@@ -110,7 +110,7 @@ func TestInitialize(t *testing.T) {
 	lib, err := NewLocalLibrary("/tmp/test-init.db")
 
 	if err != nil {
-		t.Fatalf(err)
+		t.Fatal(err)
 	}
 
 	defer lib.Close()
@@ -118,7 +118,7 @@ func TestInitialize(t *testing.T) {
 	err = lib.Initialize()
 
 	if err != nil {
-		t.Fatalf(err)
+		t.Fatal(err)
 	}
 
 	defer lib.Truncate()
@@ -129,7 +129,7 @@ func TestInitialize(t *testing.T) {
 	st, err := os.Stat("/tmp/test-init.db")
 
 	if err != nil {
-		t.Fatalf(err)
+		t.Fatal(err)
 	}
 
 	if st.Size() < 1 {
@@ -138,7 +138,7 @@ func TestInitialize(t *testing.T) {
 
 	db, err := sql.Open("sqlite3", "/tmp/test-init.db")
 	if err != nil {
-		t.Fatalf(err)
+		t.Fatal(err)
 	}
 	defer db.Close()
 
@@ -147,7 +147,7 @@ func TestInitialize(t *testing.T) {
 	for _, table := range tables {
 		row, err := db.Query(fmt.Sprintf("SELECT count(id) as cnt FROM %s", table))
 		if err != nil {
-			t.Fatalf(err)
+			t.Fatal(err)
 		}
 		defer row.Close()
 	}
@@ -157,13 +157,13 @@ func TestTruncate(t *testing.T) {
 	lib, err := NewLocalLibrary("/tmp/test-truncate.db")
 
 	if err != nil {
-		t.Fatalf(err)
+		t.Fatal(err)
 	}
 
 	err = lib.Initialize()
 
 	if err != nil {
-		t.Fatalf(err)
+		t.Fatal(err)
 	}
 
 	lib.Truncate()
@@ -225,14 +225,14 @@ func TestAddigNewFiles(t *testing.T) {
 
 	db, err := sql.Open("sqlite3", "/tmp/test-new-files.db")
 	if err != nil {
-		t.Fatalf(err)
+		t.Fatal(err)
 	}
 	defer db.Close()
 
 	tracksCount := func() int {
 		rows, err := db.Query("SELECT count(id) as cnt FROM tracks")
 		if err != nil {
-			t.Fatalf(err)
+			t.Fatal(err)
 			return 0
 		}
 		defer rows.Close()
@@ -255,7 +255,7 @@ func TestAddigNewFiles(t *testing.T) {
 	projRoot, err := helpers.ProjectRoot()
 
 	if err != nil {
-		t.Fatalf(err)
+		t.Fatal(err)
 	}
 
 	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
@@ -272,7 +272,7 @@ func TestAddigNewFiles(t *testing.T) {
 	err = library.AddMedia(realFile)
 
 	if err != nil {
-		t.Errorf(err)
+		t.Error(err)
 	}
 
 	tracks = tracksCount()

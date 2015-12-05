@@ -134,7 +134,7 @@ func TestStaticFilesServing(t *testing.T) {
 		resp, err := http.Get(url)
 
 		if err != nil {
-			t.Errorf(err)
+			t.Error(err)
 		}
 
 		defer resp.Body.Close()
@@ -146,7 +146,7 @@ func TestStaticFilesServing(t *testing.T) {
 		body, err := ioutil.ReadAll(resp.Body)
 
 		if err != nil {
-			t.Errorf(err)
+			t.Error(err)
 		}
 
 		if string(body) != expected {
@@ -230,7 +230,7 @@ func TestUserAuthentication(t *testing.T) {
 	projRoot, err := getProjectRoot()
 
 	if err != nil {
-		t.Errorf(err)
+		t.Error(err)
 	}
 
 	var wsCfg config.Config
@@ -249,7 +249,7 @@ func TestUserAuthentication(t *testing.T) {
 	resp, err := http.Get(url)
 
 	if err != nil {
-		t.Errorf(err)
+		t.Error(err)
 	}
 
 	defer resp.Body.Close()
@@ -264,7 +264,7 @@ func TestUserAuthentication(t *testing.T) {
 	resp, err = client.Do(req)
 
 	if err != nil {
-		t.Errorf(err)
+		t.Error(err)
 	}
 	defer resp.Body.Close()
 
@@ -277,7 +277,7 @@ func TestUserAuthentication(t *testing.T) {
 	resp, err = client.Do(req)
 
 	if err != nil {
-		t.Errorf(err)
+		t.Error(err)
 	}
 	defer resp.Body.Close()
 
@@ -449,7 +449,7 @@ func TestGzipEncoding(t *testing.T) {
 			resp, err := client.Do(req)
 
 			if err != nil {
-				t.Errorf(err)
+				t.Error(err)
 			}
 			defer resp.Body.Close()
 
