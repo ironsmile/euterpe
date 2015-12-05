@@ -8,12 +8,14 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"reflect"
+	"time"
 
 	"github.com/ironsmile/httpms/src/helpers"
 )
@@ -23,20 +25,21 @@ const DEFAULT_CONFIG_NAME = "config.default.json"
 
 // The configuration type. Should contain representation for everything in config.json
 type Config struct {
-	Listen         string     `json:"listen"`
-	SSL            bool       `json:"ssl"`
-	SSLCertificate ConfigCert `json:"ssl_certificate"`
-	Auth           bool       `json:"basic_authenticate"`
-	Authenticate   ConfigAuth `json:"authentication"`
-	Libraries      []string   `json:"libraries"`
-	UserPath       string     `json:"user_path"`
-	LogFile        string     `json:"log_file"`
-	SqliteDatabase string     `json:"sqlite_database"`
-	Gzip           bool       `json:"gzip"`
-	ReadTimeout    int        `json:"read_timeout"`
-	WriteTimeout   int        `json:"write_timeout"`
-	MaxHeadersSize int        `json:"max_header_bytes"`
-	HTTPRoot       string     `json:"http_root"`
+	Listen         string      `json:"listen"`
+	SSL            bool        `json:"ssl"`
+	SSLCertificate ConfigCert  `json:"ssl_certificate"`
+	Auth           bool        `json:"basic_authenticate"`
+	Authenticate   ConfigAuth  `json:"authentication"`
+	Libraries      []string    `json:"libraries"`
+	LibraryScan    ScanSection `json:"library_scan"`
+	UserPath       string      `json:"user_path"`
+	LogFile        string      `json:"log_file"`
+	SqliteDatabase string      `json:"sqlite_database"`
+	Gzip           bool        `json:"gzip"`
+	ReadTimeout    int         `json:"read_timeout"`
+	WriteTimeout   int         `json:"write_timeout"`
+	MaxHeadersSize int         `json:"max_header_bytes"`
+	HTTPRoot       string      `json:"http_root"`
 }
 
 // Used for merging one config over the other. I need the zero value for every
@@ -47,20 +50,63 @@ type Config struct {
 // Unfortunatelly this leads to repetition since MergedConfig must have the same
 // fields in the same order as Config.
 type MergedConfig struct {
-	Listen         *string     `json:"listen"`
-	SSL            *bool       `json:"ssl"`
-	SSLCertificate *ConfigCert `json:"ssl_certificate"`
-	Auth           *bool       `json:"basic_authenticate"`
-	Authenticate   *ConfigAuth `json:"authentication"`
-	Libraries      *[]string   `json:"libraries"`
-	UserPath       *string     `json:"user_path"`
-	LogFile        *string     `json:"log_file"`
-	SqliteDatabase *string     `json:"sqlite_database"`
-	Gzip           *bool       `json:"gzip"`
-	ReadTimeout    *int        `json:"read_timeout"`
-	WriteTimeout   *int        `json:"write_timeout"`
-	MaxHeadersSize *int        `json:"max_header_bytes"`
-	HTTPRoot       *string     `json:"http_root"`
+	Listen         *string      `json:"listen"`
+	SSL            *bool        `json:"ssl"`
+	SSLCertificate *ConfigCert  `json:"ssl_certificate"`
+	Auth           *bool        `json:"basic_authenticate"`
+	Authenticate   *ConfigAuth  `json:"authentication"`
+	Libraries      *[]string    `json:"libraries"`
+	LibraryScan    *ScanSection `json:"library_scan"`
+	UserPath       *string      `json:"user_path"`
+	LogFile        *string      `json:"log_file"`
+	SqliteDatabase *string      `json:"sqlite_database"`
+	Gzip           *bool        `json:"gzip"`
+	ReadTimeout    *int         `json:"read_timeout"`
+	WriteTimeout   *int         `json:"write_timeout"`
+	MaxHeadersSize *int         `json:"max_header_bytes"`
+	HTTPRoot       *string      `json:"http_root"`
+}
+
+type ScanSection struct {
+	FilesPerOperation int64         `json:"files_per_operation"`
+	SleepPerOperation time.Duration `json:"sleep_after_operation"`
+	InitialWait       time.Duration `json:"initial_wait_duration"`
+}
+
+func (ss *ScanSection) UnmarshalJSON(input []byte) error {
+	ssProxy := &struct {
+		FilesPerOperation int64  `json:"files_per_operation"`
+		SleepPerOperation string `json:"sleep_after_operation"`
+		InitialWait       string `json:"initial_wait_duration"`
+	}{}
+
+	if err := json.Unmarshal(input, ssProxy); err != nil {
+		return err
+	}
+
+	ss.FilesPerOperation = ssProxy.FilesPerOperation
+
+	if ssProxy.SleepPerOperation != "" {
+		if spo, err := time.ParseDuration(ssProxy.SleepPerOperation); err != nil {
+			return err
+		} else {
+			ss.SleepPerOperation = spo
+		}
+	}
+
+	if ssProxy.InitialWait != "" {
+		if iwd, err := time.ParseDuration(ssProxy.InitialWait); err != nil {
+			return err
+		} else {
+			ss.InitialWait = iwd
+		}
+	}
+
+	if ss.FilesPerOperation <= 0 {
+		return errors.New("files_per_operation must be a positive integer")
+	}
+
+	return nil
 }
 
 type ConfigCert struct {
