@@ -35,3 +35,7 @@ logfile
 # Build dir
 dist/*
 
+# The built binary
+httpms
+
+
