@@ -3,6 +3,10 @@ go:
   - 1.5.1
 env:
   secure: "cgpnkmmHixR8jAwzO8MizqVUGK7GgWu27syhnnGtI2714JhH4ubuNguNn1St/m8tAmZFOeQmh4qmxRNLi6fNnHb1mOsavqrJr0kyZYADf5zz6fn03yEqzYIaNL0j6iuBin0XMJbfsxyR5tCGllCPm97CpXIF16GeJSbsY8B0Jts="
-before_install:
-  - sudo apt-get install libtagc0 libtagc0-dev
+addons:
+  apt:
+    packages:
+    - libtagc0
+    - libtagc0-dev
+sudo: false
 
