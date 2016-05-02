@@ -20,7 +20,11 @@ func (lib *LocalLibrary) Scan() {
 	lib.scanWG.Add(1)
 	go lib.databaseWriter(mediaChan, &lib.scanWG)
 
-	lib.initializeWatcher()
+	initialWait := lib.ScanConfig.InitialWait
+	if !LibraryFastScan && initialWait > 0 {
+		log.Printf("Pausing initial library scan for %s as configured", initialWait)
+		time.Sleep(initialWait)
+	}
 
 	for _, path := range lib.paths {
 		lib.walkWG.Add(1)
@@ -94,14 +98,6 @@ func (lib *LocalLibrary) scanPath(scannedPath string, media chan<- string) {
 		}
 
 		return nil
-	}
-
-	initialWait := lib.ScanConfig.InitialWait
-
-	if !LibraryFastScan && initialWait > 0 {
-		log.Printf("Pausing initial library [%s] scan for %s as configured",
-			scannedPath, initialWait)
-		time.Sleep(initialWait)
 	}
 
 	err := filepath.Walk(scannedPath, walkFunc)
