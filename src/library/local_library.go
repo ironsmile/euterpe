@@ -201,15 +201,22 @@ func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []SearchResult {
 
 // Removes the file from the library. That means finding it in the database and
 // removing it from there.
-// filePath argument should be absolute path.
 func (lib *LocalLibrary) removeFile(filePath string) {
-	_, err := lib.db.Exec(`
-		DELETE FROM tracks
-		WHERE fs_path = ?
-	`, filePath)
+
+	fullPath, err := filepath.Abs(filePath)
 
 	if err != nil {
 		log.Printf("Error removing %s: %s\n", filePath, err.Error())
+		return
+	}
+
+	_, err = lib.db.Exec(`
+		DELETE FROM tracks
+		WHERE fs_path = ?
+	`, fullPath)
+
+	if err != nil {
+		log.Printf("Error removing %s: %s\n", fullPath, err.Error())
 	}
 }
 
