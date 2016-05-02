@@ -81,7 +81,6 @@ func (lib *LocalLibrary) watchEventRoutine() {
 //  * modfied files should be updated in the database
 //  * renamed ...
 func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
-	// log.Println("Watch event:", event)
 
 	if event.IsAttrib() {
 		// The event was just an attribute change
