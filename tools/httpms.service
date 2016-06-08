@@ -1,0 +1,7 @@
+[Unit]
+Description=The HTTP Media Server by Doycho
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/httpms
+Restart=on-failure
