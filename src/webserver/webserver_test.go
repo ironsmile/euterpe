@@ -56,7 +56,7 @@ func setUpServer() *Server {
 	}
 
 	var wsCfg config.Config
-	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
+	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
 	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 	wsCfg.Gzip = true
 
@@ -115,7 +115,7 @@ func getLibraryServer(t *testing.T) (*Server, library.Library) {
 	ch <- 42
 
 	var wsCfg config.Config
-	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
+	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
 	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 
 	srv := NewServer(wsCfg, lib)
@@ -200,7 +200,7 @@ func TestSSL(t *testing.T) {
 	certDir := filepath.Join(projectRoot, "test_files", "ssl")
 
 	var wsCfg config.Config
-	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
+	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
 	wsCfg.HTTPRoot = TestRoot
 	wsCfg.SSL = true
 	wsCfg.SSLCertificate = config.ConfigCert{
@@ -234,7 +234,7 @@ func TestUserAuthentication(t *testing.T) {
 	}
 
 	var wsCfg config.Config
-	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
+	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
 	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 	wsCfg.Auth = true
 	wsCfg.Authenticate = config.ConfigAuth{
@@ -306,7 +306,7 @@ func TestSearchUrl(t *testing.T) {
 	ch <- 42
 
 	var wsCfg config.Config
-	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
+	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
 	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 
 	srv := NewServer(wsCfg, lib)
@@ -486,7 +486,7 @@ func TestGzipEncoding(t *testing.T) {
 	}
 
 	var wsCfg config.Config
-	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
+	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
 	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 	wsCfg.Gzip = true
 
