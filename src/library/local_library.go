@@ -550,9 +550,8 @@ func (lib *LocalLibrary) lastInsertID() (int64, error) {
 // sqlite database file and creates one if it is absent. If a file is found
 // it does nothing.
 func (lib *LocalLibrary) Initialize() error {
-	_, err := os.Stat(lib.database)
 
-	if err == nil {
+	if st, err := os.Stat(lib.database); err == nil && st.Size() > 0 {
 		return nil
 	}
 
