@@ -18,9 +18,22 @@ import (
 
 const FSWaitTime = 10 * time.Millisecond
 
+func contains(heystack []string, needle string) bool {
+	for i := 0; i < len(heystack); i++ {
+		if needle == heystack[i] {
+			return true
+		}
+	}
+	return false
+}
+
 func init() {
-	devnull, _ := os.Create(os.DevNull)
-	log.SetOutput(devnull)
+	// Will show the output from log in the console only
+	// if the -v flag is passed to the tests.
+	if !contains(os.Args, "-test.v=true") {
+		devnull, _ := os.Create(os.DevNull)
+		log.SetOutput(devnull)
+	}
 }
 
 // It is the caller's resposibility to remove the library SQLite database file
