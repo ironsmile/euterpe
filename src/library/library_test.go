@@ -645,9 +645,6 @@ func TestRemovingFile(t *testing.T) {
 }
 
 func TestAddingAndRemovingDirectory(t *testing.T) {
-	lib := getScannedLibrary(t)
-	defer lib.Truncate()
-
 	projRoot, _ := helpers.ProjectRoot()
 	testFiles := filepath.Join(projRoot, "test_files")
 
@@ -656,6 +653,17 @@ func TestAddingAndRemovingDirectory(t *testing.T) {
 	srcTestMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
 	dstTestMp3 := filepath.Join(testFiles, "more_mp3s", "to_be_moved_directory",
 		"test_file_added.mp3")
+
+	if err := os.RemoveAll(testDir); err != nil {
+		t.Fatalf("Removing directory needed for tests: %s", err)
+	}
+
+	if err := os.RemoveAll(movedDir); err != nil {
+		t.Fatalf("Removing directory needed for tests: %s", err)
+	}
+
+	lib := getScannedLibrary(t)
+	defer lib.Truncate()
 
 	if err := os.Mkdir(testDir, 0755); err != nil {
 		t.Fatal(err)
@@ -698,6 +706,10 @@ func TestMovingDirectory(t *testing.T) {
 	srcTestMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
 	dstTestMp3 := filepath.Join(testFiles, "more_mp3s", "to_be_moved_directory",
 		"test_file_added.mp3")
+
+	_ = os.RemoveAll(testDir)
+	_ = os.RemoveAll(movedDir)
+	_ = os.RemoveAll(secondPlace)
 
 	if err := os.Mkdir(testDir, 0755); err != nil {
 		t.Fatal(err)
