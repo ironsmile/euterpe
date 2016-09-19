@@ -726,7 +726,7 @@ func TestMovingDirectory(t *testing.T) {
 	found = lib.Search("Added Song")
 
 	if len(found) != 1 {
-		t.Fatalf("Did not find exactly 'Added Song'. Found %d files", len(found))
+		t.Fatalf("Did not find exactly one 'Added Song'. Found %d files", len(found))
 	}
 
 	foundPath := lib.GetFilePath(found[0].ID)
@@ -737,7 +737,7 @@ func TestMovingDirectory(t *testing.T) {
 	}
 
 	if foundPath != expectedPath {
-		t.Errorf("File is in %s according library. But it is actually in %s",
+		t.Errorf("File is in %s according to library. But it is actually in %s",
 			foundPath, expectedPath)
 	}
 
