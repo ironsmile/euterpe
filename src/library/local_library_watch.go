@@ -94,6 +94,19 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 		return
 	}
 
+	if event.IsDelete() || event.IsRename() {
+		if lib.isSupportedFormat(event.Name) {
+			// This is a file
+			lib.removeFile(event.Name)
+			return
+		} else {
+			// It was a directory... probably
+			lib.watch.RemoveWatch(event.Name)
+			lib.removeDirectory(event.Name)
+			return
+		}
+	}
+
 	if event.IsCreate() && st.IsDir() {
 		lib.watch.Watch(event.Name)
 		lib.walkWG.Add(1)
@@ -114,18 +127,5 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 			lib.watchMediaChan <- event.Name
 		}
 		return
-	}
-
-	if event.IsDelete() || event.IsRename() {
-		if lib.isSupportedFormat(event.Name) {
-			// This is a file
-			lib.removeFile(event.Name)
-			return
-		} else {
-			// It was a directory... probably
-			lib.watch.RemoveWatch(event.Name)
-			lib.removeDirectory(event.Name)
-			return
-		}
 	}
 }
