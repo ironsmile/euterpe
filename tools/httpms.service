@@ -1,7 +1,16 @@
 [Unit]
-Description=The HTTP Media Server by Doycho
+Description=The HTTP Media Server
+After=network.target
 
 [Service]
 Type=simple
 ExecStart=/usr/bin/httpms
 Restart=on-failure
+User=USER
+Group=GROUP
+WorkingDirectory=/home/USER/.httpms
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
