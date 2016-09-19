@@ -1,22 +1,22 @@
-//!TODO: Use a random temp file. Someone may be using /tmp/test.db for something
-// already
 package library
 
 import (
 	"database/sql"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
-	"io/ioutil"
 
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/ironsmile/httpms/src/helpers"
 )
+
+const FSWaitTime = 10 * time.Millisecond
 
 func init() {
 	devnull, _ := os.Create(os.DevNull)
@@ -537,7 +537,7 @@ func TestAddingNewFile(t *testing.T) {
 	}
 
 	defer os.Remove(newFile)
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(FSWaitTime)
 
 	checkAddedSong(lib, t)
 }
@@ -562,7 +562,7 @@ func TestMovingFileIntoLibrary(t *testing.T) {
 	}
 
 	defer os.Remove(newFile)
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(FSWaitTime)
 
 	checkAddedSong(lib, t)
 }
@@ -590,11 +590,11 @@ func TestAddingNonRelatedFile(t *testing.T) {
 	fh.WriteString("Some contents")
 	fh.Close()
 
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(FSWaitTime)
 	testLibFiles()
 
 	os.Remove(newFile)
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(FSWaitTime)
 	testLibFiles()
 
 }
@@ -623,7 +623,7 @@ func TestRemovingFile(t *testing.T) {
 		t.Error(err)
 	}
 
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(FSWaitTime)
 
 	results = lib.Search("")
 	if len(results) != 3 {
@@ -658,7 +658,7 @@ func TestAddingAndRemovingDirectory(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(FSWaitTime)
 
 	checkAddedSong(lib, t)
 
@@ -666,7 +666,7 @@ func TestAddingAndRemovingDirectory(t *testing.T) {
 		t.Error(err)
 	}
 
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(FSWaitTime)
 
 	results := lib.Search("")
 
@@ -713,7 +713,7 @@ func TestMovingDirectory(t *testing.T) {
 		defer os.RemoveAll(secondPlace)
 	}
 
-	time.Sleep(10 * time.Millisecond)
+	lib.walkWG.Wait()
 
 	checkAddedSong(lib, t)
 
