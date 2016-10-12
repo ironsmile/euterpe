@@ -154,8 +154,8 @@ func TestInitialize(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	defer lib.Truncate()
 	defer func() {
+		lib.Truncate()
 		os.Remove(libDB.Name())
 	}()
 
