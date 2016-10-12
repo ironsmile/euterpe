@@ -42,7 +42,7 @@ func getDefaultCfg() *Config {
 	dflConfig.MaxHeadersSize = 100
 	dflConfig.SqliteDatabase = "httpms.db"
 	dflConfig.Auth = true
-	dflConfig.Authenticate = ConfigAuth{User: "bob", Password: "marley"}
+	dflConfig.Authenticate = Auth{User: "bob", Password: "marley"}
 	dflConfig.LibraryScan = ScanSection{
 		FilesPerOperation: 1000,
 		SleepPerOperation: 10 * time.Millisecond,
@@ -145,7 +145,7 @@ func TestMergingConfigs(t *testing.T) {
 	*merged.Libraries = append(*merged.Libraries, "/some/path")
 	merged.Auth = new(bool)
 	*merged.Auth = false
-	merged.SSLCertificate = &ConfigCert{Crt: "crt", Key: "key"}
+	merged.SSLCertificate = &Cert{Crt: "crt", Key: "key"}
 	merged.LibraryScan = &ScanSection{
 		FilesPerOperation: 1500,
 		SleepPerOperation: 15 * time.Millisecond,
@@ -158,7 +158,7 @@ func TestMergingConfigs(t *testing.T) {
 
 func TestMergingConfigsViaJSON(t *testing.T) {
 	cfg := getDefaultCfg()
-	testJson := `
+	testJSON := `
 		{
 			"listen": ":8080",
 			"ssl": true,
@@ -175,7 +175,7 @@ func TestMergingConfigsViaJSON(t *testing.T) {
 			"basic_authenticate": false
 		}
 	`
-	if err := cfg.mergeJSON([]byte(testJson)); err != nil {
+	if err := cfg.mergeJSON([]byte(testJSON)); err != nil {
 		t.Errorf("Parsing test json failed: %s", err)
 	}
 	checkMerge(t, cfg)

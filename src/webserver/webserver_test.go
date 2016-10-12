@@ -26,7 +26,7 @@ const (
 	TestRoot = "http_root"
 )
 
-func testUrl() string {
+func testURL() string {
 	return fmt.Sprintf("http://127.0.0.1:%d/", TestPort)
 }
 
@@ -164,7 +164,7 @@ func TestStaticFilesServing(t *testing.T) {
 
 func TestStartAndStop(t *testing.T) {
 
-	_, err := http.Get(testUrl())
+	_, err := http.Get(testURL())
 
 	if err == nil {
 		t.Fatalf("Something is running on testing port %d", TestPort)
@@ -173,7 +173,7 @@ func TestStartAndStop(t *testing.T) {
 	srv := setUpServer()
 	srv.Serve()
 
-	_, err = http.Get(testUrl())
+	_, err = http.Get(testURL())
 
 	if err != nil {
 		t.Errorf("Web server is not running %d", TestPort)
@@ -185,7 +185,7 @@ func TestStartAndStop(t *testing.T) {
 	srv.Wait()
 	ch <- 42
 
-	_, err = http.Get(testUrl())
+	_, err = http.Get(testURL())
 
 	if err == nil {
 		t.Errorf("The webserver was not stopped")
@@ -204,7 +204,7 @@ func TestSSL(t *testing.T) {
 	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
 	wsCfg.HTTPRoot = TestRoot
 	wsCfg.SSL = true
-	wsCfg.SSLCertificate = config.ConfigCert{
+	wsCfg.SSLCertificate = config.Cert{
 		Crt: filepath.Join(certDir, "cert.pem"),
 		Key: filepath.Join(certDir, "key.pem"),
 	}
@@ -238,7 +238,7 @@ func TestUserAuthentication(t *testing.T) {
 	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
 	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 	wsCfg.Auth = true
-	wsCfg.Authenticate = config.ConfigAuth{
+	wsCfg.Authenticate = config.Auth{
 		User:     "testuser",
 		Password: "testpass",
 	}

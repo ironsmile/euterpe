@@ -1,4 +1,4 @@
-// Contains few helpers functions which are used throughout the project
+// Package helpers contains few helpers functions which are used throughout the project
 package helpers
 
 import (
@@ -19,9 +19,8 @@ func cacheProjRoot(path string) string {
 	return path
 }
 
-// Returns the root directory. This is the place where the app is installed
-// or the place where the source is stored if in development or installed
-// with go get
+// ProjectRoot returns the root directory. This is the place where the app is installed
+// or the place where the source is stored if in development or installed with go get
 func ProjectRoot() (string, error) {
 
 	if len(projectRoot) > 0 {
@@ -73,7 +72,7 @@ func ProjectRoot() (string, error) {
 	return cacheProjRoot(abs), nil
 }
 
-// Sets the logfile of the server
+// SetLogsFile sets the logfile of the server
 func SetLogsFile(logFilePath string) error {
 	logFile, err := os.Create(logFilePath)
 	if err != nil {
@@ -83,7 +82,7 @@ func SetLogsFile(logFilePath string) error {
 	return nil
 }
 
-// Copies a file from src to dst
+// Copy copies a file from src to dst
 func Copy(src, dst string) error {
 	in, err := os.Open(src)
 	if err != nil {
@@ -103,8 +102,8 @@ func Copy(src, dst string) error {
 	return cerr
 }
 
-// Returns absolute path. If path is already absolute leave it be. If not join it with
-// relativeRoot
+// AbsolutePath returns absolute path. If path is already absolute leave it be. If not
+// join it with relativeRoot
 func AbsolutePath(path, relativeRoot string) string {
 	if filepath.IsAbs(path) {
 		return path
@@ -112,8 +111,8 @@ func AbsolutePath(path, relativeRoot string) string {
 	return filepath.Join(relativeRoot, path)
 }
 
-// Returns the directory in which user files should be stored. Creates it is missing.
-// User files are thing such as sqlite files, logfiles and user configs
+// ProjectUserPath returns the directory in which user files should be stored. Creates
+// it is missing. User files are thing such as sqlite files, logfiles and user configs.
 func ProjectUserPath() (string, error) {
 	user, err := user.Current()
 
@@ -138,7 +137,8 @@ func ProjectUserPath() (string, error) {
 	return path, nil
 }
 
-// Will create the pidfile and it will contain the processid of the current process
+// SetUpPidFile will create the pidfile and it will contain the processid of the
+// current process
 func SetUpPidFile(PidFile string) {
 	fh, err := os.Create(PidFile)
 
@@ -159,7 +159,7 @@ func SetUpPidFile(PidFile string) {
 	fh.Close()
 }
 
-// Removes the pidfile
+// RemovePidFile just removes the pidFile. The argument should be file path.
 func RemovePidFile(PidFile string) {
 	_ = os.Remove(PidFile)
 }

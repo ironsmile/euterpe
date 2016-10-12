@@ -24,7 +24,7 @@ import (
 	"github.com/ironsmile/httpms/src/helpers"
 )
 
-// Will be used in case some media tag is missing. As a consequence
+// UnknownLabel will be used in case some media tag is missing. As a consequence
 // if there are many files with missing title, artist and album only
 // one of them will be saved in the library.
 const UnknownLabel = "Unknown"
@@ -47,7 +47,8 @@ func init() {
 		" running the daemon for the fists time with big libraries.")
 }
 
-// Implements the Library interface. Will represent files found on the local storage
+// LocalLibrary implements the Library interface. Will represent files found on the
+// local storage
 type LocalLibrary struct {
 	// The configuration for how to scan the libraries.
 	ScanConfig config.ScanSection
@@ -79,7 +80,7 @@ type LocalLibrary struct {
 	databaseWriterIdle chan struct{}
 }
 
-// Closes the database connection. It is safe to call it as many times as you want.
+// Close closes the database connection. It is safe to call it as many times as you want.
 func (lib *LocalLibrary) Close() {
 	lib.stopWatcher()
 
@@ -99,6 +100,8 @@ func (lib *LocalLibrary) Close() {
 	}
 }
 
+// AddLibraryPath adds a library directory to the list of libraries which will be
+// scanned and consequently watched.
 func (lib *LocalLibrary) AddLibraryPath(path string) {
 	_, err := os.Stat(path)
 
@@ -110,7 +113,7 @@ func (lib *LocalLibrary) AddLibraryPath(path string) {
 	lib.paths = append(lib.paths, path)
 }
 
-// Does a search in the library. Will match against the track's name, artist and album.
+// Search searches in the library. Will match against the track's name, artist and album.
 func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 	var output []SearchResult
 
@@ -152,7 +155,7 @@ func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 	return output
 }
 
-// Returns the filsystem path for a file specified by its ID.
+// GetFilePath returns the filsystem path for a file specified by its ID.
 func (lib *LocalLibrary) GetFilePath(ID int64) string {
 
 	smt, err := lib.db.Prepare(`
@@ -182,7 +185,7 @@ func (lib *LocalLibrary) GetFilePath(ID int64) string {
 	return filePath
 }
 
-// Satisfies the Library interface
+// GetAlbumFiles satisfies the Library interface
 func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []SearchResult {
 	var output []SearchResult
 
@@ -335,7 +338,7 @@ func (lib *LocalLibrary) isSupportedFormat(path string) bool {
 	return false
 }
 
-// Adds a file specified by its filesystem name to the library. Will create the
+// AddMedia adds a file specified by its filesystem name to the library. Will create the
 // needed Artist, Album if neccessery.
 func (lib *LocalLibrary) AddMedia(filename string) error {
 	if lib.MediaExistsInLibrary(filename) {
@@ -387,8 +390,8 @@ func (lib *LocalLibrary) insertMediaIntoDatabase(file MediaFile, filePath string
 	return nil
 }
 
-// Checks if the media file with file system path "filename" has been added to the
-// library already.
+// MediaExistsInLibrary checks if the media file with file system path "filename" has
+// been added to the library already.
 func (lib *LocalLibrary) MediaExistsInLibrary(filename string) bool {
 	smt, err := lib.db.Prepare(`
 		SELECT
@@ -416,7 +419,8 @@ func (lib *LocalLibrary) MediaExistsInLibrary(filename string) bool {
 	return count >= 1
 }
 
-// Returns the id for this artist. When missing or on error returns that error.
+// GetArtistID returns the id for this artist. When missing or on error
+// returns that error.
 func (lib *LocalLibrary) GetArtistID(artist string) (int64, error) {
 	smt, err := lib.db.Prepare(`
 		SELECT
@@ -478,7 +482,8 @@ func (lib *LocalLibrary) setArtistID(artist string) (int64, error) {
 	return lib.lastInsertID()
 }
 
-// Returns the id for this artist's album. When missing or on error returns that error.
+// GetAlbumID returns the id for this artist's album. When missing or on error
+// returns that error.
 func (lib *LocalLibrary) GetAlbumID(album string, artistID int64) (int64, error) {
 	smt, err := lib.db.Prepare(`
 		SELECT
@@ -542,7 +547,7 @@ func (lib *LocalLibrary) setAlbumID(album string, artistID int64) (int64, error)
 	return lib.lastInsertID()
 }
 
-// Returns the id for this track. When missing or on error returns that error.
+// GetTrackID returns the id for this track. When missing or on error returns that error.
 func (lib *LocalLibrary) GetTrackID(title string,
 	artistID, albumID int64) (int64, error) {
 	smt, err := lib.db.Prepare(`
@@ -629,7 +634,7 @@ func (lib *LocalLibrary) lastInsertID() (int64, error) {
 	return id, nil
 }
 
-// Should be run once every time a library is created. It checks for the
+// Initialize should be run once every time a library is created. It checks for the
 // sqlite database file and creates one if it is absent. If a file is found
 // it does nothing.
 func (lib *LocalLibrary) Initialize() error {
@@ -698,9 +703,9 @@ func (lib *LocalLibrary) Truncate() error {
 	return os.Remove(lib.database)
 }
 
-// Returns a new LocalLibrary which will use for database the file specified by
-// databasePath. Also creates the database connection so you does not need to
-// worry about that.
+// NewLocalLibrary returns a new LocalLibrary which will use for database the file
+// specified by databasePath. Also creates the database connection so you does not
+// need to worry about that.
 func NewLocalLibrary(databasePath string) (*LocalLibrary, error) {
 	lib := new(LocalLibrary)
 	lib.database = databasePath

@@ -10,12 +10,12 @@ import (
 	"github.com/ironsmile/httpms/src/library"
 )
 
-// Will find and serve a file by its ID
+// FileHandler will find and serve a media file by its ID
 type FileHandler struct {
 	library library.Library
 }
 
-// This method is required by the http.Handler's interface
+// ServeHTTP is required by the http.Handler's interface
 func (fh FileHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	InternalErrorOnErrorHandler(writer, req, fh.find)
 }
@@ -52,7 +52,7 @@ func (fh FileHandler) find(writer http.ResponseWriter, req *http.Request) error 
 	return nil
 }
 
-// Returns a new File handler will will be resposible for serving a file
+// NewFileHandler returns a new File handler will will be resposible for serving a file
 // from the library identified from its ID.
 func NewFileHandler(lib library.Library) *FileHandler {
 	fh := new(FileHandler)

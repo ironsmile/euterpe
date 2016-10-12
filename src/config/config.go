@@ -1,4 +1,4 @@
-// The module is resposible for finding, parsing and merging the HTTPMS user
+// Package config is resposible for finding, parsing and merging the HTTPMS user
 // configuration  with the default. Configuration locations should be different
 // depending on the host OS.
 //
@@ -20,16 +20,22 @@ import (
 	"github.com/ironsmile/httpms/src/helpers"
 )
 
+// ConfigName contains the name of the actual configuration file. This is the one
+// the user is supposed to change.
 const ConfigName = "config.json"
+
+// DefaultConfigName contains the name of the file which contains the default
+// configuration values for HTTPMS. It shouldn't be edited by a user and it is part
+// of the app installation. Preferably, it should be hidden away.
 const DefaultConfigName = "config.default.json"
 
-// The configuration type. Should contain representation for everything in config.json
+// Config contains representation for everything in config.json
 type Config struct {
 	Listen         string      `json:"listen"`
 	SSL            bool        `json:"ssl"`
-	SSLCertificate ConfigCert  `json:"ssl_certificate"`
+	SSLCertificate Cert        `json:"ssl_certificate"`
 	Auth           bool        `json:"basic_authenticate"`
-	Authenticate   ConfigAuth  `json:"authentication"`
+	Authenticate   Auth        `json:"authentication"`
 	Libraries      []string    `json:"libraries"`
 	LibraryScan    ScanSection `json:"library_scan"`
 	UserPath       string      `json:"user_path"`
@@ -42,8 +48,8 @@ type Config struct {
 	HTTPRoot       string      `json:"http_root"`
 }
 
-// Used for merging one config over the other. I need the zero value for every
-// Field to be nil so that I can destinguish if it has been in the json file
+// MergedConfig is used for merging one config over the other. I need the zero value
+// for every Field to be nil so that I can destinguish if it has been in the json file
 // or not. If I did not use pointers I would not have been able to do that.
 // That way the merged (user) json can contain a subset of all fields and everything
 // else will be used from the default json.
@@ -52,9 +58,9 @@ type Config struct {
 type MergedConfig struct {
 	Listen         *string      `json:"listen"`
 	SSL            *bool        `json:"ssl"`
-	SSLCertificate *ConfigCert  `json:"ssl_certificate"`
+	SSLCertificate *Cert        `json:"ssl_certificate"`
 	Auth           *bool        `json:"basic_authenticate"`
-	Authenticate   *ConfigAuth  `json:"authentication"`
+	Authenticate   *Auth        `json:"authentication"`
 	Libraries      *[]string    `json:"libraries"`
 	LibraryScan    *ScanSection `json:"library_scan"`
 	UserPath       *string      `json:"user_path"`
@@ -113,20 +119,20 @@ func (ss *ScanSection) UnmarshalJSON(input []byte) error {
 	return nil
 }
 
-// ConfigCert represents a configuration for TLS certificate
-type ConfigCert struct {
+// Cert represents a configuration for TLS certificate
+type Cert struct {
 	Crt string `json:"crt"`
 	Key string `json:"key"`
 }
 
-// ConfigAuth represents a configuration HTTP Basic authentication
-type ConfigAuth struct {
+// Auth represents a configuration HTTP Basic authentication
+type Auth struct {
 	User     string `json:"user"`
 	Password string `json:"password"`
 }
 
-// Actually finds the configuration file, parsing it and merging it on top the default
-// configuration.
+// FindAndParse actually finds the configuration file, parsing it and merging it on
+// top the default configuration.
 func (cfg *Config) FindAndParse() error {
 	if !cfg.UserConfigExists() {
 		err := cfg.CopyDefaultOverUser()
@@ -202,7 +208,8 @@ func (cfg *Config) merge(merged *MergedConfig) {
 	}
 }
 
-// Returns the full path to the place where the user's configuration file should be
+// UserConfigPath returns the full path to the place where the user's configuration
+// file should be
 func (cfg *Config) UserConfigPath() string {
 	if len(cfg.UserPath) > 0 {
 		if filepath.IsAbs(cfg.UserPath) {
@@ -218,7 +225,7 @@ func (cfg *Config) UserConfigPath() string {
 	return filepath.Join(path, ConfigName)
 }
 
-// Returns the full path to the default configuration file
+// DefaultConfigPath returns the full path to the default configuration file
 func (cfg *Config) DefaultConfigPath() string {
 	path, err := helpers.ProjectRoot()
 	if err != nil {
@@ -228,7 +235,8 @@ func (cfg *Config) DefaultConfigPath() string {
 	return filepath.Join(path, DefaultConfigName)
 }
 
-// Returns true if the user configuration is present and in order. Otherwise false.
+// UserConfigExists returns true if the user configuration is present and in order.
+// Otherwise false.
 func (cfg *Config) UserConfigExists() bool {
 	path := cfg.UserConfigPath()
 	st, err := os.Stat(path)
@@ -238,8 +246,8 @@ func (cfg *Config) UserConfigExists() bool {
 	return !st.IsDir()
 }
 
-// Will create (or replace if neccessery) the user configuration using the default
-// config file supplied with the installation.
+// CopyDefaultOverUser will create (or replace if neccessery) the user configuration
+// using the default config file supplied with the installation.
 func (cfg *Config) CopyDefaultOverUser() error {
 	userConfig := cfg.UserConfigPath()
 	defaultConfigDir := filepath.Dir(cfg.DefaultConfigPath())
