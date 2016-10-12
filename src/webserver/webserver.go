@@ -126,10 +126,15 @@ func (srv *Server) listenAndServeTLS(certFile, keyFile string) error {
 	if addr == "" {
 		addr = ":https"
 	}
-	config := &tls.Config{}
+
+	var config *tls.Config
+
 	if srv.httpSrv.TLSConfig != nil {
-		*config = *srv.httpSrv.TLSConfig
+		config = srv.httpSrv.TLSConfig
+	} else {
+		config = &tls.Config{}
 	}
+
 	if config.NextProtos == nil {
 		config.NextProtos = []string{"http/1.1"}
 	}
