@@ -64,7 +64,7 @@ func SetupPidFileAndSignals(pidFile string) {
 		signal.Notify(signalChannel, sig)
 	}
 	go func() {
-		for _ = range signalChannel {
+		for range signalChannel {
 			log.Println("Stop signal received. Removing pidfile and stopping.")
 			helpers.RemovePidFile(pidFile)
 			os.Exit(0)
