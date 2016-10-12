@@ -278,7 +278,9 @@ func (lib *LocalLibrary) databaseWriter(media <-chan string, wg *sync.WaitGroup)
 				return
 			}
 
-			lib.AddMedia(filename)
+			if err := lib.AddMedia(filename); err != nil {
+				log.Printf("Error adding `%s` to library: %s\n", filename, err)
+			}
 
 			if !idleTimer.Stop() {
 				<-idleTimer.C
