@@ -12,7 +12,7 @@ import (
 // database.
 func (lib *LocalLibrary) Scan() {
 	// Make sure there are no other scans working at the moment
-	lib.WaitScan()
+	lib.scanWG.Wait()
 
 	start := time.Now()
 
