@@ -154,8 +154,8 @@ func TestInitialize(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	defer lib.Truncate()
 	defer func() {
+		lib.Truncate()
 		os.Remove(libDB.Name())
 	}()
 
@@ -497,9 +497,9 @@ func TestRemoveFileFunction(t *testing.T) {
 			`result but they were %d`, len(found))
 	}
 
-	fs_path := lib.GetFilePath(found[0].ID)
+	fsPath := lib.GetFilePath(found[0].ID)
 
-	lib.removeFile(fs_path)
+	lib.removeFile(fsPath)
 
 	found = lib.Search("Another One")
 
@@ -764,4 +764,61 @@ func TestMovingDirectory(t *testing.T) {
 			foundPath, expectedPath)
 	}
 
+}
+
+func checkSong(lib *LocalLibrary, song MediaFile, t *testing.T) {
+	found := lib.Search(song.Title())
+
+	if len(found) != 1 {
+		t.Fatalf("Expected one result, got %d for %s", len(found), song.Title())
+	}
+
+	track := found[0]
+
+	if track.Album != song.Album() {
+		t.Errorf("Wrong track album: %s when expecting %s", track.Album, song.Album())
+	}
+
+	if track.Artist != song.Artist() {
+		t.Errorf("Wrong track artist: %s when expecting %s", track.Artist, song.Artist())
+	}
+
+	if track.Title != song.Title() {
+		t.Errorf("Wrong track title: %s when expecting %s", track.Title, song.Title())
+	}
+
+	if track.TrackNumber != int64(song.Track()) {
+		t.Errorf("Wrong track: %d when expecting %d", track.TrackNumber, song.Track())
+	}
+}
+
+func TestAddingManyFilesSimultaniously(t *testing.T) {
+	lib := getPathedLibrary(t)
+	defer lib.Truncate()
+
+	numberOfFiles := 100
+	mediaFiles := make([]MediaFile, 0, numberOfFiles)
+
+	for i := 0; i < numberOfFiles; i++ {
+		m := &MockMedia{
+			artist: fmt.Sprintf("artist %d", i),
+			album:  fmt.Sprintf("album %d", i),
+			title:  fmt.Sprintf("title %d full", i),
+			track:  i,
+			length: 123 * time.Second,
+		}
+		mPath := fmt.Sprintf("/path/to/file_%d", i)
+
+		if err := lib.insertMediaIntoDatabase(m, mPath); err != nil {
+			t.Fatalf("Error adding media into the database: %s", err)
+		}
+
+		mediaFiles = append(mediaFiles, m)
+	}
+
+	lib.waitForDBWriterIdleSignal()
+
+	for _, song := range mediaFiles {
+		checkSong(lib, song, t)
+	}
 }

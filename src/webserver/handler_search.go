@@ -8,13 +8,13 @@ import (
 	"github.com/ironsmile/httpms/src/library"
 )
 
-// Handler responsible for search requests. It will use the Library to
-// return a list of matched files to the interface.
+// SearchHandler is a http.Handler responsible for search requests. It will use
+// the Library to return a list of matched files to the interface.
 type SearchHandler struct {
 	library library.Library
 }
 
-// This method is required by the http.Handler's interface
+// ServeHTTP is required by the http.Handler's interface
 func (sh SearchHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	InternalErrorOnErrorHandler(writer, req, sh.search)
 }
@@ -47,8 +47,8 @@ func (sh SearchHandler) search(writer http.ResponseWriter, req *http.Request) er
 	return nil
 }
 
-// Returns a new SearchHandler for processing search queries. They will be run
-// agains the supplied library
+// NewSearchHandler returns a new SearchHandler for processing search queries. They
+// will be run against the supplied library
 func NewSearchHandler(lib library.Library) *SearchHandler {
 	sh := new(SearchHandler)
 	sh.library = lib

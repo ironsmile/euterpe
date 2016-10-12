@@ -6,4 +6,5 @@
 
 package helpers
 
+// HttpmsDir is the name of the HTTPMS directory in the user's home directory
 const HttpmsDir = ".httpms"

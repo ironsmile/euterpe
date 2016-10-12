@@ -7,12 +7,12 @@ import (
 	"time"
 )
 
-//!TODO: make scan also remove files which have been deleted since the previous scan
-// Scans all of the folders in paths for media files. New files will be added to the
+// Scan scans all of the folders in paths for media files. New files will be added to the
 // database.
+//!TODO: make scan also remove files which have been deleted since the previous scan
 func (lib *LocalLibrary) Scan() {
 	// Make sure there are no other scans working at the moment
-	lib.WaitScan()
+	lib.scanWG.Wait()
 
 	start := time.Now()
 
@@ -43,7 +43,7 @@ func (lib *LocalLibrary) Scan() {
 	}()
 }
 
-// Blocks the current goroutine until the scan has been finished
+// WaitScan blocks the current goroutine until the scan has been finished
 func (lib *LocalLibrary) WaitScan() {
 	lib.scanWG.Wait()
 	lib.waitForDBWriterIdleSignal()
@@ -81,7 +81,7 @@ func (lib *LocalLibrary) scanPath(scannedPath string, media chan<- string) {
 			lib.watch.Watch(path)
 		}
 
-		scannedFiles += 1
+		scannedFiles++
 
 		if !LibraryFastScan && filesPerOperation > 0 &&
 			scannedFiles >= filesPerOperation && sleepPerOperation > 0 {

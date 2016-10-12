@@ -1,4 +1,4 @@
-// This module contains the webserver whcih deals with processing requests
+// Package webserver contains the webserver which deals with processing requests
 // from the user, presenting him with the interface of the application.
 package webserver
 
@@ -14,7 +14,7 @@ import (
 	"github.com/ironsmile/httpms/src/library"
 )
 
-// Represends our webserver. It will be controlled from here
+// Server represends our webserver. It will be controlled from here
 type Server struct {
 
 	// Configuration of this server
@@ -36,7 +36,7 @@ type Server struct {
 	library library.Library
 }
 
-// The function that actually starts the webserver. It attaches all the handlers
+// Serve actually starts the webserver. It attaches all the handlers
 // and starts the webserver while consulting the ServerConfig supplied. Trying to call
 // this method more than once for the same server will result in panic.
 func (srv *Server) Serve() {
@@ -126,10 +126,15 @@ func (srv *Server) listenAndServeTLS(certFile, keyFile string) error {
 	if addr == "" {
 		addr = ":https"
 	}
-	config := &tls.Config{}
+
+	var config *tls.Config
+
 	if srv.httpSrv.TLSConfig != nil {
-		*config = *srv.httpSrv.TLSConfig
+		config = srv.httpSrv.TLSConfig
+	} else {
+		config = &tls.Config{}
 	}
+
 	if config.NextProtos == nil {
 		config.NextProtos = []string{"http/1.1"}
 	}
@@ -153,7 +158,7 @@ func (srv *Server) listenAndServeTLS(certFile, keyFile string) error {
 	return srv.httpSrv.Serve(tlsListener)
 }
 
-// Stops the webserver
+// Stop stops the webserver
 func (srv *Server) Stop() {
 	if srv.listener != nil {
 		srv.listener.Close()
@@ -161,13 +166,13 @@ func (srv *Server) Stop() {
 	}
 }
 
-// Syncs whoever called this with the server's stop
+// Wait syncs whoever called this with the server's stop
 func (srv *Server) Wait() {
 	srv.wg.Wait()
 }
 
-// Returns a new Server using the supplied configuration cfg. The returned server
-// is ready and calling its Serve method will start it.
+// NewServer Returns a new Server using the supplied configuration cfg. The returned
+// server is ready and calling its Serve method will start it.
 func NewServer(cfg config.Config, lib library.Library) (srv *Server) {
 	srv = new(Server)
 	srv.cfg = cfg
