@@ -1,7 +1,7 @@
 HTTP Media Server
 ======
 
-[![Build Status](https://travis-ci.org/ironsmile/httpms.png?branch=master)](https://travis-ci.org/ironsmile/httpms) [![GoDoc](https://godoc.org/github.com/ironsmile/httpms?status.svg)](https://godoc.org/github.com/ironsmile/httpms)
+[![Build Status](https://travis-ci.org/ironsmile/httpms.png?branch=master)](https://travis-ci.org/ironsmile/httpms) [![GoDoc](https://godoc.org/github.com/ironsmile/httpms?status.svg)](https://godoc.org/github.com/ironsmile/httpms) [![Go Report Card](https://goreportcard.com/badge/github.com/ironsmile/httpms)](https://goreportcard.com/report/github.com/ironsmile/httpms)
 
 A way to listen to your music library from everywhere. Once set up you won't need anything but a browser.
 HTTPMS will let you browse through and listen to your music over HTTP(s).
@@ -39,7 +39,7 @@ For the moment I do not plan to distribute it any other way.
 Install
 ======
 
-The safest route is installing [one of the releases](https://github.com/ironsmile/httpms/releases). Running `go install` in the project root directory will compile `httpms` and move its binary in your `$GOPATH`. Releases from `v1.0.1` onward have their go dependencies bundled in. To make use of them you will have to have the environment variable `GO15VENDOREXPERIMENT=1` when building. See [this document](https://docs.google.com/document/d/1Bz5-UB7g2uPBdOx-rw5t9MxJwkfpx90cqG9AFL0JAYo/edit#!) for more details.
+The safest route is installing [one of the releases](https://github.com/ironsmile/httpms/releases). Running `go install` in the project root directory will compile `httpms` and move its binary in your `$GOPATH`. Releases from `v1.0.1` onward have their go dependencies vendored.
 
 If you want to install the latest development version from the `master` branch, you can just run
 
