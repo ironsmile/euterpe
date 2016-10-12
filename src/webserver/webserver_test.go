@@ -51,12 +51,12 @@ func setUpServer() *Server {
 	projRoot, err := getProjectRoot()
 
 	if err != nil {
-		println(err.Error())
+		println(err)
 		os.Exit(1)
 	}
 
 	var wsCfg config.Config
-	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
+	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
 	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 	wsCfg.Gzip = true
 
@@ -115,7 +115,7 @@ func getLibraryServer(t *testing.T) (*Server, library.Library) {
 	ch <- 42
 
 	var wsCfg config.Config
-	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
+	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
 	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 
 	srv := NewServer(wsCfg, lib)
@@ -134,7 +134,7 @@ func TestStaticFilesServing(t *testing.T) {
 		resp, err := http.Get(url)
 
 		if err != nil {
-			t.Errorf(err.Error())
+			t.Error(err)
 		}
 
 		defer resp.Body.Close()
@@ -146,7 +146,7 @@ func TestStaticFilesServing(t *testing.T) {
 		body, err := ioutil.ReadAll(resp.Body)
 
 		if err != nil {
-			t.Errorf(err.Error())
+			t.Error(err)
 		}
 
 		if string(body) != expected {
@@ -195,12 +195,12 @@ func TestSSL(t *testing.T) {
 
 	projectRoot, err := getProjectRoot()
 	if err != nil {
-		t.Fatalf("Could not determine project path: %s", err.Error())
+		t.Fatalf("Could not determine project path: %s", err)
 	}
 	certDir := filepath.Join(projectRoot, "test_files", "ssl")
 
 	var wsCfg config.Config
-	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
+	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
 	wsCfg.HTTPRoot = TestRoot
 	wsCfg.SSL = true
 	wsCfg.SSLCertificate = config.ConfigCert{
@@ -220,7 +220,7 @@ func TestSSL(t *testing.T) {
 	_, err = client.Get(fmt.Sprintf("https://127.0.0.1:%d", TestPort))
 
 	if err != nil {
-		t.Errorf("Error GETing a SSL url: %s", err.Error())
+		t.Errorf("Error GETing a SSL url: %s", err)
 	}
 }
 
@@ -230,11 +230,11 @@ func TestUserAuthentication(t *testing.T) {
 	projRoot, err := getProjectRoot()
 
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err)
 	}
 
 	var wsCfg config.Config
-	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
+	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
 	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 	wsCfg.Auth = true
 	wsCfg.Authenticate = config.ConfigAuth{
@@ -249,7 +249,7 @@ func TestUserAuthentication(t *testing.T) {
 	resp, err := http.Get(url)
 
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err)
 	}
 
 	defer resp.Body.Close()
@@ -264,7 +264,7 @@ func TestUserAuthentication(t *testing.T) {
 	resp, err = client.Do(req)
 
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err)
 	}
 	defer resp.Body.Close()
 
@@ -277,7 +277,7 @@ func TestUserAuthentication(t *testing.T) {
 	resp, err = client.Do(req)
 
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err)
 	}
 	defer resp.Body.Close()
 
@@ -306,7 +306,7 @@ func TestSearchUrl(t *testing.T) {
 	ch <- 42
 
 	var wsCfg config.Config
-	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
+	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
 	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 
 	srv := NewServer(wsCfg, lib)
@@ -449,7 +449,7 @@ func TestGzipEncoding(t *testing.T) {
 			resp, err := client.Do(req)
 
 			if err != nil {
-				t.Errorf(err.Error())
+				t.Error(err)
 			}
 			defer resp.Body.Close()
 
@@ -486,7 +486,7 @@ func TestGzipEncoding(t *testing.T) {
 	}
 
 	var wsCfg config.Config
-	wsCfg.Listen = fmt.Sprintf(":%d", TestPort)
+	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
 	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 	wsCfg.Gzip = true
 
@@ -609,7 +609,7 @@ func TestAlbumHandlerZipFunction(t *testing.T) {
 	projRoot, err := helpers.ProjectRoot()
 
 	if err != nil {
-		t.Fatalf("Was not able to find test_files directory.", err.Error())
+		t.Fatalf("Was not able to find test_files directory: %s", err)
 	}
 
 	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
@@ -644,7 +644,7 @@ func TestAlbumHandlerZipFunction(t *testing.T) {
 
 		if err != nil {
 			t.Errorf("zipped file %s not found on file system: %s", zippedFile.Name,
-				err.Error())
+				err)
 			continue
 		}
 

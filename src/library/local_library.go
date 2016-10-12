@@ -3,6 +3,7 @@ package library
 import (
 	"database/sql"
 	"errors"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -16,6 +17,7 @@ import (
 	taglib "github.com/landr0id/go-taglib"
 	_ "github.com/mattn/go-sqlite3"
 
+	"github.com/ironsmile/httpms/src/config"
 	"github.com/ironsmile/httpms/src/helpers"
 )
 
@@ -24,8 +26,29 @@ import (
 // one of them will be saved in the library.
 const UNKNOWN_LABEL = "Unknown"
 
+var (
+	// LibraryFastScan is a flag, populated by the -fast-library-scan argument.
+	//
+	// When `false` (the default), scanning the local library will honour the
+	// configuration for occasional sleeping while scanning the file system.
+	//
+	// When `true`, scanning will be as fast as possible. This may generate high
+	// IO load for the duration of the scan.
+	LibraryFastScan bool
+)
+
+func init() {
+	flag.BoolVar(&LibraryFastScan, "fast-library-scan", false, "Do not honour"+
+		" the configuration set in 'library_scan'. With this flag,"+
+		" scanning will be done as fast as possible. This may be useful when"+
+		" running the daemon for the fists time with big libraries.")
+}
+
 // Implements the Library interface. Will represent files found on the local storage
 type LocalLibrary struct {
+	// The configuration for how to scan the libraries.
+	ScanConfig config.ScanSection
+
 	database string         // The location of the library's database
 	paths    []string       // FS locations which contain the library's media files
 	db       *sql.DB        // Database handler
@@ -34,26 +57,43 @@ type LocalLibrary struct {
 
 	// If something needs to be added to the database from the watcher
 	// it should use this channel
-	watchMediaChan chan string
+	mediaChan chan string
 
 	// Used to sync the library's Close with the watcher event handling goroutine
 	watchClosedChan chan bool
 
 	// Directory watcher
 	watch *fsnotify.Watcher
+
+	// Used to signal when the database writer has stopped
+	dbWriterWG sync.WaitGroup
+
+	// Used in the database writer to shortcircuit a idle heartbeat which noone reads
+	idleTimer *time.Timer
+
+	// Receiving something on this channel means that the database goroutin is in
+	// idle state at the moment
+	databaseWriterIdle chan struct{}
 }
 
 // Closes the database connection. It is safe to call it as many times as you want.
 func (lib *LocalLibrary) Close() {
-
 	lib.stopWatcher()
 
+	lib.WaitScan()
+	lib.walkWG.Wait()
+
+	if lib.mediaChan != nil {
+		close(lib.mediaChan)
+		lib.mediaChan = nil
+	}
+
+	lib.dbWriterWG.Wait()
+
 	if lib.db != nil {
-		lib.WaitScan()
 		lib.db.Close()
 		lib.db = nil
 	}
-
 }
 
 func (lib *LocalLibrary) AddLibraryPath(path string) {
@@ -177,183 +217,24 @@ func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []SearchResult {
 	return output
 }
 
-//!TODO: make scan also remove files which have been deleted since the previous scan
-// Scans all of the folders in paths for media files. New files will be added to the
-// database.
-func (lib *LocalLibrary) Scan() {
-	// Make sure there are no other scans working at the moment
-	lib.WaitScan()
-
-	start := time.Now()
-	mediaChan := make(chan string, 100)
-
-	lib.scanWG.Add(1)
-	go lib.databaseWriter(mediaChan, &lib.scanWG)
-
-	lib.initializeWatcher()
-
-	for _, path := range lib.paths {
-		lib.walkWG.Add(1)
-		go lib.scanPath(path, mediaChan)
-	}
-
-	lib.scanWG.Add(1)
-	go func() {
-		defer func() {
-			log.Printf("Walking took %s", time.Since(start))
-			lib.scanWG.Done()
-		}()
-		lib.walkWG.Wait()
-		close(mediaChan)
-	}()
-
-	go func() {
-		lib.WaitScan()
-		log.Printf("Scaning took %s", time.Since(start))
-	}()
-}
-
-// Blocks the current goroutine until the scan has been finished
-func (lib *LocalLibrary) WaitScan() {
-	lib.scanWG.Wait()
-}
-
-// Creates the directory watcher if none was created before. On failure logs the
-// problem and leaves the watcher unintialized. LocalLibrary should work even
-// without a watch.
-func (lib *LocalLibrary) initializeWatcher() {
-	if lib.watch != nil {
-		return
-	}
-	newWatcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Printf("Directory watcher was not initialized properly. ")
-		log.Printf("New files will not be added to the library. Reason: ")
-		log.Println(err)
-		return
-	}
-	lib.watch = newWatcher
-	lib.watchMediaChan = make(chan string, 100)
-	lib.watchClosedChan = make(chan bool)
-
-	go lib.databaseWriter(lib.watchMediaChan, nil)
-
-	go lib.watchEventRoutine()
-}
-
-// Stops the filesystem watching and all supporing it goroutines.
-func (lib *LocalLibrary) stopWatcher() {
-	if lib.watch != nil {
-		lib.watchClosedChan <- true
-		lib.watch.Close()
-		lib.watch = nil
-		close(lib.watchMediaChan)
-		close(lib.watchClosedChan)
-	}
-}
-
-// This function is resposible for selecting the watcher events
-func (lib *LocalLibrary) watchEventRoutine() {
-
-	// To make sure we will not write in the database at the same time as the
-	// scanning goroutines we will wait them to end.
-	lib.WaitScan()
-	defer func() {
-		log.Println("Directory watcher event receiver stopped.")
-	}()
-
-	if lib.watch == nil {
-		return
-	}
-
-	for {
-		select {
-		case ev := <-lib.watch.Event:
-			if ev == nil {
-				return
-			}
-			lib.handleWatchEvent(ev)
-		case err := <-lib.watch.Error:
-			if err == nil {
-				return
-			}
-			log.Println("Directory watcher error:", err)
-		case <-lib.watchClosedChan:
-			return
-		}
-	}
-}
-
-// Deals with the watcher events.
-// 	* new directories should be watched and they themselves scanned
-//  * new files should be added to the library
-//  * deleted files should be removed from the library
-//  * deleted directories should be unwatched
-//  * modfied files should be updated in the database
-//  * renamed ...
-func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
-	// log.Println("Watch event:", event)
-
-	if event.IsAttrib() {
-		// The event was just an attribute change
-		return
-	}
-
-	st, stErr := os.Stat(event.Name)
-
-	if stErr != nil && !event.IsRename() && !event.IsDelete() {
-		log.Printf("Watch event stat received error: %s\n", stErr.Error())
-		return
-	}
-
-	if event.IsCreate() && st.IsDir() {
-		lib.watch.Watch(event.Name)
-		lib.walkWG.Add(1)
-		go lib.scanPath(event.Name, lib.watchMediaChan)
-		return
-	}
-
-	if event.IsCreate() && !st.IsDir() {
-		if lib.isSupportedFormat(event.Name) {
-			lib.watchMediaChan <- event.Name
-		}
-		return
-	}
-
-	if event.IsModify() && !st.IsDir() {
-		if lib.isSupportedFormat(event.Name) {
-			lib.removeFile(event.Name)
-			lib.watchMediaChan <- event.Name
-		}
-		return
-	}
-
-	if event.IsDelete() || event.IsRename() {
-		if lib.isSupportedFormat(event.Name) {
-			// This is a file
-			lib.removeFile(event.Name)
-			return
-		} else {
-			// It was a directory... probably
-			lib.watch.RemoveWatch(event.Name)
-			lib.removeDirectory(event.Name)
-			return
-		}
-		return
-	}
-}
-
 // Removes the file from the library. That means finding it in the database and
 // removing it from there.
-// filePath argument should be absolute path.
 func (lib *LocalLibrary) removeFile(filePath string) {
-	_, err := lib.db.Exec(`
-		DELETE FROM tracks
-		WHERE fs_path = ?
-	`, filePath)
+
+	fullPath, err := filepath.Abs(filePath)
 
 	if err != nil {
 		log.Printf("Error removing %s: %s\n", filePath, err.Error())
+		return
+	}
+
+	_, err = lib.db.Exec(`
+		DELETE FROM tracks
+		WHERE fs_path = ?
+	`, fullPath)
+
+	if err != nil {
+		log.Printf("Error removing %s: %s\n", fullPath, err.Error())
 	}
 }
 
@@ -379,47 +260,53 @@ func (lib *LocalLibrary) databaseWriter(media <-chan string, wg *sync.WaitGroup)
 	if wg != nil {
 		defer wg.Done()
 	}
-	for filename := range media {
-		lib.AddMedia(filename)
+
+	lib.databaseWriterIdle = make(chan struct{})
+	defer close(lib.databaseWriterIdle)
+
+	idleTimer := time.NewTimer(10 * time.Millisecond)
+	defer func() {
+		if !idleTimer.Stop() {
+			<-idleTimer.C
+		}
+	}()
+
+	for {
+		select {
+		case filename, ok := <-media:
+			if !ok {
+				return
+			}
+
+			lib.AddMedia(filename)
+
+			if !idleTimer.Stop() {
+				<-idleTimer.C
+			}
+
+		case <-idleTimer.C:
+			lib.sendDBWriterIdleSignal()
+		}
+		idleTimer.Reset(10 * time.Millisecond)
 	}
 }
 
-// This is the goroutine which actually scans a library path.
-// For now it ignores everything but the list of supported files. It is so
-// because jplayer cannot play anything else. Sends every suitable
-// file into the media channel
-func (lib *LocalLibrary) scanPath(scannedPath string, media chan<- string) {
-	start := time.Now()
-
-	defer func() {
-		log.Printf("Walking %s took %s", scannedPath, time.Since(start))
-		lib.walkWG.Done()
-	}()
-
-	walkFunc := func(path string, info os.FileInfo, err error) error {
-
-		if err != nil {
-			log.Println(err)
-			return nil
+func (lib *LocalLibrary) sendDBWriterIdleSignal() {
+	lib.idleTimer.Reset(1 * time.Millisecond)
+	select {
+	case lib.databaseWriterIdle <- struct{}{}:
+		if !lib.idleTimer.Stop() {
+			<-lib.idleTimer.C
 		}
-
-		if lib.isSupportedFormat(path) {
-			media <- path
-		}
-
-		if lib.watch != nil && info.IsDir() {
-			//log.Printf("Adding watch for %s\n", path)
-			lib.watch.Watch(path)
-		}
-
-		return nil
+		return
+	case <-lib.idleTimer.C:
+		return
 	}
+	return
+}
 
-	err := filepath.Walk(scannedPath, walkFunc)
-
-	if err != nil {
-		log.Println(err)
-	}
+func (lib *LocalLibrary) waitForDBWriterIdleSignal() {
+	<-lib.databaseWriterIdle
 }
 
 // Determines if the file will be saved to the database. Only media files which
@@ -440,7 +327,6 @@ func (lib *LocalLibrary) isSupportedFormat(path string) bool {
 			continue
 		}
 		return true
-		break
 	}
 	return false
 }
@@ -720,6 +606,10 @@ func (lib *LocalLibrary) setTrackID(title, fs_path string,
 func (lib *LocalLibrary) lastInsertID() (int64, error) {
 	var id int64
 
+	if lib.db == nil {
+		return 0, errors.New("The db connection proprety was nil")
+	}
+
 	err := lib.db.QueryRow("SELECT last_insert_rowid();").Scan(&id)
 
 	if err != nil {
@@ -733,9 +623,8 @@ func (lib *LocalLibrary) lastInsertID() (int64, error) {
 // sqlite database file and creates one if it is absent. If a file is found
 // it does nothing.
 func (lib *LocalLibrary) Initialize() error {
-	_, err := os.Stat(lib.database)
 
-	if err == nil {
+	if st, err := os.Stat(lib.database); err == nil && st.Size() > 0 {
 		return nil
 	}
 
@@ -812,6 +701,12 @@ func NewLocalLibrary(databasePath string) (*LocalLibrary, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	lib.idleTimer = time.NewTimer(1 * time.Millisecond)
+	lib.mediaChan = make(chan string, 100)
+
+	lib.dbWriterWG.Add(1)
+	go lib.databaseWriter(lib.mediaChan, &lib.dbWriterWG)
 
 	return lib, nil
 }

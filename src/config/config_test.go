@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestFindTheRighConfigFile(t *testing.T) {
@@ -62,23 +63,13 @@ func TestMergingConfigs(t *testing.T) {
 		dflConfig.SqliteDatabase = "httpms.db"
 		dflConfig.Auth = true
 		dflConfig.Authenticate = ConfigAuth{User: "bob", Password: "marley"}
+		dflConfig.LibraryScan = ScanSection{
+			FilesPerOperation: 1000,
+			SleepPerOperation: 10 * time.Millisecond,
+			InitialWait:       500 * time.Millisecond,
+		}
 		return dflConfig
 	}
-
-	cfg = getDefaultCfg()
-
-	merged.Listen = new(string)
-	*merged.Listen = ":8080"
-	merged.SSL = new(bool)
-	*merged.SSL = true
-	merged.SSLCertificate = new(ConfigCert)
-	*merged.SSLCertificate = ConfigCert{Crt: "crt", Key: "key"}
-	merged.Libraries = new([]string)
-	*merged.Libraries = append(*merged.Libraries, "/some/path")
-	merged.Auth = new(bool)
-	*merged.Auth = false
-
-	cfg.merge(merged)
 
 	checkMerge := func(cfg *Config) {
 
@@ -129,12 +120,41 @@ func TestMergingConfigs(t *testing.T) {
 				t.Errorf("Library was wrong: %s", cfg.Libraries[0])
 			}
 		}
+
+		expectedLibraryScan := ScanSection{
+			FilesPerOperation: 1500,
+			SleepPerOperation: 15 * time.Millisecond,
+			InitialWait:       1 * time.Second,
+		}
+
+		if cfg.LibraryScan != expectedLibraryScan {
+			t.Errorf("LibraryScan was not as expected: It was: %#v, expected: %#v",
+				cfg.LibraryScan, expectedLibraryScan)
+		}
 	}
 
+	cfg = getDefaultCfg()
+
+	merged.Listen = new(string)
+	*merged.Listen = ":8080"
+	merged.SSL = new(bool)
+	*merged.SSL = true
+	merged.Libraries = new([]string)
+	*merged.Libraries = append(*merged.Libraries, "/some/path")
+	merged.Auth = new(bool)
+	*merged.Auth = false
+	merged.SSLCertificate = &ConfigCert{Crt: "crt", Key: "key"}
+	merged.LibraryScan = &ScanSection{
+		FilesPerOperation: 1500,
+		SleepPerOperation: 15 * time.Millisecond,
+		InitialWait:       1 * time.Second,
+	}
+
+	cfg.merge(merged)
 	checkMerge(cfg)
 
 	cfg = getDefaultCfg()
-	cfg.mergeJSON([]byte(`
+	testJson := `
 		{
 			"listen": ":8080",
 			"ssl": true,
@@ -143,9 +163,17 @@ func TestMergingConfigs(t *testing.T) {
 				"crt": "crt"
 			},
 			"libraries": ["/some/path"],
+			"library_scan": {
+				"files_per_operation": 1500,
+				"sleep_after_operation": "15ms",
+				"initial_wait_duration": "1s"
+			},
 			"basic_authenticate": false
 		}
-	`))
+	`
+	if err := cfg.mergeJSON([]byte(testJson)); err != nil {
+		t.Errorf("Parsing test json failed: %s", err)
+	}
 	checkMerge(cfg)
 }
 

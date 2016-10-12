@@ -1,10 +1,9 @@
-//!TODO: Use a random temp file. Someone may be using /tmp/test.db for something
-// already
 package library
 
 import (
 	"database/sql"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -17,14 +16,34 @@ import (
 	"github.com/ironsmile/httpms/src/helpers"
 )
 
-func init() {
-	devnull, _ := os.Create(os.DevNull)
-	log.SetOutput(devnull)
+func contains(heystack []string, needle string) bool {
+	for i := 0; i < len(heystack); i++ {
+		if needle == heystack[i] {
+			return true
+		}
+	}
+	return false
 }
 
-func getLibrary(t *testing.T, dbFile string) *LocalLibrary {
+func init() {
+	// Will show the output from log in the console only
+	// if the -v flag is passed to the tests.
+	if !contains(os.Args, "-test.v=true") {
+		devnull, _ := os.Create(os.DevNull)
+		log.SetOutput(devnull)
+	}
+}
 
-	lib, err := NewLocalLibrary(dbFile)
+// It is the caller's resposibility to remove the library SQLite database file
+func getLibrary(t *testing.T) *LocalLibrary {
+
+	fh, err := ioutil.TempFile("", "httpms_library_test_")
+
+	if err != nil {
+		t.Fatalf("Error creating temporary library: %s", err)
+	}
+
+	lib, err := NewLocalLibrary(fh.Name())
 
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -33,13 +52,13 @@ func getLibrary(t *testing.T, dbFile string) *LocalLibrary {
 	err = lib.Initialize()
 
 	if err != nil {
-		t.Fatalf("Initializing library: %s", err.Error())
+		t.Fatalf("Initializing library: %s", err)
 	}
 
 	projRoot, err := helpers.ProjectRoot()
 
 	if err != nil {
-		t.Fatalf("Was not able to find test_files directory.", err.Error())
+		t.Fatalf("Was not able to find test_files directory: %s", err)
 	}
 
 	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
@@ -50,25 +69,32 @@ func getLibrary(t *testing.T, dbFile string) *LocalLibrary {
 	return lib
 }
 
-func getPathedLibrary(t *testing.T, dbFile string) *LocalLibrary {
+// It is the caller's resposibility to remove the library SQLite database file
+func getPathedLibrary(t *testing.T) *LocalLibrary {
 	projRoot, err := helpers.ProjectRoot()
 
 	if err != nil {
-		t.Fatalf("Was not able to find test_files directory.", err.Error())
+		t.Fatalf("Was not able to find test_files directory: %s", err)
 	}
 
 	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
 
-	lib, err := NewLocalLibrary(dbFile)
+	fh, err := ioutil.TempFile("", "httpms_library_test_")
 
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("Error creating temporary library: %s", err)
+	}
+
+	lib, err := NewLocalLibrary(fh.Name())
+
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	err = lib.Initialize()
 
 	if err != nil {
-		t.Fatalf("Initializing library: %s", err.Error())
+		t.Fatalf("Initializing library: %s", err)
 	}
 
 	lib.AddLibraryPath(testLibraryPath)
@@ -76,8 +102,9 @@ func getPathedLibrary(t *testing.T, dbFile string) *LocalLibrary {
 	return lib
 }
 
-func getScannedLibrary(t *testing.T, dbFile string) *LocalLibrary {
-	lib := getPathedLibrary(t, dbFile)
+// It is the caller's resposibility to remove the library SQLite database file
+func getScannedLibrary(t *testing.T) *LocalLibrary {
+	lib := getPathedLibrary(t)
 
 	lib.Scan()
 
@@ -107,10 +134,16 @@ func testErrorAfter(seconds time.Duration, message string) chan int {
 }
 
 func TestInitialize(t *testing.T) {
-	lib, err := NewLocalLibrary("/tmp/test-init.db")
+	libDB, err := ioutil.TempFile("", "httpms_library_test_")
 
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("Error creating temporary library: %s", err)
+	}
+
+	lib, err := NewLocalLibrary(libDB.Name())
+
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	defer lib.Close()
@@ -118,27 +151,27 @@ func TestInitialize(t *testing.T) {
 	err = lib.Initialize()
 
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 
 	defer lib.Truncate()
 	defer func() {
-		os.Remove("/tmp/test-init.db")
+		os.Remove(libDB.Name())
 	}()
 
-	st, err := os.Stat("/tmp/test-init.db")
+	st, err := os.Stat(libDB.Name())
 
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 
 	if st.Size() < 1 {
 		t.Errorf("Library database was 0 bytes in size")
 	}
 
-	db, err := sql.Open("sqlite3", "/tmp/test-init.db")
+	db, err := sql.Open("sqlite3", libDB.Name())
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 	defer db.Close()
 
@@ -147,37 +180,43 @@ func TestInitialize(t *testing.T) {
 	for _, table := range tables {
 		row, err := db.Query(fmt.Sprintf("SELECT count(id) as cnt FROM %s", table))
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err)
 		}
 		defer row.Close()
 	}
 }
 
 func TestTruncate(t *testing.T) {
-	lib, err := NewLocalLibrary("/tmp/test-truncate.db")
+	libDB, err := ioutil.TempFile("", "httpms_library_test_")
 
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("Error creating temporary library: %s", err)
+	}
+
+	lib, err := NewLocalLibrary(libDB.Name())
+
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	err = lib.Initialize()
 
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 
 	lib.Truncate()
 
-	_, err = os.Stat("/tmp/test-truncate.db")
+	_, err = os.Stat(libDB.Name())
 
 	if err == nil {
-		os.Remove("/tmp/test-truncate.db")
+		os.Remove(libDB.Name())
 		t.Errorf("Expected database file to be missing but it is still there")
 	}
 }
 
 func TestSearch(t *testing.T) {
-	lib := getLibrary(t, "/tmp/test-search.db")
+	lib := getLibrary(t)
 	defer lib.Truncate()
 
 	found := lib.Search("Buggy")
@@ -220,19 +259,20 @@ func TestSearch(t *testing.T) {
 }
 
 func TestAddigNewFiles(t *testing.T) {
-	library := getLibrary(t, "/tmp/test-new-files.db")
+
+	library := getLibrary(t)
 	defer library.Truncate()
 
-	db, err := sql.Open("sqlite3", "/tmp/test-new-files.db")
+	db, err := sql.Open("sqlite3", library.database)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 	defer db.Close()
 
 	tracksCount := func() int {
 		rows, err := db.Query("SELECT count(id) as cnt FROM tracks")
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err)
 			return 0
 		}
 		defer rows.Close()
@@ -255,7 +295,7 @@ func TestAddigNewFiles(t *testing.T) {
 	projRoot, err := helpers.ProjectRoot()
 
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 
 	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
@@ -272,7 +312,7 @@ func TestAddigNewFiles(t *testing.T) {
 	err = library.AddMedia(realFile)
 
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err)
 	}
 
 	tracks = tracksCount()
@@ -295,7 +335,7 @@ func TestAddigNewFiles(t *testing.T) {
 }
 
 func TestPreAddedFiles(t *testing.T) {
-	library := getLibrary(t, "/tmp/test-preadded-files.db")
+	library := getLibrary(t)
 	defer library.Truncate()
 
 	_, err := library.GetArtistID("doycho")
@@ -307,7 +347,7 @@ func TestPreAddedFiles(t *testing.T) {
 	artistID, err := library.GetArtistID("Artist Testoff")
 
 	if err != nil {
-		t.Fatalf("Was not able to find Artist Testoff: %s", err.Error())
+		t.Fatalf("Was not able to find Artist Testoff: %s", err)
 	}
 
 	_, err = library.GetAlbumID("Album Of Not Being There", artistID)
@@ -319,7 +359,7 @@ func TestPreAddedFiles(t *testing.T) {
 	albumID, err := library.GetAlbumID("Album Of Tests", artistID)
 
 	if err != nil {
-		t.Fatalf("Was not able to find Album Of Tests: %d", err.Error())
+		t.Fatalf("Was not able to find Album Of Tests: %s", err)
 	}
 
 	_, err = library.GetTrackID("404 Not Found", artistID, albumID)
@@ -331,12 +371,12 @@ func TestPreAddedFiles(t *testing.T) {
 	_, err = library.GetTrackID("Another One", artistID, albumID)
 
 	if err != nil {
-		t.Fatalf("Was not able to find track Another One: %s", err.Error())
+		t.Fatalf("Was not able to find track Another One: %s", err)
 	}
 }
 
 func TestGettingAFile(t *testing.T) {
-	library := getLibrary(t, "/tmp/test-getting-a-file.db")
+	library := getLibrary(t)
 	defer library.Truncate()
 
 	artistID, _ := library.GetArtistID("Artist Testoff")
@@ -344,7 +384,7 @@ func TestGettingAFile(t *testing.T) {
 	trackID, err := library.GetTrackID("Another One", artistID, albumID)
 
 	if err != nil {
-		t.Fatalf("File not found: %S", err.Error())
+		t.Fatalf("File not found: %s", err)
 	}
 
 	filePath := library.GetFilePath(trackID)
@@ -357,7 +397,7 @@ func TestGettingAFile(t *testing.T) {
 }
 
 func TestAddingLibraryPaths(t *testing.T) {
-	lib := getPathedLibrary(t, "/tmp/test-library-paths.db")
+	lib := getPathedLibrary(t)
 	defer lib.Truncate()
 
 	if len(lib.paths) != 1 {
@@ -375,7 +415,7 @@ func TestAddingLibraryPaths(t *testing.T) {
 }
 
 func TestScaning(t *testing.T) {
-	lib := getPathedLibrary(t, "/tmp/test-library-paths.db")
+	lib := getPathedLibrary(t)
 	defer lib.Truncate()
 
 	lib.Scan()
@@ -395,7 +435,7 @@ func TestScaning(t *testing.T) {
 }
 
 func TestSQLInjections(t *testing.T) {
-	lib := getScannedLibrary(t, "/tmp/test-sql-injections.db")
+	lib := getScannedLibrary(t)
 	defer lib.Truncate()
 
 	found := lib.Search(`not-such-thing" OR 1=1 OR t.name="kleopatra`)
@@ -407,7 +447,7 @@ func TestSQLInjections(t *testing.T) {
 }
 
 func TestGetAlbumFiles(t *testing.T) {
-	lib := getScannedLibrary(t, "/tmp/test-album-download.db")
+	lib := getScannedLibrary(t)
 	defer lib.Truncate()
 
 	artistID, _ := lib.GetArtistID("Artist Testoff")
@@ -447,7 +487,7 @@ func TestGetAlbumFiles(t *testing.T) {
 }
 
 func TestRemoveFileFunction(t *testing.T) {
-	lib := getScannedLibrary(t, "/tmp/test-moving-files.db")
+	lib := getScannedLibrary(t)
 	defer lib.Truncate()
 
 	found := lib.Search("Another One")
@@ -495,7 +535,7 @@ func checkAddedSong(lib *LocalLibrary, t *testing.T) {
 }
 
 func TestAddingNewFile(t *testing.T) {
-	lib := getScannedLibrary(t, "/tmp/test-new-files.db")
+	lib := getScannedLibrary(t)
 	defer lib.Truncate()
 	projRoot, _ := helpers.ProjectRoot()
 	testFiles := filepath.Join(projRoot, "test_files")
@@ -504,17 +544,17 @@ func TestAddingNewFile(t *testing.T) {
 	newFile := filepath.Join(testFiles, "library", "folder_one", "test_file_added.mp3")
 
 	if err := helpers.Copy(testMp3, newFile); err != nil {
-		t.Fatalf("Copying file to library faild: %s", err.Error())
+		t.Fatalf("Copying file to library faild: %s", err)
 	}
 
 	defer os.Remove(newFile)
-	time.Sleep(10 * time.Millisecond)
+	lib.WaitScan()
 
 	checkAddedSong(lib, t)
 }
 
 func TestMovingFileIntoLibrary(t *testing.T) {
-	lib := getScannedLibrary(t, "/tmp/test-moving-files.db")
+	lib := getScannedLibrary(t)
 	defer lib.Truncate()
 	projRoot, _ := helpers.ProjectRoot()
 	testFiles := filepath.Join(projRoot, "test_files")
@@ -524,22 +564,22 @@ func TestMovingFileIntoLibrary(t *testing.T) {
 	newFile := filepath.Join(testFiles, "library", "test_file_added.mp3")
 
 	if err := helpers.Copy(testMp3, toBeMoved); err != nil {
-		t.Fatalf("Copying file to library faild: %s", err.Error())
+		t.Fatalf("Copying file to library faild: %s", err)
 	}
 
 	if err := os.Rename(toBeMoved, newFile); err != nil {
 		os.Remove(toBeMoved)
-		t.Fatalf("Was not able to move new file into library: %s", err.Error())
+		t.Fatalf("Was not able to move new file into library: %s", err)
 	}
 
 	defer os.Remove(newFile)
-	time.Sleep(10 * time.Millisecond)
+	lib.WaitScan()
 
 	checkAddedSong(lib, t)
 }
 
 func TestAddingNonRelatedFile(t *testing.T) {
-	lib := getScannedLibrary(t, "/tmp/test-adding-nonrelated-files.db")
+	lib := getScannedLibrary(t)
 	defer lib.Truncate()
 	projRoot, _ := helpers.ProjectRoot()
 	testFiles := filepath.Join(projRoot, "test_files")
@@ -561,11 +601,11 @@ func TestAddingNonRelatedFile(t *testing.T) {
 	fh.WriteString("Some contents")
 	fh.Close()
 
-	time.Sleep(10 * time.Millisecond)
+	lib.WaitScan()
 	testLibFiles()
 
 	os.Remove(newFile)
-	time.Sleep(10 * time.Millisecond)
+	lib.WaitScan()
 	testLibFiles()
 
 }
@@ -578,10 +618,10 @@ func TestRemovingFile(t *testing.T) {
 	newFile := filepath.Join(testFiles, "library", "test_file_added.mp3")
 
 	if err := helpers.Copy(testMp3, newFile); err != nil {
-		t.Fatalf("Copying file to library faild: %s", err.Error())
+		t.Fatalf("Copying file to library faild: %s", err)
 	}
 
-	lib := getScannedLibrary(t, "/tmp/test-removing-files.db")
+	lib := getScannedLibrary(t)
 	defer lib.Truncate()
 
 	results := lib.Search("")
@@ -594,7 +634,7 @@ func TestRemovingFile(t *testing.T) {
 		t.Error(err)
 	}
 
-	time.Sleep(10 * time.Millisecond)
+	lib.WaitScan()
 
 	results = lib.Search("")
 	if len(results) != 3 {
@@ -603,9 +643,6 @@ func TestRemovingFile(t *testing.T) {
 }
 
 func TestAddingAndRemovingDirectory(t *testing.T) {
-	lib := getScannedLibrary(t, "/tmp/test-moving-directory.db")
-	defer lib.Truncate()
-
 	projRoot, _ := helpers.ProjectRoot()
 	testFiles := filepath.Join(projRoot, "test_files")
 
@@ -614,6 +651,17 @@ func TestAddingAndRemovingDirectory(t *testing.T) {
 	srcTestMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
 	dstTestMp3 := filepath.Join(testFiles, "more_mp3s", "to_be_moved_directory",
 		"test_file_added.mp3")
+
+	if err := os.RemoveAll(testDir); err != nil {
+		t.Fatalf("Removing directory needed for tests: %s", err)
+	}
+
+	if err := os.RemoveAll(movedDir); err != nil {
+		t.Fatalf("Removing directory needed for tests: %s", err)
+	}
+
+	lib := getScannedLibrary(t)
+	defer lib.Truncate()
 
 	if err := os.Mkdir(testDir, 0755); err != nil {
 		t.Fatal(err)
@@ -629,7 +677,7 @@ func TestAddingAndRemovingDirectory(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	time.Sleep(10 * time.Millisecond)
+	lib.WaitScan()
 
 	checkAddedSong(lib, t)
 
@@ -637,7 +685,7 @@ func TestAddingAndRemovingDirectory(t *testing.T) {
 		t.Error(err)
 	}
 
-	time.Sleep(10 * time.Millisecond)
+	lib.WaitScan()
 
 	results := lib.Search("")
 
@@ -657,6 +705,10 @@ func TestMovingDirectory(t *testing.T) {
 	dstTestMp3 := filepath.Join(testFiles, "more_mp3s", "to_be_moved_directory",
 		"test_file_added.mp3")
 
+	_ = os.RemoveAll(testDir)
+	_ = os.RemoveAll(movedDir)
+	_ = os.RemoveAll(secondPlace)
+
 	if err := os.Mkdir(testDir, 0755); err != nil {
 		t.Fatal(err)
 	}
@@ -673,7 +725,7 @@ func TestMovingDirectory(t *testing.T) {
 		defer os.RemoveAll(movedDir)
 	}
 
-	lib := getScannedLibrary(t, "/tmp/test-moving-inner-directory.db")
+	lib := getScannedLibrary(t)
 	defer lib.Truncate()
 
 	checkAddedSong(lib, t)
@@ -684,31 +736,31 @@ func TestMovingDirectory(t *testing.T) {
 		defer os.RemoveAll(secondPlace)
 	}
 
-	time.Sleep(10 * time.Millisecond)
+	lib.WaitScan()
 
 	checkAddedSong(lib, t)
 
 	found := lib.Search("")
 
 	if len(found) != 4 {
-		t.Errorf("Expected to find 4 tracks but found %s", len(found))
+		t.Errorf("Expected to find 4 tracks but found %d", len(found))
 	}
 
 	found = lib.Search("Added Song")
 
 	if len(found) != 1 {
-		t.Fatalf("Did not find exactly 'Added Song'. Found %d files", len(found))
+		t.Fatalf("Did not find exactly one 'Added Song'. Found %d files", len(found))
 	}
 
 	foundPath := lib.GetFilePath(found[0].ID)
 	expectedPath := filepath.Join(secondPlace, "test_file_added.mp3")
 
 	if _, err := os.Stat(expectedPath); err != nil {
-		t.Errorf("File %s was not found: %s", expectedPath, err.Error())
+		t.Errorf("File %s was not found: %s", expectedPath, err)
 	}
 
 	if foundPath != expectedPath {
-		t.Errorf("File is in %s according library. But it is actually in %s",
+		t.Errorf("File is in %s according to library. But it is actually in %s",
 			foundPath, expectedPath)
 	}
 
