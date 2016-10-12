@@ -39,7 +39,7 @@ type Library interface {
 	AddLibraryPath(string)
 
 	// Search the library using a search string. It will match against Artist, Album
-	// and Title. Will OR the results. So it is "return anything whcih Artist maches or
+	// and Title. Will OR the results. So it is "return anything which Artist maches or
 	// Album matches or Title matches"
 	Search(string) []SearchResult
 

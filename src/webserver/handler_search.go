@@ -48,7 +48,7 @@ func (sh SearchHandler) search(writer http.ResponseWriter, req *http.Request) er
 }
 
 // Returns a new SearchHandler for processing search queries. They will be run
-// agains the supplied library
+// against the supplied library
 func NewSearchHandler(lib library.Library) *SearchHandler {
 	sh := new(SearchHandler)
 	sh.library = lib

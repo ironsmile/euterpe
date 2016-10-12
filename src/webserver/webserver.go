@@ -1,4 +1,4 @@
-// This module contains the webserver whcih deals with processing requests
+// This module contains the webserver which deals with processing requests
 // from the user, presenting him with the interface of the application.
 package webserver
 

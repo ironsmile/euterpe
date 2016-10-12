@@ -15,6 +15,9 @@ import (
 
 	"github.com/howeyc/fsnotify"
 	taglib "github.com/landr0id/go-taglib"
+
+	// Blind import is the way a SQL driver is imported. This is the proposed way
+	// from the golang documentation.
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/ironsmile/httpms/src/config"
@@ -24,7 +27,7 @@ import (
 // Will be used in case some media tag is missing. As a consequence
 // if there are many files with missing title, artist and album only
 // one of them will be saved in the library.
-const UNKNOWN_LABEL = "Unknown"
+const UnknownLabel = "Unknown"
 
 var (
 	// LibraryFastScan is a flag, populated by the -fast-library-scan argument.
@@ -68,7 +71,7 @@ type LocalLibrary struct {
 	// Used to signal when the database writer has stopped
 	dbWriterWG sync.WaitGroup
 
-	// Used in the database writer to shortcircuit a idle heartbeat which noone reads
+	// Used in the database writer to shortcircuit a idle heartbeat which no one reads
 	idleTimer *time.Timer
 
 	// Receiving something on this channel means that the database goroutin is in
@@ -444,7 +447,7 @@ func (lib *LocalLibrary) GetArtistID(artist string) (int64, error) {
 // its current id.
 func (lib *LocalLibrary) setArtistID(artist string) (int64, error) {
 	if len(artist) < 1 {
-		artist = UNKNOWN_LABEL
+		artist = UnknownLabel
 	}
 
 	id, err := lib.GetArtistID(artist)
@@ -508,7 +511,7 @@ func (lib *LocalLibrary) GetAlbumID(album string, artistID int64) (int64, error)
 // separate IDs hence the artistID parameter.
 func (lib *LocalLibrary) setAlbumID(album string, artistID int64) (int64, error) {
 	if len(album) < 1 {
-		album = UNKNOWN_LABEL
+		album = UnknownLabel
 	}
 
 	id, err := lib.GetAlbumID(album, artistID)
@@ -572,13 +575,13 @@ func (lib *LocalLibrary) GetTrackID(title string,
 // Sets a new ID for this track if it is new to the library. If not, returns
 // its current id. Tracks with the same name but by different artists and/or album
 // need to have separate IDs hence the artistID and albumID parameters.
-// Additionally trackNumber and filesystem path (fs_path) are required. They are
+// Additionally trackNumber and filesystem path (fsPath) are required. They are
 // used when retreiving this particular song for playing.
-func (lib *LocalLibrary) setTrackID(title, fs_path string,
+func (lib *LocalLibrary) setTrackID(title, fsPath string,
 	trackNumber, artistID, albumID int64) (int64, error) {
 
 	if len(title) < 1 {
-		title = filepath.Base(fs_path)
+		title = filepath.Base(fsPath)
 	}
 
 	id, err := lib.GetTrackID(title, artistID, albumID)
@@ -600,7 +603,7 @@ func (lib *LocalLibrary) setTrackID(title, fs_path string,
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(title, albumID, artistID, fs_path, trackNumber)
+	_, err = stmt.Exec(title, albumID, artistID, fsPath, trackNumber)
 
 	if err != nil {
 		return 0, err
@@ -689,6 +692,7 @@ func (lib *LocalLibrary) readSchema() (string, error) {
 	return out, nil
 }
 
+// Truncate Closes the library and removes its database file leaving no traces at all.
 func (lib *LocalLibrary) Truncate() error {
 	lib.Close()
 	return os.Remove(lib.database)

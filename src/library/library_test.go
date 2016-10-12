@@ -497,9 +497,9 @@ func TestRemoveFileFunction(t *testing.T) {
 			`result but they were %d`, len(found))
 	}
 
-	fs_path := lib.GetFilePath(found[0].ID)
+	fsPath := lib.GetFilePath(found[0].ID)
 
-	lib.removeFile(fs_path)
+	lib.removeFile(fsPath)
 
 	found = lib.Search("Another One")
 

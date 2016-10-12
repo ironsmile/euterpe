@@ -1,4 +1,4 @@
-// Contains few helpers functions which are used througout the project
+// Contains few helpers functions which are used throughout the project
 package helpers
 
 import (
@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-var projectRoot string = ""
+var projectRoot string
 
 func cacheProjRoot(path string) string {
 	projectRoot = path

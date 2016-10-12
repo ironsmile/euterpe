@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -459,6 +460,7 @@ func TestGzipEncoding(t *testing.T) {
 					contentEncoding)
 			}
 
+			var bodyReader io.Reader
 			var responseBody []byte
 			if contentEncoding == "gzip" {
 				reader, err := gzip.NewReader(resp.Body)
@@ -466,10 +468,12 @@ func TestGzipEncoding(t *testing.T) {
 					t.Fatal(err)
 				}
 				defer reader.Close()
-				responseBody, err = ioutil.ReadAll(reader)
+				bodyReader = reader
 			} else {
-				responseBody, err = ioutil.ReadAll(resp.Body)
+				bodyReader = resp.Body
 			}
+
+			responseBody, err = ioutil.ReadAll(bodyReader)
 
 			if err != nil {
 				t.Fatal(err)
@@ -649,7 +653,7 @@ func TestAlbumHandlerZipFunction(t *testing.T) {
 		}
 
 		if zippedFile.FileHeader.UncompressedSize != uint32(st.Size()) {
-			t.Errorf("Zipped file %s was incorect size: %d. Expected %d",
+			t.Errorf("Zipped file %s was incorrect size: %d. Expected %d",
 				zippedFile.Name, zippedFile.FileHeader.UncompressedSize, st.Size())
 		}
 	}

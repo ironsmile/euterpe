@@ -15,13 +15,13 @@ import (
 )
 
 var (
-	PidFile string
+	pidFile string
 )
 
 func init() {
 	pidUsage := "Pidfile. Default is [user_path]/pidfile.pid"
 	pidDefault := "pidfile.pid"
-	flag.StringVar(&PidFile, "p", pidDefault, pidUsage)
+	flag.StringVar(&pidFile, "p", pidDefault, pidUsage)
 }
 
 func main() {
@@ -54,7 +54,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if out, err := exec.Command(path, "-p", PidFile).Output(); err != nil {
+	if out, err := exec.Command(path, "-p", pidFile).Output(); err != nil {
 		logger.Println(err)
 		os.Exit(1)
 	} else {

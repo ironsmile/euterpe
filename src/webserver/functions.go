@@ -1,7 +1,6 @@
 package webserver
 
 import (
-	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -28,7 +27,7 @@ func templateDir() (string, error) {
 	}
 
 	if !st.IsDir() {
-		return "", errors.New(fmt.Sprintf("%s is not a directory", theDirectory))
+		return "", fmt.Errorf("%s is not a directory", theDirectory)
 	}
 
 	return theDirectory, nil

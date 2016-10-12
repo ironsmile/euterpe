@@ -20,8 +20,8 @@ import (
 	"github.com/ironsmile/httpms/src/helpers"
 )
 
-const CONFIG_NAME = "config.json"
-const DEFAULT_CONFIG_NAME = "config.default.json"
+const ConfigName = "config.json"
+const DefaultConfigName = "config.default.json"
 
 // The configuration type. Should contain representation for everything in config.json
 type Config struct {
@@ -67,12 +67,16 @@ type MergedConfig struct {
 	HTTPRoot       *string      `json:"http_root"`
 }
 
+// ScanSection is used for merging the two configs. Its purpose is to essentially
+// hold the default values for its properties.
 type ScanSection struct {
 	FilesPerOperation int64         `json:"files_per_operation"`
 	SleepPerOperation time.Duration `json:"sleep_after_operation"`
 	InitialWait       time.Duration `json:"initial_wait_duration"`
 }
 
+// UnmarshalJSON parses a JSON and populets its ScanSection. Satisfies the
+// Unmrashaller interface.
 func (ss *ScanSection) UnmarshalJSON(input []byte) error {
 	ssProxy := &struct {
 		FilesPerOperation int64  `json:"files_per_operation"`
@@ -87,19 +91,19 @@ func (ss *ScanSection) UnmarshalJSON(input []byte) error {
 	ss.FilesPerOperation = ssProxy.FilesPerOperation
 
 	if ssProxy.SleepPerOperation != "" {
-		if spo, err := time.ParseDuration(ssProxy.SleepPerOperation); err != nil {
+		spo, err := time.ParseDuration(ssProxy.SleepPerOperation)
+		if err != nil {
 			return err
-		} else {
-			ss.SleepPerOperation = spo
 		}
+		ss.SleepPerOperation = spo
 	}
 
 	if ssProxy.InitialWait != "" {
-		if iwd, err := time.ParseDuration(ssProxy.InitialWait); err != nil {
+		iwd, err := time.ParseDuration(ssProxy.InitialWait)
+		if err != nil {
 			return err
-		} else {
-			ss.InitialWait = iwd
 		}
+		ss.InitialWait = iwd
 	}
 
 	if ss.FilesPerOperation <= 0 {
@@ -109,11 +113,13 @@ func (ss *ScanSection) UnmarshalJSON(input []byte) error {
 	return nil
 }
 
+// ConfigCert represents a configuration for TLS certificate
 type ConfigCert struct {
 	Crt string `json:"crt"`
 	Key string `json:"key"`
 }
 
+// ConfigAuth represents a configuration HTTP Basic authentication
 type ConfigAuth struct {
 	User     string `json:"user"`
 	Password string `json:"password"`
@@ -200,17 +206,16 @@ func (cfg *Config) merge(merged *MergedConfig) {
 func (cfg *Config) UserConfigPath() string {
 	if len(cfg.UserPath) > 0 {
 		if filepath.IsAbs(cfg.UserPath) {
-			return filepath.Join(cfg.UserPath, CONFIG_NAME)
-		} else {
-			log.Printf("User path %s was invalid as it was not rooted", cfg.UserPath)
+			return filepath.Join(cfg.UserPath, ConfigName)
 		}
+		log.Printf("User path %s was invalid as it was not rooted", cfg.UserPath)
 	}
 	path, err := helpers.ProjectUserPath()
 	if err != nil {
 		log.Println(err)
 		return ""
 	}
-	return filepath.Join(path, CONFIG_NAME)
+	return filepath.Join(path, ConfigName)
 }
 
 // Returns the full path to the default configuration file
@@ -220,7 +225,7 @@ func (cfg *Config) DefaultConfigPath() string {
 		log.Println(err)
 		return ""
 	}
-	return filepath.Join(path, DEFAULT_CONFIG_NAME)
+	return filepath.Join(path, DefaultConfigName)
 }
 
 // Returns true if the user configuration is present and in order. Otherwise false.
@@ -238,6 +243,6 @@ func (cfg *Config) UserConfigExists() bool {
 func (cfg *Config) CopyDefaultOverUser() error {
 	userConfig := cfg.UserConfigPath()
 	defaultConfigDir := filepath.Dir(cfg.DefaultConfigPath())
-	defaultConfig := filepath.Join(defaultConfigDir, CONFIG_NAME)
+	defaultConfig := filepath.Join(defaultConfigDir, ConfigName)
 	return helpers.Copy(defaultConfig, userConfig)
 }
