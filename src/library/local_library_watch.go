@@ -22,10 +22,7 @@ func (lib *LocalLibrary) initializeWatcher() {
 		return
 	}
 	lib.watch = newWatcher
-	lib.watchMediaChan = make(chan string, 100)
 	lib.watchClosedChan = make(chan bool)
-
-	go lib.databaseWriter(lib.watchMediaChan, nil)
 
 	go lib.watchEventRoutine()
 }
@@ -36,7 +33,6 @@ func (lib *LocalLibrary) stopWatcher() {
 		lib.watchClosedChan <- true
 		lib.watch.Close()
 		lib.watch = nil
-		close(lib.watchMediaChan)
 		close(lib.watchClosedChan)
 	}
 }
@@ -108,15 +104,16 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 	}
 
 	if event.IsCreate() && st.IsDir() {
+		// fmt.Printf("Adding watch for %s\n", event.Name)
 		lib.watch.Watch(event.Name)
 		lib.walkWG.Add(1)
-		go lib.scanPath(event.Name, lib.watchMediaChan)
+		go lib.scanPath(event.Name, lib.mediaChan)
 		return
 	}
 
 	if event.IsCreate() && !st.IsDir() {
 		if lib.isSupportedFormat(event.Name) {
-			lib.watchMediaChan <- event.Name
+			lib.mediaChan <- event.Name
 		}
 		return
 	}
@@ -124,7 +121,7 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 	if event.IsModify() && !st.IsDir() {
 		if lib.isSupportedFormat(event.Name) {
 			lib.removeFile(event.Name)
-			lib.watchMediaChan <- event.Name
+			lib.mediaChan <- event.Name
 		}
 		return
 	}

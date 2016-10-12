@@ -15,11 +15,8 @@ func (lib *LocalLibrary) Scan() {
 	lib.WaitScan()
 
 	start := time.Now()
-	mediaChan := make(chan string, 100)
 
-	lib.scanWG.Add(1)
-	go lib.databaseWriter(mediaChan, &lib.scanWG)
-
+	lib.initializeWatcher()
 	initialWait := lib.ScanConfig.InitialWait
 	if !LibraryFastScan && initialWait > 0 {
 		log.Printf("Pausing initial library scan for %s as configured", initialWait)
@@ -28,7 +25,7 @@ func (lib *LocalLibrary) Scan() {
 
 	for _, path := range lib.paths {
 		lib.walkWG.Add(1)
-		go lib.scanPath(path, mediaChan)
+		go lib.scanPath(path, lib.mediaChan)
 	}
 
 	lib.scanWG.Add(1)
@@ -38,7 +35,6 @@ func (lib *LocalLibrary) Scan() {
 			lib.scanWG.Done()
 		}()
 		lib.walkWG.Wait()
-		close(mediaChan)
 	}()
 
 	go func() {
@@ -50,6 +46,7 @@ func (lib *LocalLibrary) Scan() {
 // Blocks the current goroutine until the scan has been finished
 func (lib *LocalLibrary) WaitScan() {
 	lib.scanWG.Wait()
+	lib.waitForDBWriterIdleSignal()
 }
 
 // This is the goroutine which actually scans a library path.
@@ -81,7 +78,6 @@ func (lib *LocalLibrary) scanPath(scannedPath string, media chan<- string) {
 		}
 
 		if lib.watch != nil && info.IsDir() {
-			//log.Printf("Adding watch for %s\n", path)
 			lib.watch.Watch(path)
 		}
 

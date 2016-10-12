@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/howeyc/fsnotify"
 	taglib "github.com/landr0id/go-taglib"
@@ -56,26 +57,43 @@ type LocalLibrary struct {
 
 	// If something needs to be added to the database from the watcher
 	// it should use this channel
-	watchMediaChan chan string
+	mediaChan chan string
 
 	// Used to sync the library's Close with the watcher event handling goroutine
 	watchClosedChan chan bool
 
 	// Directory watcher
 	watch *fsnotify.Watcher
+
+	// Used to signal when the database writer has stopped
+	dbWriterWG sync.WaitGroup
+
+	// Used in the database writer to shortcircuit a idle heartbeat which noone reads
+	idleTimer *time.Timer
+
+	// Receiving something on this channel means that the database goroutin is in
+	// idle state at the moment
+	databaseWriterIdle chan struct{}
 }
 
 // Closes the database connection. It is safe to call it as many times as you want.
 func (lib *LocalLibrary) Close() {
-
 	lib.stopWatcher()
 
+	lib.WaitScan()
+	lib.walkWG.Wait()
+
+	if lib.mediaChan != nil {
+		close(lib.mediaChan)
+		lib.mediaChan = nil
+	}
+
+	lib.dbWriterWG.Wait()
+
 	if lib.db != nil {
-		lib.WaitScan()
 		lib.db.Close()
 		lib.db = nil
 	}
-
 }
 
 func (lib *LocalLibrary) AddLibraryPath(path string) {
@@ -242,9 +260,53 @@ func (lib *LocalLibrary) databaseWriter(media <-chan string, wg *sync.WaitGroup)
 	if wg != nil {
 		defer wg.Done()
 	}
-	for filename := range media {
-		lib.AddMedia(filename)
+
+	lib.databaseWriterIdle = make(chan struct{})
+	defer close(lib.databaseWriterIdle)
+
+	idleTimer := time.NewTimer(10 * time.Millisecond)
+	defer func() {
+		if !idleTimer.Stop() {
+			<-idleTimer.C
+		}
+	}()
+
+	for {
+		select {
+		case filename, ok := <-media:
+			if !ok {
+				return
+			}
+
+			lib.AddMedia(filename)
+
+			if !idleTimer.Stop() {
+				<-idleTimer.C
+			}
+
+		case <-idleTimer.C:
+			lib.sendDBWriterIdleSignal()
+		}
+		idleTimer.Reset(10 * time.Millisecond)
 	}
+}
+
+func (lib *LocalLibrary) sendDBWriterIdleSignal() {
+	lib.idleTimer.Reset(1 * time.Millisecond)
+	select {
+	case lib.databaseWriterIdle <- struct{}{}:
+		if !lib.idleTimer.Stop() {
+			<-lib.idleTimer.C
+		}
+		return
+	case <-lib.idleTimer.C:
+		return
+	}
+	return
+}
+
+func (lib *LocalLibrary) waitForDBWriterIdleSignal() {
+	<-lib.databaseWriterIdle
 }
 
 // Determines if the file will be saved to the database. Only media files which
@@ -639,6 +701,12 @@ func NewLocalLibrary(databasePath string) (*LocalLibrary, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	lib.idleTimer = time.NewTimer(1 * time.Millisecond)
+	lib.mediaChan = make(chan string, 100)
+
+	lib.dbWriterWG.Add(1)
+	go lib.databaseWriter(lib.mediaChan, &lib.dbWriterWG)
 
 	return lib, nil
 }

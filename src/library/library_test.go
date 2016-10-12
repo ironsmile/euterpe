@@ -16,8 +16,6 @@ import (
 	"github.com/ironsmile/httpms/src/helpers"
 )
 
-const FSWaitTime = 10 * time.Millisecond
-
 func contains(heystack []string, needle string) bool {
 	for i := 0; i < len(heystack); i++ {
 		if needle == heystack[i] {
@@ -550,7 +548,7 @@ func TestAddingNewFile(t *testing.T) {
 	}
 
 	defer os.Remove(newFile)
-	time.Sleep(FSWaitTime)
+	lib.WaitScan()
 
 	checkAddedSong(lib, t)
 }
@@ -575,7 +573,7 @@ func TestMovingFileIntoLibrary(t *testing.T) {
 	}
 
 	defer os.Remove(newFile)
-	time.Sleep(FSWaitTime)
+	lib.WaitScan()
 
 	checkAddedSong(lib, t)
 }
@@ -603,11 +601,11 @@ func TestAddingNonRelatedFile(t *testing.T) {
 	fh.WriteString("Some contents")
 	fh.Close()
 
-	time.Sleep(FSWaitTime)
+	lib.WaitScan()
 	testLibFiles()
 
 	os.Remove(newFile)
-	time.Sleep(FSWaitTime)
+	lib.WaitScan()
 	testLibFiles()
 
 }
@@ -636,7 +634,7 @@ func TestRemovingFile(t *testing.T) {
 		t.Error(err)
 	}
 
-	time.Sleep(FSWaitTime)
+	lib.WaitScan()
 
 	results = lib.Search("")
 	if len(results) != 3 {
@@ -679,7 +677,7 @@ func TestAddingAndRemovingDirectory(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	time.Sleep(FSWaitTime)
+	lib.WaitScan()
 
 	checkAddedSong(lib, t)
 
@@ -687,7 +685,7 @@ func TestAddingAndRemovingDirectory(t *testing.T) {
 		t.Error(err)
 	}
 
-	time.Sleep(FSWaitTime)
+	lib.WaitScan()
 
 	results := lib.Search("")
 
@@ -738,7 +736,7 @@ func TestMovingDirectory(t *testing.T) {
 		defer os.RemoveAll(secondPlace)
 	}
 
-	lib.walkWG.Wait()
+	lib.WaitScan()
 
 	checkAddedSong(lib, t)
 
