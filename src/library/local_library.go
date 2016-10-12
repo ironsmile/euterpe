@@ -304,7 +304,6 @@ func (lib *LocalLibrary) sendDBWriterIdleSignal() {
 	case <-lib.idleTimer.C:
 		return
 	}
-	return
 }
 
 func (lib *LocalLibrary) waitForDBWriterIdleSignal() {
