@@ -357,6 +357,12 @@ func (lib *LocalLibrary) AddMedia(filename string) error {
 	// log.Printf("New Song:\nArtist: %s\nAlbum: %s\nTitle: %s\nTrack: %d\n",
 	// 	file.Artist(), file.Album(), file.Title(), int(file.Track()))
 
+	return lib.insertMediaIntoDatabase(file, filename)
+}
+
+// insertMediaIntoDatabase accepts an already parsed media info object, its path.
+// The method inserts this media into the library database.
+func (lib *LocalLibrary) insertMediaIntoDatabase(file MediaFile, filePath string) error {
 	artistID, err := lib.setArtistID(file.Artist())
 
 	if err != nil {
@@ -369,7 +375,7 @@ func (lib *LocalLibrary) AddMedia(filename string) error {
 		return err
 	}
 
-	_, err = lib.setTrackID(file.Title(), filename, int64(file.Track()),
+	_, err = lib.setTrackID(file.Title(), filePath, int64(file.Track()),
 		artistID, albumID)
 
 	if err != nil {
