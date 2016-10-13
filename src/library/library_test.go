@@ -17,8 +17,17 @@ import (
 )
 
 func contains(heystack []string, needle string) bool {
-	for i := 0; i < len(heystack); i++ {
-		if needle == heystack[i] {
+	for _, val := range heystack {
+		if needle == val {
+			return true
+		}
+	}
+	return false
+}
+
+func containsInt64(heystack []int64, needle int64) bool {
+	for _, val := range heystack {
+		if needle == val {
 			return true
 		}
 	}
@@ -820,5 +829,149 @@ func TestAddingManyFilesSimultaniously(t *testing.T) {
 
 	for _, song := range mediaFiles {
 		checkSong(lib, song, t)
+	}
+}
+
+// Here an album which has different artists is simulated. This album must have the same
+// album ID since all of the tracks are in the same directory and the same album name.
+func TestAlbumsWithDifferentArtists(t *testing.T) {
+	lib := getPathedLibrary(t)
+	defer lib.Truncate()
+
+	var err error
+
+	tracks := []MockMedia{
+		MockMedia{
+			artist: "Buggy Bugoff",
+			album:  "Return Of The Bugs",
+			title:  "Payback",
+			track:  1,
+			length: 340 * time.Second,
+		},
+		MockMedia{
+			artist: "Buggy Bugoff",
+			album:  "Return Of The Bugs",
+			title:  "Realization",
+			track:  2,
+			length: 345 * time.Second,
+		},
+		MockMedia{
+			artist: "Off By One",
+			album:  "Return Of The Bugs",
+			title:  "Index By Index",
+			track:  3,
+			length: 244 * time.Second,
+		},
+	}
+
+	for _, track := range tracks {
+		err = lib.insertMediaIntoDatabase(
+			&track,
+			fmt.Sprintf("/media/return-of-the-bugs/%s.mp3", track.Title()),
+		)
+
+		if err != nil {
+			t.Fatalf("Adding a media file %s failed: %s", track.Title(), err)
+		}
+	}
+
+	lib.waitForDBWriterIdleSignal()
+
+	found := lib.Search("Return Of The Bugs")
+
+	if len(found) != 3 {
+		t.Errorf("Expected to find 3 tracks but found %d", len(found))
+	}
+
+	albumID := found[0].AlbumID
+	albumName := found[0].Album
+
+	for _, foundTrack := range found {
+		if foundTrack.AlbumID != albumID {
+			t.Errorf("Track %s had a different album id in db", foundTrack.Title)
+		}
+
+		if foundTrack.Album != albumName {
+			t.Errorf(
+				"Track %s had a different album name: %s",
+				foundTrack.Title,
+				foundTrack.Album,
+			)
+		}
+	}
+}
+
+// Albums with the same name which are for different artists should have different IDs
+// when the album is in a different directory
+func TestDifferentAlbumsWithTheSameName(t *testing.T) {
+	lib := getPathedLibrary(t)
+	defer lib.Truncate()
+
+	tracks := []struct {
+		track MockMedia
+		path  string
+	}{
+		{
+			MockMedia{
+				artist: "Buggy Bugoff",
+				album:  "Return Of The Bugs",
+				title:  "Payback",
+				track:  1,
+				length: 340 * time.Second,
+			},
+			"/media/return-of-the-bugs/track-1.mp3",
+		},
+		{
+			MockMedia{
+				artist: "Buggy Bugoff",
+				album:  "Return Of The Bugs",
+				title:  "Realization",
+				track:  2,
+				length: 345 * time.Second,
+			},
+			"/media/return-of-the-bugs/track-2.mp3",
+		},
+		{
+			MockMedia{
+				artist: "Off By One",
+				album:  "Return Of The Bugs",
+				title:  "Index By Index",
+				track:  1,
+				length: 244 * time.Second,
+			},
+			"/media/second-return-of-the-bugs/track-1.mp3", // different directory
+		},
+	}
+
+	for _, trackData := range tracks {
+		err := lib.insertMediaIntoDatabase(&trackData.track, trackData.path)
+
+		if err != nil {
+			t.Fatalf("Adding a media file %s failed: %s", trackData.track.Title(), err)
+		}
+	}
+
+	lib.waitForDBWriterIdleSignal()
+
+	found := lib.Search("Return Of The Bugs")
+
+	if len(found) != 3 {
+		t.Errorf("Expected to find 3 tracks but found %d", len(found))
+	}
+
+	albumIDs := make([]int64, 0, 2)
+
+	for _, track := range found {
+		if containsInt64(albumIDs, track.AlbumID) {
+			continue
+		}
+		albumIDs = append(albumIDs, track.AlbumID)
+	}
+
+	if len(albumIDs) != 2 {
+		t.Errorf(
+			"There should have been two 'Return Of The Bugs' albums but there were %d",
+			len(albumIDs),
+		)
 	}
 }
