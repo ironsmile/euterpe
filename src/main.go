@@ -1,8 +1,8 @@
-// The Main function of HTTPMS. It should set everything up, create a library and
-// create a webserver.
+// Package src contains the de-facto main function of the application.
+// It should set everything up, create a library and create a webserver.
 //
 // At the moment it is in package src because I import it from the project's root
-// folder.
+// folder. This way the source is in the `src/` directory.
 package src
 
 import (
@@ -36,7 +36,7 @@ func init() {
 	flag.BoolVar(&Debug, "D", false, "Debug mode. Will log everything to the stdout.")
 }
 
-// This function is the only thing run in the project's root main.go file.
+// Main is the only thing run in the project's root main.go file.
 // For all intent and purposes this is the main function.
 func Main() {
 	flag.Parse()
@@ -55,7 +55,7 @@ func Main() {
 	}
 }
 
-// Creates a pidfile and starts a signal receiver goroutine
+// SetupPidFileAndSignals creates a pidfile and starts a signal receiver goroutine
 func SetupPidFileAndSignals(pidFile string) {
 	helpers.SetUpPidFile(pidFile)
 
@@ -64,7 +64,7 @@ func SetupPidFileAndSignals(pidFile string) {
 		signal.Notify(signalChannel, sig)
 	}
 	go func() {
-		for _ = range signalChannel {
+		for range signalChannel {
 			log.Println("Stop signal received. Removing pidfile and stopping.")
 			helpers.RemovePidFile(pidFile)
 			os.Exit(0)
@@ -98,8 +98,8 @@ func getLibrary(userPath string, cfg config.Config) (library.Library, error) {
 	return lib, nil
 }
 
-// Parses the config, sets the logfile, setups the pidfile, and makes an
-// signal handler goroutine
+// ParseConfigAndStartWebserver parses the config, sets the logfile, setups the
+// pidfile, and makes an signal handler goroutine
 func ParseConfigAndStartWebserver(projRoot string) error {
 
 	var cfg config.Config

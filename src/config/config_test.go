@@ -30,6 +30,90 @@ func TestFindTheRighConfigFile(t *testing.T) {
 	}
 }
 
+// Helper function for TestMergingConfigs
+func getDefaultCfg() *Config {
+	dflConfig := new(Config)
+	dflConfig.SSL = false
+	dflConfig.Listen = ":80"
+	dflConfig.LogFile = "logfile"
+	dflConfig.Gzip = true
+	dflConfig.ReadTimeout = 10
+	dflConfig.WriteTimeout = 10
+	dflConfig.MaxHeadersSize = 100
+	dflConfig.SqliteDatabase = "httpms.db"
+	dflConfig.Auth = true
+	dflConfig.Authenticate = Auth{User: "bob", Password: "marley"}
+	dflConfig.LibraryScan = ScanSection{
+		FilesPerOperation: 1000,
+		SleepPerOperation: 10 * time.Millisecond,
+		InitialWait:       500 * time.Millisecond,
+	}
+	return dflConfig
+}
+
+// checkMerge is a helper function for TestMergingConfigs
+func checkMerge(t *testing.T, cfg *Config) {
+
+	if cfg.SSL != true {
+		t.Errorf("SSL was false but it was expected to be true")
+	}
+
+	if cfg.Auth != false {
+		t.Errorf("Auth was true but it was expected to be false")
+	}
+
+	if cfg.SSLCertificate.Crt != "crt" || cfg.SSLCertificate.Key != "key" {
+		t.Errorf("SSL Certificate was not as expected: %#v", cfg.SSLCertificate)
+	}
+
+	if cfg.Authenticate.User != "bob" || cfg.Authenticate.Password != "marley" {
+		t.Errorf("Authenticate user and password were wrong: %#v", cfg.Authenticate)
+	}
+
+	if cfg.Listen != ":8080" {
+		t.Errorf("Listen was %s", cfg.Listen)
+	}
+
+	if cfg.Gzip != true {
+		t.Errorf("Gzip was %t", cfg.Gzip)
+	}
+
+	if cfg.ReadTimeout != 10 {
+		t.Errorf("ReadTimeout was %d", cfg.ReadTimeout)
+	}
+
+	if cfg.WriteTimeout != 10 {
+		t.Errorf("WriteTimeout was %d", cfg.WriteTimeout)
+	}
+
+	if cfg.MaxHeadersSize != 100 {
+		t.Errorf("MaxHeadersSize was %d", cfg.MaxHeadersSize)
+	}
+
+	if cfg.SqliteDatabase != "httpms.db" {
+		t.Errorf("SqliteDatabase was %s", cfg.SqliteDatabase)
+	}
+
+	if len(cfg.Libraries) != 1 {
+		t.Errorf("Libraries was not as expected: %#v", cfg.Libraries)
+	} else {
+		if cfg.Libraries[0] != "/some/path" {
+			t.Errorf("Library was wrong: %s", cfg.Libraries[0])
+		}
+	}
+
+	expectedLibraryScan := ScanSection{
+		FilesPerOperation: 1500,
+		SleepPerOperation: 15 * time.Millisecond,
+		InitialWait:       1 * time.Second,
+	}
+
+	if cfg.LibraryScan != expectedLibraryScan {
+		t.Errorf("LibraryScan was not as expected: It was: %#v, expected: %#v",
+			cfg.LibraryScan, expectedLibraryScan)
+	}
+}
+
 func TestMergingConfigs(t *testing.T) {
 	cfg := new(Config)
 	merged := new(MergedConfig)
@@ -51,88 +135,6 @@ func TestMergingConfigs(t *testing.T) {
 		t.Errorf("NonZero value has not been copied over")
 	}
 
-	getDefaultCfg := func() *Config {
-		dflConfig := new(Config)
-		dflConfig.SSL = false
-		dflConfig.Listen = ":80"
-		dflConfig.LogFile = "logfile"
-		dflConfig.Gzip = true
-		dflConfig.ReadTimeout = 10
-		dflConfig.WriteTimeout = 10
-		dflConfig.MaxHeadersSize = 100
-		dflConfig.SqliteDatabase = "httpms.db"
-		dflConfig.Auth = true
-		dflConfig.Authenticate = ConfigAuth{User: "bob", Password: "marley"}
-		dflConfig.LibraryScan = ScanSection{
-			FilesPerOperation: 1000,
-			SleepPerOperation: 10 * time.Millisecond,
-			InitialWait:       500 * time.Millisecond,
-		}
-		return dflConfig
-	}
-
-	checkMerge := func(cfg *Config) {
-
-		if cfg.SSL != true {
-			t.Errorf("SSL was false but it was expected to be true")
-		}
-
-		if cfg.Auth != false {
-			t.Errorf("Auth was true but it was expected to be false")
-		}
-
-		if cfg.SSLCertificate.Crt != "crt" || cfg.SSLCertificate.Key != "key" {
-			t.Errorf("SSL Certificate was not as expected: %#v", cfg.SSLCertificate)
-		}
-
-		if cfg.Authenticate.User != "bob" || cfg.Authenticate.Password != "marley" {
-			t.Errorf("Authenticate user and password were wrong: %#v", cfg.Authenticate)
-		}
-
-		if cfg.Listen != ":8080" {
-			t.Errorf("Listen was %s", cfg.Listen)
-		}
-
-		if cfg.Gzip != true {
-			t.Errorf("Gzip was %t", cfg.Gzip)
-		}
-
-		if cfg.ReadTimeout != 10 {
-			t.Errorf("ReadTimeout was %d", cfg.ReadTimeout)
-		}
-
-		if cfg.WriteTimeout != 10 {
-			t.Errorf("WriteTimeout was %d", cfg.WriteTimeout)
-		}
-
-		if cfg.MaxHeadersSize != 100 {
-			t.Errorf("MaxHeadersSize was %d", cfg.MaxHeadersSize)
-		}
-
-		if cfg.SqliteDatabase != "httpms.db" {
-			t.Errorf("SqliteDatabase was %s", cfg.SqliteDatabase)
-		}
-
-		if len(cfg.Libraries) != 1 {
-			t.Errorf("Libraries was not as expected: %#v", cfg.Libraries)
-		} else {
-			if cfg.Libraries[0] != "/some/path" {
-				t.Errorf("Library was wrong: %s", cfg.Libraries[0])
-			}
-		}
-
-		expectedLibraryScan := ScanSection{
-			FilesPerOperation: 1500,
-			SleepPerOperation: 15 * time.Millisecond,
-			InitialWait:       1 * time.Second,
-		}
-
-		if cfg.LibraryScan != expectedLibraryScan {
-			t.Errorf("LibraryScan was not as expected: It was: %#v, expected: %#v",
-				cfg.LibraryScan, expectedLibraryScan)
-		}
-	}
-
 	cfg = getDefaultCfg()
 
 	merged.Listen = new(string)
@@ -143,7 +145,7 @@ func TestMergingConfigs(t *testing.T) {
 	*merged.Libraries = append(*merged.Libraries, "/some/path")
 	merged.Auth = new(bool)
 	*merged.Auth = false
-	merged.SSLCertificate = &ConfigCert{Crt: "crt", Key: "key"}
+	merged.SSLCertificate = &Cert{Crt: "crt", Key: "key"}
 	merged.LibraryScan = &ScanSection{
 		FilesPerOperation: 1500,
 		SleepPerOperation: 15 * time.Millisecond,
@@ -151,10 +153,12 @@ func TestMergingConfigs(t *testing.T) {
 	}
 
 	cfg.merge(merged)
-	checkMerge(cfg)
+	checkMerge(t, cfg)
+}
 
-	cfg = getDefaultCfg()
-	testJson := `
+func TestMergingConfigsViaJSON(t *testing.T) {
+	cfg := getDefaultCfg()
+	testJSON := `
 		{
 			"listen": ":8080",
 			"ssl": true,
@@ -171,10 +175,10 @@ func TestMergingConfigs(t *testing.T) {
 			"basic_authenticate": false
 		}
 	`
-	if err := cfg.mergeJSON([]byte(testJson)); err != nil {
+	if err := cfg.mergeJSON([]byte(testJSON)); err != nil {
 		t.Errorf("Parsing test json failed: %s", err)
 	}
-	checkMerge(cfg)
+	checkMerge(t, cfg)
 }
 
 func TestMergedConfigHasTheSameFieldsAsConfig(t *testing.T) {

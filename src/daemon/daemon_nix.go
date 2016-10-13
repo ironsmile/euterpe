@@ -1,6 +1,6 @@
 // +build linux darwin freebsd
 
-// This package is resposible for making sure HTTPMS will run smoothly even
+// Package daemon is resposible for making sure HTTPMS will run smoothly even
 // after the calling terminal has been closed. For *nix systems this mean
 // daemonizing. For Windows - I don't know yet.
 package daemon
@@ -11,14 +11,14 @@ import (
 	"syscall"
 )
 
-// All the signals which will make our daemon remove its pidfile
-var StopSignals []syscall.Signal = []syscall.Signal{
+// StopSignals contains all the signals which will make our daemon remove its pidfile
+var StopSignals = []syscall.Signal{
 	syscall.SIGINT,
 	syscall.SIGKILL,
 	syscall.SIGTERM,
 }
 
-// This is the main function for this module. It should be run only once.
+// Daemonize is the main function for this module. It should be run only once.
 func Daemonize() error {
 	var ret uintptr
 	var err syscall.Errno

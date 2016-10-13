@@ -6,15 +6,15 @@ import (
 	"strings"
 )
 
-// Handler wrapper used for basic authenticate. Its only job is to do the
-// authentication and then pass the work to the Handler it wraps around
+// BasicAuthHandler is a handler wrapper used for basic authenticate. Its only job is
+// to do the authentication and then pass the work to the Handler it wraps around
 type BasicAuthHandler struct {
 	wrapped  http.Handler // The actual handler that does the APP Logic job
 	username string       // Username to be used for basic authenticate
 	password string       // Password to be used for basic authenticate
 }
 
-// Implements the http.Handler interface and does the actual basic authenticate
+// ServeHTTP implements the http.Handler interface and does the actual basic authenticate
 // check for every request
 func (hl BasicAuthHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	auth, err := req.Header["Authorization"]

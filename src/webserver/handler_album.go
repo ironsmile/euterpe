@@ -13,12 +13,13 @@ import (
 	"github.com/ironsmile/httpms/src/library"
 )
 
-// Will find and serve a zip of the album by the album ID
+// AlbumHandler is a http.Handler which will find and serve a zip of the
+// album by the album ID.
 type AlbumHandler struct {
 	library library.Library
 }
 
-// This method is required by the http.Handler's interface
+// ServeHTTP is required by the http.Handler's interface
 func (fh AlbumHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	InternalErrorOnErrorHandler(writer, req, fh.find)
 }
@@ -102,7 +103,7 @@ problem_writing:
 	return err
 }
 
-// Returns a new Album handler. It needs a library to search in
+// NewAlbumHandler returns a new Album handler. It needs a library to search in
 func NewAlbumHandler(lib library.Library) *AlbumHandler {
 	fh := new(AlbumHandler)
 	fh.library = lib

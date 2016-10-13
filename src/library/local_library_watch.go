@@ -94,13 +94,12 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 		if lib.isSupportedFormat(event.Name) {
 			// This is a file
 			lib.removeFile(event.Name)
-			return
 		} else {
 			// It was a directory... probably
 			lib.watch.RemoveWatch(event.Name)
 			lib.removeDirectory(event.Name)
-			return
 		}
+		return
 	}
 
 	if event.IsCreate() && st.IsDir() {
