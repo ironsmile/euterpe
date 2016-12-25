@@ -562,8 +562,13 @@ func TestAlbumHandlerOverHttp(t *testing.T) {
 	defer lib.Truncate()
 	defer tearDownServer(srv)
 
-	artistID, _ := lib.(*library.LocalLibrary).GetArtistID("Artist Testoff")
-	albumID, _ := lib.(*library.LocalLibrary).GetAlbumID("Album Of Tests", artistID)
+	albumPaths, err := lib.(*library.LocalLibrary).GetAlbumFSPathByName("Album Of Tests")
+
+	if err != nil {
+		t.Fatalf("Cannot get album path: %s", err)
+	}
+
+	albumID, _ := lib.(*library.LocalLibrary).GetAlbumID("Album Of Tests", albumPaths[0])
 
 	albumURL := fmt.Sprintf("http://127.0.0.1:%d/album/%d", TestPort, albumID)
 
