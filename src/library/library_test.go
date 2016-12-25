@@ -43,6 +43,16 @@ func init() {
 	}
 }
 
+func getTestLibraryPath() (string, error) {
+	projRoot, err := helpers.ProjectRoot()
+
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(projRoot, "test_files", "library"), nil
+}
+
 // It is the caller's resposibility to remove the library SQLite database file
 func getLibrary(t *testing.T) *LocalLibrary {
 
@@ -64,13 +74,7 @@ func getLibrary(t *testing.T) *LocalLibrary {
 		t.Fatalf("Initializing library: %s", err)
 	}
 
-	projRoot, err := helpers.ProjectRoot()
-
-	if err != nil {
-		t.Fatalf("Was not able to find test_files directory: %s", err)
-	}
-
-	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
+	testLibraryPath, err := getTestLibraryPath()
 
 	_ = lib.AddMedia(filepath.Join(testLibraryPath, "test_file_two.mp3"))
 	_ = lib.AddMedia(filepath.Join(testLibraryPath, "folder_one", "third_file.mp3"))
@@ -340,6 +344,32 @@ func TestAddigNewFiles(t *testing.T) {
 
 	if track.Title != "Tittled Track" {
 		t.Errorf("Found track had the wrong title: %s", track.Title)
+	}
+}
+
+func TestAlbumFSPath(t *testing.T) {
+	library := getLibrary(t)
+	defer library.Truncate()
+
+	testLibraryPath, err := getTestLibraryPath()
+
+	if err != nil {
+		t.Fatalf("Cannot get test library path: %s", testLibraryPath)
+	}
+
+	albumPaths, err := library.GetAlbumFSPathByName("Album Of Tests")
+
+	if err != nil {
+		t.Fatalf("Was not able to find Album Of Tests: %s", err)
+	}
+
+	if len(albumPaths) != 1 {
+		t.Fatalf("Expected one path for an album but found %d", len(albumPaths))
+	}
+
+	if testLibraryPath != albumPaths[0] {
+		t.Errorf("Album path mismatch. Expected `%s` but got `%s`", testLibraryPath,
+			albumPaths[0])
 	}
 }
 
