@@ -374,7 +374,9 @@ func (lib *LocalLibrary) insertMediaIntoDatabase(file MediaFile, filePath string
 		return err
 	}
 
-	albumID, err := lib.setAlbumID(file.Album(), artistID)
+	fileDir := filepath.Dir(filePath)
+
+	albumID, err := lib.setAlbumID(file.Album(), fileDir)
 
 	if err != nil {
 		return err
@@ -482,9 +484,9 @@ func (lib *LocalLibrary) setArtistID(artist string) (int64, error) {
 	return lib.lastInsertID()
 }
 
-// GetAlbumID returns the id for this artist's album. When missing or on error
+// GetAlbumID returns the id for this album. When missing or on error
 // returns that error.
-func (lib *LocalLibrary) GetAlbumID(album string, artistID int64) (int64, error) {
+func (lib *LocalLibrary) GetAlbumID(album string, fsPath string) (int64, error) {
 	smt, err := lib.db.Prepare(`
 		SELECT
 			id
@@ -492,7 +494,7 @@ func (lib *LocalLibrary) GetAlbumID(album string, artistID int64) (int64, error)
 			albums
 		WHERE
 			name = ? AND
-			artist_id = ?
+			fs_path = ?
 	`)
 
 	if err != nil {
@@ -502,7 +504,7 @@ func (lib *LocalLibrary) GetAlbumID(album string, artistID int64) (int64, error)
 	defer smt.Close()
 
 	var id int64
-	err = smt.QueryRow(album, artistID).Scan(&id)
+	err = smt.QueryRow(album, fsPath).Scan(&id)
 
 	if err != nil {
 		return 0, err
@@ -512,14 +514,14 @@ func (lib *LocalLibrary) GetAlbumID(album string, artistID int64) (int64, error)
 }
 
 // Sets a new ID for this album if it is new to the library. If not, returns
-// its current id. Albums with the same name but by different artists need to have
-// separate IDs hence the artistID parameter.
-func (lib *LocalLibrary) setAlbumID(album string, artistID int64) (int64, error) {
+// its current id. Albums with the same name but by different locations need to have
+// separate IDs hence the fsPath parameter.
+func (lib *LocalLibrary) setAlbumID(album string, fsPath string) (int64, error) {
 	if len(album) < 1 {
 		album = UnknownLabel
 	}
 
-	id, err := lib.GetAlbumID(album, artistID)
+	id, err := lib.GetAlbumID(album, fsPath)
 
 	if err == nil {
 		return id, nil
@@ -527,7 +529,7 @@ func (lib *LocalLibrary) setAlbumID(album string, artistID int64) (int64, error)
 
 	stmt, err := lib.db.Prepare(`
 			INSERT INTO
-				albums (name, artist_id)
+				albums (name, fs_path)
 			VALUES
 				(?, ?)
 	`)
@@ -538,13 +540,48 @@ func (lib *LocalLibrary) setAlbumID(album string, artistID int64) (int64, error)
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(album, artistID)
+	_, err = stmt.Exec(album, fsPath)
 
 	if err != nil {
 		return 0, err
 	}
 
 	return lib.lastInsertID()
+}
+
+// GetAlbumFSPath returns all the file paths which contain versions of an album.
+func (lib *LocalLibrary) GetAlbumFSPathByName(albumName string) ([]string, error) {
+	paths := make([]string, 0)
+
+	row, err := lib.db.Query(`
+		SELECT
+			fs_path
+		FROM
+			albums
+		WHERE
+			name = ?
+	`, albumName)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+
+	var albumPath string
+	for row.Next() {
+		if err := row.Scan(&albumPath); err != nil {
+			return nil, err
+		}
+		paths = append(paths, albumPath)
+	}
+
+	if len(paths) < 1 {
+		return nil, errors.New("Album not found")
+	}
+
+	return paths, nil
+
 }
 
 // GetTrackID returns the id for this track. When missing or on error returns that error.

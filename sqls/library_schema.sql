@@ -1,7 +1,7 @@
 create table `albums` (
     `id` integer not null primary key, 
     `name` text,
-    `artist_id` integer not null
+    `fs_path` text
 );
 
 create table `artists` (

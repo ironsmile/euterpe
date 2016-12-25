@@ -333,7 +333,7 @@ func TestAddigNewFiles(t *testing.T) {
 	found := library.Search("Tittled Track")
 
 	if len(found) != 1 {
-		t.Errorf("Expected to find one track but found %d", len(found))
+		t.Fatalf("Expected to find one track but found %d", len(found))
 	}
 
 	track := found[0]
@@ -359,16 +359,26 @@ func TestPreAddedFiles(t *testing.T) {
 		t.Fatalf("Was not able to find Artist Testoff: %s", err)
 	}
 
-	_, err = library.GetAlbumID("Album Of Not Being There", artistID)
+	_, err = library.GetAlbumFSPathByName("Album Of Not Being There")
 
 	if err == nil {
 		t.Errorf("Was not expecting to find Album Of Not Being There but found one")
 	}
 
-	albumID, err := library.GetAlbumID("Album Of Tests", artistID)
+	albumPaths, err := library.GetAlbumFSPathByName("Album Of Tests")
 
 	if err != nil {
 		t.Fatalf("Was not able to find Album Of Tests: %s", err)
+	}
+
+	if len(albumPaths) != 1 {
+		t.Fatalf("Expected one path for an album but found %d", len(albumPaths))
+	}
+
+	albumID, err := library.GetAlbumID("Album Of Tests", albumPaths[0])
+
+	if err != nil {
+		t.Fatalf("Error gettin album by its name and FS path: %s", err)
 	}
 
 	_, err = library.GetTrackID("404 Not Found", artistID, albumID)
@@ -389,7 +399,22 @@ func TestGettingAFile(t *testing.T) {
 	defer library.Truncate()
 
 	artistID, _ := library.GetArtistID("Artist Testoff")
-	albumID, _ := library.GetAlbumID("Album Of Tests", artistID)
+	albumPaths, err := library.GetAlbumFSPathByName("Album Of Tests")
+
+	if err != nil {
+		t.Fatalf("Could not find album 'Album Of Tests': %s", err)
+	}
+
+	if len(albumPaths) != 1 {
+		t.Fatalf("Expected 1 path for Album Of Tests but found %d", len(albumPaths))
+	}
+
+	albumID, err := library.GetAlbumID("Album Of Tests", albumPaths[0])
+
+	if err != nil {
+		t.Fatalf("Error getting album by its name and path: %s", err)
+	}
+
 	trackID, err := library.GetTrackID("Another One", artistID, albumID)
 
 	if err != nil {
@@ -459,9 +484,13 @@ func TestGetAlbumFiles(t *testing.T) {
 	lib := getScannedLibrary(t)
 	defer lib.Truncate()
 
-	artistID, _ := lib.GetArtistID("Artist Testoff")
-	albumID, _ := lib.GetAlbumID("Album Of Tests", artistID)
+	albumPaths, err := lib.GetAlbumFSPathByName("Album Of Tests")
 
+	if err != nil {
+		t.Fatalf("Could not find fs paths for 'Album Of Tests' album: %s", err)
+	}
+
+	albumID, _ := lib.GetAlbumID("Album Of Tests", albumPaths[0])
 	albumFiles := lib.GetAlbumFiles(albumID)
 
 	if len(albumFiles) != 2 {
