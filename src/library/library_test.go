@@ -584,6 +584,10 @@ func checkAddedSong(lib *LocalLibrary, t *testing.T) {
 }
 
 func TestAddingNewFile(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	lib := getScannedLibrary(t)
 	defer lib.Truncate()
 	projRoot, _ := helpers.ProjectRoot()
@@ -599,10 +603,16 @@ func TestAddingNewFile(t *testing.T) {
 	defer os.Remove(newFile)
 	lib.WaitScan()
 
+	time.Sleep(1 * time.Second)
+
 	checkAddedSong(lib, t)
 }
 
 func TestMovingFileIntoLibrary(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	lib := getScannedLibrary(t)
 	defer lib.Truncate()
 	projRoot, _ := helpers.ProjectRoot()
@@ -628,6 +638,10 @@ func TestMovingFileIntoLibrary(t *testing.T) {
 }
 
 func TestAddingNonRelatedFile(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	lib := getScannedLibrary(t)
 	defer lib.Truncate()
 	projRoot, _ := helpers.ProjectRoot()
@@ -660,6 +674,10 @@ func TestAddingNonRelatedFile(t *testing.T) {
 }
 
 func TestRemovingFile(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	projRoot, _ := helpers.ProjectRoot()
 	testFiles := filepath.Join(projRoot, "test_files")
 
@@ -692,6 +710,10 @@ func TestRemovingFile(t *testing.T) {
 }
 
 func TestAddingAndRemovingDirectory(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	projRoot, _ := helpers.ProjectRoot()
 	testFiles := filepath.Join(projRoot, "test_files")
 
@@ -842,6 +864,10 @@ func checkSong(lib *LocalLibrary, song MediaFile, t *testing.T) {
 }
 
 func TestAddingManyFilesSimultaniously(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	lib := getPathedLibrary(t)
 	defer lib.Truncate()
 
