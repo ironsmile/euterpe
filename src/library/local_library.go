@@ -1,6 +1,7 @@
 package library
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"flag"
@@ -69,11 +70,9 @@ type LocalLibrary struct {
 	// it should use this channel
 	mediaChan chan string
 
-	// Used to sync the library's Close with the watcher event handling goroutine
-	watchClosedChan chan bool
-
 	// Directory watcher
-	watch *fsnotify.Watcher
+	watch     *fsnotify.Watcher
+	watchLock *sync.RWMutex
 
 	// Used to signal when the database writer has stopped
 	dbWriterWG sync.WaitGroup
@@ -84,26 +83,37 @@ type LocalLibrary struct {
 	// Receiving something on this channel means that the database goroutin is in
 	// idle state at the moment
 	databaseWriterIdle chan struct{}
+
+	ctx           context.Context
+	ctxCancelFunc context.CancelFunc
+	running       bool
+
+	sync.Mutex
 }
 
 // Close closes the database connection. It is safe to call it as many times as you want.
 func (lib *LocalLibrary) Close() {
-	lib.stopWatcher()
+	lib.stop()
+	lib.db.Close()
+}
 
+// Wait until all the currently started work is finished and stops all go routines
+// related to the library. But leaves the database connection open so that the lib
+// state can be examined via its methods. Useful for testing.
+func (lib *LocalLibrary) stop() {
+	lib.Lock()
+	defer lib.Unlock()
+
+	if !lib.running {
+		return
+	}
+
+	lib.running = false
 	lib.WaitScan()
 	lib.walkWG.Wait()
-
-	if lib.mediaChan != nil {
-		close(lib.mediaChan)
-		lib.mediaChan = nil
-	}
-
+	lib.ctxCancelFunc()
 	lib.dbWriterWG.Wait()
-
-	if lib.db != nil {
-		lib.db.Close()
-		lib.db = nil
-	}
+	close(lib.mediaChan)
 }
 
 // AddLibraryPath adds a library directory to the list of libraries which will be
@@ -269,14 +279,11 @@ func (lib *LocalLibrary) removeDirectory(dirPath string) {
 // Reads from the media channel and saves into the database every file
 // received.
 func (lib *LocalLibrary) databaseWriter(media <-chan string, wg *sync.WaitGroup) {
-	if wg != nil {
-		defer wg.Done()
-	}
+	defer wg.Done()
 
-	lib.databaseWriterIdle = make(chan struct{})
-	defer close(lib.databaseWriterIdle)
+	timerDuration := 100 * time.Millisecond
+	idleTimer := time.NewTimer(timerDuration)
 
-	idleTimer := time.NewTimer(10 * time.Millisecond)
 	defer func() {
 		if !idleTimer.Stop() {
 			<-idleTimer.C
@@ -299,27 +306,11 @@ func (lib *LocalLibrary) databaseWriter(media <-chan string, wg *sync.WaitGroup)
 			}
 
 		case <-idleTimer.C:
-			lib.sendDBWriterIdleSignal()
+		case <-lib.ctx.Done():
+			return
 		}
-		idleTimer.Reset(10 * time.Millisecond)
+		idleTimer.Reset(timerDuration)
 	}
-}
-
-func (lib *LocalLibrary) sendDBWriterIdleSignal() {
-	lib.idleTimer.Reset(1 * time.Millisecond)
-	select {
-	case lib.databaseWriterIdle <- struct{}{}:
-		if !lib.idleTimer.Stop() {
-			<-lib.idleTimer.C
-		}
-		return
-	case <-lib.idleTimer.C:
-		return
-	}
-}
-
-func (lib *LocalLibrary) waitForDBWriterIdleSignal() {
-	<-lib.databaseWriterIdle
 }
 
 // Determines if the file will be saved to the database. Only media files which
@@ -754,10 +745,16 @@ func (lib *LocalLibrary) Truncate() error {
 
 // NewLocalLibrary returns a new LocalLibrary which will use for database the file
 // specified by databasePath. Also creates the database connection so you does not
-// need to worry about that.
-func NewLocalLibrary(databasePath string) (*LocalLibrary, error) {
+// need to worry about that. It accepts the parent's context and create its own
+// child context.
+func NewLocalLibrary(ctx context.Context, databasePath string) (*LocalLibrary, error) {
 	lib := new(LocalLibrary)
 	lib.database = databasePath
+
+	libContext, cancelFunc := context.WithCancel(ctx)
+
+	lib.ctx = libContext
+	lib.ctxCancelFunc = cancelFunc
 
 	var err error
 
@@ -767,11 +764,15 @@ func NewLocalLibrary(databasePath string) (*LocalLibrary, error) {
 		return nil, err
 	}
 
+	lib.watchLock = &sync.RWMutex{}
+
 	lib.idleTimer = time.NewTimer(1 * time.Millisecond)
 	lib.mediaChan = make(chan string, 100)
 
 	lib.dbWriterWG.Add(1)
 	go lib.databaseWriter(lib.mediaChan, &lib.dbWriterWG)
+
+	lib.running = true
 
 	return lib, nil
 }

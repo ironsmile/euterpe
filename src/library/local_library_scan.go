@@ -30,11 +30,9 @@ func (lib *LocalLibrary) Scan() {
 
 	lib.scanWG.Add(1)
 	go func() {
-		defer func() {
-			log.Printf("Walking took %s", time.Since(start))
-			lib.scanWG.Done()
-		}()
 		lib.walkWG.Wait()
+		log.Printf("Walking took %s", time.Since(start))
+		lib.scanWG.Done()
 	}()
 
 	go func() {
@@ -43,10 +41,16 @@ func (lib *LocalLibrary) Scan() {
 	}()
 }
 
-// WaitScan blocks the current goroutine until the scan has been finished
+// WaitScan blocks the current goroutine until the scan has been finished. This includes
+// all the scanning go routines started by `Scan` along with all additional scanning
+// go routines started during because of events.
 func (lib *LocalLibrary) WaitScan() {
 	lib.scanWG.Wait()
-	lib.waitForDBWriterIdleSignal()
+
+	//!TODO: Cleanup this workaround.
+	// This thing is here because I haven't figured a way to wait for all the running
+	// go routines which make up the scanning process.
+	time.Sleep(100 * time.Millisecond)
 }
 
 // This is the goroutine which actually scans a library path.
@@ -77,9 +81,11 @@ func (lib *LocalLibrary) scanPath(scannedPath string, media chan<- string) {
 			media <- path
 		}
 
+		lib.watchLock.RLock()
 		if lib.watch != nil && info.IsDir() {
 			lib.watch.Watch(path)
 		}
+		lib.watchLock.RUnlock()
 
 		scannedFiles++
 

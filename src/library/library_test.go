@@ -1,6 +1,7 @@
 package library
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"io/ioutil"
@@ -140,7 +141,7 @@ func TestInitialize(t *testing.T) {
 		t.Fatalf("Error creating temporary library: %s", err)
 	}
 
-	lib, err := NewLocalLibrary(libDB.Name())
+	lib, err := NewLocalLibrary(context.Background(), libDB.Name())
 
 	if err != nil {
 		t.Fatal(err)
@@ -193,7 +194,7 @@ func TestTruncate(t *testing.T) {
 		t.Fatalf("Error creating temporary library: %s", err)
 	}
 
-	lib, err := NewLocalLibrary(libDB.Name())
+	lib, err := NewLocalLibrary(context.TODO(), libDB.Name())
 
 	if err != nil {
 		t.Fatal(err)
@@ -466,7 +467,7 @@ func TestScaning(t *testing.T) {
 	lib.Scan()
 
 	ch := testErrorAfter(10, "Scanning library took too long")
-	lib.WaitScan()
+	lib.stop()
 	ch <- 42
 
 	for _, track := range []string{"Another One", "Payback", "Tittled Track"} {
@@ -476,7 +477,6 @@ func TestScaning(t *testing.T) {
 			t.Errorf("%s was not found after the scan", track)
 		}
 	}
-
 }
 
 func TestSQLInjections(t *testing.T) {
@@ -893,7 +893,7 @@ func TestAddingManyFilesSimultaniously(t *testing.T) {
 		mediaFiles = append(mediaFiles, m)
 	}
 
-	lib.waitForDBWriterIdleSignal()
+	lib.WaitScan()
 
 	for _, song := range mediaFiles {
 		checkSong(lib, song, t)
@@ -943,7 +943,7 @@ func TestAlbumsWithDifferentArtists(t *testing.T) {
 		}
 	}
 
-	lib.waitForDBWriterIdleSignal()
+	lib.WaitScan()
 
 	found := lib.Search("Return Of The Bugs")
 
@@ -1019,7 +1019,7 @@ func TestDifferentAlbumsWithTheSameName(t *testing.T) {
 		}
 	}
 
-	lib.waitForDBWriterIdleSignal()
+	lib.WaitScan()
 
 	found := lib.Search("Return Of The Bugs")
 

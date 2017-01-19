@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -61,7 +62,7 @@ func setUpServer() *Server {
 	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 	wsCfg.Gzip = true
 
-	return NewServer(wsCfg, nil)
+	return NewServer(context.Background(), wsCfg, nil)
 }
 
 func tearDownServer(srv *Server) {
@@ -96,7 +97,7 @@ func getProjectRoot() (string, error) {
 func getLibraryServer(t *testing.T) (*Server, library.Library) {
 	projRoot, _ := getProjectRoot()
 
-	lib, err := library.NewLocalLibrary("/tmp/test-web-file-get.db")
+	lib, err := library.NewLocalLibrary(context.TODO(), library.SQLiteMemoryFile)
 
 	if err != nil {
 		t.Fatal(err)
@@ -119,7 +120,7 @@ func getLibraryServer(t *testing.T) (*Server, library.Library) {
 	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
 	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 
-	srv := NewServer(wsCfg, lib)
+	srv := NewServer(context.Background(), wsCfg, lib)
 	srv.Serve()
 
 	return srv, lib
@@ -209,7 +210,7 @@ func TestSSL(t *testing.T) {
 		Key: filepath.Join(certDir, "key.pem"),
 	}
 
-	srv := NewServer(wsCfg, nil)
+	srv := NewServer(context.Background(), wsCfg, nil)
 	srv.Serve()
 
 	defer tearDownServer(srv)
@@ -243,7 +244,7 @@ func TestUserAuthentication(t *testing.T) {
 		Password: "testpass",
 	}
 
-	srv := NewServer(wsCfg, nil)
+	srv := NewServer(context.Background(), wsCfg, nil)
 	srv.Serve()
 	defer tearDownServer(srv)
 
@@ -290,7 +291,7 @@ func TestUserAuthentication(t *testing.T) {
 func TestSearchUrl(t *testing.T) {
 	projRoot, _ := getProjectRoot()
 
-	lib, _ := library.NewLocalLibrary("/tmp/test-web-search.db")
+	lib, _ := library.NewLocalLibrary(context.TODO(), library.SQLiteMemoryFile)
 	err := lib.Initialize()
 
 	if err != nil {
@@ -310,7 +311,7 @@ func TestSearchUrl(t *testing.T) {
 	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
 	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 
-	srv := NewServer(wsCfg, lib)
+	srv := NewServer(context.Background(), wsCfg, lib)
 	srv.Serve()
 	defer tearDownServer(srv)
 
@@ -494,7 +495,7 @@ func TestGzipEncoding(t *testing.T) {
 	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 	wsCfg.Gzip = true
 
-	srv := NewServer(wsCfg, nil)
+	srv := NewServer(context.Background(), wsCfg, nil)
 	srv.Serve()
 
 	tests := [][2]string{
@@ -508,7 +509,7 @@ func TestGzipEncoding(t *testing.T) {
 	tearDownServer(srv)
 
 	wsCfg.Gzip = false
-	srv = NewServer(wsCfg, nil)
+	srv = NewServer(context.Background(), wsCfg, nil)
 	srv.Serve()
 	defer tearDownServer(srv)
 

@@ -22,27 +22,12 @@ func (lib *LocalLibrary) initializeWatcher() {
 		return
 	}
 	lib.watch = newWatcher
-	lib.watchClosedChan = make(chan bool)
 
 	go lib.watchEventRoutine()
 }
 
-// Stops the filesystem watching and all supporing it goroutines.
-func (lib *LocalLibrary) stopWatcher() {
-	if lib.watch != nil {
-		lib.watchClosedChan <- true
-		lib.watch.Close()
-		lib.watch = nil
-		close(lib.watchClosedChan)
-	}
-}
-
 // This function is resposible for selecting the watcher events
 func (lib *LocalLibrary) watchEventRoutine() {
-
-	// To make sure we will not write in the database at the same time as the
-	// scanning goroutines we will wait them to end.
-	lib.WaitScan()
 	defer func() {
 		log.Println("Directory watcher event receiver stopped.")
 	}()
@@ -63,7 +48,7 @@ func (lib *LocalLibrary) watchEventRoutine() {
 				return
 			}
 			log.Println("Directory watcher error:", err)
-		case <-lib.watchClosedChan:
+		case <-lib.ctx.Done():
 			return
 		}
 	}
@@ -103,10 +88,14 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 	}
 
 	if event.IsCreate() && st.IsDir() {
-		// fmt.Printf("Adding watch for %s\n", event.Name)
 		lib.watch.Watch(event.Name)
+
+		//!TODO: the next two lines are actually a race condition. An alternative way
+		// for achieving this must be found. It seems that calling `Add` on the wait
+		// group is the problem. One can detect it with `go test -race`.
 		lib.walkWG.Add(1)
 		go lib.scanPath(event.Name, lib.mediaChan)
+
 		return
 	}
 
