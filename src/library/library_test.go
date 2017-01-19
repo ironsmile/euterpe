@@ -55,14 +55,7 @@ func getTestLibraryPath() (string, error) {
 
 // It is the caller's resposibility to remove the library SQLite database file
 func getLibrary(t *testing.T) *LocalLibrary {
-
-	fh, err := ioutil.TempFile("", "httpms_library_test_")
-
-	if err != nil {
-		t.Fatalf("Error creating temporary library: %s", err)
-	}
-
-	lib, err := NewLocalLibrary(fh.Name())
+	lib, err := NewLocalLibrary(context.TODO(), SQLiteMemoryFile)
 
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -92,13 +85,7 @@ func getPathedLibrary(t *testing.T) *LocalLibrary {
 
 	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
 
-	fh, err := ioutil.TempFile("", "httpms_library_test_")
-
-	if err != nil {
-		t.Fatalf("Error creating temporary library: %s", err)
-	}
-
-	lib, err := NewLocalLibrary(fh.Name())
+	lib, err := NewLocalLibrary(context.TODO(), SQLiteMemoryFile)
 
 	if err != nil {
 		t.Fatal(err)
@@ -276,14 +263,8 @@ func TestAddigNewFiles(t *testing.T) {
 	library := getLibrary(t)
 	defer library.Truncate()
 
-	db, err := sql.Open("sqlite3", library.database)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer db.Close()
-
 	tracksCount := func() int {
-		rows, err := db.Query("SELECT count(id) as cnt FROM tracks")
+		rows, err := library.db.Query("SELECT count(id) as cnt FROM tracks")
 		if err != nil {
 			t.Fatal(err)
 			return 0

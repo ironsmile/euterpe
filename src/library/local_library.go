@@ -29,6 +29,12 @@ import (
 // one of them will be saved in the library.
 const UnknownLabel = "Unknown"
 
+// SQLiteMemoryFile can be used as a database path for the sqlite's Open method.
+// When using it, one owuld create a memory database which does not write
+// anything on disk. See https://www.sqlite.org/inmemorydb.html for more info
+// on the subject of in-memory databases.
+const SQLiteMemoryFile = ":memory:"
+
 var (
 	// LibraryFastScan is a flag, populated by the -fast-library-scan argument.
 	//
@@ -737,6 +743,12 @@ func (lib *LocalLibrary) readSchema() (string, error) {
 // Truncate Closes the library and removes its database file leaving no traces at all.
 func (lib *LocalLibrary) Truncate() error {
 	lib.Close()
+
+	// The database is in-memory. There is no file which must be truncated.
+	if lib.database == SQLiteMemoryFile {
+		return nil
+	}
+
 	return os.Remove(lib.database)
 }
 
