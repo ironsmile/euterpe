@@ -546,9 +546,9 @@ func (lib *LocalLibrary) setAlbumID(album string, fsPath string) (int64, error) 
 	return lib.lastInsertID()
 }
 
-// GetAlbumFSPath returns all the file paths which contain versions of an album.
+// GetAlbumFSPathByName returns all the file paths which contain versions of an album.
 func (lib *LocalLibrary) GetAlbumFSPathByName(albumName string) ([]string, error) {
-	paths := make([]string, 0)
+	var paths []string
 
 	row, err := lib.db.Query(`
 		SELECT
