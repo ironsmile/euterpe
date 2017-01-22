@@ -597,7 +597,7 @@ func TestAddingNewFile(t *testing.T) {
 	newFile := filepath.Join(testFiles, "library", "folder_one", "test_file_added.mp3")
 
 	if err := helpers.Copy(testMp3, newFile); err != nil {
-		t.Fatalf("Copying file to library faild: %s", err)
+		t.Fatalf("Copying file to library failed: %s", err)
 	}
 
 	defer os.Remove(newFile)
