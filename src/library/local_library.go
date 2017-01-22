@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/howeyc/fsnotify"
 	taglib "github.com/landr0id/go-taglib"
@@ -275,15 +274,6 @@ func (lib *LocalLibrary) removeDirectory(dirPath string) {
 func (lib *LocalLibrary) databaseWriter(media <-chan string, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	timerDuration := 100 * time.Millisecond
-	idleTimer := time.NewTimer(timerDuration)
-
-	defer func() {
-		if !idleTimer.Stop() {
-			<-idleTimer.C
-		}
-	}()
-
 	for {
 		select {
 		case filename, ok := <-media:
@@ -294,16 +284,9 @@ func (lib *LocalLibrary) databaseWriter(media <-chan string, wg *sync.WaitGroup)
 			if err := lib.AddMedia(filename); err != nil {
 				log.Printf("Error adding `%s` to library: %s\n", filename, err)
 			}
-
-			if !idleTimer.Stop() {
-				<-idleTimer.C
-			}
-
-		case <-idleTimer.C:
 		case <-lib.ctx.Done():
 			return
 		}
-		idleTimer.Reset(timerDuration)
 	}
 }
 
