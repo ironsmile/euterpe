@@ -601,9 +601,7 @@ func TestAddingNewFile(t *testing.T) {
 	}
 
 	defer os.Remove(newFile)
-	lib.WaitScan()
-
-	time.Sleep(1 * time.Second)
+	lib.stop()
 
 	checkAddedSong(lib, t)
 }
