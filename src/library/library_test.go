@@ -259,7 +259,7 @@ func TestSearch(t *testing.T) {
 
 }
 
-func TestAddigNewFiles(t *testing.T) {
+func TestAddingNewFiles(t *testing.T) {
 
 	library := getLibrary(t)
 	defer library.Truncate()
