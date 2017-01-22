@@ -115,7 +115,7 @@ func (lib *LocalLibrary) AddLibraryPath(path string) {
 	_, err := os.Stat(path)
 
 	if err != nil {
-		log.Println(err)
+		log.Printf("error adding path: %s", err)
 		return
 	}
 
@@ -177,7 +177,7 @@ func (lib *LocalLibrary) GetFilePath(ID int64) string {
 	`)
 
 	if err != nil {
-		log.Println(err)
+		log.Printf("Error getting file path: %s\n", err)
 		return ""
 	}
 
@@ -395,7 +395,7 @@ func (lib *LocalLibrary) MediaExistsInLibrary(filename string) bool {
 	`)
 
 	if err != nil {
-		log.Println(err)
+		log.Printf("could not prepare sql statement: %s", err)
 		return false
 	}
 	defer smt.Close()
@@ -404,7 +404,7 @@ func (lib *LocalLibrary) MediaExistsInLibrary(filename string) bool {
 	err = smt.QueryRow(filename).Scan(&count)
 
 	if err != nil {
-		log.Println(err)
+		log.Printf("error checking whether media exists already: %s", err)
 		return false
 	}
 

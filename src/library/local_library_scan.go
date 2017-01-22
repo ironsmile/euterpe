@@ -73,7 +73,7 @@ func (lib *LocalLibrary) scanPath(scannedPath string, media chan<- string) {
 	walkFunc := func(path string, info os.FileInfo, err error) error {
 
 		if err != nil {
-			log.Println(err)
+			log.Printf("error while scanning %s: %s", path, err)
 			return nil
 		}
 
@@ -105,6 +105,6 @@ func (lib *LocalLibrary) scanPath(scannedPath string, media chan<- string) {
 	err := filepath.Walk(scannedPath, walkFunc)
 
 	if err != nil {
-		log.Println(err)
+		log.Printf("error while walking %s: %s", scannedPath, err)
 	}
 }
