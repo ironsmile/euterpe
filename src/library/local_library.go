@@ -77,10 +77,6 @@ type LocalLibrary struct {
 	// Used to signal when the database writer has stopped
 	dbWriterWG sync.WaitGroup
 
-	// Receiving something on this channel means that the database goroutin is in
-	// idle state at the moment
-	databaseWriterIdle chan struct{}
-
 	ctx           context.Context
 	ctxCancelFunc context.CancelFunc
 	running       bool
