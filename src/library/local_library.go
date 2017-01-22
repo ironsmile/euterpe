@@ -81,7 +81,8 @@ type LocalLibrary struct {
 	ctxCancelFunc context.CancelFunc
 	running       bool
 
-	sync.Mutex
+	isRunningLock sync.Mutex
+	waitScanLock  sync.RWMutex
 }
 
 // Close closes the database connection. It is safe to call it as many times as you want.
@@ -94,8 +95,8 @@ func (lib *LocalLibrary) Close() {
 // related to the library. But leaves the database connection open so that the lib
 // state can be examined via its methods. Useful for testing.
 func (lib *LocalLibrary) stop() {
-	lib.Lock()
-	defer lib.Unlock()
+	lib.isRunningLock.Lock()
+	defer lib.isRunningLock.Unlock()
 
 	if !lib.running {
 		return

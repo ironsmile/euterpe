@@ -90,11 +90,11 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 	if event.IsCreate() && st.IsDir() {
 		lib.watch.Watch(event.Name)
 
-		//!TODO: the next line is actually a race condition. Calling `Add` while
-		// a different goroutine/thread is waiting on the wait groupd causes it.
+		lib.waitScanLock.Lock()
 		lib.walkWG.Add(1)
-		go lib.scanPath(event.Name, lib.mediaChan)
+		lib.waitScanLock.Unlock()
 
+		go lib.scanPath(event.Name, lib.mediaChan)
 		return
 	}
 

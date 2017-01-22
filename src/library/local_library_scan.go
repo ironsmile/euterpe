@@ -45,7 +45,9 @@ func (lib *LocalLibrary) Scan() {
 // all the scanning go routines started by `Scan` along with all additional scanning
 // go routines started during because of events.
 func (lib *LocalLibrary) WaitScan() {
+	lib.waitScanLock.RLock()
 	lib.scanWG.Wait()
+	lib.waitScanLock.RUnlock()
 
 	//!TODO: Cleanup this workaround.
 	// This thing is here because I haven't figured a way to wait for all the running
