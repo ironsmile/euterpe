@@ -90,9 +90,8 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 	if event.IsCreate() && st.IsDir() {
 		lib.watch.Watch(event.Name)
 
-		//!TODO: the next two lines are actually a race condition. An alternative way
-		// for achieving this must be found. It seems that calling `Add` on the wait
-		// group is the problem. One can detect it with `go test -race`.
+		//!TODO: the next line is actually a race condition. Calling `Add` while
+		// a different goroutine/thread is waiting on the wait groupd causes it.
 		lib.walkWG.Add(1)
 		go lib.scanPath(event.Name, lib.mediaChan)
 
