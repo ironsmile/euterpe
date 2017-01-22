@@ -77,9 +77,6 @@ type LocalLibrary struct {
 	// Used to signal when the database writer has stopped
 	dbWriterWG sync.WaitGroup
 
-	// Used in the database writer to shortcircuit a idle heartbeat which no one reads
-	idleTimer *time.Timer
-
 	// Receiving something on this channel means that the database goroutin is in
 	// idle state at the moment
 	databaseWriterIdle chan struct{}
@@ -766,7 +763,6 @@ func NewLocalLibrary(ctx context.Context, databasePath string) (*LocalLibrary, e
 
 	lib.watchLock = &sync.RWMutex{}
 
-	lib.idleTimer = time.NewTimer(1 * time.Millisecond)
 	lib.mediaChan = make(chan string, 100)
 
 	lib.dbWriterWG.Add(1)
