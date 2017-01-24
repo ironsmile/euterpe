@@ -19,7 +19,7 @@ type BasicAuthHandler struct {
 func (hl BasicAuthHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	auth, err := req.Header["Authorization"]
 
-	if err == false || len(auth) < 1 || hl.authenticate(auth[0]) == false {
+	if !err || len(auth) < 1 || !hl.authenticate(auth[0]) {
 		InternalErrorOnErrorHandler(writer, req, hl.challengeAuthentication)
 		return
 	}
@@ -41,11 +41,7 @@ func (hl BasicAuthHandler) challengeAuthentication(writer http.ResponseWriter,
 
 	err = tmpl.Execute(writer, nil)
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // Compares the authentication header with the stored user and passwords

@@ -92,11 +92,7 @@ func (fh AlbumHandler) writeZipContents(writer io.Writer, files []string) error 
 
 	err = zipWriter.Close()
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 
 problem_writing:
 	_ = zipWriter.Close()

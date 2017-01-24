@@ -362,11 +362,7 @@ func (lib *LocalLibrary) insertMediaIntoDatabase(file MediaFile, filePath string
 	_, err = lib.setTrackID(file.Title(), filePath, int64(file.Track()),
 		artistID, albumID)
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // MediaExistsInLibrary checks if the media file with file system path "filename" has

@@ -36,7 +36,7 @@ func testErrorAfter(seconds time.Duration, message string) chan int {
 
 	go func() {
 		select {
-		case _ = <-ch:
+		case <-ch:
 			close(ch)
 			return
 		case <-time.After(seconds * time.Second):
