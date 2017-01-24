@@ -32,8 +32,11 @@ const UnknownLabel = "Unknown"
 // SQLiteMemoryFile can be used as a database path for the sqlite's Open method.
 // When using it, one owuld create a memory database which does not write
 // anything on disk. See https://www.sqlite.org/inmemorydb.html for more info
-// on the subject of in-memory databases.
-const SQLiteMemoryFile = ":memory:"
+// on the subject of in-memory databases. We are using a shared cache because
+// this causes all the different connections in the database/sql pool to be
+// connected to the same "memory file". Without this. every new connection
+// would end up creating a new memory database.
+const SQLiteMemoryFile = "file::memory:?cache=shared"
 
 var (
 	// LibraryFastScan is a flag, populated by the -fast-library-scan argument.
