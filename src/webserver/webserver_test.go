@@ -217,7 +217,7 @@ func TestSSL(t *testing.T) {
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
+	} // #nosec
 	client := &http.Client{Transport: tr}
 	_, err = client.Get(fmt.Sprintf("https://127.0.0.1:%d", TestPort))
 

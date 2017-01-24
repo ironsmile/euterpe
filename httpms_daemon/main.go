@@ -54,6 +54,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	// #nosec
 	if out, err := exec.Command(path, "-p", pidFile).Output(); err != nil {
 		logger.Println(err)
 		os.Exit(1)

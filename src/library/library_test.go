@@ -176,10 +176,14 @@ func TestInitialize(t *testing.T) {
 	}
 	defer db.Close()
 
-	var tables = []string{"albums", "tracks", "artists"}
+	var queries = []string{
+		"SELECT count(id) as cnt FROM albums",
+		"SELECT count(id) as cnt FROM tracks",
+		"SELECT count(id) as cnt FROM artists",
+	}
 
-	for _, table := range tables {
-		row, err := db.Query(fmt.Sprintf("SELECT count(id) as cnt FROM %s", table))
+	for _, query := range queries {
+		row, err := db.Query(query)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -732,7 +736,7 @@ func TestAddingAndRemovingDirectory(t *testing.T) {
 	lib := getScannedLibrary(t)
 	defer lib.Truncate()
 
-	if err := os.Mkdir(testDir, 0755); err != nil {
+	if err := os.Mkdir(testDir, 0700); err != nil {
 		t.Fatal(err)
 	}
 
@@ -780,7 +784,7 @@ func TestMovingDirectory(t *testing.T) {
 	_ = os.RemoveAll(movedDir)
 	_ = os.RemoveAll(secondPlace)
 
-	if err := os.Mkdir(testDir, 0755); err != nil {
+	if err := os.Mkdir(testDir, 0700); err != nil {
 		t.Fatal(err)
 	}
 
