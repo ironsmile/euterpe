@@ -1,6 +1,7 @@
 package library
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"flag"
@@ -11,7 +12,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/howeyc/fsnotify"
 	taglib "github.com/landr0id/go-taglib"
@@ -28,6 +28,15 @@ import (
 // if there are many files with missing title, artist and album only
 // one of them will be saved in the library.
 const UnknownLabel = "Unknown"
+
+// SQLiteMemoryFile can be used as a database path for the sqlite's Open method.
+// When using it, one owuld create a memory database which does not write
+// anything on disk. See https://www.sqlite.org/inmemorydb.html for more info
+// on the subject of in-memory databases. We are using a shared cache because
+// this causes all the different connections in the database/sql pool to be
+// connected to the same "memory file". Without this. every new connection
+// would end up creating a new memory database.
+const SQLiteMemoryFile = "file::memory:?cache=shared"
 
 var (
 	// LibraryFastScan is a flag, populated by the -fast-library-scan argument.
@@ -57,47 +66,57 @@ type LocalLibrary struct {
 	paths    []string       // FS locations which contain the library's media files
 	db       *sql.DB        // Database handler
 	walkWG   sync.WaitGroup // Used to log how much time scanning took
-	scanWG   sync.WaitGroup // Used in WaitScan to signal the end of scanning
 
 	// If something needs to be added to the database from the watcher
 	// it should use this channel
-	mediaChan chan string
-
-	// Used to sync the library's Close with the watcher event handling goroutine
-	watchClosedChan chan bool
+	mediaChan    chan string
+	mediaWritten chan struct{}
 
 	// Directory watcher
-	watch *fsnotify.Watcher
+	watch     *fsnotify.Watcher
+	watchLock *sync.RWMutex
 
 	// Used to signal when the database writer has stopped
 	dbWriterWG sync.WaitGroup
 
-	// Used in the database writer to shortcircuit a idle heartbeat which no one reads
-	idleTimer *time.Timer
+	ctx           context.Context
+	ctxCancelFunc context.CancelFunc
+	running       bool
 
-	// Receiving something on this channel means that the database goroutin is in
-	// idle state at the moment
-	databaseWriterIdle chan struct{}
+	isRunningLock sync.Mutex
+	waitScanLock  sync.RWMutex
+
+	watcherWG sync.WaitGroup
 }
 
 // Close closes the database connection. It is safe to call it as many times as you want.
 func (lib *LocalLibrary) Close() {
-	lib.stopWatcher()
+	lib.stop()
+	lib.db.Close()
+}
 
-	lib.WaitScan()
+// Wait until all the currently started work is finished and stops all go routines
+// related to the library. But leaves the database connection open so that the lib
+// state can be examined via its methods. Useful for testing.
+func (lib *LocalLibrary) stop() {
+	lib.isRunningLock.Lock()
+	defer lib.isRunningLock.Unlock()
+
+	if !lib.running {
+		return
+	}
+
+	lib.running = false
+
+	lib.waitScanLock.RLock()
 	lib.walkWG.Wait()
+	lib.waitScanLock.RUnlock()
 
-	if lib.mediaChan != nil {
-		close(lib.mediaChan)
-		lib.mediaChan = nil
-	}
-
+	lib.ctxCancelFunc()
+	lib.watcherWG.Wait()
 	lib.dbWriterWG.Wait()
-
-	if lib.db != nil {
-		lib.db.Close()
-		lib.db = nil
-	}
+	close(lib.mediaChan)
+	close(lib.mediaWritten)
 }
 
 // AddLibraryPath adds a library directory to the list of libraries which will be
@@ -106,7 +125,7 @@ func (lib *LocalLibrary) AddLibraryPath(path string) {
 	_, err := os.Stat(path)
 
 	if err != nil {
-		log.Println(err)
+		log.Printf("error adding path: %s", err)
 		return
 	}
 
@@ -168,7 +187,7 @@ func (lib *LocalLibrary) GetFilePath(ID int64) string {
 	`)
 
 	if err != nil {
-		log.Println(err)
+		log.Printf("Error getting file path: %s\n", err)
 		return ""
 	}
 
@@ -262,24 +281,12 @@ func (lib *LocalLibrary) removeDirectory(dirPath string) {
 
 // Reads from the media channel and saves into the database every file
 // received.
-func (lib *LocalLibrary) databaseWriter(media <-chan string, wg *sync.WaitGroup) {
-	if wg != nil {
-		defer wg.Done()
-	}
-
-	lib.databaseWriterIdle = make(chan struct{})
-	defer close(lib.databaseWriterIdle)
-
-	idleTimer := time.NewTimer(10 * time.Millisecond)
-	defer func() {
-		if !idleTimer.Stop() {
-			<-idleTimer.C
-		}
-	}()
+func (lib *LocalLibrary) databaseWriter() {
+	defer lib.dbWriterWG.Done()
 
 	for {
 		select {
-		case filename, ok := <-media:
+		case filename, ok := <-lib.mediaChan:
 			if !ok {
 				return
 			}
@@ -288,32 +295,20 @@ func (lib *LocalLibrary) databaseWriter(media <-chan string, wg *sync.WaitGroup)
 				log.Printf("Error adding `%s` to library: %s\n", filename, err)
 			}
 
-			if !idleTimer.Stop() {
-				<-idleTimer.C
-			}
-
-		case <-idleTimer.C:
-			lib.sendDBWriterIdleSignal()
+			lib.mediaWritten <- struct{}{}
+		case <-lib.ctx.Done():
+			return
 		}
-		idleTimer.Reset(10 * time.Millisecond)
 	}
 }
 
-func (lib *LocalLibrary) sendDBWriterIdleSignal() {
-	lib.idleTimer.Reset(1 * time.Millisecond)
+func (lib *LocalLibrary) writeInDb(media string) {
 	select {
-	case lib.databaseWriterIdle <- struct{}{}:
-		if !lib.idleTimer.Stop() {
-			<-lib.idleTimer.C
-		}
-		return
-	case <-lib.idleTimer.C:
+	case lib.mediaChan <- media:
+		<-lib.mediaWritten
+	case <-lib.ctx.Done():
 		return
 	}
-}
-
-func (lib *LocalLibrary) waitForDBWriterIdleSignal() {
-	<-lib.databaseWriterIdle
 }
 
 // Determines if the file will be saved to the database. Only media files which
@@ -374,7 +369,9 @@ func (lib *LocalLibrary) insertMediaIntoDatabase(file MediaFile, filePath string
 		return err
 	}
 
-	albumID, err := lib.setAlbumID(file.Album(), artistID)
+	fileDir := filepath.Dir(filePath)
+
+	albumID, err := lib.setAlbumID(file.Album(), fileDir)
 
 	if err != nil {
 		return err
@@ -383,11 +380,7 @@ func (lib *LocalLibrary) insertMediaIntoDatabase(file MediaFile, filePath string
 	_, err = lib.setTrackID(file.Title(), filePath, int64(file.Track()),
 		artistID, albumID)
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // MediaExistsInLibrary checks if the media file with file system path "filename" has
@@ -403,7 +396,7 @@ func (lib *LocalLibrary) MediaExistsInLibrary(filename string) bool {
 	`)
 
 	if err != nil {
-		log.Println(err)
+		log.Printf("could not prepare sql statement: %s", err)
 		return false
 	}
 	defer smt.Close()
@@ -412,7 +405,7 @@ func (lib *LocalLibrary) MediaExistsInLibrary(filename string) bool {
 	err = smt.QueryRow(filename).Scan(&count)
 
 	if err != nil {
-		log.Println(err)
+		log.Printf("error checking whether media exists already: %s", err)
 		return false
 	}
 
@@ -482,9 +475,9 @@ func (lib *LocalLibrary) setArtistID(artist string) (int64, error) {
 	return lib.lastInsertID()
 }
 
-// GetAlbumID returns the id for this artist's album. When missing or on error
+// GetAlbumID returns the id for this album. When missing or on error
 // returns that error.
-func (lib *LocalLibrary) GetAlbumID(album string, artistID int64) (int64, error) {
+func (lib *LocalLibrary) GetAlbumID(album string, fsPath string) (int64, error) {
 	smt, err := lib.db.Prepare(`
 		SELECT
 			id
@@ -492,7 +485,7 @@ func (lib *LocalLibrary) GetAlbumID(album string, artistID int64) (int64, error)
 			albums
 		WHERE
 			name = ? AND
-			artist_id = ?
+			fs_path = ?
 	`)
 
 	if err != nil {
@@ -502,7 +495,7 @@ func (lib *LocalLibrary) GetAlbumID(album string, artistID int64) (int64, error)
 	defer smt.Close()
 
 	var id int64
-	err = smt.QueryRow(album, artistID).Scan(&id)
+	err = smt.QueryRow(album, fsPath).Scan(&id)
 
 	if err != nil {
 		return 0, err
@@ -512,14 +505,14 @@ func (lib *LocalLibrary) GetAlbumID(album string, artistID int64) (int64, error)
 }
 
 // Sets a new ID for this album if it is new to the library. If not, returns
-// its current id. Albums with the same name but by different artists need to have
-// separate IDs hence the artistID parameter.
-func (lib *LocalLibrary) setAlbumID(album string, artistID int64) (int64, error) {
+// its current id. Albums with the same name but by different locations need to have
+// separate IDs hence the fsPath parameter.
+func (lib *LocalLibrary) setAlbumID(album string, fsPath string) (int64, error) {
 	if len(album) < 1 {
 		album = UnknownLabel
 	}
 
-	id, err := lib.GetAlbumID(album, artistID)
+	id, err := lib.GetAlbumID(album, fsPath)
 
 	if err == nil {
 		return id, nil
@@ -527,7 +520,7 @@ func (lib *LocalLibrary) setAlbumID(album string, artistID int64) (int64, error)
 
 	stmt, err := lib.db.Prepare(`
 			INSERT INTO
-				albums (name, artist_id)
+				albums (name, fs_path)
 			VALUES
 				(?, ?)
 	`)
@@ -538,13 +531,48 @@ func (lib *LocalLibrary) setAlbumID(album string, artistID int64) (int64, error)
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(album, artistID)
+	_, err = stmt.Exec(album, fsPath)
 
 	if err != nil {
 		return 0, err
 	}
 
 	return lib.lastInsertID()
+}
+
+// GetAlbumFSPathByName returns all the file paths which contain versions of an album.
+func (lib *LocalLibrary) GetAlbumFSPathByName(albumName string) ([]string, error) {
+	var paths []string
+
+	row, err := lib.db.Query(`
+		SELECT
+			fs_path
+		FROM
+			albums
+		WHERE
+			name = ?
+	`, albumName)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+
+	var albumPath string
+	for row.Next() {
+		if err := row.Scan(&albumPath); err != nil {
+			return nil, err
+		}
+		paths = append(paths, albumPath)
+	}
+
+	if len(paths) < 1 {
+		return nil, errors.New("Album not found")
+	}
+
+	return paths, nil
+
 }
 
 // GetTrackID returns the id for this track. When missing or on error returns that error.
@@ -700,15 +728,27 @@ func (lib *LocalLibrary) readSchema() (string, error) {
 // Truncate Closes the library and removes its database file leaving no traces at all.
 func (lib *LocalLibrary) Truncate() error {
 	lib.Close()
+
+	// The database is in-memory. There is no file which must be truncated.
+	if lib.database == SQLiteMemoryFile {
+		return nil
+	}
+
 	return os.Remove(lib.database)
 }
 
 // NewLocalLibrary returns a new LocalLibrary which will use for database the file
 // specified by databasePath. Also creates the database connection so you does not
-// need to worry about that.
-func NewLocalLibrary(databasePath string) (*LocalLibrary, error) {
+// need to worry about that. It accepts the parent's context and create its own
+// child context.
+func NewLocalLibrary(ctx context.Context, databasePath string) (*LocalLibrary, error) {
 	lib := new(LocalLibrary)
 	lib.database = databasePath
+
+	libContext, cancelFunc := context.WithCancel(ctx)
+
+	lib.ctx = libContext
+	lib.ctxCancelFunc = cancelFunc
 
 	var err error
 
@@ -718,11 +758,15 @@ func NewLocalLibrary(databasePath string) (*LocalLibrary, error) {
 		return nil, err
 	}
 
-	lib.idleTimer = time.NewTimer(1 * time.Millisecond)
-	lib.mediaChan = make(chan string, 100)
+	lib.watchLock = &sync.RWMutex{}
+
+	lib.mediaChan = make(chan string)
+	lib.mediaWritten = make(chan struct{})
 
 	lib.dbWriterWG.Add(1)
-	go lib.databaseWriter(lib.mediaChan, &lib.dbWriterWG)
+	go lib.databaseWriter()
+
+	lib.running = true
 
 	return lib, nil
 }

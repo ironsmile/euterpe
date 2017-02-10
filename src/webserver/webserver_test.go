@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -35,7 +36,7 @@ func testErrorAfter(seconds time.Duration, message string) chan int {
 
 	go func() {
 		select {
-		case _ = <-ch:
+		case <-ch:
 			close(ch)
 			return
 		case <-time.After(seconds * time.Second):
@@ -61,7 +62,7 @@ func setUpServer() *Server {
 	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 	wsCfg.Gzip = true
 
-	return NewServer(wsCfg, nil)
+	return NewServer(context.Background(), wsCfg, nil)
 }
 
 func tearDownServer(srv *Server) {
@@ -96,7 +97,7 @@ func getProjectRoot() (string, error) {
 func getLibraryServer(t *testing.T) (*Server, library.Library) {
 	projRoot, _ := getProjectRoot()
 
-	lib, err := library.NewLocalLibrary("/tmp/test-web-file-get.db")
+	lib, err := library.NewLocalLibrary(context.TODO(), library.SQLiteMemoryFile)
 
 	if err != nil {
 		t.Fatal(err)
@@ -109,17 +110,16 @@ func getLibraryServer(t *testing.T) (*Server, library.Library) {
 	}
 
 	lib.AddLibraryPath(filepath.Join(projRoot, "test_files", "library"))
-	lib.Scan()
 
 	ch := testErrorAfter(5, "Library in TestGetFileUrl did not finish scaning on time")
-	lib.WaitScan()
+	lib.Scan()
 	ch <- 42
 
 	var wsCfg config.Config
 	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
 	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 
-	srv := NewServer(wsCfg, lib)
+	srv := NewServer(context.Background(), wsCfg, lib)
 	srv.Serve()
 
 	return srv, lib
@@ -209,14 +209,14 @@ func TestSSL(t *testing.T) {
 		Key: filepath.Join(certDir, "key.pem"),
 	}
 
-	srv := NewServer(wsCfg, nil)
+	srv := NewServer(context.Background(), wsCfg, nil)
 	srv.Serve()
 
 	defer tearDownServer(srv)
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
+	} // #nosec
 	client := &http.Client{Transport: tr}
 	_, err = client.Get(fmt.Sprintf("https://127.0.0.1:%d", TestPort))
 
@@ -243,7 +243,7 @@ func TestUserAuthentication(t *testing.T) {
 		Password: "testpass",
 	}
 
-	srv := NewServer(wsCfg, nil)
+	srv := NewServer(context.Background(), wsCfg, nil)
 	srv.Serve()
 	defer tearDownServer(srv)
 
@@ -290,7 +290,7 @@ func TestUserAuthentication(t *testing.T) {
 func TestSearchUrl(t *testing.T) {
 	projRoot, _ := getProjectRoot()
 
-	lib, _ := library.NewLocalLibrary("/tmp/test-web-search.db")
+	lib, _ := library.NewLocalLibrary(context.TODO(), library.SQLiteMemoryFile)
 	err := lib.Initialize()
 
 	if err != nil {
@@ -300,17 +300,16 @@ func TestSearchUrl(t *testing.T) {
 	defer lib.Truncate()
 
 	lib.AddLibraryPath(filepath.Join(projRoot, "test_files", "library"))
-	lib.Scan()
 
 	ch := testErrorAfter(5, "Library in TestSearchUrl did not finish scaning on time")
-	lib.WaitScan()
+	lib.Scan()
 	ch <- 42
 
 	var wsCfg config.Config
 	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
 	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 
-	srv := NewServer(wsCfg, lib)
+	srv := NewServer(context.Background(), wsCfg, lib)
 	srv.Serve()
 	defer tearDownServer(srv)
 
@@ -494,7 +493,7 @@ func TestGzipEncoding(t *testing.T) {
 	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 	wsCfg.Gzip = true
 
-	srv := NewServer(wsCfg, nil)
+	srv := NewServer(context.Background(), wsCfg, nil)
 	srv.Serve()
 
 	tests := [][2]string{
@@ -508,7 +507,7 @@ func TestGzipEncoding(t *testing.T) {
 	tearDownServer(srv)
 
 	wsCfg.Gzip = false
-	srv = NewServer(wsCfg, nil)
+	srv = NewServer(context.Background(), wsCfg, nil)
 	srv.Serve()
 	defer tearDownServer(srv)
 
@@ -562,8 +561,13 @@ func TestAlbumHandlerOverHttp(t *testing.T) {
 	defer lib.Truncate()
 	defer tearDownServer(srv)
 
-	artistID, _ := lib.(*library.LocalLibrary).GetArtistID("Artist Testoff")
-	albumID, _ := lib.(*library.LocalLibrary).GetAlbumID("Album Of Tests", artistID)
+	albumPaths, err := lib.(*library.LocalLibrary).GetAlbumFSPathByName("Album Of Tests")
+
+	if err != nil {
+		t.Fatalf("Cannot get album path: %s", err)
+	}
+
+	albumID, _ := lib.(*library.LocalLibrary).GetAlbumID("Album Of Tests", albumPaths[0])
 
 	albumURL := fmt.Sprintf("http://127.0.0.1:%d/album/%d", TestPort, albumID)
 

@@ -61,14 +61,14 @@ func (fh AlbumHandler) find(writer http.ResponseWriter, req *http.Request) error
 // every file is its filepath.Base.
 func (fh AlbumHandler) writeZipContents(writer io.Writer, files []string) error {
 
-	var err error
 	zipWriter := zip.NewWriter(writer)
 
 	for _, file := range files {
 		fh, err := os.Open(file)
 
 		if err != nil {
-			goto problem_writing
+			_ = zipWriter.Close()
+			return err
 		}
 
 		defer fh.Close()
@@ -76,31 +76,24 @@ func (fh AlbumHandler) writeZipContents(writer io.Writer, files []string) error 
 		contents, err := ioutil.ReadAll(fh)
 
 		if err != nil {
-			goto problem_writing
+			_ = zipWriter.Close()
+			return err
 		}
 
 		zfh, err := zipWriter.Create(filepath.Base(file))
 		if err != nil {
-			goto problem_writing
+			_ = zipWriter.Close()
+			return err
 		}
 
 		_, err = zfh.Write(contents)
 		if err != nil {
-			goto problem_writing
+			_ = zipWriter.Close()
+			return err
 		}
 	}
 
-	err = zipWriter.Close()
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-
-problem_writing:
-	_ = zipWriter.Close()
-	return err
+	return zipWriter.Close()
 }
 
 // NewAlbumHandler returns a new Album handler. It needs a library to search in

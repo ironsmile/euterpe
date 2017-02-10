@@ -39,7 +39,7 @@ type Library interface {
 	AddLibraryPath(string)
 
 	// Search the library using a search string. It will match against Artist, Album
-	// and Title. Will OR the results. So it is "return anything which Artist maches or
+	// and Title. Will OR the results. So it is "return anything which Artist matches or
 	// Album matches or Title matches"
 	Search(string) []SearchResult
 
@@ -49,12 +49,9 @@ type Library interface {
 	// Returns search result will all the files of this album
 	GetAlbumFiles(int64) []SearchResult
 
-	// Starts a background library scan. Will scan all paths if
-	// they are not scanned already. Will return immediately.
+	// Starts a full library scan. Will scan all paths if
+	// they are not scanned already.
 	Scan()
-
-	// Will sync with the Scan's end
-	WaitScan()
 
 	// Adds this media (file) to the library
 	AddMedia(string) error

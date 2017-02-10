@@ -1,6 +1,7 @@
 package library
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"io/ioutil"
@@ -17,8 +18,17 @@ import (
 )
 
 func contains(heystack []string, needle string) bool {
-	for i := 0; i < len(heystack); i++ {
-		if needle == heystack[i] {
+	for _, val := range heystack {
+		if needle == val {
+			return true
+		}
+	}
+	return false
+}
+
+func containsInt64(heystack []int64, needle int64) bool {
+	for _, val := range heystack {
+		if needle == val {
 			return true
 		}
 	}
@@ -34,16 +44,19 @@ func init() {
 	}
 }
 
-// It is the caller's resposibility to remove the library SQLite database file
-func getLibrary(t *testing.T) *LocalLibrary {
-
-	fh, err := ioutil.TempFile("", "httpms_library_test_")
+func getTestLibraryPath() (string, error) {
+	projRoot, err := helpers.ProjectRoot()
 
 	if err != nil {
-		t.Fatalf("Error creating temporary library: %s", err)
+		return "", err
 	}
 
-	lib, err := NewLocalLibrary(fh.Name())
+	return filepath.Join(projRoot, "test_files", "library"), nil
+}
+
+// It is the caller's resposibility to remove the library SQLite database file
+func getLibrary(t *testing.T) *LocalLibrary {
+	lib, err := NewLocalLibrary(context.TODO(), SQLiteMemoryFile)
 
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -55,13 +68,7 @@ func getLibrary(t *testing.T) *LocalLibrary {
 		t.Fatalf("Initializing library: %s", err)
 	}
 
-	projRoot, err := helpers.ProjectRoot()
-
-	if err != nil {
-		t.Fatalf("Was not able to find test_files directory: %s", err)
-	}
-
-	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
+	testLibraryPath, err := getTestLibraryPath()
 
 	_ = lib.AddMedia(filepath.Join(testLibraryPath, "test_file_two.mp3"))
 	_ = lib.AddMedia(filepath.Join(testLibraryPath, "folder_one", "third_file.mp3"))
@@ -79,13 +86,7 @@ func getPathedLibrary(t *testing.T) *LocalLibrary {
 
 	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
 
-	fh, err := ioutil.TempFile("", "httpms_library_test_")
-
-	if err != nil {
-		t.Fatalf("Error creating temporary library: %s", err)
-	}
-
-	lib, err := NewLocalLibrary(fh.Name())
+	lib, err := NewLocalLibrary(context.TODO(), SQLiteMemoryFile)
 
 	if err != nil {
 		t.Fatal(err)
@@ -106,10 +107,8 @@ func getPathedLibrary(t *testing.T) *LocalLibrary {
 func getScannedLibrary(t *testing.T) *LocalLibrary {
 	lib := getPathedLibrary(t)
 
-	lib.Scan()
-
 	ch := testErrorAfter(10, "Scanning library took too long")
-	lib.WaitScan()
+	lib.Scan()
 	ch <- 42
 
 	return lib
@@ -120,7 +119,7 @@ func testErrorAfter(seconds time.Duration, message string) chan int {
 
 	go func() {
 		select {
-		case _ = <-ch:
+		case <-ch:
 			close(ch)
 			return
 		case <-time.After(seconds * time.Second):
@@ -140,7 +139,7 @@ func TestInitialize(t *testing.T) {
 		t.Fatalf("Error creating temporary library: %s", err)
 	}
 
-	lib, err := NewLocalLibrary(libDB.Name())
+	lib, err := NewLocalLibrary(context.Background(), libDB.Name())
 
 	if err != nil {
 		t.Fatal(err)
@@ -175,10 +174,14 @@ func TestInitialize(t *testing.T) {
 	}
 	defer db.Close()
 
-	var tables = []string{"albums", "tracks", "artists"}
+	var queries = []string{
+		"SELECT count(id) as cnt FROM albums",
+		"SELECT count(id) as cnt FROM tracks",
+		"SELECT count(id) as cnt FROM artists",
+	}
 
-	for _, table := range tables {
-		row, err := db.Query(fmt.Sprintf("SELECT count(id) as cnt FROM %s", table))
+	for _, query := range queries {
+		row, err := db.Query(query)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -193,7 +196,7 @@ func TestTruncate(t *testing.T) {
 		t.Fatalf("Error creating temporary library: %s", err)
 	}
 
-	lib, err := NewLocalLibrary(libDB.Name())
+	lib, err := NewLocalLibrary(context.TODO(), libDB.Name())
 
 	if err != nil {
 		t.Fatal(err)
@@ -258,19 +261,13 @@ func TestSearch(t *testing.T) {
 
 }
 
-func TestAddigNewFiles(t *testing.T) {
+func TestAddingNewFiles(t *testing.T) {
 
 	library := getLibrary(t)
 	defer library.Truncate()
 
-	db, err := sql.Open("sqlite3", library.database)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer db.Close()
-
 	tracksCount := func() int {
-		rows, err := db.Query("SELECT count(id) as cnt FROM tracks")
+		rows, err := library.db.Query("SELECT count(id) as cnt FROM tracks")
 		if err != nil {
 			t.Fatal(err)
 			return 0
@@ -324,13 +321,39 @@ func TestAddigNewFiles(t *testing.T) {
 	found := library.Search("Tittled Track")
 
 	if len(found) != 1 {
-		t.Errorf("Expected to find one track but found %d", len(found))
+		t.Fatalf("Expected to find one track but found %d", len(found))
 	}
 
 	track := found[0]
 
 	if track.Title != "Tittled Track" {
 		t.Errorf("Found track had the wrong title: %s", track.Title)
+	}
+}
+
+func TestAlbumFSPath(t *testing.T) {
+	library := getLibrary(t)
+	defer library.Truncate()
+
+	testLibraryPath, err := getTestLibraryPath()
+
+	if err != nil {
+		t.Fatalf("Cannot get test library path: %s", testLibraryPath)
+	}
+
+	albumPaths, err := library.GetAlbumFSPathByName("Album Of Tests")
+
+	if err != nil {
+		t.Fatalf("Was not able to find Album Of Tests: %s", err)
+	}
+
+	if len(albumPaths) != 1 {
+		t.Fatalf("Expected one path for an album but found %d", len(albumPaths))
+	}
+
+	if testLibraryPath != albumPaths[0] {
+		t.Errorf("Album path mismatch. Expected `%s` but got `%s`", testLibraryPath,
+			albumPaths[0])
 	}
 }
 
@@ -350,16 +373,26 @@ func TestPreAddedFiles(t *testing.T) {
 		t.Fatalf("Was not able to find Artist Testoff: %s", err)
 	}
 
-	_, err = library.GetAlbumID("Album Of Not Being There", artistID)
+	_, err = library.GetAlbumFSPathByName("Album Of Not Being There")
 
 	if err == nil {
 		t.Errorf("Was not expecting to find Album Of Not Being There but found one")
 	}
 
-	albumID, err := library.GetAlbumID("Album Of Tests", artistID)
+	albumPaths, err := library.GetAlbumFSPathByName("Album Of Tests")
 
 	if err != nil {
 		t.Fatalf("Was not able to find Album Of Tests: %s", err)
+	}
+
+	if len(albumPaths) != 1 {
+		t.Fatalf("Expected one path for an album but found %d", len(albumPaths))
+	}
+
+	albumID, err := library.GetAlbumID("Album Of Tests", albumPaths[0])
+
+	if err != nil {
+		t.Fatalf("Error gettin album by its name and FS path: %s", err)
 	}
 
 	_, err = library.GetTrackID("404 Not Found", artistID, albumID)
@@ -380,7 +413,22 @@ func TestGettingAFile(t *testing.T) {
 	defer library.Truncate()
 
 	artistID, _ := library.GetArtistID("Artist Testoff")
-	albumID, _ := library.GetAlbumID("Album Of Tests", artistID)
+	albumPaths, err := library.GetAlbumFSPathByName("Album Of Tests")
+
+	if err != nil {
+		t.Fatalf("Could not find album 'Album Of Tests': %s", err)
+	}
+
+	if len(albumPaths) != 1 {
+		t.Fatalf("Expected 1 path for Album Of Tests but found %d", len(albumPaths))
+	}
+
+	albumID, err := library.GetAlbumID("Album Of Tests", albumPaths[0])
+
+	if err != nil {
+		t.Fatalf("Error getting album by its name and path: %s", err)
+	}
+
 	trackID, err := library.GetTrackID("Another One", artistID, albumID)
 
 	if err != nil {
@@ -418,10 +466,9 @@ func TestScaning(t *testing.T) {
 	lib := getPathedLibrary(t)
 	defer lib.Truncate()
 
-	lib.Scan()
-
 	ch := testErrorAfter(10, "Scanning library took too long")
-	lib.WaitScan()
+	lib.Scan()
+	lib.stop()
 	ch <- 42
 
 	for _, track := range []string{"Another One", "Payback", "Tittled Track"} {
@@ -431,7 +478,6 @@ func TestScaning(t *testing.T) {
 			t.Errorf("%s was not found after the scan", track)
 		}
 	}
-
 }
 
 func TestSQLInjections(t *testing.T) {
@@ -450,9 +496,13 @@ func TestGetAlbumFiles(t *testing.T) {
 	lib := getScannedLibrary(t)
 	defer lib.Truncate()
 
-	artistID, _ := lib.GetArtistID("Artist Testoff")
-	albumID, _ := lib.GetAlbumID("Album Of Tests", artistID)
+	albumPaths, err := lib.GetAlbumFSPathByName("Album Of Tests")
 
+	if err != nil {
+		t.Fatalf("Could not find fs paths for 'Album Of Tests' album: %s", err)
+	}
+
+	albumID, _ := lib.GetAlbumID("Album Of Tests", albumPaths[0])
 	albumFiles := lib.GetAlbumFiles(albumID)
 
 	if len(albumFiles) != 2 {
@@ -512,7 +562,13 @@ func checkAddedSong(lib *LocalLibrary, t *testing.T) {
 	found := lib.Search("Added Song")
 
 	if len(found) != 1 {
-		t.Fatalf("Expected one result, got %d for Added Song", len(found))
+		filePaths := []string{}
+		for _, track := range found {
+			filePath := lib.GetFilePath(track.ID)
+			filePaths = append(filePaths, fmt.Sprintf("%d: %s", track.ID, filePath))
+		}
+		t.Fatalf("Expected one result, got %d for Added Song: %+v. Paths:\n%s", len(found), found,
+			strings.Join(filePaths, "\n"))
 	}
 
 	track := found[0]
@@ -534,243 +590,11 @@ func checkAddedSong(lib *LocalLibrary, t *testing.T) {
 	}
 }
 
-func TestAddingNewFile(t *testing.T) {
-	lib := getScannedLibrary(t)
-	defer lib.Truncate()
-	projRoot, _ := helpers.ProjectRoot()
-	testFiles := filepath.Join(projRoot, "test_files")
-
-	testMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
-	newFile := filepath.Join(testFiles, "library", "folder_one", "test_file_added.mp3")
-
-	if err := helpers.Copy(testMp3, newFile); err != nil {
-		t.Fatalf("Copying file to library faild: %s", err)
-	}
-
-	defer os.Remove(newFile)
-	lib.WaitScan()
-
-	checkAddedSong(lib, t)
-}
-
-func TestMovingFileIntoLibrary(t *testing.T) {
-	lib := getScannedLibrary(t)
-	defer lib.Truncate()
-	projRoot, _ := helpers.ProjectRoot()
-	testFiles := filepath.Join(projRoot, "test_files")
-
-	testMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
-	toBeMoved := filepath.Join(testFiles, "more_mp3s", "test_file_moved.mp3")
-	newFile := filepath.Join(testFiles, "library", "test_file_added.mp3")
-
-	if err := helpers.Copy(testMp3, toBeMoved); err != nil {
-		t.Fatalf("Copying file to library faild: %s", err)
-	}
-
-	if err := os.Rename(toBeMoved, newFile); err != nil {
-		os.Remove(toBeMoved)
-		t.Fatalf("Was not able to move new file into library: %s", err)
-	}
-
-	defer os.Remove(newFile)
-	lib.WaitScan()
-
-	checkAddedSong(lib, t)
-}
-
-func TestAddingNonRelatedFile(t *testing.T) {
-	lib := getScannedLibrary(t)
-	defer lib.Truncate()
-	projRoot, _ := helpers.ProjectRoot()
-	testFiles := filepath.Join(projRoot, "test_files")
-	newFile := filepath.Join(testFiles, "library", "not_related")
-
-	testLibFiles := func() {
-		results := lib.Search("")
-		if len(results) != 3 {
-			t.Errorf("Expected 3 files in the library but found %d", len(results))
-		}
-	}
-
-	fh, err := os.Create(newFile)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	fh.WriteString("Some contents")
-	fh.Close()
-
-	lib.WaitScan()
-	testLibFiles()
-
-	os.Remove(newFile)
-	lib.WaitScan()
-	testLibFiles()
-
-}
-
-func TestRemovingFile(t *testing.T) {
-	projRoot, _ := helpers.ProjectRoot()
-	testFiles := filepath.Join(projRoot, "test_files")
-
-	testMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
-	newFile := filepath.Join(testFiles, "library", "test_file_added.mp3")
-
-	if err := helpers.Copy(testMp3, newFile); err != nil {
-		t.Fatalf("Copying file to library faild: %s", err)
-	}
-
-	lib := getScannedLibrary(t)
-	defer lib.Truncate()
-
-	results := lib.Search("")
-
-	if len(results) != 4 {
-		t.Errorf("Expected 4 files in the result set but found %d", len(results))
-	}
-
-	if err := os.Remove(newFile); err != nil {
-		t.Error(err)
-	}
-
-	lib.WaitScan()
-
-	results = lib.Search("")
-	if len(results) != 3 {
-		t.Errorf("Expected 3 files in the result set but found %d", len(results))
-	}
-}
-
-func TestAddingAndRemovingDirectory(t *testing.T) {
-	projRoot, _ := helpers.ProjectRoot()
-	testFiles := filepath.Join(projRoot, "test_files")
-
-	testDir := filepath.Join(testFiles, "more_mp3s", "to_be_moved_directory")
-	movedDir := filepath.Join(testFiles, "library", "to_be_moved_directory")
-	srcTestMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
-	dstTestMp3 := filepath.Join(testFiles, "more_mp3s", "to_be_moved_directory",
-		"test_file_added.mp3")
-
-	if err := os.RemoveAll(testDir); err != nil {
-		t.Fatalf("Removing directory needed for tests: %s", err)
-	}
-
-	if err := os.RemoveAll(movedDir); err != nil {
-		t.Fatalf("Removing directory needed for tests: %s", err)
-	}
-
-	lib := getScannedLibrary(t)
-	defer lib.Truncate()
-
-	if err := os.Mkdir(testDir, 0755); err != nil {
-		t.Fatal(err)
-	}
-
-	defer os.RemoveAll(testDir)
-
-	if err := helpers.Copy(srcTestMp3, dstTestMp3); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := os.Rename(testDir, movedDir); err != nil {
-		t.Fatal(err)
-	}
-
-	lib.WaitScan()
-
-	checkAddedSong(lib, t)
-
-	if err := os.RemoveAll(movedDir); err != nil {
-		t.Error(err)
-	}
-
-	lib.WaitScan()
-
-	results := lib.Search("")
-
-	if len(results) != 3 {
-		t.Errorf("Expected 3 songs but found %d", len(results))
-	}
-}
-
-func TestMovingDirectory(t *testing.T) {
-	projRoot, _ := helpers.ProjectRoot()
-	testFiles := filepath.Join(projRoot, "test_files")
-
-	testDir := filepath.Join(testFiles, "more_mp3s", "to_be_moved_directory")
-	movedDir := filepath.Join(testFiles, "library", "to_be_moved_directory")
-	secondPlace := filepath.Join(testFiles, "library", "second_place")
-	srcTestMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
-	dstTestMp3 := filepath.Join(testFiles, "more_mp3s", "to_be_moved_directory",
-		"test_file_added.mp3")
-
-	_ = os.RemoveAll(testDir)
-	_ = os.RemoveAll(movedDir)
-	_ = os.RemoveAll(secondPlace)
-
-	if err := os.Mkdir(testDir, 0755); err != nil {
-		t.Fatal(err)
-	}
-
-	defer os.RemoveAll(testDir)
-
-	if err := helpers.Copy(srcTestMp3, dstTestMp3); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := os.Rename(testDir, movedDir); err != nil {
-		t.Fatal(err)
-	} else {
-		defer os.RemoveAll(movedDir)
-	}
-
-	lib := getScannedLibrary(t)
-	defer lib.Truncate()
-
-	checkAddedSong(lib, t)
-
-	if err := os.Rename(movedDir, secondPlace); err != nil {
-		t.Error(err)
-	} else {
-		defer os.RemoveAll(secondPlace)
-	}
-
-	lib.WaitScan()
-
-	checkAddedSong(lib, t)
-
-	found := lib.Search("")
-
-	if len(found) != 4 {
-		t.Errorf("Expected to find 4 tracks but found %d", len(found))
-	}
-
-	found = lib.Search("Added Song")
-
-	if len(found) != 1 {
-		t.Fatalf("Did not find exactly one 'Added Song'. Found %d files", len(found))
-	}
-
-	foundPath := lib.GetFilePath(found[0].ID)
-	expectedPath := filepath.Join(secondPlace, "test_file_added.mp3")
-
-	if _, err := os.Stat(expectedPath); err != nil {
-		t.Errorf("File %s was not found: %s", expectedPath, err)
-	}
-
-	if foundPath != expectedPath {
-		t.Errorf("File is in %s according to library. But it is actually in %s",
-			foundPath, expectedPath)
-	}
-
-}
-
 func checkSong(lib *LocalLibrary, song MediaFile, t *testing.T) {
 	found := lib.Search(song.Title())
 
 	if len(found) != 1 {
-		t.Fatalf("Expected one result, got %d for %s", len(found), song.Title())
+		t.Fatalf("Expected one result, got %d for %s: %+v", len(found), song.Title(), found)
 	}
 
 	track := found[0]
@@ -793,6 +617,10 @@ func checkSong(lib *LocalLibrary, song MediaFile, t *testing.T) {
 }
 
 func TestAddingManyFilesSimultaniously(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	lib := getPathedLibrary(t)
 	defer lib.Truncate()
 
@@ -816,9 +644,153 @@ func TestAddingManyFilesSimultaniously(t *testing.T) {
 		mediaFiles = append(mediaFiles, m)
 	}
 
-	lib.waitForDBWriterIdleSignal()
+	lib.stop()
 
 	for _, song := range mediaFiles {
 		checkSong(lib, song, t)
+	}
+}
+
+// Here an album which has different artists is simulated. This album must have the same
+// album ID since all of the tracks are in the same directory and the same album name.
+func TestAlbumsWithDifferentArtists(t *testing.T) {
+	lib := getPathedLibrary(t)
+	defer lib.Truncate()
+
+	var err error
+
+	tracks := []MockMedia{
+		MockMedia{
+			artist: "Buggy Bugoff",
+			album:  "Return Of The Bugs",
+			title:  "Payback",
+			track:  1,
+			length: 340 * time.Second,
+		},
+		MockMedia{
+			artist: "Buggy Bugoff",
+			album:  "Return Of The Bugs",
+			title:  "Realization",
+			track:  2,
+			length: 345 * time.Second,
+		},
+		MockMedia{
+			artist: "Off By One",
+			album:  "Return Of The Bugs",
+			title:  "Index By Index",
+			track:  3,
+			length: 244 * time.Second,
+		},
+	}
+
+	for _, track := range tracks {
+		err = lib.insertMediaIntoDatabase(
+			&track,
+			fmt.Sprintf("/media/return-of-the-bugs/%s.mp3", track.Title()),
+		)
+
+		if err != nil {
+			t.Fatalf("Adding a media file %s failed: %s", track.Title(), err)
+		}
+	}
+
+	lib.stop()
+
+	found := lib.Search("Return Of The Bugs")
+
+	if len(found) != 3 {
+		t.Errorf("Expected to find 3 tracks but found %d", len(found))
+	}
+
+	albumID := found[0].AlbumID
+	albumName := found[0].Album
+
+	for _, foundTrack := range found {
+		if foundTrack.AlbumID != albumID {
+			t.Errorf("Track %s had a different album id in db", foundTrack.Title)
+		}
+
+		if foundTrack.Album != albumName {
+			t.Errorf(
+				"Track %s had a different album name: %s",
+				foundTrack.Title,
+				foundTrack.Album,
+			)
+		}
+	}
+}
+
+// Albums with the same name which are for different artists should have different IDs
+// when the album is in a different directory
+func TestDifferentAlbumsWithTheSameName(t *testing.T) {
+	lib := getPathedLibrary(t)
+	defer lib.Truncate()
+
+	tracks := []struct {
+		track MockMedia
+		path  string
+	}{
+		{
+			MockMedia{
+				artist: "Buggy Bugoff",
+				album:  "Return Of The Bugs",
+				title:  "Payback",
+				track:  1,
+				length: 340 * time.Second,
+			},
+			"/media/return-of-the-bugs/track-1.mp3",
+		},
+		{
+			MockMedia{
+				artist: "Buggy Bugoff",
+				album:  "Return Of The Bugs",
+				title:  "Realization",
+				track:  2,
+				length: 345 * time.Second,
+			},
+			"/media/return-of-the-bugs/track-2.mp3",
+		},
+		{
+			MockMedia{
+				artist: "Off By One",
+				album:  "Return Of The Bugs",
+				title:  "Index By Index",
+				track:  1,
+				length: 244 * time.Second,
+			},
+			"/media/second-return-of-the-bugs/track-1.mp3", // different directory
+		},
+	}
+
+	for _, trackData := range tracks {
+		err := lib.insertMediaIntoDatabase(&trackData.track, trackData.path)
+
+		if err != nil {
+			t.Fatalf("Adding a media file %s failed: %s", trackData.track.Title(), err)
+		}
+	}
+
+	lib.stop()
+
+	found := lib.Search("Return Of The Bugs")
+
+	if len(found) != 3 {
+		t.Errorf("Expected to find 3 tracks but found %d", len(found))
+	}
+
+	albumIDs := make([]int64, 0, 2)
+
+	for _, track := range found {
+		if containsInt64(albumIDs, track.AlbumID) {
+			continue
+		}
+		albumIDs = append(albumIDs, track.AlbumID)
+	}
+
+	if len(albumIDs) != 2 {
+		t.Errorf(
+			"There should have been two 'Return Of The Bugs' albums but there were %d",
+			len(albumIDs),
+		)
 	}
 }

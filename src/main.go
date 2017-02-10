@@ -6,6 +6,7 @@
 package src
 
 import (
+	"context"
 	"flag"
 	"log"
 	"os"
@@ -56,7 +57,7 @@ func Main() {
 }
 
 // SetupPidFileAndSignals creates a pidfile and starts a signal receiver goroutine
-func SetupPidFileAndSignals(pidFile string) {
+func SetupPidFileAndSignals(pidFile string, stopFunc context.CancelFunc) {
 	helpers.SetUpPidFile(pidFile)
 
 	signalChannel := make(chan os.Signal, 2)
@@ -66,8 +67,8 @@ func SetupPidFileAndSignals(pidFile string) {
 	go func() {
 		for range signalChannel {
 			log.Println("Stop signal received. Removing pidfile and stopping.")
+			stopFunc()
 			helpers.RemovePidFile(pidFile)
-			os.Exit(0)
 		}
 	}()
 }
@@ -75,9 +76,11 @@ func SetupPidFileAndSignals(pidFile string) {
 // Returns a new Library object using the application config.
 // For the moment this is a LocalLibrary which will place its sqlite db file
 // in the UserPath directory
-func getLibrary(userPath string, cfg config.Config) (library.Library, error) {
+func getLibrary(ctx context.Context, userPath string,
+	cfg config.Config) (library.Library, error) {
+
 	dbPath := helpers.AbsolutePath(cfg.SqliteDatabase, userPath)
-	lib, err := library.NewLocalLibrary(dbPath)
+	lib, err := library.NewLocalLibrary(ctx, dbPath)
 
 	if err != nil {
 		return nil, err
@@ -118,19 +121,22 @@ func ParseConfigAndStartWebserver(projRoot string) error {
 		}
 	}
 
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
 	pidFile := helpers.AbsolutePath(PidFile, userPath)
-	SetupPidFileAndSignals(pidFile)
+	SetupPidFileAndSignals(pidFile, cancelCtx)
 	defer helpers.RemovePidFile(pidFile)
 
-	lib, err := getLibrary(userPath, cfg)
+	lib, err := getLibrary(ctx, userPath, cfg)
 	if err != nil {
 		return err
 	}
-	lib.Scan()
+	go lib.Scan()
 
 	cfg.HTTPRoot = helpers.AbsolutePath(cfg.HTTPRoot, projRoot)
 
-	srv := webserver.NewServer(cfg, lib)
+	srv := webserver.NewServer(ctx, cfg, lib)
 	srv.Serve()
 	srv.Wait()
 	return nil
