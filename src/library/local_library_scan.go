@@ -12,7 +12,9 @@ import (
 //!TODO: make scan also remove files which have been deleted since the previous scan
 func (lib *LocalLibrary) Scan() {
 	// Make sure there are no other scans working at the moment
-	lib.scanWG.Wait()
+	lib.waitScanLock.RLock()
+	lib.walkWG.Wait()
+	lib.waitScanLock.RUnlock()
 
 	start := time.Now()
 
@@ -23,43 +25,24 @@ func (lib *LocalLibrary) Scan() {
 		time.Sleep(initialWait)
 	}
 
+	lib.waitScanLock.Lock()
 	for _, path := range lib.paths {
 		lib.walkWG.Add(1)
-		go lib.scanPath(path, lib.mediaChan)
+		go lib.scanPath(path)
 	}
+	lib.waitScanLock.Unlock()
 
-	lib.scanWG.Add(1)
-	go func() {
-		lib.walkWG.Wait()
-		log.Printf("Walking took %s", time.Since(start))
-		lib.scanWG.Done()
-	}()
-
-	go func() {
-		lib.WaitScan()
-		log.Printf("Scaning took %s", time.Since(start))
-	}()
-}
-
-// WaitScan blocks the current goroutine until the scan has been finished. This includes
-// all the scanning go routines started by `Scan` along with all additional scanning
-// go routines started during because of events.
-func (lib *LocalLibrary) WaitScan() {
 	lib.waitScanLock.RLock()
-	lib.scanWG.Wait()
+	lib.walkWG.Wait()
 	lib.waitScanLock.RUnlock()
-
-	//!TODO: Cleanup this workaround.
-	// This thing is here because I haven't figured a way to wait for all the running
-	// go routines which make up the scanning process.
-	time.Sleep(100 * time.Millisecond)
+	log.Printf("Scaning took %s", time.Since(start))
 }
 
 // This is the goroutine which actually scans a library path.
 // For now it ignores everything but the list of supported files. It is so
 // because jplayer cannot play anything else. Sends every suitable
 // file into the media channel
-func (lib *LocalLibrary) scanPath(scannedPath string, media chan<- string) {
+func (lib *LocalLibrary) scanPath(scannedPath string) {
 	start := time.Now()
 
 	defer func() {
@@ -80,7 +63,7 @@ func (lib *LocalLibrary) scanPath(scannedPath string, media chan<- string) {
 		}
 
 		if lib.isSupportedFormat(path) {
-			media <- path
+			lib.writeInDb(path)
 		}
 
 		lib.watchLock.RLock()

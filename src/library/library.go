@@ -49,12 +49,9 @@ type Library interface {
 	// Returns search result will all the files of this album
 	GetAlbumFiles(int64) []SearchResult
 
-	// Starts a background library scan. Will scan all paths if
-	// they are not scanned already. Will return immediately.
+	// Starts a full library scan. Will scan all paths if
+	// they are not scanned already.
 	Scan()
-
-	// Will sync with the Scan's end
-	WaitScan()
 
 	// Adds this media (file) to the library
 	AddMedia(string) error

@@ -11,6 +11,9 @@ import (
 // problem and leaves the watcher unintialized. LocalLibrary should work even
 // without a watch.
 func (lib *LocalLibrary) initializeWatcher() {
+	lib.watchLock.Lock()
+	defer lib.watchLock.Unlock()
+
 	if lib.watch != nil {
 		return
 	}
@@ -23,6 +26,7 @@ func (lib *LocalLibrary) initializeWatcher() {
 	}
 	lib.watch = newWatcher
 
+	lib.watcherWG.Add(1)
 	go lib.watchEventRoutine()
 }
 
@@ -30,11 +34,14 @@ func (lib *LocalLibrary) initializeWatcher() {
 func (lib *LocalLibrary) watchEventRoutine() {
 	defer func() {
 		log.Println("Directory watcher event receiver stopped.")
+		lib.watcherWG.Done()
 	}()
 
 	if lib.watch == nil {
 		return
 	}
+
+	defer lib.watch.Close()
 
 	for {
 		select {
@@ -62,6 +69,8 @@ func (lib *LocalLibrary) watchEventRoutine() {
 //  * modfied files should be updated in the database
 //  * renamed ...
 func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
+
+	log.Printf("Event received: %v", event)
 
 	if event.IsAttrib() {
 		// The event was just an attribute change
@@ -94,13 +103,13 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 		lib.walkWG.Add(1)
 		lib.waitScanLock.Unlock()
 
-		go lib.scanPath(event.Name, lib.mediaChan)
+		lib.scanPath(event.Name)
 		return
 	}
 
 	if event.IsCreate() && !st.IsDir() {
 		if lib.isSupportedFormat(event.Name) {
-			lib.mediaChan <- event.Name
+			lib.writeInDb(event.Name)
 		}
 		return
 	}
@@ -108,7 +117,7 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 	if event.IsModify() && !st.IsDir() {
 		if lib.isSupportedFormat(event.Name) {
 			lib.removeFile(event.Name)
-			lib.mediaChan <- event.Name
+			lib.writeInDb(event.Name)
 		}
 		return
 	}

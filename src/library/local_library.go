@@ -66,11 +66,11 @@ type LocalLibrary struct {
 	paths    []string       // FS locations which contain the library's media files
 	db       *sql.DB        // Database handler
 	walkWG   sync.WaitGroup // Used to log how much time scanning took
-	scanWG   sync.WaitGroup // Used in WaitScan to signal the end of scanning
 
 	// If something needs to be added to the database from the watcher
 	// it should use this channel
-	mediaChan chan string
+	mediaChan    chan string
+	mediaWritten chan struct{}
 
 	// Directory watcher
 	watch     *fsnotify.Watcher
@@ -85,6 +85,8 @@ type LocalLibrary struct {
 
 	isRunningLock sync.Mutex
 	waitScanLock  sync.RWMutex
+
+	watcherWG sync.WaitGroup
 }
 
 // Close closes the database connection. It is safe to call it as many times as you want.
@@ -105,11 +107,16 @@ func (lib *LocalLibrary) stop() {
 	}
 
 	lib.running = false
-	lib.WaitScan()
+
+	lib.waitScanLock.RLock()
 	lib.walkWG.Wait()
+	lib.waitScanLock.RUnlock()
+
 	lib.ctxCancelFunc()
+	lib.watcherWG.Wait()
 	lib.dbWriterWG.Wait()
 	close(lib.mediaChan)
+	close(lib.mediaWritten)
 }
 
 // AddLibraryPath adds a library directory to the list of libraries which will be
@@ -274,12 +281,12 @@ func (lib *LocalLibrary) removeDirectory(dirPath string) {
 
 // Reads from the media channel and saves into the database every file
 // received.
-func (lib *LocalLibrary) databaseWriter(media <-chan string, wg *sync.WaitGroup) {
-	defer wg.Done()
+func (lib *LocalLibrary) databaseWriter() {
+	defer lib.dbWriterWG.Done()
 
 	for {
 		select {
-		case filename, ok := <-media:
+		case filename, ok := <-lib.mediaChan:
 			if !ok {
 				return
 			}
@@ -287,9 +294,20 @@ func (lib *LocalLibrary) databaseWriter(media <-chan string, wg *sync.WaitGroup)
 			if err := lib.AddMedia(filename); err != nil {
 				log.Printf("Error adding `%s` to library: %s\n", filename, err)
 			}
+
+			lib.mediaWritten <- struct{}{}
 		case <-lib.ctx.Done():
 			return
 		}
+	}
+}
+
+func (lib *LocalLibrary) writeInDb(media string) {
+	select {
+	case lib.mediaChan <- media:
+		<-lib.mediaWritten
+	case <-lib.ctx.Done():
+		return
 	}
 }
 
@@ -742,10 +760,11 @@ func NewLocalLibrary(ctx context.Context, databasePath string) (*LocalLibrary, e
 
 	lib.watchLock = &sync.RWMutex{}
 
-	lib.mediaChan = make(chan string, 100)
+	lib.mediaChan = make(chan string)
+	lib.mediaWritten = make(chan struct{})
 
 	lib.dbWriterWG.Add(1)
-	go lib.databaseWriter(lib.mediaChan, &lib.dbWriterWG)
+	go lib.databaseWriter()
 
 	lib.running = true
 

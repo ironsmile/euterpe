@@ -110,10 +110,9 @@ func getLibraryServer(t *testing.T) (*Server, library.Library) {
 	}
 
 	lib.AddLibraryPath(filepath.Join(projRoot, "test_files", "library"))
-	lib.Scan()
 
 	ch := testErrorAfter(5, "Library in TestGetFileUrl did not finish scaning on time")
-	lib.WaitScan()
+	lib.Scan()
 	ch <- 42
 
 	var wsCfg config.Config
@@ -301,10 +300,9 @@ func TestSearchUrl(t *testing.T) {
 	defer lib.Truncate()
 
 	lib.AddLibraryPath(filepath.Join(projRoot, "test_files", "library"))
-	lib.Scan()
 
 	ch := testErrorAfter(5, "Library in TestSearchUrl did not finish scaning on time")
-	lib.WaitScan()
+	lib.Scan()
 	ch <- 42
 
 	var wsCfg config.Config

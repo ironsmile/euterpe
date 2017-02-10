@@ -132,7 +132,7 @@ func ParseConfigAndStartWebserver(projRoot string) error {
 	if err != nil {
 		return err
 	}
-	lib.Scan()
+	go lib.Scan()
 
 	cfg.HTTPRoot = helpers.AbsolutePath(cfg.HTTPRoot, projRoot)
 

@@ -107,10 +107,8 @@ func getPathedLibrary(t *testing.T) *LocalLibrary {
 func getScannedLibrary(t *testing.T) *LocalLibrary {
 	lib := getPathedLibrary(t)
 
-	lib.Scan()
-
 	ch := testErrorAfter(10, "Scanning library took too long")
-	lib.WaitScan()
+	lib.Scan()
 	ch <- 42
 
 	return lib
@@ -468,9 +466,8 @@ func TestScaning(t *testing.T) {
 	lib := getPathedLibrary(t)
 	defer lib.Truncate()
 
-	lib.Scan()
-
 	ch := testErrorAfter(10, "Scanning library took too long")
+	lib.Scan()
 	lib.stop()
 	ch <- 42
 
@@ -565,7 +562,13 @@ func checkAddedSong(lib *LocalLibrary, t *testing.T) {
 	found := lib.Search("Added Song")
 
 	if len(found) != 1 {
-		t.Fatalf("Expected one result, got %d for Added Song", len(found))
+		filePaths := []string{}
+		for _, track := range found {
+			filePath := lib.GetFilePath(track.ID)
+			filePaths = append(filePaths, fmt.Sprintf("%d: %s", track.ID, filePath))
+		}
+		t.Fatalf("Expected one result, got %d for Added Song: %+v. Paths:\n%s", len(found), found,
+			strings.Join(filePaths, "\n"))
 	}
 
 	track := found[0]
@@ -587,265 +590,11 @@ func checkAddedSong(lib *LocalLibrary, t *testing.T) {
 	}
 }
 
-func TestAddingNewFile(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode.")
-	}
-
-	lib := getScannedLibrary(t)
-	defer lib.Truncate()
-	projRoot, _ := helpers.ProjectRoot()
-	testFiles := filepath.Join(projRoot, "test_files")
-
-	testMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
-	newFile := filepath.Join(testFiles, "library", "folder_one", "test_file_added.mp3")
-
-	if err := helpers.Copy(testMp3, newFile); err != nil {
-		t.Fatalf("Copying file to library failed: %s", err)
-	}
-
-	defer os.Remove(newFile)
-	lib.stop()
-
-	checkAddedSong(lib, t)
-}
-
-func TestMovingFileIntoLibrary(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode.")
-	}
-
-	lib := getScannedLibrary(t)
-	defer lib.Truncate()
-	projRoot, _ := helpers.ProjectRoot()
-	testFiles := filepath.Join(projRoot, "test_files")
-
-	testMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
-	toBeMoved := filepath.Join(testFiles, "more_mp3s", "test_file_moved.mp3")
-	newFile := filepath.Join(testFiles, "library", "test_file_added.mp3")
-
-	if err := helpers.Copy(testMp3, toBeMoved); err != nil {
-		t.Fatalf("Copying file to library faild: %s", err)
-	}
-
-	if err := os.Rename(toBeMoved, newFile); err != nil {
-		os.Remove(toBeMoved)
-		t.Fatalf("Was not able to move new file into library: %s", err)
-	}
-
-	defer os.Remove(newFile)
-	lib.WaitScan()
-
-	checkAddedSong(lib, t)
-}
-
-func TestAddingNonRelatedFile(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode.")
-	}
-
-	lib := getScannedLibrary(t)
-	defer lib.Truncate()
-	projRoot, _ := helpers.ProjectRoot()
-	testFiles := filepath.Join(projRoot, "test_files")
-	newFile := filepath.Join(testFiles, "library", "not_related")
-
-	testLibFiles := func() {
-		results := lib.Search("")
-		if len(results) != 3 {
-			t.Errorf("Expected 3 files in the library but found %d", len(results))
-		}
-	}
-
-	fh, err := os.Create(newFile)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	fh.WriteString("Some contents")
-	fh.Close()
-
-	lib.WaitScan()
-	testLibFiles()
-
-	os.Remove(newFile)
-	lib.WaitScan()
-	testLibFiles()
-
-}
-
-func TestRemovingFile(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode.")
-	}
-
-	projRoot, _ := helpers.ProjectRoot()
-	testFiles := filepath.Join(projRoot, "test_files")
-
-	testMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
-	newFile := filepath.Join(testFiles, "library", "test_file_added.mp3")
-
-	if err := helpers.Copy(testMp3, newFile); err != nil {
-		t.Fatalf("Copying file to library faild: %s", err)
-	}
-
-	lib := getScannedLibrary(t)
-	defer lib.Truncate()
-
-	results := lib.Search("")
-
-	if len(results) != 4 {
-		t.Errorf("Expected 4 files in the result set but found %d", len(results))
-	}
-
-	if err := os.Remove(newFile); err != nil {
-		t.Error(err)
-	}
-
-	lib.WaitScan()
-
-	results = lib.Search("")
-	if len(results) != 3 {
-		t.Errorf("Expected 3 files in the result set but found %d", len(results))
-	}
-}
-
-func TestAddingAndRemovingDirectory(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping test in short mode.")
-	}
-
-	projRoot, _ := helpers.ProjectRoot()
-	testFiles := filepath.Join(projRoot, "test_files")
-
-	testDir := filepath.Join(testFiles, "more_mp3s", "to_be_moved_directory")
-	movedDir := filepath.Join(testFiles, "library", "to_be_moved_directory")
-	srcTestMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
-	dstTestMp3 := filepath.Join(testFiles, "more_mp3s", "to_be_moved_directory",
-		"test_file_added.mp3")
-
-	if err := os.RemoveAll(testDir); err != nil {
-		t.Fatalf("Removing directory needed for tests: %s", err)
-	}
-
-	if err := os.RemoveAll(movedDir); err != nil {
-		t.Fatalf("Removing directory needed for tests: %s", err)
-	}
-
-	lib := getScannedLibrary(t)
-	defer lib.Truncate()
-
-	if err := os.Mkdir(testDir, 0700); err != nil {
-		t.Fatal(err)
-	}
-
-	defer os.RemoveAll(testDir)
-
-	if err := helpers.Copy(srcTestMp3, dstTestMp3); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := os.Rename(testDir, movedDir); err != nil {
-		t.Fatal(err)
-	}
-
-	lib.WaitScan()
-
-	checkAddedSong(lib, t)
-
-	if err := os.RemoveAll(movedDir); err != nil {
-		t.Error(err)
-	}
-
-	lib.WaitScan()
-
-	results := lib.Search("")
-
-	if len(results) != 3 {
-		t.Errorf("Expected 3 songs but found %d", len(results))
-	}
-}
-
-func TestMovingDirectory(t *testing.T) {
-	t.Skip("Fails bevause of a race condition")
-
-	projRoot, _ := helpers.ProjectRoot()
-	testFiles := filepath.Join(projRoot, "test_files")
-
-	testDir := filepath.Join(testFiles, "more_mp3s", "to_be_moved_directory")
-	movedDir := filepath.Join(testFiles, "library", "to_be_moved_directory")
-	secondPlace := filepath.Join(testFiles, "library", "second_place")
-	srcTestMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
-	dstTestMp3 := filepath.Join(testFiles, "more_mp3s", "to_be_moved_directory",
-		"test_file_added.mp3")
-
-	_ = os.RemoveAll(testDir)
-	_ = os.RemoveAll(movedDir)
-	_ = os.RemoveAll(secondPlace)
-
-	if err := os.Mkdir(testDir, 0700); err != nil {
-		t.Fatal(err)
-	}
-
-	defer os.RemoveAll(testDir)
-
-	if err := helpers.Copy(srcTestMp3, dstTestMp3); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := os.Rename(testDir, movedDir); err != nil {
-		t.Fatal(err)
-	} else {
-		defer os.RemoveAll(movedDir)
-	}
-
-	lib := getScannedLibrary(t)
-	defer lib.Truncate()
-
-	checkAddedSong(lib, t)
-
-	if err := os.Rename(movedDir, secondPlace); err != nil {
-		t.Error(err)
-	} else {
-		defer os.RemoveAll(secondPlace)
-	}
-
-	lib.WaitScan()
-
-	checkAddedSong(lib, t)
-
-	found := lib.Search("")
-
-	if len(found) != 4 {
-		t.Errorf("Expected to find 4 tracks but found %d", len(found))
-	}
-
-	found = lib.Search("Added Song")
-
-	if len(found) != 1 {
-		t.Fatalf("Did not find exactly one 'Added Song'. Found %d files", len(found))
-	}
-
-	foundPath := lib.GetFilePath(found[0].ID)
-	expectedPath := filepath.Join(secondPlace, "test_file_added.mp3")
-
-	if _, err := os.Stat(expectedPath); err != nil {
-		t.Errorf("File %s was not found: %s", expectedPath, err)
-	}
-
-	if foundPath != expectedPath {
-		t.Errorf("File is in %s according to library. But it is actually in %s",
-			foundPath, expectedPath)
-	}
-
-}
-
 func checkSong(lib *LocalLibrary, song MediaFile, t *testing.T) {
 	found := lib.Search(song.Title())
 
 	if len(found) != 1 {
-		t.Fatalf("Expected one result, got %d for %s", len(found), song.Title())
+		t.Fatalf("Expected one result, got %d for %s: %+v", len(found), song.Title(), found)
 	}
 
 	track := found[0]
@@ -895,7 +644,7 @@ func TestAddingManyFilesSimultaniously(t *testing.T) {
 		mediaFiles = append(mediaFiles, m)
 	}
 
-	lib.WaitScan()
+	lib.stop()
 
 	for _, song := range mediaFiles {
 		checkSong(lib, song, t)
@@ -945,7 +694,7 @@ func TestAlbumsWithDifferentArtists(t *testing.T) {
 		}
 	}
 
-	lib.WaitScan()
+	lib.stop()
 
 	found := lib.Search("Return Of The Bugs")
 
@@ -1021,7 +770,7 @@ func TestDifferentAlbumsWithTheSameName(t *testing.T) {
 		}
 	}
 
-	lib.WaitScan()
+	lib.stop()
 
 	found := lib.Search("Return Of The Bugs")
 
