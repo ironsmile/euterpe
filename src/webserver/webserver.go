@@ -3,6 +3,7 @@
 package webserver
 
 import (
+	"context"
 	"crypto/tls"
 	"log"
 	"net"
@@ -16,12 +17,14 @@ import (
 
 // Server represends our webserver. It will be controlled from here
 type Server struct {
+	// Used for server-wide stopping, cancelation and stuff
+	ctx context.Context
+
+	// Calling this function will stop the server
+	cancelFunc context.CancelFunc
 
 	// Configuration of this server
 	cfg config.Config
-
-	// WG used in Server.Wait to sync with server's end
-	wg sync.WaitGroup
 
 	// Makes sure Serve does not return before all the starting work ha been finished
 	startWG sync.WaitGroup
@@ -34,24 +37,27 @@ type Server struct {
 
 	// This server's library with media
 	library library.Library
+
+	// Makes the server lockable. This lock should be used for accessing the
+	// listener
+	sync.Mutex
 }
 
 // Serve actually starts the webserver. It attaches all the handlers
 // and starts the webserver while consulting the ServerConfig supplied. Trying to call
 // this method more than once for the same server will result in panic.
 func (srv *Server) Serve() {
+	srv.Lock()
+	defer srv.Unlock()
 	if srv.listener != nil {
 		panic("Second Server.Serve call for the same server")
 	}
-	srv.wg.Add(1)
 	srv.startWG.Add(1)
 	go srv.serveGoroutine()
 	srv.startWG.Wait()
 }
 
 func (srv *Server) serveGoroutine() {
-	defer srv.wg.Done()
-
 	mux := http.NewServeMux()
 
 	mux.Handle("/", http.FileServer(http.Dir(srv.cfg.HTTPRoot)))
@@ -59,9 +65,7 @@ func (srv *Server) serveGoroutine() {
 	mux.Handle("/file/", http.StripPrefix("/file/", NewFileHandler(srv.library)))
 	mux.Handle("/album/", http.StripPrefix("/album/", NewAlbumHandler(srv.library)))
 
-	var handler http.Handler
-
-	handler = NewTerryHandler(mux)
+	handler := NewTerryHandler(mux)
 
 	if srv.cfg.Gzip {
 		log.Println("Adding gzip handler")
@@ -76,6 +80,14 @@ func (srv *Server) serveGoroutine() {
 			srv.cfg.Authenticate.Password,
 		}
 	}
+
+	handler = func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx, closeRequest := context.WithCancel(srv.ctx)
+			h.ServeHTTP(w, r.WithContext(ctx))
+			closeRequest()
+		})
+	}(handler)
 
 	srv.httpSrv = &http.Server{
 		Addr:           srv.cfg.Listen,
@@ -99,6 +111,8 @@ func (srv *Server) serveGoroutine() {
 	if reason != nil {
 		log.Printf("Reason: %s\n", reason.Error())
 	}
+
+	srv.cancelFunc()
 }
 
 // Uses our own listener to make our server stoppable. Similar to
@@ -160,6 +174,8 @@ func (srv *Server) listenAndServeTLS(certFile, keyFile string) error {
 
 // Stop stops the webserver
 func (srv *Server) Stop() {
+	srv.Lock()
+	defer srv.Unlock()
 	if srv.listener != nil {
 		srv.listener.Close()
 		srv.listener = nil
@@ -168,14 +184,17 @@ func (srv *Server) Stop() {
 
 // Wait syncs whoever called this with the server's stop
 func (srv *Server) Wait() {
-	srv.wg.Wait()
+	<-srv.ctx.Done()
 }
 
 // NewServer Returns a new Server using the supplied configuration cfg. The returned
 // server is ready and calling its Serve method will start it.
-func NewServer(cfg config.Config, lib library.Library) (srv *Server) {
-	srv = new(Server)
-	srv.cfg = cfg
-	srv.library = lib
-	return
+func NewServer(ctx context.Context, cfg config.Config, lib library.Library) *Server {
+	ctx, cancelCtx := context.WithCancel(ctx)
+	return &Server{
+		ctx:        ctx,
+		cancelFunc: cancelCtx,
+		cfg:        cfg,
+		library:    lib,
+	}
 }

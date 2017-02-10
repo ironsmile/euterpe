@@ -54,11 +54,11 @@ func getDefaultCfg() *Config {
 // checkMerge is a helper function for TestMergingConfigs
 func checkMerge(t *testing.T, cfg *Config) {
 
-	if cfg.SSL != true {
+	if !cfg.SSL {
 		t.Errorf("SSL was false but it was expected to be true")
 	}
 
-	if cfg.Auth != false {
+	if cfg.Auth {
 		t.Errorf("Auth was true but it was expected to be false")
 	}
 
@@ -74,7 +74,7 @@ func checkMerge(t *testing.T, cfg *Config) {
 		t.Errorf("Listen was %s", cfg.Listen)
 	}
 
-	if cfg.Gzip != true {
+	if !cfg.Gzip {
 		t.Errorf("Gzip was %t", cfg.Gzip)
 	}
 
@@ -122,7 +122,7 @@ func TestMergingConfigs(t *testing.T) {
 
 	cfg.merge(merged)
 
-	if cfg.SSL != true {
+	if !cfg.SSL {
 		t.Errorf("Zero value from the merged has been copied over")
 	}
 

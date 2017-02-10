@@ -38,4 +38,6 @@ dist/*
 # The built binary
 httpms
 
+# OSX bullshits
+**/.DS_Store
 
