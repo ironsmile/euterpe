@@ -15,7 +15,7 @@ import (
 	"sync"
 
 	"github.com/howeyc/fsnotify"
-	taglib "github.com/landr0id/go-taglib"
+	taglib "github.com/wtolson/go-taglib"
 
 	// Blind import is the way a SQL driver is imported. This is the proposed way
 	// from the golang documentation.
