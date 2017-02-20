@@ -678,7 +678,7 @@ func (lib *LocalLibrary) Initialize() error {
 	}
 
 	if lib.db == nil {
-		return errors.New("Library is not opened. Call its Open method first.")
+		return errors.New("library is not opened, call its Open method first")
 	}
 
 	queries := strings.Split(sqlSchema, ";")
