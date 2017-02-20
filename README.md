@@ -3,12 +3,9 @@ HTTP Media Server
 
 [![Build Status](https://travis-ci.org/ironsmile/httpms.png?branch=master)](https://travis-ci.org/ironsmile/httpms) [![GoDoc](https://godoc.org/github.com/ironsmile/httpms?status.svg)](https://godoc.org/github.com/ironsmile/httpms) [![Go Report Card](https://goreportcard.com/badge/github.com/ironsmile/httpms)](https://goreportcard.com/report/github.com/ironsmile/httpms)
 
-A way to listen to your music library from everywhere. Once set up you won't need anything but a browser.
-HTTPMS will let you browse through and listen to your music over HTTP(s).
-Up until now I've had a really bad time listening to my music which is stored back home.
-I would create a mount over ftp, sshfs or something similar and point the local player to
-the mounted library. Every time it resulted in some upleasantries. Just imagine searching
-in a network mounted directory!
+![HTTPMS Log](images/heavy-metal-128.png)
+
+A way to listen to your music library from everywhere. Once set up you won't need anything but a browser. Think of it as your own Spotify service over which you have full control. HTTPMS will let you browse through and listen to your music over HTTP(s). Up until now I've had a really bad time listening to my music which is stored back home. I would create a mount over ftp, sshfs or something similar and point the local player to the mounted library. Every time it resulted in some upleasantries. Just imagine searching in a network mounted directory!
 
 No more!
 
