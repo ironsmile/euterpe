@@ -10,11 +10,12 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 
 	"github.com/howeyc/fsnotify"
-	taglib "github.com/landr0id/go-taglib"
+	taglib "github.com/wtolson/go-taglib"
 
 	// Blind import is the way a SQL driver is imported. This is the proposed way
 	// from the golang documentation.
@@ -283,6 +284,7 @@ func (lib *LocalLibrary) removeDirectory(dirPath string) {
 // received.
 func (lib *LocalLibrary) databaseWriter() {
 	defer lib.dbWriterWG.Done()
+	runtime.LockOSThread()
 
 	for {
 		select {
@@ -678,7 +680,7 @@ func (lib *LocalLibrary) Initialize() error {
 	}
 
 	if lib.db == nil {
-		return errors.New("Library is not opened. Call its Open method first.")
+		return errors.New("library is not opened, call its Open method first")
 	}
 
 	queries := strings.Split(sqlSchema, ";")
