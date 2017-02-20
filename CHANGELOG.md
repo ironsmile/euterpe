@@ -1,5 +1,11 @@
 # Change Log
 
+## v1.0.4 - Unreleased
+
+### Changes
+
+Changed the library for scanning mp3 files meta information. This would hopefully improve the accuracy.
+
 ## v1.0.3 - 2017-02-11
 
 ### Bug fixes
