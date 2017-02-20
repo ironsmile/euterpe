@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 
@@ -283,6 +284,7 @@ func (lib *LocalLibrary) removeDirectory(dirPath string) {
 // received.
 func (lib *LocalLibrary) databaseWriter() {
 	defer lib.dbWriterWG.Done()
+	runtime.LockOSThread()
 
 	for {
 		select {
