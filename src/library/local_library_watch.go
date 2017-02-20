@@ -70,8 +70,6 @@ func (lib *LocalLibrary) watchEventRoutine() {
 //  * renamed ...
 func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 
-	log.Printf("Event received: %v", event)
-
 	if event.IsAttrib() {
 		// The event was just an attribute change
 		return
