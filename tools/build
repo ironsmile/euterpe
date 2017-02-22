@@ -24,11 +24,6 @@ mkdir -p dist/httpms || exit 1
 echo "Building binaries..."
 GOOS="$os" GOARCH="$arch" go build -o dist/httpms/httpms || exit 1
 
-cd httpms_daemon
-GOOS="$os" GOARCH="$arch" go build -o ../dist/httpms/httpms_daemon || exit 1
-cd -
-
-
 for file in config.json config.default.json README.md
 do
     echo "Copying $file..."
@@ -72,3 +67,4 @@ cd - || exit 1
 rm -rf dist/httpms || exit
 
 echo "Done"
+

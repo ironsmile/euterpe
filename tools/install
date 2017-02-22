@@ -8,7 +8,7 @@ if [ -d /etc/httpms ]; then
     exit 0
 fi
 
-for binary in httpms httpms_daemon
+for binary in httpms
 do
     if [ -f "/usr/bin/${binary}" ]; then
         echo "HTTPMS is already installed. Aborting."
@@ -24,6 +24,6 @@ find /etc/httpms -type d -exec chmod 755 "{}" \; || exit 1
 
 echo "Moving binaries to /usr/bin/..."
 mv /etc/httpms/httpms /usr/bin/httpms || exit 1
-mv /etc/httpms/httpms_daemon /usr/bin/httpms_daemon || exit 1
 
 echo "Done"
+

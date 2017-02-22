@@ -7,4 +7,4 @@ fi
 
 rm -rf /etc/httpms
 rm /usr/bin/httpms
-rm /usr/bin/httpms_daemon
+
