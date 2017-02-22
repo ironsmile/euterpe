@@ -479,7 +479,11 @@ func (lib *LocalLibrary) setArtistID(artist string) (int64, error) {
 		return 0, err
 	}
 
-	return lib.lastInsertID()
+	newID, err := lib.lastInsertID()
+
+	log.Printf("Inserted artist id: %d, name: %s\n", newID, artist)
+
+	return newID, err
 }
 
 // GetAlbumID returns the id for this album. When missing or on error
@@ -544,7 +548,11 @@ func (lib *LocalLibrary) setAlbumID(album string, fsPath string) (int64, error) 
 		return 0, err
 	}
 
-	return lib.lastInsertID()
+	newID, err := lib.lastInsertID()
+
+	log.Printf("Inserted album id: %d, name: %s, path: %s\n", newID, album, fsPath)
+
+	return newID, err
 }
 
 // GetAlbumFSPathByName returns all the file paths which contain versions of an album.
@@ -649,7 +657,12 @@ func (lib *LocalLibrary) setTrackID(title, fsPath string,
 		return 0, err
 	}
 
-	return lib.lastInsertID()
+	newID, err := lib.lastInsertID()
+
+	log.Printf("Inserted id: %d, name: %s, album ID: %d, artist ID: %d, number: %d, fs_path: %s\n",
+		newID, title, albumID, artistID, trackNumber, fsPath)
+
+	return newID, err
 }
 
 // Returns the last ID insert in the database.
