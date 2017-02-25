@@ -170,7 +170,6 @@ $(document).ready(function(){
     jPlayerPlaylist.prototype.setPlaylist = function(playlist) {
         this._initPlaylist(playlist);
         this._refresh(true);
-        this.current = undefined;
     };
 
     // The default implementation of _updateControls was making a show/hide
@@ -290,7 +289,7 @@ $(document).ready(function(){
         supplied: "mp3, oga, m4a, wav, fla",
         preload: "none",
         playlistOptions: {
-            autoPlay: true,
+            autoPlay: false,
             displayTime: 0,
             addTime: 0,
             removeTime: 0,
@@ -345,8 +344,6 @@ $(document).ready(function(){
             return;
         }
 
-        _currently_playing = media.media_id;
-
         document.title = media.title + ' by ' + media.artist + ' | HTTPMS';
 
         if (history.pushState) {
@@ -393,7 +390,6 @@ $(document).ready(function(){
     restore_last_saved_search();
 });
 
-_currently_playing = null;
 _ajax_query = null;
 
 function search_database (query, opts) {
@@ -491,6 +487,14 @@ function load_playlist (songs) {
     });
 
     var selected_index = null;
+    var currently_playing = null;
+
+    var uri = new URI(window.location);
+    var query_data = uri.search(true);
+    if (query_data.tr !== undefined) {
+        currently_playing = parseInt(query_data.tr, 10);
+    }
+
     var new_playlist = [];
     for (var i = 0; i < songs.length; i++) {
         var song_url = "/file/"+songs[i].id;
@@ -506,7 +510,7 @@ function load_playlist (songs) {
             media_id: songs[i].id
         });
 
-        if (_currently_playing == songs[i].id) {
+        if (currently_playing !== null && currently_playing == songs[i].id) {
             selected_index = i;
         }
     }
