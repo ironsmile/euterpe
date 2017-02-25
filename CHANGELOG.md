@@ -6,6 +6,10 @@
 
 Changed the library for scanning mp3 files meta information. This would hopefully improve the accuracy.
 
+### New Stuff
+
+Now one can share search, artist and album selections, along with the currently playing track by just copying the URL.
+
 ## v1.0.3 - 2017-02-11
 
 ### Bug fixes
