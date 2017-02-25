@@ -379,8 +379,13 @@ func (lib *LocalLibrary) insertMediaIntoDatabase(file MediaFile, filePath string
 		return err
 	}
 
-	_, err = lib.setTrackID(file.Title(), filePath, int64(file.Track()),
-		artistID, albumID)
+	trackNumber := int64(file.Track())
+
+	if trackNumber == 0 {
+		trackNumber = helpers.GuessTrackNumber(filePath)
+	}
+
+	_, err = lib.setTrackID(file.Title(), filePath, trackNumber, artistID, albumID)
 
 	return err
 }
