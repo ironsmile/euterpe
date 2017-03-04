@@ -230,6 +230,16 @@ $(document).ready(function(){
         filter_playlist();
     });
 
+    $(document).ajaxStop(function(){
+        var btn = $('.search-form-button > .glyphicon-refresh');
+        btn.removeClass('glyphicon-refresh anim-revolving').addClass('glyphicon-search');
+    });
+
+    $(document).ajaxStart(function(){
+        var btn = $('.search-form-button > .glyphicon-search');
+        btn.removeClass('glyphicon-search').addClass('glyphicon-refresh anim-revolving');
+    });
+
     restore_last_saved_search();
 });
 

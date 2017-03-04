@@ -18,9 +18,7 @@ body {
     padding: 10px 0 10px 0;
 }
 
-.filter-list {
-    
-}
+.filter-list {}
 
 div.jp-video {
     margin: 20px auto;
@@ -28,4 +26,28 @@ div.jp-video {
 
 footer {
     text-align: center;
+}
+
+.anim-revolving {
+    animation-duration: 2s;
+    animation-name: revolve;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+
+    -webkit-animation-duration: 2s;
+    -webkit-animation-name: revolve;
+    -webkit-animation-iteration-count: infinite;
+    -webkit-animation-timing-function: linear;
+}
+
+@keyframes revolve {
+    from {
+        transform: rotate(0deg);
+        -webkit-transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+        -webkit-transform: rotate(360deg);
+    }
 }
