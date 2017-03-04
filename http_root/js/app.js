@@ -167,7 +167,7 @@ $(document).ready(function(){
     var search_immediately_on_enter = function (e) {
         var search_query = $('#search').val();
         var code = e.keyCode || e.which;
-        if(code != 13) {
+        if(code != 13 && e.type != 'click') {
            return;
         }
 
@@ -217,6 +217,7 @@ $(document).ready(function(){
 
     // Used when Enter is clicked - it should immediately send a request
     $('#search').keypress(search_immediately_on_enter);
+    $('.search-form-button').click(search_immediately_on_enter);
 
     $('#album').change(function () {
         save_selected_album();
