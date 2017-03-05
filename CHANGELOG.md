@@ -8,7 +8,9 @@ Changed the library for scanning mp3 files meta information. This would hopefull
 
 ### New Stuff
 
-Now one can share search, artist and album selections, along with the currently playing track by just copying the URL.
+* Now one can share search, artist and album selections, along with the currently playing track by just copying the URL.
+
+* The UI is greatly improved on devices with small screens. This comes on the cost of exclusion of some features. On such devices one wouldn't be able to use suffle and repeat. Also, no direct download of albums or tracks. The main reason for these ommisions is that the original jPlayer theme was completely unaware of small devices. Future patches may bring the features back.
 
 ## v1.0.3 - 2017-02-11
 
