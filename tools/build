@@ -47,6 +47,7 @@ cp http_root/js/squashed.js dist/httpms/http_root/js || exit 1
 cp http_root/js/Jplayer.swf dist/httpms/http_root/js || exit 1
 
 cp -a http_root/favicon dist/httpms/http_root || exit 1
+cp -a http_root/fonts dist/httpms/http_root || exit 1
 cp -a http_root/skin dist/httpms/http_root || exit 1
 cp -a http_root/js/ie8 dist/httpms/http_root/js || exit 1
 
