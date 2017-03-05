@@ -82,7 +82,7 @@ $(document).ready(function(){
         // Create links to free media
         if(media.free) {
             var first = true;
-            listItem += "<span class='" + options.freeGroupClass;
+            listItem += "<span class='hidden-xs " + options.freeGroupClass;
             listItem += "'>(";
             $.each(media, function(property,value) {
                 // Check property is a media format.
@@ -101,7 +101,7 @@ $(document).ready(function(){
         }
 
         if (media.album) {
-            listItem += " <span class='" + options.freeGroupClass + "'>" +
+            listItem += " <span class='hidden-xs " + options.freeGroupClass + "'>" +
                     "<a href='/album/"+media.album_id+"' title='download album' "+
                     "target='_blank'>" +  media.album + "</a></span>";
         }
@@ -120,8 +120,8 @@ $(document).ready(function(){
     };
 
     var cssSelector = {
-        jPlayer: "#jquery_jplayer_N",
-        cssSelectorAncestor: "#jp_container_N"
+        jPlayer: "#jquery_jplayer_bootstrap",
+        cssSelectorAncestor: "#jp_container_bootstrap"
     };
 
     var playlist = [];
@@ -179,7 +179,7 @@ $(document).ready(function(){
     };
 
     // Show song title when one is playing
-    $("#jquery_jplayer_N").bind($.jPlayer.event.play, function(event) {
+    $(cssSelector.jPlayer).bind($.jPlayer.event.play, function(event) {
         var media = event.jPlayer.status.media;
 
         if (!media) {
@@ -207,8 +207,8 @@ $(document).ready(function(){
         document.title = 'HTTPMS';
     };
 
-    $("#jquery_jplayer_N").bind($.jPlayer.event.ended, restore_title);
-    $("#jquery_jplayer_N").bind($.jPlayer.event.pause, restore_title);
+    $(cssSelector.jPlayer).bind($.jPlayer.event.ended, restore_title);
+    $(cssSelector.jPlayer).bind($.jPlayer.event.pause, restore_title);
 
     // Used when typing in the search area - it should use timeout since more
     // typing can follow immediately
