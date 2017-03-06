@@ -464,9 +464,6 @@ function load_filters(songs, opts) {
         }
         
         if (all_albums[songs[i].album] === undefined) {
-            if (opts.selected_artist && opts.selected_artist != songs[i].artist) {
-                continue;
-            }
             all_albums[songs[i].album] = true;
             all_albums_list.push(songs[i].album);
         }
