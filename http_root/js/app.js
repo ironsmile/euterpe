@@ -119,6 +119,40 @@ $(document).ready(function(){
         return listItem;
     };
 
+    // The override is needed because of a bug with loading different playlists
+    // while media is still runnig. The previous click handler did not change the
+    // media when the index of the clicked media matched the index of the currently
+    // played media in the previous playlist.
+    jPlayerPlaylist.prototype._createItemHandlers = function() {
+        var self = this;
+        var options = this.options.playlistOptions;
+        // Create live handlers for the playlist items
+        $(this.cssSelector.playlist).off("click", "a." + options.itemClass);
+        $(this.cssSelector.playlist).on("click", "a." + options.itemClass, function() {
+            var index = $(this).parent().parent().index();
+            self.play(index);
+            $(this).blur();
+            return false;
+        });
+
+        // Create live handlers that disable free media links to force access via right click
+        $(this.cssSelector.playlist).off("click", "a." + options.freeItemClass);
+        $(this.cssSelector.playlist).on("click", "a." + options.freeItemClass, function() {
+            $(this).parent().parent().find("." + options.itemClass).click();
+            $(this).blur();
+            return false;
+        });
+
+        // Create live handlers for the remove controls
+        $(this.cssSelector.playlist).off("click", "a." + options.removeItemClass);
+        $(this.cssSelector.playlist).on("click", "a." + options.removeItemClass, function() {
+            var index = $(this).parent().parent().index();
+            self.remove(index);
+            $(this).blur();
+            return false;
+        });
+    };
+
     var cssSelector = {
         jPlayer: "#jquery_jplayer_bootstrap",
         cssSelectorAncestor: "#jp_container_bootstrap"
@@ -344,7 +378,7 @@ function load_playlist (songs) {
 
     var uri = new URI(window.location);
     var query_data = uri.search(true);
-    if (query_data.tr !== undefined) {
+    if (query_data.tr !== undefined && query_data.tr !== "") {
         currently_playing = parseInt(query_data.tr, 10);
     }
 
@@ -370,9 +404,20 @@ function load_playlist (songs) {
 
     pagePlaylist.setPlaylist(new_playlist);
 
-    if (selected_index) {
+    if (selected_index === null && songs.length > 0) {
+        selected_index = 0;
+    }
+
+    if (selected_index !== null) {
         pagePlaylist._highlight(selected_index);
         pagePlaylist.current = selected_index;
+
+        if (currently_playing === null) {
+            $(pagePlaylist.cssSelector.jPlayer).jPlayer(
+                "setMedia",
+                pagePlaylist.playlist[selected_index]
+            );
+        }
     }
 }
 
