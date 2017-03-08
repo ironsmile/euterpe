@@ -250,7 +250,7 @@ func TestUserAuthentication(t *testing.T) {
 	resp, err := http.Get(url)
 
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	defer resp.Body.Close()
@@ -265,7 +265,7 @@ func TestUserAuthentication(t *testing.T) {
 	resp, err = client.Do(req)
 
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	defer resp.Body.Close()
 
@@ -278,12 +278,26 @@ func TestUserAuthentication(t *testing.T) {
 	resp, err = client.Do(req)
 
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 401 {
 		t.Errorf("Expected 401 but got: %d", resp.StatusCode)
+	}
+
+	// Make sure the is not HTTP Basic Auth for getting media files
+	url = fmt.Sprintf("http://127.0.0.1:%d/file/1", TestPort)
+	resp, err = http.Get(url)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 401 {
+		t.Errorf("Media files were protected with basic authentication")
 	}
 }
 
