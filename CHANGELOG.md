@@ -4,7 +4,9 @@
 
 ### Changes
 
-Changed the library for scanning mp3 files meta information. This would hopefully improve the accuracy.
+* Changed the library for scanning mp3 files meta information. This would hopefully improve the accuracy.
+
+* The web UI now supports multiple albums with the same name. They would be individually listed in the album filter.
 
 ### New Stuff
 
