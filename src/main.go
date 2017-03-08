@@ -27,6 +27,9 @@ var (
 
 	// Debug is populated by an command line argument.
 	Debug bool
+
+	// ShowVersion would be true when the -v flag is used
+	ShowVersion bool
 )
 
 func init() {
@@ -35,12 +38,18 @@ func init() {
 	flag.StringVar(&PidFile, "p", pidDefault, pidUsage)
 
 	flag.BoolVar(&Debug, "D", false, "Debug mode. Will log everything to the stdout.")
+	flag.BoolVar(&ShowVersion, "v", false, "Show version and build information.")
 }
 
 // Main is the only thing run in the project's root main.go file.
 // For all intent and purposes this is the main function.
 func Main() {
 	flag.Parse()
+
+	if ShowVersion {
+		printVersionInformation()
+		os.Exit(0)
+	}
 
 	projRoot, err := helpers.ProjectRoot()
 	if err != nil {
