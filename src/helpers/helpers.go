@@ -76,7 +76,10 @@ func ProjectRoot() (string, error) {
 
 // SetLogsFile sets the logfile of the server
 func SetLogsFile(logFilePath string) error {
-	logFile, err := os.Create(logFilePath)
+	logFile, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil && os.IsNotExist(err) {
+		logFile, err = os.Create(logFilePath)
+	}
 	if err != nil {
 		return err
 	}
