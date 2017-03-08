@@ -620,10 +620,16 @@ function load_filters(songs, opts) {
             all_artists[songs[i].artist] = true;
             all_artists_list.push(songs[i].artist);
         }
-        
-        if (all_albums[songs[i].album] === undefined) {
-            all_albums[songs[i].album] = true;
-            all_albums_list.push(songs[i].album);
+
+        // There might be more than one album with the same name. So we are forced
+        // to use album IDs instead of names. This is unfortunate since the URLs
+        // would be worse!
+        if (all_albums[songs[i].album_id] === undefined) {
+            all_albums[songs[i].album_id] = true;
+            all_albums_list.push({
+                name: songs[i].album,
+                id: songs[i].album_id
+            });
         }
     }
 
@@ -661,11 +667,12 @@ function load_filters(songs, opts) {
     
     var really_selected_album = false;
     for (var i = 0; i < all_albums_list.length; i++) {
-        var album = all_albums_list[i];
+        var album = all_albums_list[i].name;
+        var album_id = all_albums_list[i].id;
         option = $('<option></option>');
-        option.html(album).val(album);
-        if (opts.selected_album && opts.selected_album == album) {
-            really_selected_album = album;
+        option.html(album).val(album_id);
+        if (opts.selected_album && opts.selected_album == album_id) {
+            really_selected_album = album_id;
             option.attr("selected", 1);
         }
         album_elem.append(option);
@@ -704,7 +711,7 @@ function filter_playlist () {
     var selected_album = $('#album :selected').val();
     if (selected_album) {
         album_filter = function (song) {
-            if (selected_album == song.album) {
+            if (selected_album == song.album_id) {
                 return true;
             }
             return false;
@@ -728,6 +735,9 @@ function filter_playlist () {
 }
 
 function alpha_sort (a, b) {
+    if (a.name) {
+        return alpha_sort(a.name, b.name);
+    }
     a = a.toLowerCase();
     b = b.toLowerCase();
     if (a == b) {
