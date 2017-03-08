@@ -60,25 +60,18 @@ func (srv *Server) Serve() {
 func (srv *Server) serveGoroutine() {
 	mux := http.NewServeMux()
 
-	mux.Handle("/", http.FileServer(http.Dir(srv.cfg.HTTPRoot)))
-	mux.Handle("/search/", http.StripPrefix("/search/", NewSearchHandler(srv.library)))
+	mux.Handle("/", srv.withBasicAuth(http.FileServer(http.Dir(srv.cfg.HTTPRoot))))
+	searchHandler := srv.withBasicAuth(NewSearchHandler(srv.library))
+	mux.Handle("/search/", http.StripPrefix("/search/", searchHandler))
 	mux.Handle("/file/", http.StripPrefix("/file/", NewFileHandler(srv.library)))
-	mux.Handle("/album/", http.StripPrefix("/album/", NewAlbumHandler(srv.library)))
+	albumHandler := srv.withBasicAuth(NewAlbumHandler(srv.library))
+	mux.Handle("/album/", http.StripPrefix("/album/", albumHandler))
 
 	handler := NewTerryHandler(mux)
 
 	if srv.cfg.Gzip {
 		log.Println("Adding gzip handler")
 		handler = NewGzipHandler(handler)
-	}
-
-	if srv.cfg.Auth {
-		log.Println("Adding basic authenticate handler")
-		handler = BasicAuthHandler{
-			handler,
-			srv.cfg.Authenticate.User,
-			srv.cfg.Authenticate.Password,
-		}
 	}
 
 	handler = func(h http.Handler) http.Handler {
@@ -113,6 +106,18 @@ func (srv *Server) serveGoroutine() {
 	}
 
 	srv.cancelFunc()
+}
+
+func (srv *Server) withBasicAuth(handler http.Handler) http.Handler {
+	if !srv.cfg.Auth {
+		return handler
+	}
+
+	return BasicAuthHandler{
+		handler,
+		srv.cfg.Authenticate.User,
+		srv.cfg.Authenticate.Password,
+	}
 }
 
 // Uses our own listener to make our server stoppable. Similar to

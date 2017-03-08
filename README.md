@@ -1,23 +1,20 @@
 HTTP Media Server
 ======
 
-[![Build Status](https://travis-ci.org/ironsmile/httpms.png?branch=master)](https://travis-ci.org/ironsmile/httpms) [![GoDoc](https://godoc.org/github.com/ironsmile/httpms?status.svg)](https://godoc.org/github.com/ironsmile/httpms) [![Go Report Card](https://goreportcard.com/badge/github.com/ironsmile/httpms)](https://goreportcard.com/report/github.com/ironsmile/httpms)
+<img src="images/heavy-metal-128.png" alt="HTTPMS Icon" align="left" style="margin-right: 20px" title="HTTPMS Icon" />
 
-A way to listen to your music library from everywhere. Once set up you won't need anything but a browser.
-HTTPMS will let you browse through and listen to your music over HTTP(s).
-Up until now I've had a really bad time listening to my music which is stored back home.
-I would create a mount over ftp, sshfs or something similar and point the local player to
-the mounted library. Every time it resulted in some upleasantries. Just imagine searching
-in a network mounted directory!
+A way to listen to your music library from everywhere. Once set up you won't need anything but a browser. Think of it as your own Spotify service over which you have full control. HTTPMS will let you browse through and listen to your music over HTTP(s). Up until now I've had a really bad time listening to my music which is stored back home. I would create a mount over ftp, sshfs or something similar and point the local player to the mounted library. Every time it resulted in some upleasantries. Just imagine searching in a network mounted directory!
 
 No more!
+
+[![Build Status](https://travis-ci.org/ironsmile/httpms.png?branch=master)](https://travis-ci.org/ironsmile/httpms) [![GoDoc](https://godoc.org/github.com/ironsmile/httpms?status.svg)](https://godoc.org/github.com/ironsmile/httpms) [![Go Report Card](https://goreportcard.com/badge/github.com/ironsmile/httpms)](https://goreportcard.com/report/github.com/ironsmile/httpms) [![Coverage Status](https://coveralls.io/repos/github/ironsmile/httpms/badge.svg?branch=master)](https://coveralls.io/github/ironsmile/httpms?branch=master)
 
 Web UI
 ======
 
 Have a taste of how its web interface looks like
 
-![HTTPMS Screenshot](images/screenshot.png)
+![HTTPMS Screenshot](images/httpms-example.gif)
 
 It comes with a custom [jPlayer](https://github.com/happyworm/jPlayer) which can handle playlists with thousands of songs.
 
@@ -146,13 +143,61 @@ When started for the first time HTTPMS will create one for you. Here is an examp
 
 List with all directives can be found in the [configration wiki](https://github.com/ironsmile/httpms/wiki/configuration#wiki-json-directives).
 
-
-Daemon
+As an API
 ======
 
-HTTPMS comes with a separate daemonization binary. It is called ```httpms_daemon```. You can find it in the ```httpms_daemon``` directory. Separate binary is required since Go's standar libraries fail miserably if you fork the main process. As far as I can tell when
-forking the ```notify``` library stops working along with the goroutine scheduler. The goroutine scheduler may work from time to time but it is by no means stable after forking.
-**Note**: You should always use the PID recorded in the pidfile for stopping httpms. Even if you use httpms_daemon.
+You can use HTTPMS as a REST API and write your own player. Or maybe a plugin for your favourite player which would use your HTTPMS installation as a backend.
+
+Essentially, there are just a few API calls.
+
+### Search
+
+One can do a search query at the following endpoint
+
+```sh
+GET /search/{query}
+```
+
+wich would return an JSON array with tracks. Every object in the JSON represents a single track which matches the `query`. Example:
+
+```js
+[
+   {
+      "album" : "Battlefield Vietnam",
+      "title" : "Somebody to Love",
+      "track" : 10,
+      "artist" : "Jefferson Airplane",
+      "id" : 18,
+      "album_id" : 2
+   },
+   {
+      "album" : "Battlefield Vietnam",
+      "artist" : "Jefferson Airplane",
+      "track" : 14,
+      "title" : "White Rabbit",
+      "album_id" : 2,
+      "id" : 22
+   }
+]
+```
+
+The most importat thing here is the track ID at the `id` key. It can be used for playing this track. The other interesting thing is `album_id`. Tracks can be grouped in albums using this value. And the last field of particular interest is `track`. It is the position of this track in the album.
+
+### Play a Song
+
+```sh
+GET /file/{trackID}
+```
+
+This endpoint would return you the media file as is. A song's `trackID` can be found with the search API call.
+
+### Download an Album
+
+```sh
+GET /file/{albumID}
+```
+
+This endpoint would return you an archive which contains the whole album.
 
 
 Related Projects

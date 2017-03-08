@@ -3,6 +3,7 @@ package webserver
 import (
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -66,6 +67,8 @@ func InternalErrorOnErrorHandler(writer http.ResponseWriter, req *http.Request,
 	err := fnc(writer, req)
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
-		writer.Write([]byte(err.Error()))
+		if _, err := writer.Write([]byte(err.Error())); err != nil {
+			log.Printf("error writing body in InternalErrorHandler: %s", err)
+		}
 	}
 }

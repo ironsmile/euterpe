@@ -32,6 +32,10 @@ func (fh FileHandler) find(writer http.ResponseWriter, req *http.Request) error 
 		return nil
 	}
 
+	if fh.library == nil {
+		return fmt.Errorf("Library for FileHandler is nil")
+	}
+
 	filePath := fh.library.GetFilePath(int64(id))
 
 	_, err = os.Stat(filePath)

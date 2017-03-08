@@ -7,37 +7,70 @@
         <link rel="stylesheet" href="/skin/blue.monday/jplayer.blue.monday.css" />
         <title>HTTPMS</title>
         
-    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-      <script src="/js/ie8/html5shiv.js"></script>
-      <script src="/js/ie8/respond.min.js"></script>
-    <![endif]-->
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+          <script src="/js/ie8/html5shiv.js"></script>
+          <script src="/js/ie8/respond.min.js"></script>
+        <![endif]-->
+
+        <!-- ****** faviconit.com favicons ****** -->
+        <link rel="shortcut icon" href="/favicon/favicon.ico">
+        <link rel="icon" sizes="16x16 32x32 64x64" href="/favicon/favicon.ico">
+        <link rel="icon" type="image/png" sizes="196x196" href="/favicon/favicon-192.png">
+        <link rel="icon" type="image/png" sizes="160x160" href="/favicon/favicon-160.png">
+        <link rel="icon" type="image/png" sizes="96x96" href="/favicon/favicon-96.png">
+        <link rel="icon" type="image/png" sizes="64x64" href="/favicon/favicon-64.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16.png">
+        <link rel="apple-touch-icon" href="/favicon/favicon-57.png">
+        <link rel="apple-touch-icon" sizes="114x114" href="/favicon/favicon-114.png">
+        <link rel="apple-touch-icon" sizes="72x72" href="/favicon/favicon-72.png">
+        <link rel="apple-touch-icon" sizes="144x144" href="/favicon/favicon-144.png">
+        <link rel="apple-touch-icon" sizes="60x60" href="/favicon/favicon-60.png">
+        <link rel="apple-touch-icon" sizes="120x120" href="/favicon/favicon-120.png">
+        <link rel="apple-touch-icon" sizes="76x76" href="/favicon/favicon-76.png">
+        <link rel="apple-touch-icon" sizes="152x152" href="/favicon/favicon-152.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="/favicon/favicon-180.png">
+        <meta name="msapplication-TileColor" content="#FFFFFF">
+        <meta name="msapplication-TileImage" content="/favicon/favicon-144.png">
+        <meta name="msapplication-config" content="/favicon/browserconfig.xml">
+        <!-- ****** faviconit.com favicons ****** -->
+
     </head>
     <body>
         <div class="container">
             <div class="row">
                 <div class="col-md-12">
-                    <input 
-                        id="search"
-                        type="text"
-                        class="form-control"
-                        autofocus=""
-                        placeholder="Search" />                    
+                    <div class="input-group">
+                        <input
+                            id="search"
+                            type="text"
+                            class="form-control"
+                            autofocus=""
+                            placeholder="Search for track, album or artist" />
+                        <span class="input-group-btn">
+                            <button
+                                class="btn btn-primary search-form-button"
+                                type="button">
+                                <span class="glyphicon glyphicon-search"></span>
+                            </button>
+                        </span>
+                    </div>
                 </div>
             </div>
             
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-6 col-xs-6">
                     <h3>Artist</h3>
                     <select name="artist"
                         id="artist"
                         class="form-control filter-list"
                         size="10">
                         
-                    </select>                    
+                    </select>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6 col-xs-6">
                     <h3>Album</h3>
                     <select name="album"
                         id="album"
@@ -47,69 +80,138 @@
                     </select>
                 </div>
             </div>
-            
-            <div class="row">
-                <div class="col-md-12">
-                    <!-- Here is the player -->                       
-                                                        
-                    <div id="jp_container_N" class="jp-video">
-                        <div class="jp-type-playlist">
-                            <div id="jquery_jplayer_N" class="jp-jplayer"></div>
-                            <div class="jp-gui">
-                                <div class="jp-video-play">
-                                    <a href="javascript:;" class="jp-video-play-icon" tabindex="1">play</a>
-                                </div>
-                                <div class="jp-interface">
-                                    <div class="jp-progress">
-                                        <div class="jp-seek-bar">
-                                            <div class="jp-play-bar"></div>
-                                        </div>
-                                    </div>
-                                    <div class="jp-current-time"></div>
-                                    <div class="jp-duration"></div>
-                                    <div class="jp-title">
-                                        <ul>
-                                            <li></li>
-                                        </ul>
-                                    </div>
-                                    <div class="jp-controls-holder">
-                                        <ul class="jp-controls">
-                                            <li><a href="javascript:;" class="jp-previous" tabindex="1">previous</a></li>
-                                            <li><a href="javascript:;" class="jp-play" tabindex="1">play</a></li>
-                                            <li><a href="javascript:;" class="jp-pause" tabindex="1">pause</a></li>
-                                            <li><a href="javascript:;" class="jp-next" tabindex="1">next</a></li>
-                                            <li><a href="javascript:;" class="jp-stop" tabindex="1">stop</a></li>
-                                            <li><a href="javascript:;" class="jp-mute" tabindex="1" title="mute">mute</a></li>
-                                            <li><a href="javascript:;" class="jp-unmute" tabindex="1" title="unmute">unmute</a></li>
-                                            <li><a href="javascript:;" class="jp-volume-max" tabindex="1" title="max volume">max volume</a></li>
-                                        </ul>
-                                        <div class="jp-volume-bar">
-                                            <div class="jp-volume-bar-value"></div>
-                                        </div>
-                                        <ul class="jp-toggles visible-md visible-lg">
-                                            <li><a href="javascript:;" class="jp-full-screen" tabindex="1" title="full screen">full screen</a></li>
-                                            <li><a href="javascript:;" class="jp-restore-screen" tabindex="1" title="restore screen">restore screen</a></li>
-                                            <li><a href="javascript:;" class="jp-shuffle" tabindex="1" title="shuffle">shuffle</a></li>
-                                            <li><a href="javascript:;" class="jp-shuffle-off" tabindex="1" title="shuffle off">shuffle off</a></li>
-                                            <li><a href="javascript:;" class="jp-repeat" tabindex="1" title="repeat">repeat</a></li>
-                                            <li><a href="javascript:;" class="jp-repeat-off" tabindex="1" title="repeat off">repeat off</a></li>
-                                        </ul>
-                                    </div>
+
+            <div id="jp_container_bootstrap" class="jp-video">
+                <div class="jp-type-playlist">
+
+                    <div class="row">
+                        <div class="col-md-12 hidden">
+                            <div id="jquery_jplayer_bootstrap" class="jp-jplayer"></div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 hidden">
+                            <div class="jp-video-play">
+                                <a href="javascript:;"
+                                    class="jp-video-play-icon"
+                                    tabindex="1">
+                                    play
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="jp-progress">
+                                <div class="jp-seek-bar">
+                                    <div class="jp-play-bar"></div>
                                 </div>
                             </div>
-                            <div class="jp-playlist">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="jp-current-time"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="jp-duration"></div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="jp-title">
                                 <ul>
-                                    <!-- The method Playlist.displayPlaylist() uses this unordered list -->
+                                    <li></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row jp-controls">
+
+                        <div class="col-md-4 col-sm-3 hidden-xs text-right jp-volume-controls">
+
+                            <button class="btn btn-default btn-xs jp-mute" title="mute">
+                                <span class="glyphicon glyphicon-volume-down"></span>
+                            </button>
+
+                            <button class="btn btn-default btn-xs jp-unmute active" title="unmute">
+                                <span class="glyphicon glyphicon-volume-off"></span>
+                            </button>
+
+                            <div class="jp-volume-bar">
+                                <div class="jp-volume-bar-value"></div>
+                            </div>
+
+                            <button class="btn btn-default btn-xs jp-volume-max" title="max volume">
+                                <span class="glyphicon glyphicon-volume-up"></span>
+                            </button>
+
+                        </div>
+
+                        <div class="col-md-4 col-sm-6 col-xs-12 text-center jp-media-controls">
+                            <button class="btn btn-primary jp-previous" title="previous">
+                                <span class="glyphicon glyphicon-backward"></span>
+                            </button>
+
+                            <button class="btn btn-primary btn-lg jp-play" title="play">
+                                <span class="glyphicon glyphicon-play"></span>
+                            </button>
+
+                            <button class="btn btn-primary btn-lg jp-pause" title="pause">
+                                <span class="glyphicon glyphicon-pause"></span>
+                            </button>
+
+                            <button class="btn btn-primary jp-next" title="next">
+                                <span class="glyphicon glyphicon-forward"></span>
+                            </button>
+
+                            <button class="btn btn-primary jp-stop" title="stop">
+                                <span class="glyphicon glyphicon-stop"></span>
+                            </button>
+                        </div>
+
+                        <div class="col-md-4 col-sm-3 hidden-xs text-left jp-toggles">
+                            <button class="btn btn-default jp-shuffle" title="shuffle">
+                                <span class="glyphicon glyphicon-random"></span>
+                            </button>
+
+                            <button class="btn btn-default jp-shuffle-off active" title="shuffle off">
+                                <span class="glyphicon glyphicon-random"></span>
+                            </button>
+
+                            <button class="btn btn-default jp-repeat" title="repeat">
+                                <span class="glyphicon glyphicon-repeat"></span>
+                            </button>
+
+                            <button class="btn btn-default jp-repeat-off active" title="repeat off">
+                                <span class="glyphicon glyphicon-repeat"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="jp-playlist table-responsive">
+                                <ul>
+                                    <!--
+                                        The method Playlist.displayPlaylist() uses this
+                                        unordered list
+                                    -->
                                     <li></li>
                                 </ul>
                             </div>
                             <div class="jp-no-solution">
                                 <span>Update Required</span>
-                                To play the media you will need to either update your browser to a recent version or update your <a href="http://get.adobe.com/flashplayer/" target="_blank">Flash plugin</a>.
+                                To play the media you will need to either update
+                                your browser to a recent version or update your
+                                <a href="http://get.adobe.com/flashplayer/"
+                                    target="_blank">
+                                    Flash plugin
+                                </a>.
                             </div>
                         </div>
                     </div>
-                
+
                 </div>
             </div>
         </div>
@@ -125,6 +227,10 @@
                     <a href="https://github.com/ironsmile">
                         Doychin Atanasov.
                     </a>
+                </div>
+                <div class="col-md-12">
+                    Logo made by Iconnice from
+                    <a href="//www.flaticon.com">www.flaticon.com</a>
                 </div>
             </div>
         </footer>

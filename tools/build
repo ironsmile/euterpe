@@ -24,11 +24,6 @@ mkdir -p dist/httpms || exit 1
 echo "Building binaries..."
 GOOS="$os" GOARCH="$arch" go build -o dist/httpms/httpms || exit 1
 
-cd httpms_daemon
-GOOS="$os" GOARCH="$arch" go build -o ../dist/httpms/httpms_daemon || exit 1
-cd -
-
-
 for file in config.json config.default.json README.md
 do
     echo "Copying $file..."
@@ -51,6 +46,8 @@ cp http_root/css/squashed.css dist/httpms/http_root/css || exit 1
 cp http_root/js/squashed.js dist/httpms/http_root/js || exit 1
 cp http_root/js/Jplayer.swf dist/httpms/http_root/js || exit 1
 
+cp -a http_root/favicon dist/httpms/http_root || exit 1
+cp -a http_root/fonts dist/httpms/http_root || exit 1
 cp -a http_root/skin dist/httpms/http_root || exit 1
 cp -a http_root/js/ie8 dist/httpms/http_root/js || exit 1
 
@@ -71,3 +68,4 @@ cd - || exit 1
 rm -rf dist/httpms || exit
 
 echo "Done"
+
