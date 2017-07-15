@@ -229,12 +229,15 @@ How to do it:
 Or with images:
 
 BeardedSpice Preferences:
+
 ![BS Install Step 1](images/barded-spice-install-step1.png)
 
 Select "Import" under Genral tab:
+
 ![BS Install Step 2](images/barded-spice-install-step2.png)
 
 Select the [bearded-spice.js](tools/bearded-spice.js) file:
+
 ![BS Install Step 3](images/barded-spice-install-step3.png)
 
 Then you are good to go. Smash those media buttons!
