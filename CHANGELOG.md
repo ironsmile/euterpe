@@ -1,6 +1,6 @@
 # Change Log
 
-## v1.0.4 - Unreleased
+## v1.0.4 - 2017-03-08
 
 ### Changes
 
