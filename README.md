@@ -74,6 +74,7 @@ Features
 * Playlists
 * Search by track name, artist or album
 * Download whole album in a zip file with one click
+* Controllable via media keys in OSX with the help of [BeardedSpice](https://beardedspice.github.io/)
 
 Configuration
 ======
@@ -198,6 +199,31 @@ GET /file/{albumID}
 ```
 
 This endpoint would return you an archive which contains the whole album.
+
+
+Media Keys Control For OSX
+======
+
+You can control your HTTPMS web interface with the media keys the same way you can control any native media player. In order to do it you would have to include the [strategy](https://github.com/beardedspice/beardedspice/tree/disco-strategy-web#writing-a-media-strategy) [file](tools/bearded-spice.js) included in this repo in your installed bearded spice.
+
+How to do it:
+
+1. Install BeardedSpice. Here's the [download link](https://beardedspice.github.io/#download)
+2. Then go to BeardedSpice's Preferences -> General -> Media Controls -> Import
+3. Select the [bearded-spice.js](tools/bearded-spice.js) strategy from this repo
+
+Or with images:
+
+BeardedSpice Preferences:
+![BS Install Step 1](images/barded-spice-install-step1.png)
+
+Select "Import" under Genral tab:
+![BS Install Step 2](images/barded-spice-install-step2.png)
+
+Select the [bearded-spice.js](tools/bearded-spice.js) file:
+![BS Install Step 3](images/barded-spice-install-step3.png)
+
+Then you are good to go. Smash those media buttons!
 
 
 Related Projects
