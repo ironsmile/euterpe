@@ -218,7 +218,7 @@ This endpoint would return you an archive which contains the whole album.
 Media Keys Control For OSX
 ======
 
-You can control your HTTPMS web interface with the media keys the same way you can control any native media player. In order to do it you would have to include the [strategy](https://github.com/beardedspice/beardedspice/tree/disco-strategy-web#writing-a-media-strategy) [file](tools/bearded-spice.js) included in this repo in your installed bearded spice.
+You can control your HTTPMS web interface with the media keys the same way you can control any native media player. To achieve this a third-party program is required: [BearderSpice](https://beardedspice.github.io/). Sadly, HTTPMS is [not included](https://github.com/beardedspice/beardedspice/pull/684) in the default web strategies bundled-in with the program. You will have to import the [strategy](https://github.com/beardedspice/beardedspice/tree/disco-strategy-web#writing-a-media-strategy) [file](tools/bearded-spice.js) included in this repo yourself.
 
 How to do it:
 
