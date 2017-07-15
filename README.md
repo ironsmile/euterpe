@@ -9,6 +9,18 @@ No more!
 
 [![Build Status](https://travis-ci.org/ironsmile/httpms.png?branch=master)](https://travis-ci.org/ironsmile/httpms) [![GoDoc](https://godoc.org/github.com/ironsmile/httpms?status.svg)](https://godoc.org/github.com/ironsmile/httpms) [![Go Report Card](https://goreportcard.com/badge/github.com/ironsmile/httpms)](https://goreportcard.com/report/github.com/ironsmile/httpms) [![Coverage Status](https://coveralls.io/repos/github/ironsmile/httpms/badge.svg?branch=master)](https://coveralls.io/github/ironsmile/httpms?branch=master)
 
+* [Web UI](#web-ui)
+* [Features](#features)
+* [Requirements](#requirements)
+* [Install](#install)
+* [Docker Image](#docker)
+* [Configuration](#configuration)
+* [As an API](#as-an-api)
+* [OSX Media Keys Control](#media-keys-control-for-osx)
+* [Related Projects](#related-projects)
+* [Known Issues](#known-issues)
+
+
 Web UI
 ======
 
@@ -19,6 +31,20 @@ Have a taste of how its web interface looks like
 It comes with a custom [jPlayer](https://github.com/happyworm/jPlayer) which can handle playlists with thousands of songs.
 
 I feel obliged to say that the music on the screenshot is written and performed by my close friend [Velislav Ivanov](http://www.progarchives.com/artist.asp?id=4264).
+
+
+Features
+======
+
+* Uses [jplayer](https://github.com/happyworm/jPlayer) to play your music so it will probably work in every browser
+* jplayer supports mp3, oga, wav, flac and m4a audio formats
+* Interface and media via HTTPS
+* HTTP Basic Authenticate
+* Playlists
+* Search by track name, artist or album
+* Download whole album in a zip file with one click
+* Controllable via media keys in OSX with the help of [BeardedSpice](https://beardedspice.github.io/)
+
 
 Requirements
 ======
@@ -63,18 +89,6 @@ Alternatively to installing everything in your environment you can use my [docke
 
 It is ready for running or development.
 
-
-Features
-======
-
-* Uses [jplayer](https://github.com/happyworm/jPlayer) to play your music so it will probably work in every browser
-* jplayer supports mp3, oga, wav, flac and m4a audio formats
-* Interface and media via HTTPS
-* HTTP Basic Authenticate
-* Playlists
-* Search by track name, artist or album
-* Download whole album in a zip file with one click
-* Controllable via media keys in OSX with the help of [BeardedSpice](https://beardedspice.github.io/)
 
 Configuration
 ======
