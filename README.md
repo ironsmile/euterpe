@@ -209,7 +209,7 @@ This endpoint would return you the media file as is. A song's `trackID` can be f
 ### Download an Album
 
 ```sh
-GET /file/{albumID}
+GET /album/{albumID}
 ```
 
 This endpoint would return you an archive which contains the whole album.
