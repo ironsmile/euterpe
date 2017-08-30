@@ -17,7 +17,7 @@ No more!
 * [Configuration](#configuration)
 * [As an API](#as-an-api)
 * [OSX Media Keys Control](#media-keys-control-for-osx)
-* [Related Projects](#related-projects)
+* [Clients](#clients)
 * [Known Issues](#known-issues)
 
 
@@ -243,7 +243,7 @@ Select the [bearded-spice.js](tools/bearded-spice.js) file:
 Then you are good to go. Smash those media buttons!
 
 
-Related Projects
+Clients
 ======
 
 You are not restricted to using the web UI. The server has a RESTful API which can easily be used from other clients. I will try to keep a list with all of the known clients here:
