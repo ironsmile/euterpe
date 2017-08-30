@@ -23,10 +23,20 @@ func (sh SearchHandler) search(writer http.ResponseWriter, req *http.Request) er
 
 	writer.Header().Add("Content-Type", "application/json; charset=utf-8")
 
-	query, err := url.QueryUnescape(req.URL.Path)
-
-	if err != nil {
+	if err := req.ParseForm(); err != nil {
 		return err
+	}
+
+	query := req.Form.Get("q")
+
+	if query == "" {
+		var err error
+
+		query, err = url.QueryUnescape(req.URL.Path)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	results := sh.library.Search(query)

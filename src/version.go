@@ -5,7 +5,7 @@ import (
 	"runtime"
 )
 
-const version = "v1.0.4-development"
+const version = "v1.1.0-development"
 
 func printVersionInformation() {
 	fmt.Printf("HTTP Media Server (httpms) %s\n", version)

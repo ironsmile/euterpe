@@ -170,7 +170,7 @@ Essentially, there are just a few API calls.
 One can do a search query at the following endpoint
 
 ```sh
-GET /search/{query}
+GET /search/?q={query}
 ```
 
 wich would return an JSON array with tracks. Every object in the JSON represents a single track which matches the `query`. Example:

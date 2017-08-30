@@ -336,7 +336,60 @@ func TestSearchUrl(t *testing.T) {
 		]
 	*/
 
-	url := fmt.Sprintf("http://127.0.0.1:%d/search/Album+Of+Tests", TestPort)
+	searchURLs := []string{
+		// Backward compatibility must be kept for the sake of all 1.0.0 clients
+		fmt.Sprintf("http://127.0.0.1:%d/search/Album+Of+Tests", TestPort),
+
+		// The new way of searching which makes it possible to add additional parameters
+		// to the search.
+		fmt.Sprintf("http://127.0.0.1:%d/search/?q=Album+Of+Tests", TestPort),
+	}
+
+	for _, searchURL := range searchURLs {
+		resp, err := http.Get(searchURL)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		defer resp.Body.Close()
+
+		if resp.StatusCode != 200 {
+			t.Errorf("Unexpected response status code: %d", resp.StatusCode)
+		}
+
+		contentType := resp.Header.Get("Content-Type")
+
+		if !strings.Contains(contentType, "application/json") {
+			t.Errorf("Wrong content-type: %s", contentType)
+		}
+
+		responseBody, err := ioutil.ReadAll(resp.Body)
+
+		if err != nil {
+			t.Error(err)
+		}
+
+		var results []library.SearchResult
+
+		err = json.Unmarshal(responseBody, &results)
+
+		if err != nil {
+			t.Error(err)
+		}
+
+		if len(results) != 2 {
+			t.Errorf("Expected two results from search but they were %d", len(results))
+		}
+
+		for _, result := range results {
+			if result.Album != "Album Of Tests" {
+				t.Errorf("Wrong album in search results: %s", result.Album)
+			}
+		}
+	}
+
+	url := fmt.Sprintf("http://127.0.0.1:%d/search/Not+There", TestPort)
 	resp, err := http.Get(url)
 
 	if err != nil {
@@ -349,50 +402,7 @@ func TestSearchUrl(t *testing.T) {
 		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
 	}
 
-	contentType := resp.Header.Get("Content-Type")
-
-	if !strings.Contains(contentType, "application/json") {
-		t.Errorf("Wrong content-type: %s", contentType)
-	}
-
 	responseBody, err := ioutil.ReadAll(resp.Body)
-
-	if err != nil {
-		t.Error(err)
-	}
-
-	var results []library.SearchResult
-
-	err = json.Unmarshal(responseBody, &results)
-
-	if err != nil {
-		t.Error(err)
-	}
-
-	if len(results) != 2 {
-		t.Errorf("Expected two results from search but they were %d", len(results))
-	}
-
-	for _, result := range results {
-		if result.Album != "Album Of Tests" {
-			t.Errorf("Wrong album in search results: %s", result.Album)
-		}
-	}
-
-	url = fmt.Sprintf("http://127.0.0.1:%d/search/Not+There", TestPort)
-	resp, err = http.Get(url)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
-	}
-
-	responseBody, err = ioutil.ReadAll(resp.Body)
 
 	var noResults []library.SearchResult
 
