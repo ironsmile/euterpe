@@ -198,6 +198,56 @@ wich would return an JSON array with tracks. Every object in the JSON represents
 
 The most importat thing here is the track ID at the `id` key. It can be used for playing this track. The other interesting thing is `album_id`. Tracks can be grouped in albums using this value. And the last field of particular interest is `track`. It is the position of this track in the album.
 
+### Browse
+
+A way to browse through the whole collection is via the browse API call. It allows you to get its albums or artists in an ordered and paginated manner.
+
+```sh
+GET /browse/[?by=artist|album][&per-page={number}][&page={number}]
+```
+
+The returned JSON contains the data for the current page, the number of all pages for the current browse method and URLs of the next or previous pages.
+
+```js
+{
+  "pages_count": 12,
+  "next": "/browse/?page=4&per-page=10",
+  "previous": "/browse/?page=2&per-page=10",
+  "data": [ /* different data types are returned, determined by the `by` parmeter */ ]
+}
+```
+
+For the moment there are two possible values for the `by` parameter. Consequently there are two types of `data` that can be returned: "artist" and "album" (which is the **default**).
+
+**by=artist**
+
+would resulst in value such as
+
+```js
+{
+  "artist": "Jefferson Airplane",
+  "artist_id": 73
+}
+```
+
+**by=album**
+
+would result in value such as
+
+```js
+{
+  "album": "Battlefield Vietnam"
+  "artist": "Jefferson Airplane",
+  "album_id": 2
+}
+```
+
+**Additional parameters**
+
+_per-page_: controls how many items would be present in the `data` field for every particular page. The **default is 10**.
+_page_: the generated data would be for this page. The **default is 1**.
+
+
 ### Play a Song
 
 ```sh
@@ -212,7 +262,7 @@ This endpoint would return you the media file as is. A song's `trackID` can be f
 GET /album/{albumID}
 ```
 
-This endpoint would return you an archive which contains the whole album.
+This endpoint would return you an archive which contains the songs of the whole album.
 
 
 Media Keys Control For OSX

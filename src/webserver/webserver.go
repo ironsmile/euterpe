@@ -66,6 +66,8 @@ func (srv *Server) serveGoroutine() {
 	mux.Handle("/file/", http.StripPrefix("/file/", NewFileHandler(srv.library)))
 	albumHandler := srv.withBasicAuth(NewAlbumHandler(srv.library))
 	mux.Handle("/album/", http.StripPrefix("/album/", albumHandler))
+	browseHandler := srv.withBasicAuth(NewBrowseHandler(srv.library))
+	mux.Handle("/browse/", http.StripPrefix("/browse/", browseHandler))
 
 	handler := NewTerryHandler(mux)
 

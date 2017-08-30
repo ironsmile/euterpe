@@ -28,6 +28,19 @@ type SearchResult struct {
 	TrackNumber int64 `json:"track"`
 }
 
+// Artist represents an artist from the database
+type Artist struct {
+	ID   int64  `json:"artist_id"`
+	Name string `json:"artist"`
+}
+
+// Album represents an album from the database
+type Album struct {
+	ID     int64  `json:"album_id"`
+	Name   string `json:"album"`
+	Artist string `json:"artist"`
+}
+
 // Library represents the media library which is played using the HTTPMS.
 // It is responsible for scaning the library directories, watching for new files,
 // actually searching for a media by a search term and finding the exact file path
@@ -42,6 +55,16 @@ type Library interface {
 	// and Title. Will OR the results. So it is "return anything which Artist matches or
 	// Album matches or Title matches"
 	Search(string) []SearchResult
+
+	// BrowseArtists makes it possible to browse through the library artists page by page.
+	// Returns a list of artists for particular page and the number of all artists in the
+	// library.
+	BrowseArtists(page, perPage int) ([]Artist, int)
+
+	// BrowseAlbums makes it possible to browse through the library albums page by page.
+	// Returns a list of albums for particular page and the number of all albums in the
+	// library.
+	BrowseAlbums(page, perPage int) ([]Album, int)
 
 	// Returns the real filesystem path. Requires the media ID.
 	GetFilePath(int64) string
