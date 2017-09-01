@@ -1,5 +1,9 @@
 # Change Log
 
+## v1.1.0 - 2017-09-01
+
+A new API endpoint is included: `/browse/`. Using it one can browse through all artists or albums in paginated manner. See [here](README.md#browse) for its full documentation.
+
 ## v1.0.4 - 2017-03-08
 
 ### Changes
