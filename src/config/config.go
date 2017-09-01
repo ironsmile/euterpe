@@ -53,7 +53,7 @@ type Config struct {
 // or not. If I did not use pointers I would not have been able to do that.
 // That way the merged (user) json can contain a subset of all fields and everything
 // else will be used from the default json.
-// Unfortunatelly this leads to repetition since MergedConfig must have the same
+// Unfortunately this leads to repetition since MergedConfig must have the same
 // fields in the same order as Config.
 type MergedConfig struct {
 	Listen         *string      `json:"listen"`

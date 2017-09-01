@@ -72,7 +72,7 @@ func TestTrackNumberGuessing(t *testing.T) {
 		// Traps which should return 0. If for some reason there is a conflict
 		// between a "trap" and something from the previous category, the guess
 		// should return 0. That is to say, it should be cautious and use only
-		// high confidance guesses.
+		// high confidence guesses.
 		{`B4 - Whole Lotta Rosie.mp3`, 0},
 		{`Guns N' Roses - Estranged.mp3`, 0},
 		{`Apollo 440 - Stop The Rock.mp3`, 0},

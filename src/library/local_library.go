@@ -670,7 +670,7 @@ func (lib *LocalLibrary) lastInsertID() (int64, error) {
 	var id int64
 
 	if lib.db == nil {
-		return 0, errors.New("The db connection proprety was nil")
+		return 0, errors.New("The db connection property was nil")
 	}
 
 	err := lib.db.QueryRow("SELECT last_insert_rowid();").Scan(&id)
