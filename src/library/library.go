@@ -59,12 +59,12 @@ type Library interface {
 	// BrowseArtists makes it possible to browse through the library artists page by page.
 	// Returns a list of artists for particular page and the number of all artists in the
 	// library.
-	BrowseArtists(page, perPage int) ([]Artist, int)
+	BrowseArtists(page, perPage uint) ([]Artist, int)
 
 	// BrowseAlbums makes it possible to browse through the library albums page by page.
 	// Returns a list of albums for particular page and the number of all albums in the
 	// library.
-	BrowseAlbums(page, perPage int) ([]Album, int)
+	BrowseAlbums(page, perPage uint) ([]Album, int)
 
 	// Returns the real filesystem path. Requires the media ID.
 	GetFilePath(int64) string
