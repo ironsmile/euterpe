@@ -80,13 +80,13 @@ func (bh BrowseHandler) browseAlbums(writer http.ResponseWriter, page, perPage i
 	prevPage := ""
 
 	if page-1 > 0 {
-		prevPage = fmt.Sprintf("/browse/?by=album&page=%d&perPage=%d", page-1, perPage)
+		prevPage = fmt.Sprintf("/browse/?by=album&page=%d&per-page=%d", page-1, perPage)
 	}
 
 	nextPage := ""
 
 	if page*perPage < count {
-		nextPage = fmt.Sprintf("/browse/?by=album&page=%d&perPage=%d", page+1, perPage)
+		nextPage = fmt.Sprintf("/browse/?by=album&page=%d&per-page=%d", page+1, perPage)
 	}
 
 	retData := struct {
@@ -120,13 +120,13 @@ func (bh BrowseHandler) browseArtists(writer http.ResponseWriter, page, perPage 
 	prevPage := ""
 
 	if page-1 > 0 {
-		prevPage = fmt.Sprintf("/browse/?by=artist&page=%d&perPage=%d", page-1, perPage)
+		prevPage = fmt.Sprintf("/browse/?by=artist&page=%d&per-page=%d", page-1, perPage)
 	}
 
 	nextPage := ""
 
 	if page*perPage < count {
-		nextPage = fmt.Sprintf("/browse/?by=artist&page=%d&perPage=%d", page+1, perPage)
+		nextPage = fmt.Sprintf("/browse/?by=artist&page=%d&per-page=%d", page+1, perPage)
 	}
 
 	retData := struct {
