@@ -19,6 +19,7 @@ No more!
 * [OSX Media Keys Control](#media-keys-control-for-osx)
 * [Clients](#clients)
 * [Known Issues](#known-issues)
+* [Change Log](CHANGELOG.md)
 
 
 Web UI
