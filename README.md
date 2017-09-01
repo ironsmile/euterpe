@@ -63,7 +63,11 @@ For the moment I do not plan to distribute it any other way.
 Install
 ======
 
-The safest route is installing [one of the releases](https://github.com/ironsmile/httpms/releases). Running `go install` in the project root directory will compile `httpms` and move its binary in your `$GOPATH`. Releases from `v1.0.1` onward have their go dependencies vendored.
+The safest route is installing [one of the releases](https://github.com/ironsmile/httpms/releases).
+
+If have an already built version (for example `https_1.1.0_linux.tar.gz`) it includes an `install` script which would install HTTPMS in `/usr/bin/httpms` and put all of its assets in `/etc/httpms`. You will have to uninstall any previously installed versions first. An `uninstall` script is provided as well.
+
+If installing from source running `go install` in the project root directory will compile `httpms` and move its binary in your `$GOPATH`. Releases from `v1.0.1` onward have their go dependencies vendored in.
 
 If you want to install the latest development version from the `master` branch, you can just run
 
