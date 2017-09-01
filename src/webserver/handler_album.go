@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -73,20 +72,13 @@ func (fh AlbumHandler) writeZipContents(writer io.Writer, files []string) error 
 
 		defer fh.Close()
 
-		contents, err := ioutil.ReadAll(fh)
-
-		if err != nil {
-			_ = zipWriter.Close()
-			return err
-		}
-
 		zfh, err := zipWriter.Create(filepath.Base(file))
 		if err != nil {
 			_ = zipWriter.Close()
 			return err
 		}
 
-		_, err = zfh.Write(contents)
+		_, err = io.Copy(zfh, fh)
 		if err != nil {
 			_ = zipWriter.Close()
 			return err

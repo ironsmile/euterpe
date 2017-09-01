@@ -2,6 +2,7 @@ package webserver
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/url"
 
@@ -23,10 +24,24 @@ func (sh SearchHandler) search(writer http.ResponseWriter, req *http.Request) er
 
 	writer.Header().Add("Content-Type", "application/json; charset=utf-8")
 
-	query, err := url.QueryUnescape(req.URL.Path)
+	if err := req.ParseForm(); err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		if _, err := writer.Write([]byte(err.Error())); err != nil {
+			log.Printf("error writing body in search handler: %s", err)
+		}
+		return nil
+	}
 
-	if err != nil {
-		return err
+	query := req.Form.Get("q")
+
+	if query == "" {
+		var err error
+
+		query, err = url.QueryUnescape(req.URL.Path)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	results := sh.library.Search(query)

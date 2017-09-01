@@ -9,6 +9,19 @@ No more!
 
 [![Build Status](https://travis-ci.org/ironsmile/httpms.png?branch=master)](https://travis-ci.org/ironsmile/httpms) [![GoDoc](https://godoc.org/github.com/ironsmile/httpms?status.svg)](https://godoc.org/github.com/ironsmile/httpms) [![Go Report Card](https://goreportcard.com/badge/github.com/ironsmile/httpms)](https://goreportcard.com/report/github.com/ironsmile/httpms) [![Coverage Status](https://coveralls.io/repos/github/ironsmile/httpms/badge.svg?branch=master)](https://coveralls.io/github/ironsmile/httpms?branch=master)
 
+* [Web UI](#web-ui)
+* [Features](#features)
+* [Requirements](#requirements)
+* [Install](#install)
+* [Docker Image](#docker)
+* [Configuration](#configuration)
+* [As an API](#as-an-api)
+* [OSX Media Keys Control](#media-keys-control-for-osx)
+* [Clients](#clients)
+* [Known Issues](#known-issues)
+* [Change Log](CHANGELOG.md)
+
+
 Web UI
 ======
 
@@ -16,9 +29,23 @@ Have a taste of how its web interface looks like
 
 ![HTTPMS Screenshot](images/httpms-example.gif)
 
-It comes with a custom [jPlayer](https://github.com/happyworm/jPlayer) which can handle playlists with thousands of songs.
+It comes with a custom [jPlayer](https://github.com/happyworm/jPlayer) which can handle playlists with thousands of songs. Which is [an imrovement](https://github.com/jplayer/jPlayer/pull/192) over the original which never included this performance patch.
 
 I feel obliged to say that the music on the screenshot is written and performed by my close friend [Velislav Ivanov](http://www.progarchives.com/artist.asp?id=4264).
+
+
+Features
+======
+
+* Uses [jplayer](https://github.com/happyworm/jPlayer) to play your music so it will probably work in every browser
+* jplayer supports mp3, oga, wav, flac and m4a audio formats
+* Interface and media via HTTPS
+* HTTP Basic Authenticate
+* Playlists
+* Search by track name, artist or album
+* Download whole album in a zip file with one click
+* Controllable via media keys in OSX with the help of [BeardedSpice](https://beardedspice.github.io/)
+
 
 Requirements
 ======
@@ -63,17 +90,6 @@ Alternatively to installing everything in your environment you can use my [docke
 
 It is ready for running or development.
 
-
-Features
-======
-
-* Uses [jplayer](https://github.com/happyworm/jPlayer) to play your music so it will probably work in every browser
-* jplayer supports mp3, oga, wav, flac and m4a audio formats
-* Interface and media via HTTPS
-* HTTP Basic Authenticate
-* Playlists
-* Search by track name, artist or album
-* Download whole album in a zip file with one click
 
 Configuration
 ======
@@ -155,7 +171,7 @@ Essentially, there are just a few API calls.
 One can do a search query at the following endpoint
 
 ```sh
-GET /search/{query}
+GET /search/?q={query}
 ```
 
 wich would return an JSON array with tracks. Every object in the JSON represents a single track which matches the `query`. Example:
@@ -183,6 +199,56 @@ wich would return an JSON array with tracks. Every object in the JSON represents
 
 The most importat thing here is the track ID at the `id` key. It can be used for playing this track. The other interesting thing is `album_id`. Tracks can be grouped in albums using this value. And the last field of particular interest is `track`. It is the position of this track in the album.
 
+### Browse
+
+A way to browse through the whole collection is via the browse API call. It allows you to get its albums or artists in an ordered and paginated manner.
+
+```sh
+GET /browse/[?by=artist|album][&per-page={number}][&page={number}]
+```
+
+The returned JSON contains the data for the current page, the number of all pages for the current browse method and URLs of the next or previous pages.
+
+```js
+{
+  "pages_count": 12,
+  "next": "/browse/?page=4&per-page=10",
+  "previous": "/browse/?page=2&per-page=10",
+  "data": [ /* different data types are returned, determined by the `by` parmeter */ ]
+}
+```
+
+For the moment there are two possible values for the `by` parameter. Consequently there are two types of `data` that can be returned: "artist" and "album" (which is the **default**).
+
+**by=artist**
+
+would resulst in value such as
+
+```js
+{
+  "artist": "Jefferson Airplane",
+  "artist_id": 73
+}
+```
+
+**by=album**
+
+would result in value such as
+
+```js
+{
+  "album": "Battlefield Vietnam"
+  "artist": "Jefferson Airplane",
+  "album_id": 2
+}
+```
+
+**Additional parameters**
+
+_per-page_: controls how many items would be present in the `data` field for every particular page. The **default is 10**.
+_page_: the generated data would be for this page. The **default is 1**.
+
+
 ### Play a Song
 
 ```sh
@@ -194,13 +260,41 @@ This endpoint would return you the media file as is. A song's `trackID` can be f
 ### Download an Album
 
 ```sh
-GET /file/{albumID}
+GET /album/{albumID}
 ```
 
-This endpoint would return you an archive which contains the whole album.
+This endpoint would return you an archive which contains the songs of the whole album.
 
 
-Related Projects
+Media Keys Control For OSX
+======
+
+You can control your HTTPMS web interface with the media keys the same way you can control any native media player. To achieve this a third-party program is required: [BearderSpice](https://beardedspice.github.io/). Sadly, HTTPMS is [not included](https://github.com/beardedspice/beardedspice/pull/684) in the default web strategies bundled-in with the program. You will have to import the [strategy](https://github.com/beardedspice/beardedspice/tree/disco-strategy-web#writing-a-media-strategy) [file](tools/bearded-spice.js) included in this repo yourself.
+
+How to do it:
+
+1. Install BeardedSpice. Here's the [download link](https://beardedspice.github.io/#download)
+2. Then go to BeardedSpice's Preferences -> General -> Media Controls -> Import
+3. Select the [bearded-spice.js](tools/bearded-spice.js) strategy from this repo
+
+Or with images:
+
+BeardedSpice Preferences:
+
+![BS Install Step 1](images/barded-spice-install-step1.png)
+
+Select "Import" under Genral tab:
+
+![BS Install Step 2](images/barded-spice-install-step2.png)
+
+Select the [bearded-spice.js](tools/bearded-spice.js) file:
+
+![BS Install Step 3](images/barded-spice-install-step3.png)
+
+Then you are good to go. Smash those media buttons!
+
+
+Clients
 ======
 
 You are not restricted to using the web UI. The server has a RESTful API which can easily be used from other clients. I will try to keep a list with all of the known clients here:

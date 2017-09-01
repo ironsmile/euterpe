@@ -296,7 +296,7 @@ function search_database (query, opts) {
     _ajax_query = $.ajax({
         type: "GET",
         async: opts.async,
-        url: encodeURI("/search/" + query),
+        url: "/search/?q=" + encodeURIComponent(query),
         success: function (msg) {
             load_filters(msg);
             filter_playlist();
