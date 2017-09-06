@@ -42,19 +42,41 @@ func (lib *LocalLibrary) BrowseArtists(page, perPage uint) ([]Artist, int) {
 // the database ordered by their name.
 func (lib *LocalLibrary) BrowseAlbums(page, perPage uint) ([]Album, int) {
 	var output []Album
+	var albumsCount int
 
-	albumsCount := lib.getTableSize("albums")
+	smt, err := lib.db.Prepare(`
+        SELECT
+            COUNT(DISTINCT tr.album_id) as cnt
+        FROM
+            tracks tr
+    `)
+
+	if err != nil {
+		log.Printf("Query for getting albums count not prepared: %s\n", err.Error())
+	} else {
+		err = smt.QueryRow().Scan(&albumsCount)
+
+		if err != nil {
+			log.Printf("Query for getting albums count not successful: %s\n", err.Error())
+		}
+	}
+
 	rows, err := lib.db.Query(`
         SELECT
             al.id,
             al.name as album_name,
-            CASE WHEN (SELECT COUNT(DISTINCT artist_id) FROM tracks WHERE album_id = al.id) = 1
-            THEN (SELECT ar.name FROM tracks t LEFT JOIN artists ar ON ar.id = t.artist_id
-                    WHERE t.album_id = al.id LIMIT 1)
+            CASE WHEN COUNT(DISTINCT tr.artist_id) = 1
+            THEN ar.name
             ELSE "Various Artists"
             END AS arist_name
         FROM
-            albums al
+            tracks tr
+            LEFT JOIN
+                albums al ON al.id = tr.album_id
+            LEFT JOIN
+                artists ar ON ar.id = tr.artist_id
+        GROUP BY
+            tr.album_id
         ORDER BY
             al.name ASC
         LIMIT
