@@ -250,8 +250,11 @@ would result in value such as
 **Additional parameters**
 
 _per-page_: controls how many items would be present in the `data` field for every particular page. The **default is 10**.
+
 _page_: the generated data would be for this page. The **default is 1**.
+
 _order-by_: controls how the resulst would be ordered. The value `id` means the ordering would be done by the album or artist ID, depending on the `by` argument. The same goes for the `name` value. **Defaults to `name`**.
+
 _order_: controls if the order would ascending (with value `asc`) or descending (with value `desc`). **Defaults to `asc`**.
 
 
