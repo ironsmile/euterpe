@@ -11,20 +11,31 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 	page := args.Page
 	perPage := args.PerPage
 
+	order := "ASC"
+	orderBy := "ar.name"
+
+	if args.OrderBy == OrderByID {
+		orderBy = "ar.id"
+	}
+
+	if args.Order == OrderDesc {
+		order = "DESC"
+	}
+
 	var output []Artist
 
 	artistsCount := lib.getTableSize("artists")
-	rows, err := lib.db.Query(`
+	rows, err := lib.db.Query(fmt.Sprintf(`
         SELECT
             ar.id,
             ar.name
         FROM
             artists ar
         ORDER BY
-            ar.name ASC
+            %s %s
         LIMIT
             ?, ?
-    `, page*perPage, perPage)
+    `, orderBy, order), page*perPage, perPage)
 
 	if err != nil {
 		log.Printf("Query for browsing artists not successful: %s\n", err.Error())
@@ -67,7 +78,18 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 		}
 	}
 
-	rows, err := lib.db.Query(`
+	order := "ASC"
+	orderBy := "al.name"
+
+	if args.OrderBy == OrderByID {
+		orderBy = "al.id"
+	}
+
+	if args.Order == OrderDesc {
+		order = "DESC"
+	}
+
+	rows, err := lib.db.Query(fmt.Sprintf(`
         SELECT
             al.id,
             al.name as album_name,
@@ -84,10 +106,10 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
         GROUP BY
             tr.album_id
         ORDER BY
-            al.name ASC
+            %s %s
         LIMIT
             ?, ?
-    `, page*perPage, perPage)
+    `, orderBy, order), page*perPage, perPage)
 
 	if err != nil {
 		log.Printf("Query for browsing albums not successful: %s\n", err.Error())

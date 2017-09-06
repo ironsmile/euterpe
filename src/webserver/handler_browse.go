@@ -37,7 +37,7 @@ func (bh BrowseHandler) browse(writer http.ResponseWriter, req *http.Request) er
 	perPageStr := req.Form.Get("per-page")
 	browseBy := req.Form.Get("by")
 	orderBy := strings.TrimSpace(strings.ToLower(req.Form.Get("order-by")))
-	orderType := strings.TrimSpace(strings.ToLower(req.Form.Get("order-type")))
+	order := strings.TrimSpace(strings.ToLower(req.Form.Get("order")))
 
 	if browseBy != "" && browseBy != "artist" && browseBy != "album" {
 		bh.badRequest(writer, "Wrong 'by' parameter. Must be 'album' or 'artist'")
@@ -49,7 +49,7 @@ func (bh BrowseHandler) browse(writer http.ResponseWriter, req *http.Request) er
 		return nil
 	}
 
-	if orderType != "" && orderType != "asc" && orderType != "desc" {
+	if order != "" && order != "asc" && order != "desc" {
 		bh.badRequest(writer, "Wrong 'order-type' parameter. Must be 'asc' or 'desc'")
 		return nil
 	}
@@ -80,31 +80,21 @@ func (bh BrowseHandler) browse(writer http.ResponseWriter, req *http.Request) er
 	}
 
 	if browseBy == "artist" {
-		return bh.browseArtists(writer, page, perPage)
+		return bh.browseArtists(writer, page, perPage, orderBy, order)
 	}
 
-	return bh.browseAlbums(writer, page, perPage)
+	return bh.browseAlbums(writer, page, perPage, orderBy, order)
 }
 
-func (bh BrowseHandler) browseAlbums(writer http.ResponseWriter, page, perPage int) error {
-	// In the API we count starting from 1. But actually for the library function pages
-	// are counted from 0 which is much easier for implementing.
-	albums, count := bh.library.BrowseAlbums(library.BrowseArgs{
-		Page:    uint(page - 1),
-		PerPage: uint(perPage),
-	})
+func (bh BrowseHandler) browseAlbums(
+	writer http.ResponseWriter,
+	page, perPage int,
+	orderBy, order string,
+) error {
 
-	prevPage := ""
-
-	if page-1 > 0 {
-		prevPage = fmt.Sprintf("/browse/?by=album&page=%d&per-page=%d", page-1, perPage)
-	}
-
-	nextPage := ""
-
-	if page*perPage < count {
-		nextPage = fmt.Sprintf("/browse/?by=album&page=%d&per-page=%d", page+1, perPage)
-	}
+	browseArgs := getBrowseArgs(page, perPage, orderBy, order)
+	albums, count := bh.library.BrowseAlbums(browseArgs)
+	prevPage, nextPage := getPrevNextPageURI("album", page, perPage, count, orderBy, order)
 
 	retData := struct {
 		Data       []library.Album `json:"data"`
@@ -129,25 +119,14 @@ func (bh BrowseHandler) browseAlbums(writer http.ResponseWriter, page, perPage i
 	return nil
 }
 
-func (bh BrowseHandler) browseArtists(writer http.ResponseWriter, page, perPage int) error {
-	// In the API we count starting from 1. But actually for the library function pages
-	// are counted from 0 which is much easier for implementing.
-	artists, count := bh.library.BrowseArtists(library.BrowseArgs{
-		Page:    uint(page - 1),
-		PerPage: uint(perPage),
-	})
-
-	prevPage := ""
-
-	if page-1 > 0 {
-		prevPage = fmt.Sprintf("/browse/?by=artist&page=%d&per-page=%d", page-1, perPage)
-	}
-
-	nextPage := ""
-
-	if page*perPage < count {
-		nextPage = fmt.Sprintf("/browse/?by=artist&page=%d&per-page=%d", page+1, perPage)
-	}
+func (bh BrowseHandler) browseArtists(
+	writer http.ResponseWriter,
+	page, perPage int,
+	orderBy, order string,
+) error {
+	browseArgs := getBrowseArgs(page, perPage, orderBy, order)
+	artists, count := bh.library.BrowseArtists(browseArgs)
+	prevPage, nextPage := getPrevNextPageURI("artist", page, perPage, count, orderBy, order)
 
 	retData := struct {
 		Data       []library.Artist `json:"data"`
@@ -182,6 +161,72 @@ func (bh BrowseHandler) badRequest(writer http.ResponseWriter, message string) {
 	if _, err := writer.Write([]byte(msgJSON)); err != nil {
 		log.Printf("error writing body in browse handler: %s", err)
 	}
+}
+
+func getBrowseArgs(page, perPage int, orderBy, order string) library.BrowseArgs {
+	browseArgs := library.BrowseArgs{
+		// In the API we count starting from 1. But actually for the library function pages
+		// are counted from 0 which is much easier for implementing.
+		Page:    uint(page - 1),
+		PerPage: uint(perPage),
+	}
+
+	switch orderBy {
+	case "id":
+		browseArgs.OrderBy = library.OrderByID
+	case "name":
+		browseArgs.OrderBy = library.OrderByName
+	}
+
+	switch order {
+	case "asc":
+		browseArgs.Order = library.OrderAsc
+	case "desc":
+		browseArgs.Order = library.OrderDesc
+	}
+
+	return browseArgs
+}
+
+func getPrevNextPageURI(by string, page, perPage, count int, orderBy, order string) (string, string) {
+	orderArg := ""
+	orderByArg := ""
+
+	if order != "" {
+		orderArg = fmt.Sprintf("&order=%s", order)
+	}
+
+	if orderBy != "" {
+		orderByArg = fmt.Sprintf("&order-by=%s", orderBy)
+	}
+
+	prevPage := ""
+
+	if page-1 > 0 {
+		prevPage = fmt.Sprintf(
+			"/browse/?by=%s&page=%d&per-page=%d%s%s",
+			by,
+			page-1,
+			perPage,
+			orderArg,
+			orderByArg,
+		)
+	}
+
+	nextPage := ""
+
+	if page*perPage < count {
+		nextPage = fmt.Sprintf(
+			"/browse/?by=%s&page=%d&per-page=%d%s%s",
+			by,
+			page+1,
+			perPage,
+			orderArg,
+			orderByArg,
+		)
+	}
+
+	return prevPage, nextPage
 }
 
 // NewBrowseHandler returns a new Browse handler. It needs a library to browse through.

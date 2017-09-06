@@ -208,7 +208,7 @@ The most importat thing here is the track ID at the `id` key. It can be used for
 A way to browse through the whole collection is via the browse API call. It allows you to get its albums or artists in an ordered and paginated manner.
 
 ```sh
-GET /browse/[?by=artist|album][&per-page={number}][&page={number}][&order-by=id|name][&order-tyep=desc|asc]
+GET /browse/[?by=artist|album][&per-page={number}][&page={number}][&order-by=id|name][&order=desc|asc]
 ```
 
 The returned JSON contains the data for the current page, the number of all pages for the current browse method and URLs of the next or previous pages.
@@ -252,7 +252,7 @@ would result in value such as
 _per-page_: controls how many items would be present in the `data` field for every particular page. The **default is 10**.
 _page_: the generated data would be for this page. The **default is 1**.
 _order-by_: controls how the resulst would be ordered. The value `id` means the ordering would be done by the album or artist ID, depending on the `by` argument. The same goes for the `name` value. **Defaults to `name`**.
-_order-type_: controls if the order would ascending (with value `asc`) or descending (with value `desc`). **Defaults to `asc`**.
+_order_: controls if the order would ascending (with value `asc`) or descending (with value `desc`). **Defaults to `asc`**.
 
 
 ### Play a Song
