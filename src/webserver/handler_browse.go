@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/ironsmile/httpms/src/library"
 )
@@ -35,9 +36,21 @@ func (bh BrowseHandler) browse(writer http.ResponseWriter, req *http.Request) er
 	pageStr := req.Form.Get("page")
 	perPageStr := req.Form.Get("per-page")
 	browseBy := req.Form.Get("by")
+	orderBy := strings.TrimSpace(strings.ToLower(req.Form.Get("order-by")))
+	orderType := strings.TrimSpace(strings.ToLower(req.Form.Get("order-type")))
 
 	if browseBy != "" && browseBy != "artist" && browseBy != "album" {
 		bh.badRequest(writer, "Wrong 'by' parameter. Must be 'album' or 'artist'")
+		return nil
+	}
+
+	if orderBy != "" && orderBy != "id" && orderBy != "name" {
+		bh.badRequest(writer, "Wrong 'order-by' parameter. Must be 'id' or 'name'")
+		return nil
+	}
+
+	if orderType != "" && orderType != "asc" && orderType != "desc" {
+		bh.badRequest(writer, "Wrong 'order-type' parameter. Must be 'asc' or 'desc'")
 		return nil
 	}
 

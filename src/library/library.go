@@ -41,7 +41,7 @@ type Album struct {
 	Artist string `json:"artist"`
 }
 
-// BrowseArgs defines all
+// BrowseArgs defines all arguments one can pass to the browse methods
 type BrowseArgs struct {
 	Page    uint
 	PerPage uint
