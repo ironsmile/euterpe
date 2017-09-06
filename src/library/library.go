@@ -41,6 +41,12 @@ type Album struct {
 	Artist string `json:"artist"`
 }
 
+// BrowseArgs defines all
+type BrowseArgs struct {
+	Page    uint
+	PerPage uint
+}
+
 // Library represents the media library which is played using the HTTPMS.
 // It is responsible for scaning the library directories, watching for new files,
 // actually searching for a media by a search term and finding the exact file path
@@ -59,12 +65,12 @@ type Library interface {
 	// BrowseArtists makes it possible to browse through the library artists page by page.
 	// Returns a list of artists for particular page and the number of all artists in the
 	// library.
-	BrowseArtists(page, perPage uint) ([]Artist, int)
+	BrowseArtists(BrowseArgs) ([]Artist, int)
 
 	// BrowseAlbums makes it possible to browse through the library albums page by page.
 	// Returns a list of albums for particular page and the number of all albums in the
 	// library.
-	BrowseAlbums(page, perPage uint) ([]Album, int)
+	BrowseAlbums(BrowseArgs) ([]Album, int)
 
 	// Returns the real filesystem path. Requires the media ID.
 	GetFilePath(int64) string

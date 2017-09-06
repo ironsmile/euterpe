@@ -76,7 +76,10 @@ func (bh BrowseHandler) browse(writer http.ResponseWriter, req *http.Request) er
 func (bh BrowseHandler) browseAlbums(writer http.ResponseWriter, page, perPage int) error {
 	// In the API we count starting from 1. But actually for the library function pages
 	// are counted from 0 which is much easier for implementing.
-	albums, count := bh.library.BrowseAlbums(uint(page-1), uint(perPage))
+	albums, count := bh.library.BrowseAlbums(library.BrowseArgs{
+		Page:    uint(page - 1),
+		PerPage: uint(perPage),
+	})
 
 	prevPage := ""
 
@@ -116,7 +119,10 @@ func (bh BrowseHandler) browseAlbums(writer http.ResponseWriter, page, perPage i
 func (bh BrowseHandler) browseArtists(writer http.ResponseWriter, page, perPage int) error {
 	// In the API we count starting from 1. But actually for the library function pages
 	// are counted from 0 which is much easier for implementing.
-	artists, count := bh.library.BrowseArtists(uint(page-1), uint(perPage))
+	artists, count := bh.library.BrowseArtists(library.BrowseArgs{
+		Page:    uint(page - 1),
+		PerPage: uint(perPage),
+	})
 
 	prevPage := ""
 

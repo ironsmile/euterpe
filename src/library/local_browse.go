@@ -7,7 +7,10 @@ import (
 
 // BrowseArtists implements the Library interface for the local library by getting artists from
 // the database ordered by their name.
-func (lib *LocalLibrary) BrowseArtists(page, perPage uint) ([]Artist, int) {
+func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
+	page := args.Page
+	perPage := args.PerPage
+
 	var output []Artist
 
 	artistsCount := lib.getTableSize("artists")
@@ -40,7 +43,10 @@ func (lib *LocalLibrary) BrowseArtists(page, perPage uint) ([]Artist, int) {
 
 // BrowseAlbums implements the Library interface for the local library by getting albums from
 // the database ordered by their name.
-func (lib *LocalLibrary) BrowseAlbums(page, perPage uint) ([]Album, int) {
+func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
+	page := args.Page
+	perPage := args.PerPage
+
 	var output []Album
 	var albumsCount int
 
