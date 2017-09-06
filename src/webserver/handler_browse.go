@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 
@@ -96,7 +97,7 @@ func (bh BrowseHandler) browseAlbums(writer http.ResponseWriter, page, perPage i
 		PagesCount int             `json:"pages_count"`
 	}{
 		Data:       albums,
-		PagesCount: count / perPage,
+		PagesCount: int(math.Ceil(float64(count) / float64(perPage))),
 		Next:       nextPage,
 		Previous:   prevPage,
 	}
@@ -136,7 +137,7 @@ func (bh BrowseHandler) browseArtists(writer http.ResponseWriter, page, perPage 
 		PagesCount int              `json:"pages_count"`
 	}{
 		Data:       artists,
-		PagesCount: count / perPage,
+		PagesCount: int(math.Ceil(float64(count) / float64(perPage))),
 		Next:       nextPage,
 		Previous:   prevPage,
 	}
