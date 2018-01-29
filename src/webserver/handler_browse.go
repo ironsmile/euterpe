@@ -94,7 +94,14 @@ func (bh BrowseHandler) browseAlbums(
 
 	browseArgs := getBrowseArgs(page, perPage, orderBy, order)
 	albums, count := bh.library.BrowseAlbums(browseArgs)
-	prevPage, nextPage := getPrevNextPageURI("album", page, perPage, count, orderBy, order)
+	prevPage, nextPage := getPrevNextPageURI(
+		"album",
+		page,
+		perPage,
+		count,
+		orderBy,
+		order,
+	)
 
 	retData := struct {
 		Data       []library.Album `json:"data"`
@@ -124,9 +131,17 @@ func (bh BrowseHandler) browseArtists(
 	page, perPage int,
 	orderBy, order string,
 ) error {
+
 	browseArgs := getBrowseArgs(page, perPage, orderBy, order)
 	artists, count := bh.library.BrowseArtists(browseArgs)
-	prevPage, nextPage := getPrevNextPageURI("artist", page, perPage, count, orderBy, order)
+	prevPage, nextPage := getPrevNextPageURI(
+		"artist",
+		page,
+		perPage,
+		count,
+		orderBy,
+		order,
+	)
 
 	retData := struct {
 		Data       []library.Artist `json:"data"`
@@ -188,7 +203,12 @@ func getBrowseArgs(page, perPage int, orderBy, order string) library.BrowseArgs 
 	return browseArgs
 }
 
-func getPrevNextPageURI(by string, page, perPage, count int, orderBy, order string) (string, string) {
+func getPrevNextPageURI(
+	by string,
+	page, perPage, count int,
+	orderBy,
+	order string,
+) (string, string) {
 	orderArg := ""
 	orderByArg := ""
 
