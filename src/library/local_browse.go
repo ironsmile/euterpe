@@ -5,8 +5,9 @@ import (
 	"log"
 )
 
-// BrowseArtists implements the Library interface for the local library by getting artists from
-// the database ordered by their name.
+// BrowseArtists implements the Library interface for the local library by getting
+// artists from the database ordered by their name. Returns an artists slice and the
+// total count of all artists in the database.
 func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 	page := args.Page
 	perPage := args.PerPage
@@ -52,8 +53,8 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 	return output, artistsCount
 }
 
-// BrowseAlbums implements the Library interface for the local library by getting albums from
-// the database ordered by their name.
+// BrowseAlbums implements the Library interface for the local library by getting
+// albums from the database ordered by their name.
 func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 	page := args.Page
 	perPage := args.PerPage

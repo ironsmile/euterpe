@@ -489,7 +489,6 @@ func TestSQLInjections(t *testing.T) {
 	if len(found) != 0 {
 		t.Errorf("Successful sql injection in a single query")
 	}
-
 }
 
 func TestGetAlbumFiles(t *testing.T) {

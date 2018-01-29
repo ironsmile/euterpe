@@ -12,8 +12,8 @@ import (
 	"github.com/ironsmile/httpms/src/library"
 )
 
-// BrowseHandler is a http.Handler which will allow you to browse through artists or albums
-// with the help of pagination.
+// BrowseHandler is a http.Handler which will allow you to browse through artists or
+// albums with the help of pagination.
 type BrowseHandler struct {
 	library library.Library
 }
@@ -165,8 +165,8 @@ func (bh BrowseHandler) badRequest(writer http.ResponseWriter, message string) {
 
 func getBrowseArgs(page, perPage int, orderBy, order string) library.BrowseArgs {
 	browseArgs := library.BrowseArgs{
-		// In the API we count starting from 1. But actually for the library function pages
-		// are counted from 0 which is much easier for implementing.
+		// In the API we count starting from 1. But actually for the library function
+		// pages are counted from 0 which is much easier for implementing.
 		Page:    uint(page - 1),
 		PerPage: uint(perPage),
 	}
