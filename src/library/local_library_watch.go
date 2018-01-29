@@ -56,6 +56,7 @@ func (lib *LocalLibrary) watchEventRoutine() {
 			}
 			log.Println("Directory watcher error:", err)
 		case <-lib.ctx.Done():
+			lib.walkWG.Wait()
 			return
 		}
 	}
