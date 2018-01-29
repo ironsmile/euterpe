@@ -59,7 +59,7 @@ func (bh BrowseHandler) browse(writer http.ResponseWriter, req *http.Request) er
 		page, err = strconv.Atoi(pageStr)
 
 		if err != nil {
-			bh.badRequest(writer, fmt.Sprintf(`Wrong "page" parameter: %s`, err.Error()))
+			bh.badRequest(writer, fmt.Sprintf(`Wrong "page" parameter: %s`, err))
 			return nil
 		}
 	}
@@ -69,7 +69,7 @@ func (bh BrowseHandler) browse(writer http.ResponseWriter, req *http.Request) er
 		perPage, err = strconv.Atoi(perPageStr)
 
 		if err != nil {
-			bh.badRequest(writer, fmt.Sprintf(`Wrong "perPage" parameter: %s`, err.Error()))
+			bh.badRequest(writer, fmt.Sprintf(`Wrong "perPage" parameter: %s`, err))
 			return nil
 		}
 	}

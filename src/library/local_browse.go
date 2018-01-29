@@ -39,7 +39,7 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
     `, orderBy, order), page*perPage, perPage)
 
 	if err != nil {
-		log.Printf("Query for browsing artists not successful: %s\n", err.Error())
+		log.Printf("Query for browsing artists not successful: %s\n", err)
 		return output, artistsCount
 	}
 
@@ -70,12 +70,12 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
     `)
 
 	if err != nil {
-		log.Printf("Query for getting albums count not prepared: %s\n", err.Error())
+		log.Printf("Query for getting albums count not prepared: %s\n", err)
 	} else {
 		err = smt.QueryRow().Scan(&albumsCount)
 
 		if err != nil {
-			log.Printf("Query for getting albums count not successful: %s\n", err.Error())
+			log.Printf("Query for getting albums count not successful: %s\n", err)
 		}
 	}
 
@@ -113,7 +113,7 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
     `, orderBy, order), page*perPage, perPage)
 
 	if err != nil {
-		log.Printf("Query for browsing albums not successful: %s\n", err.Error())
+		log.Printf("Query for browsing albums not successful: %s\n", err)
 		return output, albumsCount
 	}
 
@@ -138,14 +138,14 @@ func (lib *LocalLibrary) getTableSize(table string) int {
 	var count int
 
 	if err != nil {
-		log.Printf("Query for getting %s count not prepared: %s\n", table, err.Error())
+		log.Printf("Query for getting %s count not prepared: %s\n", table, err)
 		return count
 	}
 
 	err = smt.QueryRow().Scan(&count)
 
 	if err != nil {
-		log.Printf("Query for getting %s count not successful: %s\n", table, err.Error())
+		log.Printf("Query for getting %s count not successful: %s\n", table, err)
 		return 0
 	}
 
