@@ -133,7 +133,7 @@ func TestBrowsingArtists(t *testing.T) {
 		}
 
 		if len(foundArtists) != len(expectedArtists) {
-			t.Fatalf("Expected returned artists to be %d but found %d for seach %+v",
+			t.Fatalf("Expected returned artists to be %d but found %d for search %+v",
 				len(expectedArtists), len(foundArtists), browseArgs)
 		}
 
