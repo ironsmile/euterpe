@@ -275,6 +275,15 @@ GET /album/{albumID}
 This endpoint would return you an archive which contains the songs of the whole album.
 
 
+### Album Artwork
+
+```sh
+GET /album/{albumID}/artwork
+```
+
+Returns a bitmap image with artwork for this album if one is available. Searching for artwork works like this: the album's directory would be scanned for any images (png/jpeg/gif/tiff files) and if anyone of them looks like an artwork, it would be shown. If this fails, you can configure HTTPMS to search in the [MusicBrainz Cover Art Archive](https://musicbrainz.org/doc/Cover_Art_Archive/). By default no external calls are made.
+
+
 Media Keys Control For OSX
 ======
 
