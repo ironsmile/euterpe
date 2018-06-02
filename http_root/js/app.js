@@ -580,6 +580,12 @@ function alpha_sort (a, b) {
     if (a.name) {
         return alpha_sort(a.name, b.name);
     }
+    if (!a.toLowerCase) {
+        return b;
+    }
+    if (!b.toLowerCase) {
+        return a;
+    }
     a = a.toLowerCase();
     b = b.toLowerCase();
     if (a == b) {
