@@ -1,9 +1,11 @@
 package webserver
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -15,16 +17,17 @@ import (
 // a particular album.
 type AlbumArtworkHandler struct {
 	artworkFinder library.ArtworkFinder
+	notFoundPath  string
 }
 
 // ServeHTTP is required by the http.Handler's interface
-func (fh AlbumArtworkHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
-	WithInternalError(fh.find)(writer, req)
+func (aah AlbumArtworkHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
+	WithInternalError(aah.find)(writer, req)
 }
 
 // Actually searches through the library for the artwork of an album and serves
 // it as a raw image
-func (fh AlbumArtworkHandler) find(writer http.ResponseWriter, req *http.Request) error {
+func (aah AlbumArtworkHandler) find(writer http.ResponseWriter, req *http.Request) error {
 
 	vars := mux.Vars(req)
 	idString, ok := vars["albumID"]
@@ -37,14 +40,22 @@ func (fh AlbumArtworkHandler) find(writer http.ResponseWriter, req *http.Request
 	id, err := strconv.Atoi(idString)
 
 	if err != nil {
-		http.NotFoundHandler().ServeHTTP(writer, req)
+		fmt.Fprintln(writer, "Bad request. Parsing albumID: %s", err)
+		writer.WriteHeader(http.StatusBadRequest)
 		return nil
 	}
 
-	imgReader, err := fh.artworkFinder.GetAlbumArtwork(int64(id))
+	imgReader, err := aah.artworkFinder.GetAlbumArtwork(int64(id))
 
 	if err != nil && err == library.ErrArtworkNotFound {
-		http.NotFoundHandler().ServeHTTP(writer, req)
+		notFoundImage, err := os.Open(aah.notFoundPath)
+		if err == nil {
+			defer notFoundImage.Close()
+			_, _ = io.Copy(writer, notFoundImage)
+		} else {
+			fmt.Fprintln(writer, "404 page not found")
+		}
+		writer.WriteHeader(http.StatusNotFound)
 		return nil
 	}
 
@@ -65,8 +76,9 @@ func (fh AlbumArtworkHandler) find(writer http.ResponseWriter, req *http.Request
 
 // NewAlbumArtworkHandler returns a new Album artwork handler.
 // It needs an implementaion of the ArtworkFinder.
-func NewAlbumArtworkHandler(artworkFinder library.ArtworkFinder) *AlbumArtworkHandler {
-	aah := new(AlbumArtworkHandler)
-	aah.artworkFinder = artworkFinder
-	return aah
+func NewAlbumArtworkHandler(artworkFinder library.ArtworkFinder, notFoundImagePath string) *AlbumArtworkHandler {
+	return &AlbumArtworkHandler{
+		artworkFinder: artworkFinder,
+		notFoundPath:  notFoundImagePath,
+	}
 }

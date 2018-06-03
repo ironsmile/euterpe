@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -59,10 +60,12 @@ func (srv *Server) Serve() {
 }
 
 func (srv *Server) serveGoroutine() {
+	notFoundAlbumImage := filepath.Join(srv.cfg.HTTPRoot, "images", "unknownAlbum.png")
+
 	staticFilesHandler := http.FileServer(http.Dir(srv.cfg.HTTPRoot))
 	searchHandler := NewSearchHandler(srv.library)
 	albumHandler := NewAlbumHandler(srv.library)
-	albumArtworkHandler := NewAlbumArtworkHandler(srv.library)
+	albumArtworkHandler := NewAlbumArtworkHandler(srv.library, notFoundAlbumImage)
 	browseHandler := NewBrowseHandler(srv.library)
 	mediaFileHandler := NewFileHandler(srv.library)
 
