@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/gorilla/mux"
 	"github.com/ironsmile/httpms/src/library"
 )
 
@@ -25,7 +26,9 @@ func (fh FileHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 // Uses http.FileServer for serving the found files
 func (fh FileHandler) find(writer http.ResponseWriter, req *http.Request) error {
 
-	id, err := strconv.Atoi(req.URL.Path)
+	vars := mux.Vars(req)
+
+	id, err := strconv.Atoi(vars["fileID"])
 
 	if err != nil {
 		http.NotFoundHandler().ServeHTTP(writer, req)

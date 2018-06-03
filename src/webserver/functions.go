@@ -68,8 +68,7 @@ type HandlerFuncWithError func(http.ResponseWriter, *http.Request) error
 // the html.
 func InternalErrorOnErrorHandler(writer http.ResponseWriter, req *http.Request,
 	fnc HandlerFuncWithError) {
-	withErrorHandling := WithInternalError(fnc)
-	withErrorHandling(writer, req)
+	WithInternalError(fnc)(writer, req)
 }
 
 // WithInternalError converts HandlerFuncWithError to http.HandlerFunc by making sure

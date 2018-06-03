@@ -22,9 +22,7 @@ type AlbumHandler struct {
 
 // ServeHTTP is required by the http.Handler's interface
 func (fh AlbumHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
-	router := mux.NewRouter()
-	router.HandleFunc("/", WithInternalError(fh.find))
-	router.ServeHTTP(writer, req)
+	WithInternalError(fh.find)(writer, req)
 }
 
 // Actually searches through the library for this album
@@ -32,7 +30,15 @@ func (fh AlbumHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) 
 // all the files for this album.
 func (fh AlbumHandler) find(writer http.ResponseWriter, req *http.Request) error {
 
-	id, err := strconv.Atoi(req.URL.Path)
+	vars := mux.Vars(req)
+	idString, ok := vars["albumID"]
+
+	if !ok {
+		http.NotFoundHandler().ServeHTTP(writer, req)
+		return nil
+	}
+
+	id, err := strconv.Atoi(idString)
 
 	if err != nil {
 		http.NotFoundHandler().ServeHTTP(writer, req)

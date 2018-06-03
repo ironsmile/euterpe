@@ -285,20 +285,6 @@ func TestUserAuthentication(t *testing.T) {
 	if resp.StatusCode != 401 {
 		t.Errorf("Expected 401 but got: %d", resp.StatusCode)
 	}
-
-	// Make sure the is not HTTP Basic Auth for getting media files
-	url = fmt.Sprintf("http://127.0.0.1:%d/file/1", TestPort)
-	resp, err = http.Get(url)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode == 401 {
-		t.Errorf("Media files were protected with basic authentication")
-	}
 }
 
 func TestSearchUrl(t *testing.T) {
@@ -507,7 +493,7 @@ func TestGzipEncoding(t *testing.T) {
 			}
 
 			if string(responseBody) != "This is a static file" {
-				t.Errorf("Returned file was not the one expected")
+				t.Errorf("Served file was not the expected. It was:\n%s", responseBody)
 			}
 		}
 	}
@@ -542,7 +528,6 @@ func TestGzipEncoding(t *testing.T) {
 	}
 
 	testGzipResponse(tests)
-
 }
 
 func TestFileNameHeaders(t *testing.T) {
