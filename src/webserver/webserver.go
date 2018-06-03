@@ -37,7 +37,7 @@ type Server struct {
 	listener net.Listener
 
 	// This server's library with media
-	library library.Library
+	library *library.LocalLibrary
 
 	// Makes the server lockable. This lock should be used for accessing the
 	// listener
@@ -62,6 +62,7 @@ func (srv *Server) serveGoroutine() {
 	staticFilesHandler := http.FileServer(http.Dir(srv.cfg.HTTPRoot))
 	searchHandler := NewSearchHandler(srv.library)
 	albumHandler := NewAlbumHandler(srv.library)
+	albumArtworkHandler := NewAlbumArtworkHandler(srv.library)
 	browseHandler := NewBrowseHandler(srv.library)
 	mediaFileHandler := NewFileHandler(srv.library)
 
@@ -69,6 +70,7 @@ func (srv *Server) serveGoroutine() {
 	router.StrictSlash(true)
 	router.UseEncodedPath()
 	router.Handle("/file/{fileID}", mediaFileHandler).Methods("GET")
+	router.Handle("/album/{albumID}/artwork", albumArtworkHandler).Methods("GET")
 	router.Handle("/album/{albumID}", albumHandler).Methods("GET")
 	router.Handle("/browse", browseHandler).Methods("GET")
 	router.Handle("/search/{searchQuery}", searchHandler).Methods("GET")
@@ -78,12 +80,10 @@ func (srv *Server) serveGoroutine() {
 	handler := NewTerryHandler(router)
 
 	if srv.cfg.Gzip {
-		log.Println("Adding gzip handler")
 		handler = NewGzipHandler(handler)
 	}
 
 	if srv.cfg.Auth {
-		log.Println("Adding basich auth handler")
 		handler = BasicAuthHandler{
 			handler,
 			srv.cfg.Authenticate.User,
@@ -199,7 +199,7 @@ func (srv *Server) Wait() {
 
 // NewServer Returns a new Server using the supplied configuration cfg. The returned
 // server is ready and calling its Serve method will start it.
-func NewServer(ctx context.Context, cfg config.Config, lib library.Library) *Server {
+func NewServer(ctx context.Context, cfg config.Config, lib *library.LocalLibrary) *Server {
 	ctx, cancelCtx := context.WithCancel(ctx)
 	return &Server{
 		ctx:        ctx,

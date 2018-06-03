@@ -86,7 +86,7 @@ func SetupPidFileAndSignals(pidFile string, stopFunc context.CancelFunc) {
 // For the moment this is a LocalLibrary which will place its sqlite db file
 // in the UserPath directory
 func getLibrary(ctx context.Context, userPath string,
-	cfg config.Config) (library.Library, error) {
+	cfg config.Config) (*library.LocalLibrary, error) {
 
 	dbPath := helpers.AbsolutePath(cfg.SqliteDatabase, userPath)
 	lib, err := library.NewLocalLibrary(ctx, dbPath)

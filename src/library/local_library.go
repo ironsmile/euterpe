@@ -48,6 +48,12 @@ var (
 	// When `true`, scanning will be as fast as possible. This may generate high
 	// IO load for the duration of the scan.
 	LibraryFastScan bool
+
+	// ErrAlbumNotFound is returned when no album could be found fr partilcuar operation.
+	ErrAlbumNotFound = errors.New("Album Not Found")
+
+	// ErrArtworkNotFound is returned when no artwork can be found for particular album.
+	ErrArtworkNotFound = errors.New("Artwork Not Found")
 )
 
 func init() {
@@ -583,11 +589,38 @@ func (lib *LocalLibrary) GetAlbumFSPathByName(albumName string) ([]string, error
 	}
 
 	if len(paths) < 1 {
-		return nil, errors.New("Album not found")
+		return nil, ErrAlbumNotFound
 	}
 
 	return paths, nil
+}
 
+// GetAlbumFSPathByID returns the album path by its ID
+func (lib *LocalLibrary) GetAlbumFSPathByID(albumID int64) (string, error) {
+	row, err := lib.db.Query(`
+		SELECT
+			fs_path
+		FROM
+			albums
+		WHERE
+			id = ?
+	`, albumID)
+
+	if err != nil {
+		return "", err
+	}
+
+	defer row.Close()
+
+	var albumPath string
+	for row.Next() {
+		if err := row.Scan(&albumPath); err != nil {
+			return "", err
+		}
+		return albumPath, nil
+	}
+
+	return "", ErrAlbumNotFound
 }
 
 // GetTrackID returns the id for this track. When missing or on error returns that error.
