@@ -54,8 +54,8 @@ func (aah AlbumArtworkHandler) find(writer http.ResponseWriter, req *http.Reques
 			_, _ = io.Copy(writer, notFoundImage)
 		} else {
 			fmt.Fprintln(writer, "404 page not found")
+			writer.WriteHeader(http.StatusNotFound)
 		}
-		writer.WriteHeader(http.StatusNotFound)
 		return nil
 	}
 
