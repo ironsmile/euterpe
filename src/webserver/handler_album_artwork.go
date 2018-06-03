@@ -40,7 +40,7 @@ func (aah AlbumArtworkHandler) find(writer http.ResponseWriter, req *http.Reques
 	id, err := strconv.Atoi(idString)
 
 	if err != nil {
-		fmt.Fprintln(writer, "Bad request. Parsing albumID: %s", err)
+		fmt.Fprintf(writer, "Bad request. Parsing albumID: %s\n", err)
 		writer.WriteHeader(http.StatusBadRequest)
 		return nil
 	}
