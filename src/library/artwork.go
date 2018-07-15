@@ -44,8 +44,10 @@ func (lib *LocalLibrary) GetAlbumArtwork(albumID int64) (io.ReadCloser, error) {
 		return nil, ErrArtworkNotFound
 	}
 
-	var selectedArtwork string
-	var score int
+	var (
+		selectedArtwork string
+		score           int
+	)
 
 	for _, path := range possibleArtworks {
 		pathScore := 5
