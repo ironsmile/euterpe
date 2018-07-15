@@ -76,7 +76,10 @@ func (aah AlbumArtworkHandler) find(writer http.ResponseWriter, req *http.Reques
 
 // NewAlbumArtworkHandler returns a new Album artwork handler.
 // It needs an implementaion of the ArtworkFinder.
-func NewAlbumArtworkHandler(artworkFinder library.ArtworkFinder, notFoundImagePath string) *AlbumArtworkHandler {
+func NewAlbumArtworkHandler(
+	artworkFinder library.ArtworkFinder,
+	notFoundImagePath string,
+) *AlbumArtworkHandler {
 	return &AlbumArtworkHandler{
 		artworkFinder: artworkFinder,
 		notFoundPath:  notFoundImagePath,
