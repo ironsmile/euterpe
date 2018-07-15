@@ -40,26 +40,34 @@ func (aah AlbumArtworkHandler) find(writer http.ResponseWriter, req *http.Reques
 	id, err := strconv.Atoi(idString)
 
 	if err != nil {
-		fmt.Fprintf(writer, "Bad request. Parsing albumID: %s\n", err)
 		writer.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(writer, "Bad request. Parsing albumID: %s\n", err)
 		return nil
 	}
 
-	imgReader, err := aah.artworkFinder.GetAlbumArtwork(int64(id))
+	imgReader, err := aah.artworkFinder.FindAndSaveAlbumArtwork(int64(id))
 
 	if err != nil && err == library.ErrArtworkNotFound {
 		notFoundImage, err := os.Open(aah.notFoundPath)
 		if err == nil {
 			defer notFoundImage.Close()
+			//!TODO: return Status Code Not Found here. But unfortunately
+			// because of the gzip handler on WriteHeader here the gzip
+			// headers could not be send as well. We need some deferred response
+			// writer here. One which caches its WriteHeader status code and
+			// sends it only once Write is called.
+			// writer.WriteHeader(http.StatusNotFound)
 			_, _ = io.Copy(writer, notFoundImage)
 		} else {
-			fmt.Fprintln(writer, "404 page not found")
+			log.Printf("Error opening not-found image: %s\n", err)
 			writer.WriteHeader(http.StatusNotFound)
+			fmt.Fprintln(writer, "404 page not found")
 		}
 		return nil
 	}
 
 	if err != nil {
+		log.Printf("Error finding album artwork: %s\n", err)
 		return err
 	}
 

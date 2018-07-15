@@ -6,6 +6,6 @@ import "io"
 // in the local library.
 type ArtworkFinder interface {
 
-	// GetAlbumArtwork returns the artwork for a particular album by its ID.
-	GetAlbumArtwork(albumID int64) (io.ReadCloser, error)
+	// FindAndSaveAlbumArtwork returns the artwork for a particular album by its ID.
+	FindAndSaveAlbumArtwork(albumID int64) (io.ReadCloser, error)
 }

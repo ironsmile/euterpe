@@ -54,6 +54,11 @@ var (
 
 	// ErrArtworkNotFound is returned when no artwork can be found for particular album.
 	ErrArtworkNotFound = errors.New("Artwork Not Found")
+
+	// ErrCachedArtworkNotFound is returned when the database has been queried and
+	// its cache says the artwork was not found in the recent past. No need to continue
+	// searching further once you receive this error.
+	ErrCachedArtworkNotFound = errors.New("Artwork Not Found")
 )
 
 func init() {
@@ -719,19 +724,18 @@ func (lib *LocalLibrary) lastInsertID() (int64, error) {
 // sqlite database file and creates one if it is absent. If a file is found
 // it does nothing.
 func (lib *LocalLibrary) Initialize() error {
+	if lib.db == nil {
+		return errors.New("library is not opened, call its Open method first")
+	}
 
 	if st, err := os.Stat(lib.database); err == nil && st.Size() > 0 {
-		return nil
+		return lib.applyMigrations()
 	}
 
 	sqlSchema, err := lib.readSchema()
 
 	if err != nil {
 		return err
-	}
-
-	if lib.db == nil {
-		return errors.New("library is not opened, call its Open method first")
 	}
 
 	queries := strings.Split(sqlSchema, ";")
@@ -750,7 +754,7 @@ func (lib *LocalLibrary) Initialize() error {
 		}
 	}
 
-	return nil
+	return lib.applyMigrations()
 }
 
 // Returns the SQL schema for the library. It is stored in the project root directory
