@@ -140,7 +140,7 @@ func (srv *Server) listenAndServe() error {
 		return err
 	}
 	srv.listener = lsn
-	log.Println("Webserver started.")
+	log.Printf("Webserver started on http://%s\n", addr)
 	srv.startWG.Done()
 	return srv.httpSrv.Serve(lsn)
 }
@@ -180,7 +180,7 @@ func (srv *Server) listenAndServeTLS(certFile, keyFile string) error {
 
 	tlsListener := tls.NewListener(conn, config)
 	srv.listener = tlsListener
-	log.Println("Webserver started.")
+	log.Printf("Webserver started on https://%s\n", addr)
 	srv.startWG.Done()
 	return srv.httpSrv.Serve(tlsListener)
 }
