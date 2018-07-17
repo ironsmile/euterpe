@@ -1,7 +1,6 @@
 package library
 
 import (
-	"bytes"
 	"database/sql"
 	"io"
 	"io/ioutil"
@@ -81,7 +80,7 @@ func (lib *LocalLibrary) saveAlbumArtwork(
 		return nil, err
 	}
 
-	return newBytesReadCloser(bytes.NewReader(buff)), nil
+	return newBytesReadCloser(buff), nil
 }
 
 func (lib *LocalLibrary) saveAlbumArtworkNotFound(albumID int64) error {
@@ -140,7 +139,7 @@ func (lib *LocalLibrary) albumArtworkFromDB(albumID int64) (io.ReadCloser, error
 		return nil, ErrCachedArtworkNotFound
 	}
 
-	return newBytesReadCloser(bytes.NewReader(buff)), nil
+	return newBytesReadCloser(buff), nil
 }
 
 func (lib *LocalLibrary) albumArtworkFromFS(albumID int64) (io.ReadCloser, error) {
