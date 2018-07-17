@@ -63,7 +63,7 @@ func (lib *LocalLibrary) saveAlbumArtwork(
 	}
 
 	stmt, err := lib.db.Prepare(`
-			INSERT INTO
+			INSERT OR REPLACE INTO
 				albums_artworks (album_id, artwork_cover, updated_at)
 			VALUES
 				(?, ?, ?)
@@ -86,7 +86,7 @@ func (lib *LocalLibrary) saveAlbumArtwork(
 
 func (lib *LocalLibrary) saveAlbumArtworkNotFound(albumID int64) error {
 	stmt, err := lib.db.Prepare(`
-			INSERT INTO
+			INSERT OR REPLACE INTO
 				albums_artworks (album_id, updated_at)
 			VALUES
 				(?, ?)

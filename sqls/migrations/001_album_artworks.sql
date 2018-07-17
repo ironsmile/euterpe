@@ -2,7 +2,7 @@
 
 create table `albums_artworks` (
     `id` integer not null primary key, 
-    `album_id` integer,
+    `album_id` integer unique,
     `artwork_cover` blob default null,
     `updated_at` integer
 );
