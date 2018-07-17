@@ -30,6 +30,10 @@ import (
 //
 // !TODO: Make sure there is no race conditions while getting/saving artwork for
 // particular album.
+//
+// !TODO: Do work by using some kind of pool with workers. If there are many calls
+// for FindAndSaveAlbumArtwork we don't want to make as many HTTP and/or database
+// connections. Or maybe a semaphore?
 func (lib *LocalLibrary) FindAndSaveAlbumArtwork(albumID int64) (io.ReadCloser, error) {
 	reader, err := lib.albumArtworkFromDB(albumID)
 	if err == ErrCachedArtworkNotFound {

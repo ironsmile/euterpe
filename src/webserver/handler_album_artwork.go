@@ -51,7 +51,7 @@ func (aah AlbumArtworkHandler) find(writer http.ResponseWriter, req *http.Reques
 		notFoundImage, err := os.Open(aah.notFoundPath)
 		if err == nil {
 			defer notFoundImage.Close()
-			//!TODO: return Status Code Not Found here. But unfortunately
+			// !TODO: return Status Code Not Found here. But unfortunately
 			// because of the gzip handler on WriteHeader here the gzip
 			// headers could not be send as well. We need some deferred response
 			// writer here. One which caches its WriteHeader status code and
