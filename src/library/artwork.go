@@ -42,6 +42,9 @@ func (lib *LocalLibrary) FindAndSaveAlbumArtwork(albumID int64) (io.ReadCloser, 
 		return reader, err
 	}
 
+	lib.aquireArtworkSem()
+	defer lib.releaseArtworkSem()
+
 	reader, err = lib.albumArtworkFromFS(albumID)
 	if err == nil {
 		return lib.saveAlbumArtwork(albumID, reader)
@@ -54,6 +57,14 @@ func (lib *LocalLibrary) FindAndSaveAlbumArtwork(albumID int64) (io.ReadCloser, 
 	}
 
 	return nil, ErrArtworkNotFound
+}
+
+func (lib *LocalLibrary) aquireArtworkSem() {
+	lib.artworkSem <- struct{}{}
+}
+
+func (lib *LocalLibrary) releaseArtworkSem() {
+	<-lib.artworkSem
 }
 
 func (lib *LocalLibrary) saveAlbumArtwork(

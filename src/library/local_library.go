@@ -84,6 +84,10 @@ type LocalLibrary struct {
 	mediaChan    chan string
 	mediaWritten chan struct{}
 
+	// artworkSem is used to make sure there are no more than certain amount
+	// of artwork resolution tasks at a given moment.
+	artworkSem chan struct{}
+
 	// Directory watcher
 	watch     *fsnotify.Watcher
 	watchLock *sync.RWMutex
@@ -819,6 +823,7 @@ func NewLocalLibrary(ctx context.Context, databasePath string) (*LocalLibrary, e
 
 	lib.mediaChan = make(chan string)
 	lib.mediaWritten = make(chan struct{})
+	lib.artworkSem = make(chan struct{}, 10)
 
 	lib.dbWriterWG.Add(1)
 	go lib.databaseWriter()
