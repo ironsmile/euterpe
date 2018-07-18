@@ -2,6 +2,7 @@ package library
 
 import (
 	"database/sql"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -10,6 +11,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/ironsmile/httpms/ca"
 )
 
 // FindAndSaveAlbumArtwork implements the ArtworkFinder interface for the local library.
@@ -50,6 +53,15 @@ func (lib *LocalLibrary) FindAndSaveAlbumArtwork(albumID int64) (io.ReadCloser, 
 		return lib.saveAlbumArtwork(albumID, reader)
 	} else if err != ErrArtworkNotFound {
 		return nil, err
+	}
+
+	reader, err = lib.albumArtworkFromInternet(albumID)
+	if err == nil {
+		return lib.saveAlbumArtwork(albumID, reader)
+	}
+
+	if err != ca.ErrImageNotFound {
+		log.Printf("Finding album on the internet error: %s\n", err)
 	}
 
 	if err := lib.saveAlbumArtworkNotFound(albumID); err != nil {
@@ -118,6 +130,74 @@ func (lib *LocalLibrary) saveAlbumArtworkNotFound(albumID int64) error {
 	}
 
 	return nil
+}
+
+func (lib *LocalLibrary) albumArtworkFromInternet(albumID int64) (io.ReadCloser, error) {
+	row, err := lib.db.Query(`
+		SELECT
+			name
+		FROM
+			albums
+		WHERE
+			id = ?
+	`, albumID)
+
+	if err != nil {
+		return nil, fmt.Errorf("query database: %s", err)
+	}
+
+	defer func(row *sql.Rows) {
+		row.Close()
+	}(row)
+
+	if !row.Next() {
+		return nil, ErrAlbumNotFound
+	}
+
+	var albumName string
+	if err := row.Scan(&albumName); err != nil {
+		return nil, fmt.Errorf("scanning db result: %s", err)
+	}
+
+	row, err = lib.db.Query(`
+		SELECT
+			a.name,
+			COUNT(*) as cnt
+		FROM tracks AS t
+		LEFT JOIN artists AS a ON a.id = t.artist_id
+		WHERE album_id = ?
+		GROUP BY artist_id
+		ORDER BY cnt DESC
+		LIMIT 1;
+	`, albumID)
+
+	if err != nil {
+		return nil, fmt.Errorf("query database: %s", err)
+	}
+
+	defer func(row *sql.Rows) {
+		row.Close()
+	}(row)
+
+	var (
+		artistName string
+		count      int
+	)
+	if row.Next() {
+		if err := row.Scan(&artistName, &count); err != nil {
+			return nil, fmt.Errorf("scanning db result: %s", err)
+		}
+	}
+
+	cover, err := ca.GetFrontImage(artistName, albumName)
+	if err == ca.ErrImageNotFound {
+		return nil, ErrArtworkNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return newBytesReadCloser(cover.Data), nil
 }
 
 func (lib *LocalLibrary) albumArtworkFromDB(albumID int64) (io.ReadCloser, error) {

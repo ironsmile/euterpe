@@ -47,7 +47,7 @@ func (aah AlbumArtworkHandler) find(writer http.ResponseWriter, req *http.Reques
 
 	imgReader, err := aah.artworkFinder.FindAndSaveAlbumArtwork(int64(id))
 
-	if err != nil && err == library.ErrArtworkNotFound {
+	if err != nil && err == library.ErrArtworkNotFound || os.IsNotExist(err) {
 		notFoundImage, err := os.Open(aah.notFoundPath)
 		if err == nil {
 			defer notFoundImage.Close()
