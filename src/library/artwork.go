@@ -61,7 +61,7 @@ func (lib *LocalLibrary) FindAndSaveAlbumArtwork(albumID int64) (io.ReadCloser, 
 	}
 
 	if err != ca.ErrImageNotFound {
-		log.Printf("Finding album on the internet error: %s\n", err)
+		log.Printf("Finding album %d artwork on the internet error: %s\n", albumID, err)
 	}
 
 	if err := lib.saveAlbumArtworkNotFound(albumID); err != nil {
