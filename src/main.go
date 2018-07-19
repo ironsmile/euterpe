@@ -8,10 +8,14 @@ package src
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"time"
+
+	"github.com/ironsmile/httpms/ca"
 
 	"github.com/ironsmile/httpms/src/config"
 	"github.com/ironsmile/httpms/src/daemon"
@@ -30,6 +34,10 @@ var (
 
 	// ShowVersion would be true when the -v flag is used
 	ShowVersion bool
+)
+
+const (
+	userAgentFormat = "HTTP Media Server/%s (github.com/ironsmile/httpms)"
 )
 
 func init() {
@@ -86,7 +94,7 @@ func SetupPidFileAndSignals(pidFile string, stopFunc context.CancelFunc) {
 // For the moment this is a LocalLibrary which will place its sqlite db file
 // in the UserPath directory
 func getLibrary(ctx context.Context, userPath string,
-	cfg config.Config) (library.Library, error) {
+	cfg config.Config) (*library.LocalLibrary, error) {
 
 	dbPath := helpers.AbsolutePath(cfg.SqliteDatabase, userPath)
 	lib, err := library.NewLocalLibrary(ctx, dbPath)
@@ -105,6 +113,12 @@ func getLibrary(ctx context.Context, userPath string,
 
 	for _, path := range cfg.Libraries {
 		lib.AddLibraryPath(path)
+	}
+
+	if cfg.DownloadArtwork {
+		useragent := fmt.Sprintf(userAgentFormat, Version)
+		caf := ca.NewClient(useragent, time.Second)
+		lib.SetCoverArtFinder(caf)
 	}
 
 	return lib, nil

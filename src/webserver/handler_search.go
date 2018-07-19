@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/gorilla/mux"
 	"github.com/ironsmile/httpms/src/library"
 )
 
@@ -37,7 +38,8 @@ func (sh SearchHandler) search(writer http.ResponseWriter, req *http.Request) er
 	if query == "" {
 		var err error
 
-		query, err = url.QueryUnescape(req.URL.Path)
+		vars := mux.Vars(req)
+		query, err = url.QueryUnescape(vars["searchQuery"])
 
 		if err != nil {
 			return err

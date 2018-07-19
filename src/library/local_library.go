@@ -21,6 +21,7 @@ import (
 	// from the golang documentation.
 	_ "github.com/mattn/go-sqlite3"
 
+	"github.com/ironsmile/httpms/ca"
 	"github.com/ironsmile/httpms/src/config"
 	"github.com/ironsmile/httpms/src/helpers"
 )
@@ -48,7 +49,37 @@ var (
 	// When `true`, scanning will be as fast as possible. This may generate high
 	// IO load for the duration of the scan.
 	LibraryFastScan bool
+
+	// ErrAlbumNotFound is returned when no album could be found fr partilcuar operation.
+	ErrAlbumNotFound = errors.New("Album Not Found")
+
+	// ErrArtworkNotFound is returned when no artwork can be found for particular album.
+	ErrArtworkNotFound = NewArtworkError("Artwork Not Found")
+
+	// ErrCachedArtworkNotFound is returned when the database has been queried and
+	// its cache says the artwork was not found in the recent past. No need to continue
+	// searching further once you receive this error.
+	ErrCachedArtworkNotFound = NewArtworkError("Artwork Not Found (Cached)")
+
+	// ErrArtworkTooBig is returned from operation when the artwork is too big for it to
+	// handle.
+	ErrArtworkTooBig = NewArtworkError("Artwork Is Too Big")
 )
+
+// ArtworkError represents some kind of artwork error.
+type ArtworkError struct {
+	Err string
+}
+
+// Error implements the error interface.
+func (a *ArtworkError) Error() string {
+	return a.Err
+}
+
+// NewArtworkError returns a new artwork error which will have `err` as message.
+func NewArtworkError(err string) *ArtworkError {
+	return &ArtworkError{Err: err}
+}
 
 func init() {
 	flag.BoolVar(&LibraryFastScan, "fast-library-scan", false, "Do not honour"+
@@ -73,6 +104,10 @@ type LocalLibrary struct {
 	mediaChan    chan string
 	mediaWritten chan struct{}
 
+	// artworkSem is used to make sure there are no more than certain amount
+	// of artwork resolution tasks at a given moment.
+	artworkSem chan struct{}
+
 	// Directory watcher
 	watch     *fsnotify.Watcher
 	watchLock *sync.RWMutex
@@ -88,6 +123,8 @@ type LocalLibrary struct {
 	waitScanLock  sync.RWMutex
 
 	watcherWG sync.WaitGroup
+
+	coverArtFinder ca.CovertArtFinder
 }
 
 // Close closes the database connection. It is safe to call it as many times as you want.
@@ -583,11 +620,38 @@ func (lib *LocalLibrary) GetAlbumFSPathByName(albumName string) ([]string, error
 	}
 
 	if len(paths) < 1 {
-		return nil, errors.New("Album not found")
+		return nil, ErrAlbumNotFound
 	}
 
 	return paths, nil
+}
 
+// GetAlbumFSPathByID returns the album path by its ID
+func (lib *LocalLibrary) GetAlbumFSPathByID(albumID int64) (string, error) {
+	row, err := lib.db.Query(`
+		SELECT
+			fs_path
+		FROM
+			albums
+		WHERE
+			id = ?
+	`, albumID)
+
+	if err != nil {
+		return "", err
+	}
+
+	defer row.Close()
+
+	var albumPath string
+	for row.Next() {
+		if err := row.Scan(&albumPath); err != nil {
+			return "", err
+		}
+		return albumPath, nil
+	}
+
+	return "", ErrAlbumNotFound
 }
 
 // GetTrackID returns the id for this track. When missing or on error returns that error.
@@ -686,19 +750,18 @@ func (lib *LocalLibrary) lastInsertID() (int64, error) {
 // sqlite database file and creates one if it is absent. If a file is found
 // it does nothing.
 func (lib *LocalLibrary) Initialize() error {
+	if lib.db == nil {
+		return errors.New("library is not opened, call its Open method first")
+	}
 
 	if st, err := os.Stat(lib.database); err == nil && st.Size() > 0 {
-		return nil
+		return lib.applyMigrations()
 	}
 
 	sqlSchema, err := lib.readSchema()
 
 	if err != nil {
 		return err
-	}
-
-	if lib.db == nil {
-		return errors.New("library is not opened, call its Open method first")
 	}
 
 	queries := strings.Split(sqlSchema, ";")
@@ -717,7 +780,7 @@ func (lib *LocalLibrary) Initialize() error {
 		}
 	}
 
-	return nil
+	return lib.applyMigrations()
 }
 
 // Returns the SQL schema for the library. It is stored in the project root directory
@@ -757,6 +820,11 @@ func (lib *LocalLibrary) Truncate() error {
 	return os.Remove(lib.database)
 }
 
+// SetCoverArtFinder bind a particular ca.CoverArtFinder to this library.
+func (lib *LocalLibrary) SetCoverArtFinder(caf ca.CovertArtFinder) {
+	lib.coverArtFinder = caf
+}
+
 // NewLocalLibrary returns a new LocalLibrary which will use for database the file
 // specified by databasePath. Also creates the database connection so you does not
 // need to worry about that. It accepts the parent's context and create its own
@@ -782,6 +850,7 @@ func NewLocalLibrary(ctx context.Context, databasePath string) (*LocalLibrary, e
 
 	lib.mediaChan = make(chan string)
 	lib.mediaWritten = make(chan struct{})
+	lib.artworkSem = make(chan struct{}, 10)
 
 	lib.dbWriterWG.Add(1)
 	go lib.databaseWriter()

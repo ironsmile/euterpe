@@ -9,5 +9,6 @@
     "read_timeout": 15,
     "write_timeout": 1200,
     "max_header_bytes": 1048576,
-    "http_root": "http_root"
+    "http_root": "http_root",
+    "download_artwork": false
 }

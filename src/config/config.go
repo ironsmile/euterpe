@@ -31,21 +31,22 @@ const DefaultConfigName = "config.default.json"
 
 // Config contains representation for everything in config.json
 type Config struct {
-	Listen         string      `json:"listen"`
-	SSL            bool        `json:"ssl"`
-	SSLCertificate Cert        `json:"ssl_certificate"`
-	Auth           bool        `json:"basic_authenticate"`
-	Authenticate   Auth        `json:"authentication"`
-	Libraries      []string    `json:"libraries"`
-	LibraryScan    ScanSection `json:"library_scan"`
-	UserPath       string      `json:"user_path"`
-	LogFile        string      `json:"log_file"`
-	SqliteDatabase string      `json:"sqlite_database"`
-	Gzip           bool        `json:"gzip"`
-	ReadTimeout    int         `json:"read_timeout"`
-	WriteTimeout   int         `json:"write_timeout"`
-	MaxHeadersSize int         `json:"max_header_bytes"`
-	HTTPRoot       string      `json:"http_root"`
+	Listen          string      `json:"listen"`
+	SSL             bool        `json:"ssl"`
+	SSLCertificate  Cert        `json:"ssl_certificate"`
+	Auth            bool        `json:"basic_authenticate"`
+	Authenticate    Auth        `json:"authentication"`
+	Libraries       []string    `json:"libraries"`
+	LibraryScan     ScanSection `json:"library_scan"`
+	UserPath        string      `json:"user_path"`
+	LogFile         string      `json:"log_file"`
+	SqliteDatabase  string      `json:"sqlite_database"`
+	Gzip            bool        `json:"gzip"`
+	ReadTimeout     int         `json:"read_timeout"`
+	WriteTimeout    int         `json:"write_timeout"`
+	MaxHeadersSize  int         `json:"max_header_bytes"`
+	HTTPRoot        string      `json:"http_root"`
+	DownloadArtwork bool        `json:"download_artwork"`
 }
 
 // MergedConfig is used for merging one config over the other. I need the zero value
@@ -56,21 +57,22 @@ type Config struct {
 // Unfortunately this leads to repetition since MergedConfig must have the same
 // fields in the same order as Config.
 type MergedConfig struct {
-	Listen         *string      `json:"listen"`
-	SSL            *bool        `json:"ssl"`
-	SSLCertificate *Cert        `json:"ssl_certificate"`
-	Auth           *bool        `json:"basic_authenticate"`
-	Authenticate   *Auth        `json:"authentication"`
-	Libraries      *[]string    `json:"libraries"`
-	LibraryScan    *ScanSection `json:"library_scan"`
-	UserPath       *string      `json:"user_path"`
-	LogFile        *string      `json:"log_file"`
-	SqliteDatabase *string      `json:"sqlite_database"`
-	Gzip           *bool        `json:"gzip"`
-	ReadTimeout    *int         `json:"read_timeout"`
-	WriteTimeout   *int         `json:"write_timeout"`
-	MaxHeadersSize *int         `json:"max_header_bytes"`
-	HTTPRoot       *string      `json:"http_root"`
+	Listen          *string      `json:"listen"`
+	SSL             *bool        `json:"ssl"`
+	SSLCertificate  *Cert        `json:"ssl_certificate"`
+	Auth            *bool        `json:"basic_authenticate"`
+	Authenticate    *Auth        `json:"authentication"`
+	Libraries       *[]string    `json:"libraries"`
+	LibraryScan     *ScanSection `json:"library_scan"`
+	UserPath        *string      `json:"user_path"`
+	LogFile         *string      `json:"log_file"`
+	SqliteDatabase  *string      `json:"sqlite_database"`
+	Gzip            *bool        `json:"gzip"`
+	ReadTimeout     *int         `json:"read_timeout"`
+	WriteTimeout    *int         `json:"write_timeout"`
+	MaxHeadersSize  *int         `json:"max_header_bytes"`
+	HTTPRoot        *string      `json:"http_root"`
+	DownloadArtwork *bool        `json:"download_artwork"`
 }
 
 // ScanSection is used for merging the two configs. Its purpose is to essentially

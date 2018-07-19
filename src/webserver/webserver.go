@@ -8,9 +8,11 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"path/filepath"
 	"sync"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/ironsmile/httpms/src/config"
 	"github.com/ironsmile/httpms/src/library"
 )
@@ -36,7 +38,7 @@ type Server struct {
 	listener net.Listener
 
 	// This server's library with media
-	library library.Library
+	library *library.LocalLibrary
 
 	// Makes the server lockable. This lock should be used for accessing the
 	// listener
@@ -58,22 +60,38 @@ func (srv *Server) Serve() {
 }
 
 func (srv *Server) serveGoroutine() {
-	mux := http.NewServeMux()
+	notFoundAlbumImage := filepath.Join(srv.cfg.HTTPRoot, "images", "unknownAlbum.png")
 
-	mux.Handle("/", srv.withBasicAuth(http.FileServer(http.Dir(srv.cfg.HTTPRoot))))
-	searchHandler := srv.withBasicAuth(NewSearchHandler(srv.library))
-	mux.Handle("/search/", http.StripPrefix("/search/", searchHandler))
-	mux.Handle("/file/", http.StripPrefix("/file/", NewFileHandler(srv.library)))
-	albumHandler := srv.withBasicAuth(NewAlbumHandler(srv.library))
-	mux.Handle("/album/", http.StripPrefix("/album/", albumHandler))
-	browseHandler := srv.withBasicAuth(NewBrowseHandler(srv.library))
-	mux.Handle("/browse/", http.StripPrefix("/browse/", browseHandler))
+	staticFilesHandler := http.FileServer(http.Dir(srv.cfg.HTTPRoot))
+	searchHandler := NewSearchHandler(srv.library)
+	albumHandler := NewAlbumHandler(srv.library)
+	artoworkHandler := NewAlbumArtworkHandler(srv.library, notFoundAlbumImage)
+	browseHandler := NewBrowseHandler(srv.library)
+	mediaFileHandler := NewFileHandler(srv.library)
 
-	handler := NewTerryHandler(mux)
+	router := mux.NewRouter()
+	router.StrictSlash(true)
+	router.UseEncodedPath()
+	router.Handle("/file/{fileID}", mediaFileHandler).Methods("GET")
+	router.Handle("/album/{albumID}/artwork", artoworkHandler).Methods("GET", "PUT", "DELETE")
+	router.Handle("/album/{albumID}", albumHandler).Methods("GET")
+	router.Handle("/browse", browseHandler).Methods("GET")
+	router.Handle("/search/{searchQuery}", searchHandler).Methods("GET")
+	router.Handle("/search", searchHandler).Methods("GET")
+	router.PathPrefix("/").Handler(staticFilesHandler).Methods("GET")
+
+	handler := NewTerryHandler(router)
 
 	if srv.cfg.Gzip {
-		log.Println("Adding gzip handler")
 		handler = NewGzipHandler(handler)
+	}
+
+	if srv.cfg.Auth {
+		handler = BasicAuthHandler{
+			handler,
+			srv.cfg.Authenticate.User,
+			srv.cfg.Authenticate.Password,
+		}
 	}
 
 	handler = func(h http.Handler) http.Handler {
@@ -110,18 +128,6 @@ func (srv *Server) serveGoroutine() {
 	srv.cancelFunc()
 }
 
-func (srv *Server) withBasicAuth(handler http.Handler) http.Handler {
-	if !srv.cfg.Auth {
-		return handler
-	}
-
-	return BasicAuthHandler{
-		handler,
-		srv.cfg.Authenticate.User,
-		srv.cfg.Authenticate.Password,
-	}
-}
-
 // Uses our own listener to make our server stoppable. Similar to
 // net.http.Server.ListenAndServer only this version saves a reference to the listener
 func (srv *Server) listenAndServe() error {
@@ -134,7 +140,7 @@ func (srv *Server) listenAndServe() error {
 		return err
 	}
 	srv.listener = lsn
-	log.Println("Webserver started.")
+	log.Printf("Webserver started on http://%s\n", addr)
 	srv.startWG.Done()
 	return srv.httpSrv.Serve(lsn)
 }
@@ -174,7 +180,7 @@ func (srv *Server) listenAndServeTLS(certFile, keyFile string) error {
 
 	tlsListener := tls.NewListener(conn, config)
 	srv.listener = tlsListener
-	log.Println("Webserver started.")
+	log.Printf("Webserver started on https://%s\n", addr)
 	srv.startWG.Done()
 	return srv.httpSrv.Serve(tlsListener)
 }
@@ -196,7 +202,7 @@ func (srv *Server) Wait() {
 
 // NewServer Returns a new Server using the supplied configuration cfg. The returned
 // server is ready and calling its Serve method will start it.
-func NewServer(ctx context.Context, cfg config.Config, lib library.Library) *Server {
+func NewServer(ctx context.Context, cfg config.Config, lib *library.LocalLibrary) *Server {
 	ctx, cancelCtx := context.WithCancel(ctx)
 	return &Server{
 		ctx:        ctx,
