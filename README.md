@@ -51,7 +51,7 @@ Requirements
 ======
 If you want to install it from source (from here) you will need:
 
-* [Go](http://golang.org/) 1.5 or later [installed and properly configured](http://golang.org/doc/install).
+* [Go](http://golang.org/) 1.10 or later [installed and properly configured](http://golang.org/doc/install).
 
 * [go-taglib](https://github.com/landr0id/go-taglib) - Read the [install notes](https://github.com/landr0id/go-taglib#install)
 
