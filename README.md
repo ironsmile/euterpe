@@ -158,7 +158,12 @@ When started for the first time HTTPMS will create one for you. Here is an examp
 
         // After each "operation", sleep this amount of time.
         "sleep_after_operation": "15ms"
-    }
+    },
+
+    // When true, HTTPMS will search Cover Art Archive for album artworks when none is
+    // found locally. Anything found will be saved in the HTTPMS database and later used
+    // instead of further calls to the archive.
+    "download_artwork": true
 }
 ```
 

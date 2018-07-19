@@ -115,9 +115,11 @@ func getLibrary(ctx context.Context, userPath string,
 		lib.AddLibraryPath(path)
 	}
 
-	useragent := fmt.Sprintf(userAgentFormat, Version)
-	caf := ca.NewClient(useragent, time.Second)
-	lib.SetCoverArtFinder(caf)
+	if cfg.DownloadArtwork {
+		useragent := fmt.Sprintf(userAgentFormat, Version)
+		caf := ca.NewClient(useragent, time.Second)
+		lib.SetCoverArtFinder(caf)
+	}
 
 	return lib, nil
 }
