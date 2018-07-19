@@ -42,6 +42,7 @@ Features
 * Interface and media via HTTPS
 * HTTP Basic Authenticate
 * Playlists
+* Media artwork from local files or automatically downloaded from the [Cover Art Archive](https://musicbrainz.org/doc/Cover_Art_Archive)
 * Search by track name, artist or album
 * Download whole album in a zip file with one click
 * Controllable via media keys in OSX with the help of [BeardedSpice](https://beardedspice.github.io/)
@@ -147,9 +148,9 @@ When started for the first time HTTPMS will create one for you. Here is an examp
     // Optional configuration on how to scan libraries. Note that this configuration
     // is applied to each library separately.
     "library_scan": {
-        // Will wait this mutch time before actually starting to scan a library.
+        // Will wait this much time before actually starting to scan a library.
         // This might be useful when scanning is resource hungry operation and you
-        // want to postpone it on startup.
+        // want to postpone it on start up.
         "initial_wait_duration": "1s",
         
         // With this option a "operation" is defined by this number of scanned files.
@@ -226,7 +227,7 @@ For the moment there are two possible values for the `by` parameter. Consequentl
 
 **by=artist**
 
-would resulst in value such as
+would result in value such as
 
 ```js
 {
@@ -253,7 +254,7 @@ _per-page_: controls how many items would be present in the `data` field for eve
 
 _page_: the generated data would be for this page. The **default is 1**.
 
-_order-by_: controls how the resulst would be ordered. The value `id` means the ordering would be done by the album or artist ID, depending on the `by` argument. The same goes for the `name` value. **Defaults to `name`**.
+_order-by_: controls how the results would be ordered. The value `id` means the ordering would be done by the album or artist ID, depending on the `by` argument. The same goes for the `name` value. **Defaults to `name`**.
 
 _order_: controls if the order would ascending (with value `asc`) or descending (with value `desc`). **Defaults to `asc`**.
 
@@ -277,12 +278,37 @@ This endpoint would return you an archive which contains the songs of the whole 
 
 ### Album Artwork
 
+HTTPMS supports album artwork. Here are all the methods for managing it through the API.
+
+#### Get Artwork
+
 ```sh
 GET /album/{albumID}/artwork
 ```
 
 Returns a bitmap image with artwork for this album if one is available. Searching for artwork works like this: the album's directory would be scanned for any images (png/jpeg/gif/tiff files) and if anyone of them looks like an artwork, it would be shown. If this fails, you can configure HTTPMS to search in the [MusicBrainz Cover Art Archive](https://musicbrainz.org/doc/Cover_Art_Archive/). By default no external calls are made.
 
+#### Upload Artwork
+
+```sh
+PUT /album/{albumID}/artwork
+```
+
+Can be used to upload artwork directly on the HTTPMS server. This artwork will be stored in the server database and will not create any files in the library paths. The image should  be send in the body of the request in binary format without any transformations. Only images up to 5MB are accepted. Example:
+
+```sh
+curl -i -X PUT \
+  --data-binary @/path/to/file.jpg \
+  http://127.0.0.1:9996/album/18/artwork
+```
+
+#### Remove Artwork
+
+```sh
+DELETE /album/{albumID}/artwork
+```
+
+Will remove the artwork from the server database. Note, this will not touch any files on the file system. Thus it is futile to call it for artwork which was found on disk.
 
 Media Keys Control For OSX
 ======

@@ -21,6 +21,7 @@ import (
 	// from the golang documentation.
 	_ "github.com/mattn/go-sqlite3"
 
+	"github.com/ironsmile/httpms/ca"
 	"github.com/ironsmile/httpms/src/config"
 	"github.com/ironsmile/httpms/src/helpers"
 )
@@ -53,13 +54,32 @@ var (
 	ErrAlbumNotFound = errors.New("Album Not Found")
 
 	// ErrArtworkNotFound is returned when no artwork can be found for particular album.
-	ErrArtworkNotFound = errors.New("Artwork Not Found")
+	ErrArtworkNotFound = NewArtworkError("Artwork Not Found")
 
 	// ErrCachedArtworkNotFound is returned when the database has been queried and
 	// its cache says the artwork was not found in the recent past. No need to continue
 	// searching further once you receive this error.
-	ErrCachedArtworkNotFound = errors.New("Artwork Not Found")
+	ErrCachedArtworkNotFound = NewArtworkError("Artwork Not Found (Cached)")
+
+	// ErrArtworkTooBig is returned from operation when the artwork is too big for it to
+	// handle.
+	ErrArtworkTooBig = NewArtworkError("Artwork Is Too Big")
 )
+
+// ArtworkError represents some kind of artwork error.
+type ArtworkError struct {
+	Err string
+}
+
+// Error implements the error interface.
+func (a *ArtworkError) Error() string {
+	return a.Err
+}
+
+// NewArtworkError returns a new artwork error which will have `err` as message.
+func NewArtworkError(err string) *ArtworkError {
+	return &ArtworkError{Err: err}
+}
 
 func init() {
 	flag.BoolVar(&LibraryFastScan, "fast-library-scan", false, "Do not honour"+
@@ -103,6 +123,8 @@ type LocalLibrary struct {
 	waitScanLock  sync.RWMutex
 
 	watcherWG sync.WaitGroup
+
+	coverArtFinder ca.CovertArtFinder
 }
 
 // Close closes the database connection. It is safe to call it as many times as you want.
@@ -796,6 +818,11 @@ func (lib *LocalLibrary) Truncate() error {
 	}
 
 	return os.Remove(lib.database)
+}
+
+// SetCoverArtFinder bind a particular ca.CoverArtFinder to this library.
+func (lib *LocalLibrary) SetCoverArtFinder(caf ca.CovertArtFinder) {
+	lib.coverArtFinder = caf
 }
 
 // NewLocalLibrary returns a new LocalLibrary which will use for database the file

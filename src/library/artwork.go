@@ -1,6 +1,7 @@
 package library
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"io"
@@ -15,7 +16,7 @@ import (
 	"github.com/ironsmile/httpms/ca"
 )
 
-// FindAndSaveAlbumArtwork implements the ArtworkFinder interface for the local library.
+// FindAndSaveAlbumArtwork implements the ArtworkManager interface for the local library.
 // It would return a previously found artwork if any or try to find one in the
 // filesystem or _on the internet_! This function returns ReadCloser and the caller
 // is resposible for freeing the used resources by calling Close().
@@ -32,35 +33,42 @@ import (
 // nicely contained in the app's database.
 //
 // !TODO: Make sure there is no race conditions while getting/saving artwork for
-// particular album.
-//
-// !TODO: Do work by using some kind of pool with workers. If there are many calls
-// for FindAndSaveAlbumArtwork we don't want to make as many HTTP and/or database
-// connections. Or maybe a semaphore?
-func (lib *LocalLibrary) FindAndSaveAlbumArtwork(albumID int64) (io.ReadCloser, error) {
-	reader, err := lib.albumArtworkFromDB(albumID)
+// particular album. Wink, wink, the database.
+func (lib *LocalLibrary) FindAndSaveAlbumArtwork(
+	ctx context.Context,
+	albumID int64,
+) (io.ReadCloser, error) {
+	reader, err := lib.albumArtworkFromDB(ctx, albumID)
 	if err == ErrCachedArtworkNotFound {
 		return nil, ErrArtworkNotFound
 	} else if err == nil || err != ErrArtworkNotFound {
 		return reader, err
 	}
 
-	lib.aquireArtworkSem()
+	if err := lib.aquireArtworkSem(ctx); err != nil {
+		// When error is returned it means that the semaphore was not acquired.
+		// So we can return safely without releaseing it.
+		return nil, err
+	}
 	defer lib.releaseArtworkSem()
 
-	reader, err = lib.albumArtworkFromFS(albumID)
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	reader, err = lib.albumArtworkFromFS(ctx, albumID)
 	if err == nil {
 		return lib.saveAlbumArtwork(albumID, reader)
 	} else if err != ErrArtworkNotFound {
 		return nil, err
 	}
 
-	reader, err = lib.albumArtworkFromInternet(albumID)
+	reader, err = lib.albumArtworkFromInternet(ctx, albumID)
 	if err == nil {
 		return lib.saveAlbumArtwork(albumID, reader)
 	}
 
-	if err != ca.ErrImageNotFound {
+	if err != ca.ErrImageNotFound && err != ErrArtworkNotFound {
 		log.Printf("Finding album %d artwork on the internet error: %s\n", albumID, err)
 	}
 
@@ -71,8 +79,15 @@ func (lib *LocalLibrary) FindAndSaveAlbumArtwork(albumID int64) (io.ReadCloser, 
 	return nil, ErrArtworkNotFound
 }
 
-func (lib *LocalLibrary) aquireArtworkSem() {
-	lib.artworkSem <- struct{}{}
+// Used to limit the concurrent requests for getting artwork. On error the semaphore
+// is not acquired. The caller *must not* try to release it.
+func (lib *LocalLibrary) aquireArtworkSem(ctx context.Context) error {
+	select {
+	case lib.artworkSem <- struct{}{}:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 func (lib *LocalLibrary) releaseArtworkSem() {
@@ -83,6 +98,8 @@ func (lib *LocalLibrary) saveAlbumArtwork(
 	albumID int64,
 	artwork io.ReadCloser,
 ) (io.ReadCloser, error) {
+	defer artwork.Close()
+
 	buff, err := ioutil.ReadAll(artwork)
 	if err != nil {
 		return nil, err
@@ -132,8 +149,15 @@ func (lib *LocalLibrary) saveAlbumArtworkNotFound(albumID int64) error {
 	return nil
 }
 
-func (lib *LocalLibrary) albumArtworkFromInternet(albumID int64) (io.ReadCloser, error) {
-	row, err := lib.db.Query(`
+func (lib *LocalLibrary) albumArtworkFromInternet(
+	ctx context.Context,
+	albumID int64,
+) (io.ReadCloser, error) {
+	if lib.coverArtFinder == nil {
+		return nil, ErrArtworkNotFound
+	}
+
+	row, err := lib.db.QueryContext(ctx, `
 		SELECT
 			name
 		FROM
@@ -159,7 +183,7 @@ func (lib *LocalLibrary) albumArtworkFromInternet(albumID int64) (io.ReadCloser,
 		return nil, fmt.Errorf("scanning db result: %s", err)
 	}
 
-	row, err = lib.db.Query(`
+	row, err = lib.db.QueryContext(ctx, `
 		SELECT
 			a.name,
 			COUNT(*) as cnt
@@ -189,7 +213,7 @@ func (lib *LocalLibrary) albumArtworkFromInternet(albumID int64) (io.ReadCloser,
 		}
 	}
 
-	cover, err := ca.GetFrontImage(artistName, albumName)
+	cover, err := lib.coverArtFinder.GetFrontImage(ctx, artistName, albumName)
 	if err == ca.ErrImageNotFound {
 		return nil, ErrArtworkNotFound
 	}
@@ -200,8 +224,11 @@ func (lib *LocalLibrary) albumArtworkFromInternet(albumID int64) (io.ReadCloser,
 	return newBytesReadCloser(cover.Data), nil
 }
 
-func (lib *LocalLibrary) albumArtworkFromDB(albumID int64) (io.ReadCloser, error) {
-	smt, err := lib.db.Prepare(`
+func (lib *LocalLibrary) albumArtworkFromDB(
+	ctx context.Context,
+	albumID int64,
+) (io.ReadCloser, error) {
+	smt, err := lib.db.PrepareContext(ctx, `
 		SELECT
 			artwork_cover,
 			updated_at
@@ -222,7 +249,7 @@ func (lib *LocalLibrary) albumArtworkFromDB(albumID int64) (io.ReadCloser, error
 		unixTime int64
 	)
 
-	err = smt.QueryRow(albumID).Scan(&buff, &unixTime)
+	err = smt.QueryRowContext(ctx, albumID).Scan(&buff, &unixTime)
 	if err == sql.ErrNoRows {
 		return nil, ErrArtworkNotFound
 	} else if err != nil {
@@ -237,7 +264,10 @@ func (lib *LocalLibrary) albumArtworkFromDB(albumID int64) (io.ReadCloser, error
 	return newBytesReadCloser(buff), nil
 }
 
-func (lib *LocalLibrary) albumArtworkFromFS(albumID int64) (io.ReadCloser, error) {
+func (lib *LocalLibrary) albumArtworkFromFS(
+	ctx context.Context,
+	albumID int64,
+) (io.ReadCloser, error) {
 	albumPath, err := lib.GetAlbumFSPathByID(albumID)
 
 	if err != nil {
@@ -248,6 +278,10 @@ func (lib *LocalLibrary) albumArtworkFromFS(albumID int64) (io.ReadCloser, error
 	var possibleArtworks []string
 
 	err = filepath.Walk(albumPath, func(path string, info os.FileInfo, err error) error {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
 		if err != nil {
 			return err
 		}
@@ -275,6 +309,10 @@ func (lib *LocalLibrary) albumArtworkFromFS(albumID int64) (io.ReadCloser, error
 	)
 
 	for _, path := range possibleArtworks {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
 		pathScore := 5
 
 		fileBase := strings.ToLower(filepath.Base(path))
@@ -298,4 +336,66 @@ func (lib *LocalLibrary) albumArtworkFromFS(albumID int64) (io.ReadCloser, error
 	}
 
 	return os.Open(selectedArtwork)
+}
+
+// SaveAlbumArtwork implements the ArtworkManager interface for the local library.
+//
+// It saves the artwork in `r` in the database. It will read up to 5MB of data from
+// `r` and if this limit is reached, the artwork is considered too big and will not
+// be saved in the db.
+func (lib *LocalLibrary) SaveAlbumArtwork(
+	ctx context.Context,
+	albumID int64,
+	r io.Reader,
+) error {
+	var readLimit int64 = 5 * 1024 * 1024
+
+	lr := &io.LimitedReader{
+		R: r,
+		N: readLimit,
+	}
+
+	buff, err := ioutil.ReadAll(lr)
+	if err != nil && err != io.EOF {
+		return fmt.Errorf(
+			"reading the request body for storing album %d: %s",
+			albumID,
+			err,
+		)
+	}
+
+	if int64(len(buff)) >= readLimit {
+		return ErrArtworkTooBig
+	}
+
+	if len(buff) == 0 {
+		return NewArtworkError("uploaded artwork is empty")
+	}
+
+	stmt, err := lib.db.Prepare(`
+			INSERT OR REPLACE INTO
+				albums_artworks (album_id, artwork_cover, updated_at)
+			VALUES
+				(?, ?, ?)
+	`)
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(albumID, buff, time.Now().Unix())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// RemoveAlbumArtwork removes the artwork from the library database.
+//
+// Note that this operation does not make sense for artwork which came from disk. Because
+// future requests will find it again and store in the database.
+func (lib *LocalLibrary) RemoveAlbumArtwork(ctx context.Context, albumID int64) error {
+	return lib.saveAlbumArtworkNotFound(albumID)
 }

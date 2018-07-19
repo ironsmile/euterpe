@@ -8,10 +8,14 @@ package src
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"time"
+
+	"github.com/ironsmile/httpms/ca"
 
 	"github.com/ironsmile/httpms/src/config"
 	"github.com/ironsmile/httpms/src/daemon"
@@ -30,6 +34,10 @@ var (
 
 	// ShowVersion would be true when the -v flag is used
 	ShowVersion bool
+)
+
+const (
+	userAgentFormat = "HTTP Media Server/%s (github.com/ironsmile/httpms)"
 )
 
 func init() {
@@ -106,6 +114,10 @@ func getLibrary(ctx context.Context, userPath string,
 	for _, path := range cfg.Libraries {
 		lib.AddLibraryPath(path)
 	}
+
+	useragent := fmt.Sprintf(userAgentFormat, Version)
+	caf := ca.NewClient(useragent, time.Second)
+	lib.SetCoverArtFinder(caf)
 
 	return lib, nil
 }

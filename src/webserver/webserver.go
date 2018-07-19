@@ -65,7 +65,7 @@ func (srv *Server) serveGoroutine() {
 	staticFilesHandler := http.FileServer(http.Dir(srv.cfg.HTTPRoot))
 	searchHandler := NewSearchHandler(srv.library)
 	albumHandler := NewAlbumHandler(srv.library)
-	albumArtworkHandler := NewAlbumArtworkHandler(srv.library, notFoundAlbumImage)
+	artoworkHandler := NewAlbumArtworkHandler(srv.library, notFoundAlbumImage)
 	browseHandler := NewBrowseHandler(srv.library)
 	mediaFileHandler := NewFileHandler(srv.library)
 
@@ -73,7 +73,7 @@ func (srv *Server) serveGoroutine() {
 	router.StrictSlash(true)
 	router.UseEncodedPath()
 	router.Handle("/file/{fileID}", mediaFileHandler).Methods("GET")
-	router.Handle("/album/{albumID}/artwork", albumArtworkHandler).Methods("GET")
+	router.Handle("/album/{albumID}/artwork", artoworkHandler).Methods("GET", "PUT", "DELETE")
 	router.Handle("/album/{albumID}", albumHandler).Methods("GET")
 	router.Handle("/browse", browseHandler).Methods("GET")
 	router.Handle("/search/{searchQuery}", searchHandler).Methods("GET")
