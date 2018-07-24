@@ -63,7 +63,7 @@ func (lib *LocalLibrary) scanPath(scannedPath string) {
 		}
 
 		if lib.isSupportedFormat(path) {
-			lib.writeInDb(path)
+			lib.AddMedia(path)
 		}
 
 		lib.watchLock.RLock()
