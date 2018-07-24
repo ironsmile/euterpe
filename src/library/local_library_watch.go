@@ -108,7 +108,7 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 
 	if event.IsCreate() && !st.IsDir() {
 		if lib.isSupportedFormat(event.Name) {
-			lib.writeInDb(event.Name)
+			lib.AddMedia(event.Name)
 		}
 		return
 	}
@@ -116,7 +116,7 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 	if event.IsModify() && !st.IsDir() {
 		if lib.isSupportedFormat(event.Name) {
 			lib.removeFile(event.Name)
-			lib.writeInDb(event.Name)
+			lib.AddMedia(event.Name)
 		}
 		return
 	}

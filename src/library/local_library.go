@@ -10,7 +10,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 
@@ -99,10 +98,9 @@ type LocalLibrary struct {
 	db       *sql.DB        // Database handler
 	walkWG   sync.WaitGroup // Used to log how much time scanning took
 
-	// If something needs to be added to the database from the watcher
-	// it should use this channel
-	mediaChan    chan string
-	mediaWritten chan struct{}
+	// If something needs to work with the database it has to construct
+	// a DatabaseExecutable and send it through this channel.
+	dbExecutes chan DatabaseExecutable
 
 	// artworkSem is used to make sure there are no more than certain amount
 	// of artwork resolution tasks at a given moment.
@@ -112,8 +110,8 @@ type LocalLibrary struct {
 	watch     *fsnotify.Watcher
 	watchLock *sync.RWMutex
 
-	// Used to signal when the database writer has stopped
-	dbWriterWG sync.WaitGroup
+	// Used to signal when the database worker has stopped
+	dbWorkerWG sync.WaitGroup
 
 	ctx           context.Context
 	ctxCancelFunc context.CancelFunc
@@ -130,6 +128,8 @@ type LocalLibrary struct {
 // Close closes the database connection. It is safe to call it as many times as you want.
 func (lib *LocalLibrary) Close() {
 	lib.stop()
+	lib.ctxCancelFunc()
+	lib.dbWorkerWG.Wait()
 	lib.db.Close()
 }
 
@@ -150,11 +150,7 @@ func (lib *LocalLibrary) stop() {
 	lib.walkWG.Wait()
 	lib.waitScanLock.RUnlock()
 
-	lib.ctxCancelFunc()
 	lib.watcherWG.Wait()
-	lib.dbWriterWG.Wait()
-	close(lib.mediaChan)
-	close(lib.mediaWritten)
 }
 
 // AddLibraryPath adds a library directory to the list of libraries which will be
@@ -172,111 +168,152 @@ func (lib *LocalLibrary) AddLibraryPath(path string) {
 
 // Search searches in the library. Will match against the track's name, artist and album.
 func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
-	var output []SearchResult
-
 	searchTerm = fmt.Sprintf("%%%s%%", searchTerm)
 
-	rows, err := lib.db.Query(`
-		SELECT
-			t.id as track_id,
-			t.name as track,
-			al.name as album,
-			at.name as artist,
-			t.number as track_number,
-			t.album_id as album_id
-		FROM
-			tracks as t
-				LEFT JOIN albums as al ON al.id = t.album_id
-				LEFT JOIN artists as at ON at.id = t.artist_id
-		WHERE
-			t.name LIKE ? OR
-			al.name LIKE ? OR
-			at.name LIKE ?
-		ORDER BY
-			al.name, t.number
-	`, searchTerm, searchTerm, searchTerm)
+	var output []SearchResult
+	done := make(chan struct{})
+	defer close(done)
 
-	if err != nil {
-		log.Printf("Query not successful: %s\n", err.Error())
+	work := func(db *sql.DB) error {
+		defer func() {
+			done <- struct{}{}
+		}()
+
+		rows, err := db.Query(`
+			SELECT
+				t.id as track_id,
+				t.name as track,
+				al.name as album,
+				at.name as artist,
+				t.number as track_number,
+				t.album_id as album_id
+			FROM
+				tracks as t
+					LEFT JOIN albums as al ON al.id = t.album_id
+					LEFT JOIN artists as at ON at.id = t.artist_id
+			WHERE
+				t.name LIKE ? OR
+				al.name LIKE ? OR
+				at.name LIKE ?
+			ORDER BY
+				al.name, t.number
+		`, searchTerm, searchTerm, searchTerm)
+		if err != nil {
+			log.Printf("Query not successful: %s\n", err.Error())
+			return nil
+		}
+
+		defer rows.Close()
+		for rows.Next() {
+			var res SearchResult
+			rows.Scan(&res.ID, &res.Title, &res.Album, &res.Artist,
+				&res.TrackNumber, &res.AlbumID)
+			output = append(output, res)
+		}
+
+		return nil
+	}
+	if err := lib.executeDBJob(work); err != nil {
+		log.Printf("Error executing search db work: %s", err)
 		return output
 	}
 
-	defer rows.Close()
-	for rows.Next() {
-		var res SearchResult
-		rows.Scan(&res.ID, &res.Title, &res.Album, &res.Artist,
-			&res.TrackNumber, &res.AlbumID)
-		output = append(output, res)
-	}
-
+	<-done
 	return output
 }
 
 // GetFilePath returns the filsystem path for a file specified by its ID.
 func (lib *LocalLibrary) GetFilePath(ID int64) string {
-
-	smt, err := lib.db.Prepare(`
-		SELECT
-			fs_path
-		FROM
-			tracks
-		WHERE
-			id = ?
-	`)
-
-	if err != nil {
-		log.Printf("Error getting file path: %s\n", err)
-		return ""
-	}
-
-	defer smt.Close()
-
 	var filePath string
-	err = smt.QueryRow(ID).Scan(&filePath)
+	done := make(chan struct{})
+	defer close(done)
 
-	if err != nil {
-		log.Println(err)
-		return ""
+	work := func(db *sql.DB) error {
+		defer func() {
+			done <- struct{}{}
+		}()
+
+		smt, err := db.Prepare(`
+			SELECT
+				fs_path
+			FROM
+				tracks
+			WHERE
+				id = ?
+		`)
+		if err != nil {
+			log.Printf("Error getting file path: %s\n", err)
+			return nil
+		}
+
+		defer smt.Close()
+
+		err = smt.QueryRow(ID).Scan(&filePath)
+		if err != nil {
+			log.Printf("Error file path query row: %s\n", err)
+			return nil
+		}
+
+		return nil
+	}
+	if err := lib.executeDBJob(work); err != nil {
+		log.Printf("Error executing get file path db work: %s", err)
+		return filePath
 	}
 
+	<-done
 	return filePath
 }
 
 // GetAlbumFiles satisfies the Library interface
 func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []SearchResult {
 	var output []SearchResult
+	done := make(chan struct{})
+	defer close(done)
 
-	rows, err := lib.db.Query(`
-		SELECT
-			t.id as track_id,
-			t.name as track,
-			al.name as album,
-			at.name as artist,
-			t.number as track_number,
-			t.album_id as album_id
-		FROM
-			tracks as t
-				LEFT JOIN albums as al ON al.id = t.album_id
-				LEFT JOIN artists as at ON at.id = t.artist_id
-		WHERE
-			t.album_id = ?
-		ORDER BY
-			al.name, t.number
-	`, albumID)
+	work := func(db *sql.DB) error {
+		defer func() {
+			done <- struct{}{}
+		}()
 
-	if err != nil {
-		log.Printf("Query not successful: %s\n", err.Error())
+		rows, err := db.Query(`
+			SELECT
+				t.id as track_id,
+				t.name as track,
+				al.name as album,
+				at.name as artist,
+				t.number as track_number,
+				t.album_id as album_id
+			FROM
+				tracks as t
+					LEFT JOIN albums as al ON al.id = t.album_id
+					LEFT JOIN artists as at ON at.id = t.artist_id
+			WHERE
+				t.album_id = ?
+			ORDER BY
+				al.name, t.number
+		`, albumID)
+		if err != nil {
+			log.Printf("Query not successful: %s\n", err.Error())
+			return nil
+		}
+
+		defer rows.Close()
+		for rows.Next() {
+			var res SearchResult
+			rows.Scan(&res.ID, &res.Title, &res.Album, &res.Artist,
+				&res.TrackNumber, &res.AlbumID)
+			output = append(output, res)
+		}
+
+		return nil
+	}
+	if err := lib.executeDBJob(work); err != nil {
+		log.Printf("Error executing get album files db work: %s", err)
 		return output
 	}
 
-	defer rows.Close()
-	for rows.Next() {
-		var res SearchResult
-		rows.Scan(&res.ID, &res.Title, &res.Album, &res.Artist,
-			&res.TrackNumber, &res.AlbumID)
-		output = append(output, res)
-	}
-
+	<-done
 	return output
 }
 
@@ -291,14 +328,30 @@ func (lib *LocalLibrary) removeFile(filePath string) {
 		return
 	}
 
-	_, err = lib.db.Exec(`
-		DELETE FROM tracks
-		WHERE fs_path = ?
-	`, fullPath)
+	done := make(chan struct{})
+	defer close(done)
 
-	if err != nil {
-		log.Printf("Error removing %s: %s\n", fullPath, err.Error())
+	work := func(db *sql.DB) error {
+		defer func() {
+			done <- struct{}{}
+		}()
+
+		_, err = db.Exec(`
+			DELETE FROM tracks
+			WHERE fs_path = ?
+		`, fullPath)
+		if err != nil {
+			log.Printf("Error removing %s: %s\n", fullPath, err.Error())
+		}
+
+		return nil
 	}
+	if err := lib.executeDBJob(work); err != nil {
+		log.Printf("Error executing remove file db work: %s", err)
+		return
+	}
+
+	<-done
 }
 
 // Removes files which belong in this directory from the library.
@@ -307,47 +360,30 @@ func (lib *LocalLibrary) removeDirectory(dirPath string) {
 	// Adding slash at the end to make sure we are always removing directories
 	deleteMatch := fmt.Sprintf("%s/%%", strings.TrimRight(dirPath, "/"))
 
-	_, err := lib.db.Exec(`
-		DELETE FROM tracks
-		WHERE fs_path LIKE ?
-	`, deleteMatch)
+	done := make(chan struct{})
+	defer close(done)
 
-	if err != nil {
-		log.Printf("Error removing %s: %s\n", dirPath, err.Error())
-	}
-}
+	work := func(db *sql.DB) error {
+		defer func() {
+			done <- struct{}{}
+		}()
 
-// Reads from the media channel and saves into the database every file
-// received.
-func (lib *LocalLibrary) databaseWriter() {
-	defer lib.dbWriterWG.Done()
-	runtime.LockOSThread()
-
-	for {
-		select {
-		case filename, ok := <-lib.mediaChan:
-			if !ok {
-				return
-			}
-
-			if err := lib.AddMedia(filename); err != nil {
-				log.Printf("Error adding `%s` to library: %s\n", filename, err)
-			}
-
-			lib.mediaWritten <- struct{}{}
-		case <-lib.ctx.Done():
-			return
+		_, err := db.Exec(`
+			DELETE FROM tracks
+			WHERE fs_path LIKE ?
+		`, deleteMatch)
+		if err != nil {
+			log.Printf("Error removing %s: %s\n", dirPath, err.Error())
 		}
-	}
-}
 
-func (lib *LocalLibrary) writeInDb(media string) {
-	select {
-	case lib.mediaChan <- media:
-		<-lib.mediaWritten
-	case <-lib.ctx.Done():
+		return nil
+	}
+	if err := lib.executeDBJob(work); err != nil {
+		log.Printf("Error executing remove dir db work: %s", err)
 		return
 	}
+
+	<-done
 }
 
 // Determines if the file will be saved to the database. Only media files which
@@ -430,58 +466,90 @@ func (lib *LocalLibrary) insertMediaIntoDatabase(file MediaFile, filePath string
 // MediaExistsInLibrary checks if the media file with file system path "filename" has
 // been added to the library already.
 func (lib *LocalLibrary) MediaExistsInLibrary(filename string) bool {
-	smt, err := lib.db.Prepare(`
-		SELECT
-			count(id)
-		FROM
-			tracks
-		WHERE
-			fs_path = ?
-	`)
+	res := make(chan bool)
+	defer close(res)
 
-	if err != nil {
-		log.Printf("could not prepare sql statement: %s", err)
+	work := func(db *sql.DB) error {
+		smt, err := db.Prepare(`
+			SELECT
+				count(id)
+			FROM
+				tracks
+			WHERE
+				fs_path = ?
+		`)
+		if err != nil {
+			res <- false
+			return fmt.Errorf("could not prepare sql statement: %s", err)
+		}
+		defer smt.Close()
+
+		var count int
+		err = smt.QueryRow(filename).Scan(&count)
+
+		if err != nil {
+			res <- false
+			return fmt.Errorf("error checking whether media exists already: %s", err)
+		}
+
+		res <- (count >= 1)
+		return nil
+	}
+	if err := lib.executeDBJob(work); err != nil {
+		log.Printf("Error on executing db job: %s", err)
 		return false
 	}
-	defer smt.Close()
 
-	var count int
-	err = smt.QueryRow(filename).Scan(&count)
-
-	if err != nil {
-		log.Printf("error checking whether media exists already: %s", err)
-		return false
-	}
-
-	return count >= 1
+	return <-res
 }
 
 // GetArtistID returns the id for this artist. When missing or on error
 // returns that error.
 func (lib *LocalLibrary) GetArtistID(artist string) (int64, error) {
-	smt, err := lib.db.Prepare(`
-		SELECT
-			id
-		FROM
-			artists
-		WHERE
-			name = ?
-	`)
+	var (
+		artistID int64
+		outErr   error
+	)
+	done := make(chan struct{})
+	defer close(done)
 
-	if err != nil {
+	work := func(db *sql.DB) error {
+		defer func() {
+			done <- struct{}{}
+		}()
+
+		smt, err := db.Prepare(`
+			SELECT
+				id
+			FROM
+				artists
+			WHERE
+				name = ?
+		`)
+		if err != nil {
+			outErr = err
+			return nil
+		}
+
+		defer smt.Close()
+
+		var id int64
+		err = smt.QueryRow(artist).Scan(&id)
+
+		if err != nil {
+			outErr = err
+			return nil
+		}
+
+		artistID = id
+		return nil
+	}
+	if err := lib.executeDBJob(work); err != nil {
 		return 0, err
 	}
 
-	defer smt.Close()
-
-	var id int64
-	err = smt.QueryRow(artist).Scan(&id)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return id, nil
+	<-done
+	return artistID, outErr
 }
 
 // Sets a new ID for this artist if it is new to the library. If not, returns
@@ -492,64 +560,99 @@ func (lib *LocalLibrary) setArtistID(artist string) (int64, error) {
 	}
 
 	id, err := lib.GetArtistID(artist)
-
 	if err == nil {
 		return id, nil
 	}
 
-	stmt, err := lib.db.Prepare(`
-			INSERT INTO
-				artists (name)
-			VALUES
-				(?)
-	`)
+	var (
+		newID  int64
+		outErr error
+	)
+	done := make(chan struct{})
+	defer close(done)
+	work := func(db *sql.DB) error {
+		defer func() {
+			done <- struct{}{}
+		}()
 
-	if err != nil {
+		stmt, err := db.Prepare(`
+				INSERT INTO
+					artists (name)
+				VALUES
+					(?)
+		`)
+		if err != nil {
+			outErr = err
+			return nil
+		}
+
+		defer stmt.Close()
+
+		_, err = stmt.Exec(artist)
+		if err != nil {
+			outErr = err
+			return nil
+		}
+
+		newID, outErr = lastInsertID(db)
+		log.Printf("Inserted artist id: %d, name: %s\n", newID, artist)
+		return nil
+	}
+	if err := lib.executeDBJob(work); err != nil {
 		return 0, err
 	}
 
-	defer stmt.Close()
-
-	_, err = stmt.Exec(artist)
-
-	if err != nil {
-		return 0, err
-	}
-
-	newID, err := lib.lastInsertID()
-
-	log.Printf("Inserted artist id: %d, name: %s\n", newID, artist)
-
-	return newID, err
+	<-done
+	return newID, outErr
 }
 
 // GetAlbumID returns the id for this album. When missing or on error
 // returns that error.
 func (lib *LocalLibrary) GetAlbumID(album string, fsPath string) (int64, error) {
-	smt, err := lib.db.Prepare(`
-		SELECT
-			id
-		FROM
-			albums
-		WHERE
-			name = ? AND
-			fs_path = ?
-	`)
+	var (
+		albumID int64
+		outErr  error
+	)
+	done := make(chan struct{})
+	defer close(done)
 
-	if err != nil {
+	work := func(db *sql.DB) error {
+		defer func() {
+			done <- struct{}{}
+		}()
+
+		smt, err := db.Prepare(`
+			SELECT
+				id
+			FROM
+				albums
+			WHERE
+				name = ? AND
+				fs_path = ?
+		`)
+		if err != nil {
+			outErr = err
+			return nil
+		}
+
+		defer smt.Close()
+
+		var id int64
+		err = smt.QueryRow(album, fsPath).Scan(&id)
+		if err != nil {
+			outErr = err
+			return nil
+		}
+
+		albumID = id
+		return nil
+	}
+	if err := lib.executeDBJob(work); err != nil {
 		return 0, err
 	}
 
-	defer smt.Close()
-
-	var id int64
-	err = smt.QueryRow(album, fsPath).Scan(&id)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return id, nil
+	<-done
+	return albumID, outErr
 }
 
 // Sets a new ID for this album if it is new to the library. If not, returns
@@ -561,127 +664,202 @@ func (lib *LocalLibrary) setAlbumID(album string, fsPath string) (int64, error) 
 	}
 
 	id, err := lib.GetAlbumID(album, fsPath)
-
 	if err == nil {
 		return id, nil
 	}
 
-	stmt, err := lib.db.Prepare(`
-			INSERT INTO
-				albums (name, fs_path)
-			VALUES
-				(?, ?)
-	`)
+	var (
+		newID  int64
+		outErr error
+	)
+	done := make(chan struct{})
+	defer close(done)
 
-	if err != nil {
+	work := func(db *sql.DB) error {
+		defer func() {
+			done <- struct{}{}
+		}()
+
+		stmt, err := db.Prepare(`
+				INSERT INTO
+					albums (name, fs_path)
+				VALUES
+					(?, ?)
+		`)
+		if err != nil {
+			outErr = err
+			return nil
+		}
+
+		defer stmt.Close()
+
+		_, err = stmt.Exec(album, fsPath)
+		if err != nil {
+			outErr = err
+			return nil
+		}
+
+		newID, outErr = lastInsertID(db)
+		log.Printf("Inserted album id: %d, name: %s, path: %s\n", newID, album, fsPath)
+
+		return nil
+	}
+	if err := lib.executeDBJob(work); err != nil {
 		return 0, err
 	}
 
-	defer stmt.Close()
-
-	_, err = stmt.Exec(album, fsPath)
-
-	if err != nil {
-		return 0, err
-	}
-
-	newID, err := lib.lastInsertID()
-
-	log.Printf("Inserted album id: %d, name: %s, path: %s\n", newID, album, fsPath)
-
-	return newID, err
+	<-done
+	return newID, outErr
 }
 
 // GetAlbumFSPathByName returns all the file paths which contain versions of an album.
 func (lib *LocalLibrary) GetAlbumFSPathByName(albumName string) ([]string, error) {
-	var paths []string
+	var (
+		paths  []string
+		outErr error
+	)
+	done := make(chan struct{})
+	defer close(done)
 
-	row, err := lib.db.Query(`
-		SELECT
-			fs_path
-		FROM
-			albums
-		WHERE
-			name = ?
-	`, albumName)
+	work := func(db *sql.DB) error {
+		defer func() {
+			done <- struct{}{}
+		}()
 
-	if err != nil {
-		return nil, err
-	}
-
-	defer row.Close()
-
-	var albumPath string
-	for row.Next() {
-		if err := row.Scan(&albumPath); err != nil {
-			return nil, err
+		row, err := db.Query(`
+			SELECT
+				fs_path
+			FROM
+				albums
+			WHERE
+				name = ?
+		`, albumName)
+		if err != nil {
+			outErr = err
+			return nil
 		}
-		paths = append(paths, albumPath)
+
+		defer row.Close()
+
+		var albumPath string
+		for row.Next() {
+			if err := row.Scan(&albumPath); err != nil {
+				outErr = err
+				return nil
+			}
+			paths = append(paths, albumPath)
+		}
+
+		return nil
+	}
+	if err := lib.executeDBJob(work); err != nil {
+		return paths, err
 	}
 
-	if len(paths) < 1 {
+	<-done
+	if outErr == nil && len(paths) < 1 {
 		return nil, ErrAlbumNotFound
 	}
-
-	return paths, nil
+	return paths, outErr
 }
 
 // GetAlbumFSPathByID returns the album path by its ID
 func (lib *LocalLibrary) GetAlbumFSPathByID(albumID int64) (string, error) {
-	row, err := lib.db.Query(`
-		SELECT
-			fs_path
-		FROM
-			albums
-		WHERE
-			id = ?
-	`, albumID)
+	var (
+		path   string
+		outErr error
+	)
+	done := make(chan struct{})
+	defer close(done)
 
-	if err != nil {
+	work := func(db *sql.DB) error {
+		defer func() {
+			done <- struct{}{}
+		}()
+
+		row, err := db.Query(`
+			SELECT
+				fs_path
+			FROM
+				albums
+			WHERE
+				id = ?
+		`, albumID)
+		if err != nil {
+			outErr = err
+			return nil
+		}
+
+		defer row.Close()
+
+		for row.Next() {
+			if err := row.Scan(&path); err != nil {
+				outErr = err
+				return nil
+			}
+			return nil
+		}
+
+		outErr = ErrAlbumNotFound
+		return nil
+	}
+	if err := lib.executeDBJob(work); err != nil {
 		return "", err
 	}
 
-	defer row.Close()
-
-	var albumPath string
-	for row.Next() {
-		if err := row.Scan(&albumPath); err != nil {
-			return "", err
-		}
-		return albumPath, nil
-	}
-
-	return "", ErrAlbumNotFound
+	<-done
+	return path, outErr
 }
 
 // GetTrackID returns the id for this track. When missing or on error returns that error.
 func (lib *LocalLibrary) GetTrackID(title string,
 	artistID, albumID int64) (int64, error) {
-	smt, err := lib.db.Prepare(`
-		SELECT
-			id
-		FROM
-			tracks
-		WHERE
-			name = ? AND
-			artist_id = ? AND
-			album_id = ?
-	`)
 
-	if err != nil {
+	var (
+		newID  int64
+		outErr error
+	)
+	done := make(chan struct{})
+	defer close(done)
+
+	work := func(db *sql.DB) error {
+		defer func() {
+			done <- struct{}{}
+		}()
+
+		smt, err := db.Prepare(`
+			SELECT
+				id
+			FROM
+				tracks
+			WHERE
+				name = ? AND
+				artist_id = ? AND
+				album_id = ?
+		`)
+		if err != nil {
+			outErr = err
+			return nil
+		}
+
+		defer smt.Close()
+
+		var id int64
+		err = smt.QueryRow(title, artistID, albumID).Scan(&id)
+		if err != nil {
+			outErr = err
+			return nil
+		}
+
+		newID = id
+		return nil
+	}
+	if err := lib.executeDBJob(work); err != nil {
 		return 0, err
 	}
 
-	defer smt.Close()
-
-	var id int64
-	err = smt.QueryRow(title, artistID, albumID).Scan(&id)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return id, nil
+	<-done
+	return newID, outErr
 }
 
 // Sets a new ID for this track if it is new to the library. If not, returns
@@ -697,53 +875,53 @@ func (lib *LocalLibrary) setTrackID(title, fsPath string,
 	}
 
 	id, err := lib.GetTrackID(title, artistID, albumID)
-
 	if err == nil {
 		return id, nil
 	}
 
-	stmt, err := lib.db.Prepare(`
-		INSERT INTO
-			tracks (name, album_id, artist_id, fs_path, number)
-		VALUES
-			(?, ?, ?, ?, ?)
-	`)
+	var (
+		newID  int64
+		outErr error
+	)
+	done := make(chan struct{})
+	defer close(done)
 
-	if err != nil {
+	work := func(db *sql.DB) error {
+		defer func() {
+			done <- struct{}{}
+		}()
+
+		stmt, err := db.Prepare(`
+			INSERT INTO
+				tracks (name, album_id, artist_id, fs_path, number)
+			VALUES
+				(?, ?, ?, ?, ?)
+		`)
+		if err != nil {
+			outErr = err
+			return nil
+		}
+
+		defer stmt.Close()
+
+		_, err = stmt.Exec(title, albumID, artistID, fsPath, trackNumber)
+		if err != nil {
+			outErr = err
+			return nil
+		}
+
+		newID, outErr = lastInsertID(db)
+		log.Printf("Inserted id: %d, name: %s, album ID: %d, artist ID: %d, number: %d, fs_path: %s\n",
+			newID, title, albumID, artistID, trackNumber, fsPath)
+
+		return nil
+	}
+	if err := lib.executeDBJob(work); err != nil {
 		return 0, err
 	}
 
-	defer stmt.Close()
-
-	_, err = stmt.Exec(title, albumID, artistID, fsPath, trackNumber)
-
-	if err != nil {
-		return 0, err
-	}
-
-	newID, err := lib.lastInsertID()
-
-	log.Printf("Inserted id: %d, name: %s, album ID: %d, artist ID: %d, number: %d, fs_path: %s\n",
-		newID, title, albumID, artistID, trackNumber, fsPath)
-
-	return newID, err
-}
-
-// Returns the last ID insert in the database.
-func (lib *LocalLibrary) lastInsertID() (int64, error) {
-	var id int64
-
-	if lib.db == nil {
-		return 0, errors.New("The db connection property was nil")
-	}
-
-	err := lib.db.QueryRow("SELECT last_insert_rowid();").Scan(&id)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return id, nil
+	<-done
+	return newID, outErr
 }
 
 // Initialize should be run once every time a library is created. It checks for the
@@ -848,12 +1026,11 @@ func NewLocalLibrary(ctx context.Context, databasePath string) (*LocalLibrary, e
 
 	lib.watchLock = &sync.RWMutex{}
 
-	lib.mediaChan = make(chan string)
-	lib.mediaWritten = make(chan struct{})
+	lib.dbExecutes = make(chan DatabaseExecutable)
 	lib.artworkSem = make(chan struct{}, 10)
 
-	lib.dbWriterWG.Add(1)
-	go lib.databaseWriter()
+	lib.dbWorkerWG.Add(1)
+	go lib.databaseWorker()
 
 	lib.running = true
 
