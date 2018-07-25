@@ -17,6 +17,9 @@ import (
 	"github.com/ironsmile/httpms/src/helpers"
 )
 
+// testTimeout is the maximum time a test is allowed to work.
+var testTimeout = 40 * time.Second
+
 func contains(heystack []string, needle string) bool {
 	for _, val := range heystack {
 		if needle == val {
@@ -104,11 +107,8 @@ func getPathedLibrary(ctx context.Context, t *testing.T) *LocalLibrary {
 }
 
 // It is the caller's resposibility to remove the library SQLite database file
-func getScannedLibrary(t *testing.T) *LocalLibrary {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
+func getScannedLibrary(ctx context.Context, t *testing.T) *LocalLibrary {
 	lib := getPathedLibrary(ctx, t)
-	defer lib.Truncate()
 
 	ch := testErrorAfter(t, 10*time.Second, "Scanning library took too long")
 	lib.Scan()
@@ -224,7 +224,7 @@ func TestTruncate(t *testing.T) {
 }
 
 func TestSearch(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getLibrary(ctx, t)
 	defer lib.Truncate()
@@ -270,7 +270,7 @@ func TestSearch(t *testing.T) {
 
 func TestAddingNewFiles(t *testing.T) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	library := getLibrary(ctx, t)
 	defer library.Truncate()
@@ -341,7 +341,7 @@ func TestAddingNewFiles(t *testing.T) {
 }
 
 func TestAlbumFSPath(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	library := getLibrary(ctx, t)
 	defer library.Truncate()
@@ -369,7 +369,7 @@ func TestAlbumFSPath(t *testing.T) {
 }
 
 func TestPreAddedFiles(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	library := getLibrary(ctx, t)
 	defer library.Truncate()
@@ -422,7 +422,7 @@ func TestPreAddedFiles(t *testing.T) {
 }
 
 func TestGettingAFile(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	library := getLibrary(ctx, t)
 	defer library.Truncate()
@@ -460,7 +460,7 @@ func TestGettingAFile(t *testing.T) {
 }
 
 func TestAddingLibraryPaths(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getPathedLibrary(ctx, t)
 	defer lib.Truncate()
@@ -480,7 +480,7 @@ func TestAddingLibraryPaths(t *testing.T) {
 }
 
 func TestScaning(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getPathedLibrary(ctx, t)
 	defer lib.Truncate()
@@ -499,7 +499,9 @@ func TestScaning(t *testing.T) {
 }
 
 func TestSQLInjections(t *testing.T) {
-	lib := getScannedLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	lib := getScannedLibrary(ctx, t)
 	defer lib.Truncate()
 
 	found := lib.Search(`not-such-thing" OR 1=1 OR t.name="kleopatra`)
@@ -510,7 +512,9 @@ func TestSQLInjections(t *testing.T) {
 }
 
 func TestGetAlbumFiles(t *testing.T) {
-	lib := getScannedLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	lib := getScannedLibrary(ctx, t)
 	defer lib.Truncate()
 
 	albumPaths, err := lib.GetAlbumFSPathByName("Album Of Tests")
@@ -554,7 +558,9 @@ func TestGetAlbumFiles(t *testing.T) {
 }
 
 func TestRemoveFileFunction(t *testing.T) {
-	lib := getScannedLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	lib := getScannedLibrary(ctx, t)
 	defer lib.Truncate()
 
 	found := lib.Search("Another One")
@@ -638,7 +644,7 @@ func TestAddingManyFilesSimultaniously(t *testing.T) {
 		t.Skip("skipping test in short mode.")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getPathedLibrary(ctx, t)
 	defer lib.Truncate()
@@ -671,7 +677,7 @@ func TestAddingManyFilesSimultaniously(t *testing.T) {
 // Here an album which has different artists is simulated. This album must have the same
 // album ID since all of the tracks are in the same directory and the same album name.
 func TestAlbumsWithDifferentArtists(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getPathedLibrary(ctx, t)
 	defer lib.Truncate()
@@ -740,7 +746,7 @@ func TestAlbumsWithDifferentArtists(t *testing.T) {
 // Albums with the same name which are for different artists should have different IDs
 // when the album is in a different directory
 func TestDifferentAlbumsWithTheSameName(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getPathedLibrary(ctx, t)
 	defer lib.Truncate()
