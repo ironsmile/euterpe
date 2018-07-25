@@ -55,9 +55,7 @@ func getTestLibraryPath() (string, error) {
 }
 
 // It is the caller's resposibility to remove the library SQLite database file
-func getLibrary(t *testing.T) *LocalLibrary {
-	ctx, _ := context.WithTimeout(context.Background(), 20*time.Second)
-
+func getLibrary(ctx context.Context, t *testing.T) *LocalLibrary {
 	lib, err := NewLocalLibrary(ctx, SQLiteMemoryFile)
 
 	if err != nil {
@@ -79,7 +77,7 @@ func getLibrary(t *testing.T) *LocalLibrary {
 }
 
 // It is the caller's resposibility to remove the library SQLite database file
-func getPathedLibrary(t *testing.T) *LocalLibrary {
+func getPathedLibrary(ctx context.Context, t *testing.T) *LocalLibrary {
 	projRoot, err := helpers.ProjectRoot()
 
 	if err != nil {
@@ -87,8 +85,6 @@ func getPathedLibrary(t *testing.T) *LocalLibrary {
 	}
 
 	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
-
-	ctx, _ := context.WithTimeout(context.Background(), 20*time.Second)
 
 	lib, err := NewLocalLibrary(ctx, SQLiteMemoryFile)
 
@@ -109,7 +105,10 @@ func getPathedLibrary(t *testing.T) *LocalLibrary {
 
 // It is the caller's resposibility to remove the library SQLite database file
 func getScannedLibrary(t *testing.T) *LocalLibrary {
-	lib := getPathedLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	lib := getPathedLibrary(ctx, t)
+	defer lib.Truncate()
 
 	ch := testErrorAfter(t, 10*time.Second, "Scanning library took too long")
 	lib.Scan()
@@ -225,7 +224,9 @@ func TestTruncate(t *testing.T) {
 }
 
 func TestSearch(t *testing.T) {
-	lib := getLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	lib := getLibrary(ctx, t)
 	defer lib.Truncate()
 
 	found := lib.Search("Buggy")
@@ -269,7 +270,9 @@ func TestSearch(t *testing.T) {
 
 func TestAddingNewFiles(t *testing.T) {
 
-	library := getLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	library := getLibrary(ctx, t)
 	defer library.Truncate()
 
 	tracksCount := func() int {
@@ -338,7 +341,9 @@ func TestAddingNewFiles(t *testing.T) {
 }
 
 func TestAlbumFSPath(t *testing.T) {
-	library := getLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	library := getLibrary(ctx, t)
 	defer library.Truncate()
 
 	testLibraryPath, err := getTestLibraryPath()
@@ -364,7 +369,9 @@ func TestAlbumFSPath(t *testing.T) {
 }
 
 func TestPreAddedFiles(t *testing.T) {
-	library := getLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	library := getLibrary(ctx, t)
 	defer library.Truncate()
 
 	_, err := library.GetArtistID("doycho")
@@ -415,7 +422,9 @@ func TestPreAddedFiles(t *testing.T) {
 }
 
 func TestGettingAFile(t *testing.T) {
-	library := getLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	library := getLibrary(ctx, t)
 	defer library.Truncate()
 
 	artistID, _ := library.GetArtistID("Artist Testoff")
@@ -451,7 +460,9 @@ func TestGettingAFile(t *testing.T) {
 }
 
 func TestAddingLibraryPaths(t *testing.T) {
-	lib := getPathedLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	lib := getPathedLibrary(ctx, t)
 	defer lib.Truncate()
 
 	if len(lib.paths) != 1 {
@@ -469,7 +480,9 @@ func TestAddingLibraryPaths(t *testing.T) {
 }
 
 func TestScaning(t *testing.T) {
-	lib := getPathedLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	lib := getPathedLibrary(ctx, t)
 	defer lib.Truncate()
 
 	ch := testErrorAfter(t, 10*time.Second, "Scanning library took too long")
@@ -625,7 +638,9 @@ func TestAddingManyFilesSimultaniously(t *testing.T) {
 		t.Skip("skipping test in short mode.")
 	}
 
-	lib := getPathedLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	lib := getPathedLibrary(ctx, t)
 	defer lib.Truncate()
 
 	numberOfFiles := 100
@@ -656,7 +671,9 @@ func TestAddingManyFilesSimultaniously(t *testing.T) {
 // Here an album which has different artists is simulated. This album must have the same
 // album ID since all of the tracks are in the same directory and the same album name.
 func TestAlbumsWithDifferentArtists(t *testing.T) {
-	lib := getPathedLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	lib := getPathedLibrary(ctx, t)
 	defer lib.Truncate()
 
 	var err error
@@ -723,7 +740,9 @@ func TestAlbumsWithDifferentArtists(t *testing.T) {
 // Albums with the same name which are for different artists should have different IDs
 // when the album is in a different directory
 func TestDifferentAlbumsWithTheSameName(t *testing.T) {
-	lib := getPathedLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	lib := getPathedLibrary(ctx, t)
 	defer lib.Truncate()
 
 	tracks := []struct {
