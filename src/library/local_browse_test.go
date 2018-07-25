@@ -1,6 +1,7 @@
 package library
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -8,7 +9,9 @@ import (
 )
 
 func TestBrowsingArtists(t *testing.T) {
-	lib := getPathedLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	lib := getPathedLibrary(ctx, t)
 	defer lib.Truncate()
 
 	tracks := []struct {
