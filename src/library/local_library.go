@@ -120,9 +120,7 @@ type LocalLibrary struct {
 
 // Close closes the database connection. It is safe to call it as many times as you want.
 func (lib *LocalLibrary) Close() {
-	log.Printf("Closing library - canceling context\n")
 	lib.ctxCancelFunc()
-	log.Printf("Closing the database.\n")
 	lib.db.Close()
 }
 
