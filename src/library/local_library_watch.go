@@ -36,6 +36,7 @@ func (lib *LocalLibrary) watchEventRoutine() {
 	lib.watchLock.RLock()
 	if lib.watch == nil {
 		lib.watchLock.RUnlock()
+		log.Printf("lib.watch is nil. Stopping the watch event routine.")
 		return
 	}
 	lib.watchLock.RUnlock()
