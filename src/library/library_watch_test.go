@@ -37,8 +37,6 @@ func TestMovingFileIntoLibrary(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	lib.stop()
-
 	checkAddedSong(lib, t)
 }
 

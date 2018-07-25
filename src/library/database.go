@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"runtime"
+	"sync"
 )
 
 // DatabaseExecutable is the type used for passing "work unit" to the databaseWorker.
@@ -14,13 +15,11 @@ type DatabaseExecutable func(db *sql.DB) error
 
 // Reads from the media channel and saves into the database every file
 // received.
-func (lib *LocalLibrary) databaseWorker() {
-	defer func() {
-		close(lib.dbExecutes)
-		lib.dbWorkerWG.Done()
-	}()
+func (lib *LocalLibrary) databaseWorker(wg *sync.WaitGroup) {
+	lib.dbExecutes = make(chan DatabaseExecutable)
 	runtime.LockOSThread()
 
+	wg.Done()
 	for {
 		select {
 		case executable, ok := <-lib.dbExecutes:

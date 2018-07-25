@@ -26,22 +26,25 @@ func (lib *LocalLibrary) initializeWatcher() {
 	}
 	lib.watch = newWatcher
 
-	lib.watcherWG.Add(1)
 	go lib.watchEventRoutine()
 }
 
 // This function is resposible for selecting the watcher events
 func (lib *LocalLibrary) watchEventRoutine() {
-	defer func() {
-		log.Println("Directory watcher event receiver stopped.")
-		lib.watcherWG.Done()
-	}()
+	defer log.Println("Directory watcher event receiver stopped.")
 
+	lib.watchLock.RLock()
 	if lib.watch == nil {
+		lib.watchLock.RUnlock()
 		return
 	}
+	lib.watchLock.RUnlock()
 
-	defer lib.watch.Close()
+	defer func() {
+		lib.watchLock.Lock()
+		lib.watch.Close()
+		lib.watchLock.Unlock()
+	}()
 
 	for {
 		select {
@@ -49,6 +52,7 @@ func (lib *LocalLibrary) watchEventRoutine() {
 			if ev == nil {
 				return
 			}
+
 			lib.handleWatchEvent(ev)
 		case err := <-lib.watch.Error:
 			if err == nil {
@@ -56,7 +60,6 @@ func (lib *LocalLibrary) watchEventRoutine() {
 			}
 			log.Println("Directory watcher error:", err)
 		case <-lib.ctx.Done():
-			lib.walkWG.Wait()
 			return
 		}
 	}
@@ -89,7 +92,9 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 			lib.removeFile(event.Name)
 		} else {
 			// It was a directory... probably
+			lib.watchLock.Lock()
 			lib.watch.RemoveWatch(event.Name)
+			lib.watchLock.Unlock()
 			lib.removeDirectory(event.Name)
 		}
 		return

@@ -56,7 +56,9 @@ func getTestLibraryPath() (string, error) {
 
 // It is the caller's resposibility to remove the library SQLite database file
 func getLibrary(t *testing.T) *LocalLibrary {
-	lib, err := NewLocalLibrary(context.TODO(), SQLiteMemoryFile)
+	ctx, _ := context.WithTimeout(context.Background(), 20*time.Second)
+
+	lib, err := NewLocalLibrary(ctx, SQLiteMemoryFile)
 
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -86,7 +88,9 @@ func getPathedLibrary(t *testing.T) *LocalLibrary {
 
 	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
 
-	lib, err := NewLocalLibrary(context.TODO(), SQLiteMemoryFile)
+	ctx, _ := context.WithTimeout(context.Background(), 20*time.Second)
+
+	lib, err := NewLocalLibrary(ctx, SQLiteMemoryFile)
 
 	if err != nil {
 		t.Fatal(err)
@@ -107,14 +111,14 @@ func getPathedLibrary(t *testing.T) *LocalLibrary {
 func getScannedLibrary(t *testing.T) *LocalLibrary {
 	lib := getPathedLibrary(t)
 
-	ch := testErrorAfter(10, "Scanning library took too long")
+	ch := testErrorAfter(t, 10*time.Second, "Scanning library took too long")
 	lib.Scan()
 	ch <- 42
 
 	return lib
 }
 
-func testErrorAfter(seconds time.Duration, message string) chan int {
+func testErrorAfter(t *testing.T, dur time.Duration, message string) chan int {
 	ch := make(chan int)
 
 	go func() {
@@ -122,9 +126,11 @@ func testErrorAfter(seconds time.Duration, message string) chan int {
 		case <-ch:
 			close(ch)
 			return
-		case <-time.After(seconds * time.Second):
+		case <-time.After(dur):
+			log.Printf("Test timed out: %s", message)
 			close(ch)
-			println(message)
+			t.Errorf(message)
+			t.FailNow()
 			os.Exit(1)
 		}
 	}()
@@ -466,9 +472,8 @@ func TestScaning(t *testing.T) {
 	lib := getPathedLibrary(t)
 	defer lib.Truncate()
 
-	ch := testErrorAfter(10, "Scanning library took too long")
+	ch := testErrorAfter(t, 10*time.Second, "Scanning library took too long")
 	lib.Scan()
-	lib.stop()
 	ch <- 42
 
 	for _, track := range []string{"Another One", "Payback", "Tittled Track"} {
@@ -643,8 +648,6 @@ func TestAddingManyFilesSimultaniously(t *testing.T) {
 		mediaFiles = append(mediaFiles, m)
 	}
 
-	lib.stop()
-
 	for _, song := range mediaFiles {
 		checkSong(lib, song, t)
 	}
@@ -692,8 +695,6 @@ func TestAlbumsWithDifferentArtists(t *testing.T) {
 			t.Fatalf("Adding a media file %s failed: %s", track.Title(), err)
 		}
 	}
-
-	lib.stop()
 
 	found := lib.Search("Return Of The Bugs")
 
@@ -768,8 +769,6 @@ func TestDifferentAlbumsWithTheSameName(t *testing.T) {
 			t.Fatalf("Adding a media file %s failed: %s", trackData.track.Title(), err)
 		}
 	}
-
-	lib.stop()
 
 	found := lib.Search("Return Of The Bugs")
 
