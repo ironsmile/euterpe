@@ -77,8 +77,6 @@ func TestBrowsingArtists(t *testing.T) {
 		}
 	}
 
-	lib.stop()
-
 	tests := []struct {
 		search   BrowseArgs
 		expected []string

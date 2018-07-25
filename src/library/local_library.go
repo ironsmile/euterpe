@@ -110,47 +110,20 @@ type LocalLibrary struct {
 	watch     *fsnotify.Watcher
 	watchLock *sync.RWMutex
 
-	// Used to signal when the database worker has stopped
-	dbWorkerWG sync.WaitGroup
-
 	ctx           context.Context
 	ctxCancelFunc context.CancelFunc
-	running       bool
 
-	isRunningLock sync.Mutex
-	waitScanLock  sync.RWMutex
-
-	watcherWG sync.WaitGroup
+	waitScanLock sync.RWMutex
 
 	coverArtFinder ca.CovertArtFinder
 }
 
 // Close closes the database connection. It is safe to call it as many times as you want.
 func (lib *LocalLibrary) Close() {
-	lib.stop()
+	log.Printf("Closing library - canceling context\n")
 	lib.ctxCancelFunc()
-	lib.dbWorkerWG.Wait()
+	log.Printf("Closing the database.\n")
 	lib.db.Close()
-}
-
-// Wait until all the currently started work is finished and stops all go routines
-// related to the library. But leaves the database connection open so that the lib
-// state can be examined via its methods. Useful for testing.
-func (lib *LocalLibrary) stop() {
-	lib.isRunningLock.Lock()
-	defer lib.isRunningLock.Unlock()
-
-	if !lib.running {
-		return
-	}
-
-	lib.running = false
-
-	lib.waitScanLock.RLock()
-	lib.walkWG.Wait()
-	lib.waitScanLock.RUnlock()
-
-	lib.watcherWG.Wait()
 }
 
 // AddLibraryPath adds a library directory to the list of libraries which will be
@@ -932,6 +905,8 @@ func (lib *LocalLibrary) Initialize() error {
 		return errors.New("library is not opened, call its Open method first")
 	}
 
+	// This database is already created and populated. We could just apply the
+	// migrations without executing the initial schema.
 	if st, err := os.Stat(lib.database); err == nil && st.Size() > 0 {
 		return lib.applyMigrations()
 	}
@@ -1025,14 +1000,12 @@ func NewLocalLibrary(ctx context.Context, databasePath string) (*LocalLibrary, e
 	}
 
 	lib.watchLock = &sync.RWMutex{}
-
-	lib.dbExecutes = make(chan DatabaseExecutable)
 	lib.artworkSem = make(chan struct{}, 10)
 
-	lib.dbWorkerWG.Add(1)
-	go lib.databaseWorker()
-
-	lib.running = true
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go lib.databaseWorker(&wg)
+	wg.Wait()
 
 	return lib, nil
 }
