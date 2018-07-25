@@ -1,6 +1,7 @@
 package library
 
 import (
+	"context"
 	_ "net/http/pprof"
 	"os"
 	"path/filepath"
@@ -15,7 +16,9 @@ func TestMovingFileIntoLibrary(t *testing.T) {
 		t.Skip("skipping test in short mode.")
 	}
 
-	lib := getScannedLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	lib := getScannedLibrary(ctx, t)
 	defer lib.Truncate()
 	projRoot, _ := helpers.ProjectRoot()
 	testFiles := filepath.Join(projRoot, "test_files")
@@ -55,7 +58,9 @@ func TestRemovingFile(t *testing.T) {
 		t.Fatalf("Copying file to library faild: %s", err)
 	}
 
-	lib := getScannedLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	lib := getScannedLibrary(ctx, t)
 	defer lib.Truncate()
 
 	results := lib.Search("")
@@ -97,7 +102,9 @@ func TestAddingAndRemovingDirectory(t *testing.T) {
 		t.Fatalf("Removing directory needed for tests: %s", err)
 	}
 
-	lib := getScannedLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	lib := getScannedLibrary(ctx, t)
 	defer lib.Truncate()
 
 	if err := os.Mkdir(testDir, 0700); err != nil {
@@ -166,7 +173,9 @@ func TestMovingDirectory(t *testing.T) {
 		defer os.RemoveAll(movedDir)
 	}
 
-	lib := getScannedLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	lib := getScannedLibrary(ctx, t)
 	defer lib.Truncate()
 
 	checkAddedSong(lib, t)
@@ -212,7 +221,9 @@ func TestAddingNewFile(t *testing.T) {
 		t.Skip("skipping test in short mode.")
 	}
 
-	lib := getScannedLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	lib := getScannedLibrary(ctx, t)
 	defer lib.Truncate()
 	projRoot, _ := helpers.ProjectRoot()
 	testFiles := filepath.Join(projRoot, "test_files")
@@ -236,7 +247,9 @@ func TestAddingNonRelatedFile(t *testing.T) {
 		t.Skip("skipping test in short mode.")
 	}
 
-	lib := getScannedLibrary(t)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	lib := getScannedLibrary(ctx, t)
 	defer lib.Truncate()
 	projRoot, _ := helpers.ProjectRoot()
 	testFiles := filepath.Join(projRoot, "test_files")

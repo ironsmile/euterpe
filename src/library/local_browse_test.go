@@ -9,7 +9,7 @@ import (
 )
 
 func TestBrowsingArtists(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getPathedLibrary(ctx, t)
 	defer lib.Truncate()
