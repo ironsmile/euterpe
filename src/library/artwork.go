@@ -105,48 +105,91 @@ func (lib *LocalLibrary) saveAlbumArtwork(
 		return nil, err
 	}
 
-	stmt, err := lib.db.Prepare(`
-			INSERT OR REPLACE INTO
-				albums_artworks (album_id, artwork_cover, updated_at)
-			VALUES
-				(?, ?, ?)
-	`)
+	var outErr error
+	done := make(chan struct{})
+	defer close(done)
 
-	if err != nil {
+	work := func(db *sql.DB) error {
+		defer func() {
+			done <- struct{}{}
+		}()
+
+		stmt, err := db.Prepare(`
+				INSERT OR REPLACE INTO
+					albums_artworks (album_id, artwork_cover, updated_at)
+				VALUES
+					(?, ?, ?)
+		`)
+
+		if err != nil {
+			outErr = err
+			return nil
+		}
+
+		defer stmt.Close()
+
+		_, err = stmt.Exec(albumID, buff, time.Now().Unix())
+
+		if err != nil {
+			outErr = err
+			return nil
+		}
+
+		return nil
+	}
+	if err := lib.executeDBJob(work); err != nil {
+		log.Printf("Error executing save artwork query: %s", err)
 		return nil, err
 	}
 
-	defer stmt.Close()
-
-	_, err = stmt.Exec(albumID, buff, time.Now().Unix())
-
-	if err != nil {
-		return nil, err
+	<-done
+	if outErr != nil {
+		return nil, outErr
 	}
 
 	return newBytesReadCloser(buff), nil
 }
 
 func (lib *LocalLibrary) saveAlbumArtworkNotFound(albumID int64) error {
-	stmt, err := lib.db.Prepare(`
-			INSERT OR REPLACE INTO
-				albums_artworks (album_id, updated_at)
-			VALUES
-				(?, ?)
-	`)
 
-	if err != nil {
+	var outErr error
+	done := make(chan struct{})
+	defer close(done)
+
+	work := func(db *sql.DB) error {
+		defer func() {
+			done <- struct{}{}
+		}()
+
+		stmt, err := db.Prepare(`
+				INSERT OR REPLACE INTO
+					albums_artworks (album_id, updated_at)
+				VALUES
+					(?, ?)
+		`)
+
+		if err != nil {
+			outErr = err
+			return nil
+		}
+
+		defer stmt.Close()
+
+		_, err = stmt.Exec(albumID, time.Now().Unix())
+		if err != nil {
+			outErr = err
+			return nil
+		}
+
+		return nil
+	}
+	if err := lib.executeDBJob(work); err != nil {
+		log.Printf("Error executing save artwork not found query: %s", err)
 		return err
 	}
 
-	defer stmt.Close()
-
-	_, err = stmt.Exec(albumID, time.Now().Unix())
-	if err != nil {
-		return err
-	}
-
-	return nil
+	<-done
+	return outErr
 }
 
 func (lib *LocalLibrary) albumArtworkFromInternet(
@@ -157,60 +200,85 @@ func (lib *LocalLibrary) albumArtworkFromInternet(
 		return nil, ErrArtworkNotFound
 	}
 
-	row, err := lib.db.QueryContext(ctx, `
-		SELECT
-			name
-		FROM
-			albums
-		WHERE
-			id = ?
-	`, albumID)
-
-	if err != nil {
-		return nil, fmt.Errorf("query database: %s", err)
-	}
-
-	defer func(row *sql.Rows) {
-		row.Close()
-	}(row)
-
-	if !row.Next() {
-		return nil, ErrAlbumNotFound
-	}
-
-	var albumName string
-	if err := row.Scan(&albumName); err != nil {
-		return nil, fmt.Errorf("scanning db result: %s", err)
-	}
-
-	row, err = lib.db.QueryContext(ctx, `
-		SELECT
-			a.name,
-			COUNT(*) as cnt
-		FROM tracks AS t
-		LEFT JOIN artists AS a ON a.id = t.artist_id
-		WHERE album_id = ?
-		GROUP BY artist_id
-		ORDER BY cnt DESC
-		LIMIT 1;
-	`, albumID)
-
-	if err != nil {
-		return nil, fmt.Errorf("query database: %s", err)
-	}
-
-	defer func(row *sql.Rows) {
-		row.Close()
-	}(row)
-
 	var (
+		albumName  string
 		artistName string
 		count      int
+		outErr     error
 	)
-	if row.Next() {
-		if err := row.Scan(&artistName, &count); err != nil {
-			return nil, fmt.Errorf("scanning db result: %s", err)
+	done := make(chan struct{})
+	defer close(done)
+
+	work := func(db *sql.DB) error {
+		defer func() {
+			done <- struct{}{}
+		}()
+
+		row, err := db.QueryContext(ctx, `
+			SELECT
+				name
+			FROM
+				albums
+			WHERE
+				id = ?
+		`, albumID)
+
+		if err != nil {
+			outErr = fmt.Errorf("query database: %s", err)
+			return nil
 		}
+
+		defer func(row *sql.Rows) {
+			row.Close()
+		}(row)
+
+		if !row.Next() {
+			outErr = ErrAlbumNotFound
+			return nil
+		}
+
+		if err := row.Scan(&albumName); err != nil {
+			outErr = fmt.Errorf("scanning db result: %s", err)
+			return nil
+		}
+
+		row, err = db.QueryContext(ctx, `
+			SELECT
+				a.name,
+				COUNT(*) as cnt
+			FROM tracks AS t
+			LEFT JOIN artists AS a ON a.id = t.artist_id
+			WHERE album_id = ?
+			GROUP BY artist_id
+			ORDER BY cnt DESC
+			LIMIT 1;
+		`, albumID)
+
+		if err != nil {
+			outErr = fmt.Errorf("query database: %s", err)
+			return nil
+		}
+
+		defer func(row *sql.Rows) {
+			row.Close()
+		}(row)
+
+		if row.Next() {
+			if err := row.Scan(&artistName, &count); err != nil {
+				outErr = fmt.Errorf("scanning db result: %s", err)
+				return nil
+			}
+		}
+
+		return nil
+	}
+	if err := lib.executeDBJob(work); err != nil {
+		return nil, err
+	}
+
+	<-done
+	if outErr != nil {
+		return nil, outErr
 	}
 
 	cover, err := lib.coverArtFinder.GetFrontImage(ctx, artistName, albumName)
@@ -228,33 +296,56 @@ func (lib *LocalLibrary) albumArtworkFromDB(
 	ctx context.Context,
 	albumID int64,
 ) (io.ReadCloser, error) {
-	smt, err := lib.db.PrepareContext(ctx, `
-		SELECT
-			artwork_cover,
-			updated_at
-		FROM
-			albums_artworks
-		WHERE
-			album_id = ?
-	`)
-
-	if err != nil {
-		log.Printf("could not prepare album artwork sql statement: %s", err)
-		return nil, err
-	}
-	defer smt.Close()
 
 	var (
 		buff     []byte
 		unixTime int64
+		outErr   error
 	)
+	done := make(chan struct{})
+	defer close(done)
 
-	err = smt.QueryRowContext(ctx, albumID).Scan(&buff, &unixTime)
-	if err == sql.ErrNoRows {
-		return nil, ErrArtworkNotFound
-	} else if err != nil {
-		log.Printf("error getting album cover from db: %s", err)
+	work := func(db *sql.DB) error {
+		defer func() {
+			done <- struct{}{}
+		}()
+
+		smt, err := db.PrepareContext(ctx, `
+			SELECT
+				artwork_cover,
+				updated_at
+			FROM
+				albums_artworks
+			WHERE
+				album_id = ?
+		`)
+
+		if err != nil {
+			log.Printf("could not prepare album artwork sql statement: %s", err)
+			outErr = err
+			return nil
+		}
+		defer smt.Close()
+
+		err = smt.QueryRowContext(ctx, albumID).Scan(&buff, &unixTime)
+		if err == sql.ErrNoRows {
+			outErr = ErrArtworkNotFound
+			return nil
+		} else if err != nil {
+			log.Printf("error getting album cover from db: %s", err)
+			outErr = err
+			return nil
+		}
+
+		return nil
+	}
+	if err := lib.executeDBJob(work); err != nil {
 		return nil, err
+	}
+
+	<-done
+	if outErr != nil {
+		return nil, outErr
 	}
 
 	if len(buff) < 1 && time.Now().Before(time.Unix(unixTime, 0).Add(24*7*time.Hour)) {
@@ -372,21 +463,40 @@ func (lib *LocalLibrary) SaveAlbumArtwork(
 		return NewArtworkError("uploaded artwork is empty")
 	}
 
-	stmt, err := lib.db.Prepare(`
+	var (
+		outErr error
+	)
+	done := make(chan struct{})
+	defer close(done)
+
+	work := func(db *sql.DB) error {
+		defer func() {
+			done <- struct{}{}
+		}()
+
+		stmt, err := db.Prepare(`
 			INSERT OR REPLACE INTO
 				albums_artworks (album_id, artwork_cover, updated_at)
 			VALUES
 				(?, ?, ?)
-	`)
-	if err != nil {
+		`)
+		if err != nil {
+			outErr = err
+			return nil
+		}
+
+		defer stmt.Close()
+
+		_, outErr = stmt.Exec(albumID, buff, time.Now().Unix())
+		return nil
+	}
+	if err := lib.executeDBJob(work); err != nil {
 		return err
 	}
 
-	defer stmt.Close()
-
-	_, err = stmt.Exec(albumID, buff, time.Now().Unix())
-	if err != nil {
-		return err
+	<-done
+	if outErr != nil {
+		return outErr
 	}
 
 	return nil

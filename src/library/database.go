@@ -15,6 +15,9 @@ type DatabaseExecutable func(db *sql.DB) error
 
 // Reads from the media channel and saves into the database every file
 // received.
+//
+// !TODO: Separate the database worker from the library. It should be stand alone
+// type. Ideally the library will not have direct access to the sql.DB object.
 func (lib *LocalLibrary) databaseWorker(wg *sync.WaitGroup) {
 	lib.dbExecutes = make(chan DatabaseExecutable)
 	runtime.LockOSThread()
