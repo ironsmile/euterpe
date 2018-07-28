@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/ironsmile/httpms/ca"
-
 	"github.com/ironsmile/httpms/src/config"
 	"github.com/ironsmile/httpms/src/daemon"
 	"github.com/ironsmile/httpms/src/helpers"
@@ -159,6 +158,7 @@ func ParseConfigAndStartWebserver(projRoot string) error {
 
 	cfg.HTTPRoot = helpers.AbsolutePath(cfg.HTTPRoot, projRoot)
 
+	log.Printf("Release %s\n", Version)
 	srv := webserver.NewServer(ctx, cfg, lib)
 	srv.Serve()
 	srv.Wait()

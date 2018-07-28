@@ -6,7 +6,7 @@ import (
 )
 
 // Version stores the current verion of HTTPMS. It is set during building.
-var Version = "v1.2-source"
+var Version = "dev-unreleased"
 
 func printVersionInformation() {
 	fmt.Printf("HTTP Media Server (httpms) %s\n", Version)
