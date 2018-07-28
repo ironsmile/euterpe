@@ -122,7 +122,7 @@ func (srv *Server) serveGoroutine() {
 	log.Println("Webserver stopped.")
 
 	if reason != nil {
-		log.Printf("Reason: %s\n", reason.Error())
+		log.Printf("Reason: %s\n", reason)
 	}
 
 	srv.cancelFunc()
@@ -137,6 +137,7 @@ func (srv *Server) listenAndServe() error {
 	}
 	lsn, err := net.Listen("tcp", addr)
 	if err != nil {
+		srv.startWG.Done()
 		return err
 	}
 	srv.listener = lsn
@@ -170,11 +171,13 @@ func (srv *Server) listenAndServeTLS(certFile, keyFile string) error {
 	config.Certificates = make([]tls.Certificate, 1)
 	config.Certificates[0], err = tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
+		srv.startWG.Done()
 		return err
 	}
 
 	conn, err := net.Listen("tcp", addr)
 	if err != nil {
+		srv.startWG.Done()
 		return err
 	}
 
