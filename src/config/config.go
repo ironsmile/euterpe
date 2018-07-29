@@ -18,14 +18,18 @@ import (
 	"github.com/ironsmile/httpms/src/helpers"
 )
 
-// ConfigName contains the name of the actual configuration file. This is the one
-// the user is supposed to change.
-const ConfigName = "config.json"
+const (
+	// ConfigName contains the name of the actual configuration file. This is the one
+	// the user is supposed to change.
+	ConfigName = "config.json"
+
+	defaultlistAddress = ":9996"
+)
 
 // defaultConfig contains all the default values for the HTTPMS configuration. Users
 // can overwrite values here with their user's configuraiton.
 var defaultConfig = Config{
-	Listen:         ":9996",
+	Listen:         defaultlistAddress,
 	LogFile:        "httpms.log",
 	SqliteDatabase: "httpms.db",
 	Gzip:           true,
@@ -133,7 +137,7 @@ func CopyDefaultOverUser() error {
 	}
 
 	userCfg := Config{
-		Listen: ":9996",
+		Listen: defaultlistAddress,
 		Libraries: []string{
 			filepath.Join(homeDir, "Music"),
 		},
