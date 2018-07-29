@@ -17,6 +17,10 @@ release:
 install:
 	packr install -ldflags "-X github.com/ironsmile/httpms/src.Version=`git describe --tags --always`"
 
+# Build distribution archive.
+dist-archive:
+	./tools/build
+
 # Start HTTPMS after building it from source.
 run:
 	go run main.go -D
