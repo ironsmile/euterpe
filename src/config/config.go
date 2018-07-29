@@ -45,7 +45,6 @@ type Config struct {
 	ReadTimeout     int         `json:"read_timeout"`
 	WriteTimeout    int         `json:"write_timeout"`
 	MaxHeadersSize  int         `json:"max_header_bytes"`
-	HTTPRoot        string      `json:"http_root"`
 	DownloadArtwork bool        `json:"download_artwork"`
 }
 
@@ -71,7 +70,6 @@ type MergedConfig struct {
 	ReadTimeout     *int         `json:"read_timeout"`
 	WriteTimeout    *int         `json:"write_timeout"`
 	MaxHeadersSize  *int         `json:"max_header_bytes"`
-	HTTPRoot        *string      `json:"http_root"`
 	DownloadArtwork *bool        `json:"download_artwork"`
 }
 

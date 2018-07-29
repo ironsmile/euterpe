@@ -6,13 +6,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 
+	"github.com/gobuffalo/packr"
 	"github.com/howeyc/fsnotify"
 	taglib "github.com/wtolson/go-taglib"
 
@@ -25,19 +25,29 @@ import (
 	"github.com/ironsmile/httpms/src/helpers"
 )
 
-// UnknownLabel will be used in case some media tag is missing. As a consequence
-// if there are many files with missing title, artist and album only
-// one of them will be saved in the library.
-const UnknownLabel = "Unknown"
+const (
+	// UnknownLabel will be used in case some media tag is missing. As a consequence
+	// if there are many files with missing title, artist and album only
+	// one of them will be saved in the library.
+	UnknownLabel = "Unknown"
 
-// SQLiteMemoryFile can be used as a database path for the sqlite's Open method.
-// When using it, one owuld create a memory database which does not write
-// anything on disk. See https://www.sqlite.org/inmemorydb.html for more info
-// on the subject of in-memory databases. We are using a shared cache because
-// this causes all the different connections in the database/sql pool to be
-// connected to the same "memory file". Without this. every new connection
-// would end up creating a new memory database.
-const SQLiteMemoryFile = "file::memory:?cache=shared"
+	// SQLiteMemoryFile can be used as a database path for the sqlite's Open method.
+	// When using it, one owuld create a memory database which does not write
+	// anything on disk. See https://www.sqlite.org/inmemorydb.html for more info
+	// on the subject of in-memory databases. We are using a shared cache because
+	// this causes all the different connections in the database/sql pool to be
+	// connected to the same "memory file". Without this. every new connection
+	// would end up creating a new memory database.
+	SQLiteMemoryFile = "file::memory:?cache=shared"
+
+	// sqlFilesPath is path to the directory which contains the `.sql` schme and
+	// migrations files. It must be relative to this package.
+	sqlFilesPath = "../../sqls/"
+
+	// sqlSchemaFile is the file which contains the initial SQL Schema for the
+	// media library. It must be relateive to `sqlFilesPath`.
+	sqlSchemaFile = "library_schema.sql"
+)
 
 var (
 	// LibraryFastScan is a flag, populated by the -fast-library-scan argument.
@@ -116,6 +126,8 @@ type LocalLibrary struct {
 	waitScanLock sync.RWMutex
 
 	coverArtFinder ca.CovertArtFinder
+
+	sqlFiles packr.Box
 }
 
 // Close closes the database connection. It is safe to call it as many times as you want.
@@ -937,23 +949,17 @@ func (lib *LocalLibrary) Initialize() error {
 // Returns the SQL schema for the library. It is stored in the project root directory
 // under sqls/library_schema.sql
 func (lib *LocalLibrary) readSchema() (string, error) {
-	projRoot, err := helpers.ProjectRoot()
-
+	out, err := lib.sqlFiles.MustString(sqlSchemaFile)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf(
+			"error reading schema file `%s`: %s",
+			sqlSchemaFile,
+			err,
+		)
 	}
-	sqlSchemaPath := filepath.Join(projRoot, "sqls", "library_schema.sql")
-
-	outBytes, err := ioutil.ReadFile(sqlSchemaPath)
-
-	if err != nil {
-		return "", err
-	}
-
-	out := string(outBytes)
 
 	if len(out) < 1 {
-		return "", errors.New("SQL schema was empty")
+		return "", fmt.Errorf("SQL schema was empty")
 	}
 
 	return out, nil
@@ -983,6 +989,7 @@ func (lib *LocalLibrary) SetCoverArtFinder(caf ca.CovertArtFinder) {
 func NewLocalLibrary(ctx context.Context, databasePath string) (*LocalLibrary, error) {
 	lib := new(LocalLibrary)
 	lib.database = databasePath
+	lib.sqlFiles = packr.NewBox(sqlFilesPath)
 
 	libContext, cancelFunc := context.WithCancel(ctx)
 

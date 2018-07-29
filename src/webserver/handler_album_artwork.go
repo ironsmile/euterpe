@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gobuffalo/packr"
 	"github.com/gorilla/mux"
 
 	"github.com/ironsmile/httpms/src/library"
@@ -19,6 +20,7 @@ import (
 // a particular album.
 type AlbumArtworkHandler struct {
 	artworkManager library.ArtworkManager
+	rootBox        packr.Box
 	notFoundPath   string
 }
 
@@ -69,7 +71,7 @@ func (aah AlbumArtworkHandler) find(
 	imgReader, err := aah.artworkManager.FindAndSaveAlbumArtwork(ctx, id)
 
 	if err != nil && err == library.ErrArtworkNotFound || os.IsNotExist(err) {
-		notFoundImage, err := os.Open(aah.notFoundPath)
+		notFoundImage, err := aah.rootBox.Open(aah.notFoundPath)
 		if err == nil {
 			defer notFoundImage.Close()
 			// !TODO: return Status Code Not Found here. But unfortunately
@@ -142,10 +144,12 @@ func (aah AlbumArtworkHandler) upload(
 // It needs an implementaion of the ArtworkManager.
 func NewAlbumArtworkHandler(
 	am library.ArtworkManager,
+	rootBox packr.Box,
 	notFoundImagePath string,
 ) *AlbumArtworkHandler {
 
 	return &AlbumArtworkHandler{
+		rootBox:        rootBox,
 		artworkManager: am,
 		notFoundPath:   notFoundImagePath,
 	}

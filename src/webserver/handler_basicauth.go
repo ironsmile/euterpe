@@ -9,9 +9,10 @@ import (
 // BasicAuthHandler is a handler wrapper used for basic authenticate. Its only job is
 // to do the authentication and then pass the work to the Handler it wraps around
 type BasicAuthHandler struct {
-	wrapped  http.Handler // The actual handler that does the APP Logic job
-	username string       // Username to be used for basic authenticate
-	password string       // Password to be used for basic authenticate
+	wrapped   http.Handler // The actual handler that does the APP Logic job
+	username  string       // Username to be used for basic authenticate
+	password  string       // Password to be used for basic authenticate
+	templates Templates    // Template finder
 }
 
 // ServeHTTP implements the http.Handler interface and does the actual basic authenticate
@@ -28,10 +29,11 @@ func (hl BasicAuthHandler) ServeHTTP(writer http.ResponseWriter, req *http.Reque
 }
 
 // Sends 401 and authentication challenge in the writer
-func (hl BasicAuthHandler) challengeAuthentication(writer http.ResponseWriter,
-	req *http.Request) error {
-	tmpl, err := getTemplate("unauthorized.html")
-
+func (hl BasicAuthHandler) challengeAuthentication(
+	writer http.ResponseWriter,
+	req *http.Request,
+) error {
+	tmpl, err := hl.templates.Get("unauthorized.html")
 	if err != nil {
 		return err
 	}

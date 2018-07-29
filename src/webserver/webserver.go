@@ -8,13 +8,30 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"path/filepath"
 	"sync"
 	"time"
 
+	"github.com/gobuffalo/packr"
 	"github.com/gorilla/mux"
+
 	"github.com/ironsmile/httpms/src/config"
 	"github.com/ironsmile/httpms/src/library"
+)
+
+const (
+	// httpRootPath is the path to the directory which contains the
+	// static files served by HTTPMS. This directory must be relative to
+	// this package directory. Its contents will be packed in the binary
+	// for release builds.
+	httpRootPath = "../../http_root/"
+
+	// htmlTeplatesDir is the path to the directory with HTML templates.
+	// It must be relative to this package.
+	htmlTeplatesDir = "../../templates/"
+
+	// notFoundAlbumImage is path to the image shown when there is no image
+	// for particular album. It must be relative то httpRootPath.
+	notFoundAlbumImage = "images/unknownAlbum.png"
 )
 
 // Server represends our webserver. It will be controlled from here
@@ -60,12 +77,17 @@ func (srv *Server) Serve() {
 }
 
 func (srv *Server) serveGoroutine() {
-	notFoundAlbumImage := filepath.Join(srv.cfg.HTTPRoot, "images", "unknownAlbum.png")
+	templatesBox := packr.NewBox(htmlTeplatesDir)
+	rootBox := packr.NewBox(httpRootPath)
 
-	staticFilesHandler := http.FileServer(http.Dir(srv.cfg.HTTPRoot))
+	staticFilesHandler := http.FileServer(rootBox)
 	searchHandler := NewSearchHandler(srv.library)
 	albumHandler := NewAlbumHandler(srv.library)
-	artoworkHandler := NewAlbumArtworkHandler(srv.library, notFoundAlbumImage)
+	artoworkHandler := NewAlbumArtworkHandler(
+		srv.library,
+		rootBox,
+		notFoundAlbumImage,
+	)
 	browseHandler := NewBrowseHandler(srv.library)
 	mediaFileHandler := NewFileHandler(srv.library)
 
@@ -88,9 +110,10 @@ func (srv *Server) serveGoroutine() {
 
 	if srv.cfg.Auth {
 		handler = BasicAuthHandler{
-			handler,
-			srv.cfg.Authenticate.User,
-			srv.cfg.Authenticate.Password,
+			wrapped:   handler,
+			username:  srv.cfg.Authenticate.User,
+			password:  srv.cfg.Authenticate.Password,
+			templates: NewPackrTemplates(templatesBox),
 		}
 	}
 

@@ -58,15 +58,7 @@ func Main() {
 		os.Exit(0)
 	}
 
-	projRoot, err := helpers.ProjectRoot()
-	if err != nil {
-		log.Println(err)
-		os.Exit(1)
-	}
-
-	err = ParseConfigAndStartWebserver(projRoot)
-
-	if err != nil {
+	if err := ParseConfigAndStartWebserver(); err != nil {
 		log.Println(err)
 		os.Exit(1)
 	}
@@ -125,7 +117,7 @@ func getLibrary(ctx context.Context, userPath string,
 
 // ParseConfigAndStartWebserver parses the config, sets the logfile, setups the
 // pidfile, and makes an signal handler goroutine
-func ParseConfigAndStartWebserver(projRoot string) error {
+func ParseConfigAndStartWebserver() error {
 
 	var cfg config.Config
 	err := cfg.FindAndParse()
@@ -155,8 +147,6 @@ func ParseConfigAndStartWebserver(projRoot string) error {
 		return err
 	}
 	go lib.Scan()
-
-	cfg.HTTPRoot = helpers.AbsolutePath(cfg.HTTPRoot, projRoot)
 
 	log.Printf("Release %s\n", Version)
 	srv := webserver.NewServer(ctx, cfg, lib)

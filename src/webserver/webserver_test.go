@@ -24,7 +24,6 @@ import (
 
 const (
 	TestPort = 9092
-	TestRoot = "http_root"
 )
 
 func testURL() string {
@@ -50,16 +49,8 @@ func testErrorAfter(seconds time.Duration, message string) chan int {
 }
 
 func setUpServer() *Server {
-	projRoot, err := getProjectRoot()
-
-	if err != nil {
-		println(err)
-		os.Exit(1)
-	}
-
 	var wsCfg config.Config
 	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
-	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 	wsCfg.Gzip = true
 
 	return NewServer(context.Background(), wsCfg, nil)
@@ -117,7 +108,6 @@ func getLibraryServer(t *testing.T) (*Server, library.Library) {
 
 	var wsCfg config.Config
 	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
-	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 
 	srv := NewServer(context.Background(), wsCfg, lib)
 	srv.Serve()
@@ -130,36 +120,22 @@ func TestStaticFilesServing(t *testing.T) {
 	srv.Serve()
 	defer tearDownServer(srv)
 
-	testStaticFile := func(url, expected string) {
+	url := fmt.Sprintf("http://127.0.0.1:%d/index.html", TestPort)
+	resp, err := http.Get(url)
 
-		resp, err := http.Get(url)
-
-		if err != nil {
-			t.Error(err)
-		}
-
-		defer resp.Body.Close()
-
-		if resp.StatusCode != 200 {
-			t.Errorf("Unexpected response status code: %d", resp.StatusCode)
-		}
-
-		body, err := ioutil.ReadAll(resp.Body)
-
-		if err != nil {
-			t.Error(err)
-		}
-
-		if string(body) != expected {
-			t.Errorf("Wrong static file found: %s", string(body))
-		}
+	if err != nil {
+		t.Error(err)
 	}
 
-	url := fmt.Sprintf("http://127.0.0.1:%d/static", TestPort)
-	testStaticFile(url, "This is a static file")
+	defer resp.Body.Close()
 
-	url = fmt.Sprintf("http://127.0.0.1:%d/second/static", TestPort)
-	testStaticFile(url, "Second static file")
+	if resp.StatusCode != 200 {
+		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
+	}
+
+	if _, err := ioutil.ReadAll(resp.Body); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestStartAndStop(t *testing.T) {
@@ -202,7 +178,6 @@ func TestSSL(t *testing.T) {
 
 	var wsCfg config.Config
 	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
-	wsCfg.HTTPRoot = TestRoot
 	wsCfg.SSL = true
 	wsCfg.SSLCertificate = config.Cert{
 		Crt: filepath.Join(certDir, "cert.pem"),
@@ -226,17 +201,10 @@ func TestSSL(t *testing.T) {
 }
 
 func TestUserAuthentication(t *testing.T) {
-	url := fmt.Sprintf("http://127.0.0.1:%d/static", TestPort)
-
-	projRoot, err := getProjectRoot()
-
-	if err != nil {
-		t.Error(err)
-	}
+	url := fmt.Sprintf("http://127.0.0.1:%d/", TestPort)
 
 	var wsCfg config.Config
 	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
-	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 	wsCfg.Auth = true
 	wsCfg.Authenticate = config.Auth{
 		User:     "testuser",
@@ -248,7 +216,6 @@ func TestUserAuthentication(t *testing.T) {
 	defer tearDownServer(srv)
 
 	resp, err := http.Get(url)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -307,7 +274,6 @@ func TestSearchUrl(t *testing.T) {
 
 	var wsCfg config.Config
 	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
-	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 
 	srv := NewServer(context.Background(), wsCfg, lib)
 	srv.Serve()
@@ -442,14 +408,8 @@ func TestGetFileUrl(t *testing.T) {
 }
 
 func TestGzipEncoding(t *testing.T) {
-	projRoot, err := getProjectRoot()
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	testGzipResponse := func(tests [][2]string) {
-		url := fmt.Sprintf("http://127.0.0.1:%d/static", TestPort)
+		url := fmt.Sprintf("http://127.0.0.1:%d/", TestPort)
 		for _, test := range tests {
 			header := test[0]
 			expected := test[1]
@@ -470,7 +430,6 @@ func TestGzipEncoding(t *testing.T) {
 			}
 
 			var bodyReader io.Reader
-			var responseBody []byte
 			if contentEncoding == "gzip" {
 				reader, err := gzip.NewReader(resp.Body)
 				if err != nil {
@@ -482,25 +441,15 @@ func TestGzipEncoding(t *testing.T) {
 				bodyReader = resp.Body
 			}
 
-			responseBody, err = ioutil.ReadAll(bodyReader)
-
+			_, err = ioutil.ReadAll(bodyReader)
 			if err != nil {
 				t.Fatal(err)
-			}
-
-			if len(responseBody) != 21 {
-				t.Errorf("Expected response size 21 but found %d", len(responseBody))
-			}
-
-			if string(responseBody) != "This is a static file" {
-				t.Errorf("Served file was not the expected. It was:\n%s", responseBody)
 			}
 		}
 	}
 
 	var wsCfg config.Config
 	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
-	wsCfg.HTTPRoot = filepath.Join(projRoot, "test_files", TestRoot)
 	wsCfg.Gzip = true
 
 	srv := NewServer(context.Background(), wsCfg, nil)

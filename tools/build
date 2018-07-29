@@ -4,15 +4,23 @@ set -e
 cd $(dirname `readlink -f $0`)
 cd ..
 
-arch="amd64"
-
-if [[ $# -lt 1 ]]; then
-    os="linux"
-else
-    os="$1"
+os='unknown'
+unamestr=`uname`
+if [[ "$unamestr" == 'Linux' ]]; then
+   os='linux'
+elif [[ "$unamestr" == 'FreeBSD' ]]; then
+   os='freebsd'
+elif [[ "$unamestr" == 'Darwin' ]]; then
+    os='darwin'
 fi
 
-echo "OS: $os, ARCH: $arch"
+arch="amd64"
+version=`git describe --tags --always`
+
+if [[ $# -gt 0 ]]; then
+    export GOOS="$1"
+    os="$GOOS"
+fi
 
 if [ -d dist/httpms ]
 then
@@ -24,40 +32,20 @@ echo "Making dist directory..."
 mkdir -p dist/httpms
 
 echo "Building binaries..."
-GOOS="$os" GOARCH="$arch" go build -o dist/httpms/httpms
+make release
+mv httpms dist/httpms/httpms
 
-for file in config.json config.default.json README.md
+for file in config.json README.md
 do
     echo "Copying $file..."
     cp "$file" dist/httpms
 done
 
-for directory in sqls templates
-do
-    echo "Copying $directory..."
-    cp -a "$directory" dist/httpms
-done
-
-echo "Creating http_root js and css directories..."
-mkdir -p dist/httpms/http_root/js
-mkdir -p dist/httpms/http_root/css
-
-echo "Copying files..."
-cp http_root/index.html dist/httpms/http_root
-cp http_root/css/squashed.css dist/httpms/http_root/css
-cp http_root/js/squashed.js dist/httpms/http_root/js
-cp http_root/js/Jplayer.swf dist/httpms/http_root/js
-
-cp -a http_root/favicon dist/httpms/http_root
-cp -a http_root/fonts dist/httpms/http_root
-cp -a http_root/skin dist/httpms/http_root
-cp -a http_root/js/ie8 dist/httpms/http_root/js
-
 echo "Copying install/uninstall scripts..."
 cp tools/install dist/httpms
 cp tools/uninstall dist/httpms
 
-archive="httpms_${os}_${arch}.tar.gz"
+archive="httpms_${version}_${os}_${arch}.tar.gz"
 
 echo "Creating archive..."
 cd dist

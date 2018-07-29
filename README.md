@@ -58,15 +58,13 @@ If you want to install it from source (from here) you will need:
 
 * [go-sqlite3](https://github.com/mattn/go-sqlite3) - `go get github.com/mattn/go-sqlite3` would probably be enough.
 
-For the moment I do not plan to distribute it any other way.
-
 
 Install
 ======
 
 The safest route is installing [one of the releases](https://github.com/ironsmile/httpms/releases).
 
-If have an already built version (for example `https_1.1.0_linux.tar.gz`) it includes an `install` script which would install HTTPMS in `/usr/bin/httpms` and put all of its assets in `/etc/httpms`. You will have to uninstall any previously installed versions first. An `uninstall` script is provided as well.
+If you have an already built version (for example `https_1.1.0_linux.tar.gz`) it includes an `install` script which would install HTTPMS in `/usr/bin/httpms`. You will have to uninstall any previously installed versions first. An `uninstall` script is provided as well.
 
 If installing from source running `go install` in the project root directory will compile `httpms` and move its binary in your `$GOPATH`. Releases from `v1.0.1` onward have their go dependencies vendored in.
 
@@ -74,6 +72,18 @@ If you want to install the latest development version from the `master` branch, 
 
 ```
 go get github.com/ironsmile/httpms
+```
+
+For building a release version you will need [packr](https://godoc.org/github.com/gobuffalo/packr) installed. Then in the root of the project run
+
+```
+make release
+```
+
+This will produce a binary `httpms` which is ready for distribution. Check its version with
+
+```
+./httpms -v
 ```
 
 First Run
