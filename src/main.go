@@ -118,20 +118,17 @@ func getLibrary(ctx context.Context, userPath string,
 // ParseConfigAndStartWebserver parses the config, sets the logfile, setups the
 // pidfile, and makes an signal handler goroutine
 func ParseConfigAndStartWebserver() error {
-
-	var cfg config.Config
-	err := cfg.FindAndParse()
-
+	cfg, err := config.FindAndParse()
 	if err != nil {
-		return err
+		return fmt.Errorf("parsing configuration: %s", err)
 	}
 
-	userPath := filepath.Dir(cfg.UserConfigPath())
+	userPath := filepath.Dir(config.UserConfigPath())
 
 	if !Debug {
 		err = helpers.SetLogsFile(helpers.AbsolutePath(cfg.LogFile, userPath))
 		if err != nil {
-			return err
+			return fmt.Errorf("setting debug file: %s", err)
 		}
 	}
 

@@ -35,7 +35,7 @@ echo "Building binaries..."
 make release
 mv httpms dist/httpms/httpms
 
-for file in config.json README.md
+for file in README.md
 do
     echo "Copying $file..."
     cp "$file" dist/httpms
