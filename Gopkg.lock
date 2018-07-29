@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  digest = "1:6d8190b0aff35116b32678a9ef6655369f78da8272a7e0adeed58ae53b46fb43"
+  name = "github.com/gbrlsnchs/jwt"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "c3625abb8d9cc771ae11d7497c54f21136c1a09d"
+  version = "v1.0.2"
+
+[[projects]]
   digest = "1:b4ba61892a3c44436ea465b0f7403b5ce1cc0e80e6cf0f885f7213e1a5b5725a"
   name = "github.com/gobuffalo/packr"
   packages = ["."]
@@ -96,6 +104,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/gbrlsnchs/jwt",
     "github.com/gobuffalo/packr",
     "github.com/gorilla/mux",
     "github.com/howeyc/fsnotify",
