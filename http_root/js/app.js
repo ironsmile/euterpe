@@ -3,7 +3,17 @@
 */
 
 $(document).ready(function(){
+    switch (window.location.pathname) {
+        case "/":
+            playerPageInit();
+            break;
+        case "/login/":
+            loginPageInit();
+            break;
+    }
+});
 
+function playerPageInit() {
     // The default setPlaylist method was calling _init which did 
     // jPlayerPlaylist.select for the first track. That resulted in jplayer stopping 
     // the played song. Now we make it never select. We also set current = undef so
@@ -275,7 +285,13 @@ $(document).ready(function(){
     });
 
     restore_last_saved_search();
-});
+}
+
+function loginPageInit() {
+    if (window.location.search.includes("wrongCreds=1")) {
+        $('.wrong-creds').show();
+    }
+}
 
 _ajax_query = null;
 

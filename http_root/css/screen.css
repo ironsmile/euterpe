@@ -1,9 +1,11 @@
 /*
     Application CSS
 */
-
-body {
-    padding: 10px 0 10px 0;
+.login-container {
+    min-height: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
 }
 
 .filter-list {}
@@ -38,4 +40,16 @@ footer {
         transform: rotate(360deg);
         -webkit-transform: rotate(360deg);
     }
+}
+
+.wrong-creds {
+    display: none;
+}
+
+.login-logo {
+    margin-bottom: 20px;
+}
+
+.navbar-brand {
+    padding: 8px 15px;
 }

@@ -32,6 +32,9 @@ const (
 	// notFoundAlbumImage is path to the image shown when there is no image
 	// for particular album. It must be relative то httpRootPath.
 	notFoundAlbumImage = "images/unknownAlbum.png"
+
+	sessionCookieName  = "session"
+	returnToQueryParam = "return_to"
 )
 
 // Server represends our webserver. It will be controlled from here
@@ -90,6 +93,8 @@ func (srv *Server) serveGoroutine() {
 	)
 	browseHandler := NewBrowseHandler(srv.library)
 	mediaFileHandler := NewFileHandler(srv.library)
+	loginHandler := NewLoginHandler(srv.cfg.Authenticate)
+	logoutHandler := NewLogoutHandler()
 
 	router := mux.NewRouter()
 	router.StrictSlash(true)
@@ -100,6 +105,8 @@ func (srv *Server) serveGoroutine() {
 	router.Handle("/browse", browseHandler).Methods("GET")
 	router.Handle("/search/{searchQuery}", searchHandler).Methods("GET")
 	router.Handle("/search", searchHandler).Methods("GET")
+	router.Handle("/login/", loginHandler).Methods("POST")
+	router.Handle("/logout/", logoutHandler).Methods("GET")
 	router.PathPrefix("/").Handler(staticFilesHandler).Methods("GET")
 
 	handler := NewTerryHandler(router)
@@ -109,11 +116,19 @@ func (srv *Server) serveGoroutine() {
 	}
 
 	if srv.cfg.Auth {
-		handler = BasicAuthHandler{
+		handler = &AuthHandler{
 			wrapped:   handler,
 			username:  srv.cfg.Authenticate.User,
 			password:  srv.cfg.Authenticate.Password,
 			templates: NewPackrTemplates(templatesBox),
+			secret:    srv.cfg.Authenticate.Secret,
+			exceptions: []string{
+				"/login/",
+				"/css/",
+				"/js/",
+				"/favicon/",
+				"/fonts/",
+			},
 		}
 	}
 

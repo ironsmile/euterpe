@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="/css/squashed.css" />
+        <title>Login | HTTPMS</title>
+
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+          <script src="/js/ie8/html5shiv.js"></script>
+          <script src="/js/ie8/respond.min.js"></script>
+        <![endif]-->
+
+        <!-- ****** faviconit.com favicons ****** -->
+        <link rel="shortcut icon" href="/favicon/favicon.ico">
+        <link rel="icon" sizes="16x16 32x32 64x64" href="/favicon/favicon.ico">
+        <link rel="icon" type="image/png" sizes="196x196" href="/favicon/favicon-192.png">
+        <link rel="icon" type="image/png" sizes="160x160" href="/favicon/favicon-160.png">
+        <link rel="icon" type="image/png" sizes="96x96" href="/favicon/favicon-96.png">
+        <link rel="icon" type="image/png" sizes="64x64" href="/favicon/favicon-64.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16.png">
+        <link rel="apple-touch-icon" href="/favicon/favicon-57.png">
+        <link rel="apple-touch-icon" sizes="114x114" href="/favicon/favicon-114.png">
+        <link rel="apple-touch-icon" sizes="72x72" href="/favicon/favicon-72.png">
+        <link rel="apple-touch-icon" sizes="144x144" href="/favicon/favicon-144.png">
+        <link rel="apple-touch-icon" sizes="60x60" href="/favicon/favicon-60.png">
+        <link rel="apple-touch-icon" sizes="120x120" href="/favicon/favicon-120.png">
+        <link rel="apple-touch-icon" sizes="76x76" href="/favicon/favicon-76.png">
+        <link rel="apple-touch-icon" sizes="152x152" href="/favicon/favicon-152.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="/favicon/favicon-180.png">
+        <meta name="msapplication-TileColor" content="#FFFFFF">
+        <meta name="msapplication-TileImage" content="/favicon/favicon-144.png">
+        <meta name="msapplication-config" content="/favicon/browserconfig.xml">
+        <!-- ****** faviconit.com favicons ****** -->
+    </head>
+    <body>
+        <div class="login-container">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12 text-center">
+                        <img src="/favicon/favicon-150.png" alt="Logo" class="login-logo">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4"></div>
+                    <div class="col-md-4">
+                        <div class="wrong-creds alert alert-danger alert-dismissible" role="alert">
+                          <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                          <span class="sr-only">Error:</span>
+                          Wrong username or password
+                        </div>
+
+                        <form action="" method="POST">
+                            <div class="form-group">
+                                <label for="username">Username</label>
+                                <input
+                                    type="text"
+                                    id="username"
+                                    placeholder="Username"
+                                    name="username"
+                                    class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="password">Password</label>
+                                <input
+                                    type="password"
+                                    id="password"
+                                    placeholder="Password"
+                                    name="password"
+                                    class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary">Login</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script type="text/javascript" src="/js/squashed.js"></script>
+    </body>
+</html>

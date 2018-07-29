@@ -7,6 +7,8 @@
 package config
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -24,6 +26,7 @@ const (
 	ConfigName = "config.json"
 
 	defaultlistAddress = ":9996"
+	defaultSecretBytes = 64
 )
 
 // defaultConfig contains all the default values for the HTTPMS configuration. Users
@@ -75,6 +78,7 @@ type Cert struct {
 type Auth struct {
 	User     string `json:"user,omitempty"`
 	Password string `json:"password,omitempty"`
+	Secret   string `json:"secret"`
 }
 
 // FindAndParse actually finds the configuration file, parsing it and merging it on
@@ -136,10 +140,18 @@ func CopyDefaultOverUser() error {
 		homeDir = user.HomeDir
 	}
 
+	randBuff := make([]byte, defaultSecretBytes)
+	if _, err := rand.Read(randBuff); err != nil {
+		return fmt.Errorf("creating random secret: %s", err)
+	}
+
 	userCfg := Config{
 		Listen: defaultlistAddress,
 		Libraries: []string{
 			filepath.Join(homeDir, "Music"),
+		},
+		Authenticate: Auth{
+			Secret: hex.EncodeToString(randBuff),
 		},
 	}
 
