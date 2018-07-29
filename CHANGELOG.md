@@ -1,5 +1,15 @@
 # Change Log
 
+## v1.2.0 - 2018-07-29
+
+Album artwork support is added into the server. Now artwork will be searched on disk or if configured - using the [Cover Art Archive](https://musicbrainz.org/doc/Cover_Art_Archive/). For this new API endpoints are created for working with the artwork.
+
+All static files are bundled into the binary. This makes installation and uninstallation easier. On top of that because we now use `upx` the binary is much smaller than before. Apparently "more is less" contrary to what commander Pike says.
+
+When configured with authentication HTTPMs will now have 3 new options for authentication with JWT tokens: HTTP cookie, `Authorization: Bearer` and via query parameter `token`. At the moment there is no public API for generating tokens but the interactive web login.
+
+On the development front - dependencies are now vendored using `dep` instead of `govendor`. Also, from this version forward releases will be made from the `master` branch instead of `release/X` branches. The latter will be abandoned.
+
 ## v1.1.0 - 2017-09-01
 
 A new API endpoint is included: `/browse/`. Using it one can browse through all artists or albums in paginated manner. See [here](README.md#browse) for its full documentation.
