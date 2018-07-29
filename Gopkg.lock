@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  digest = "1:b4ba61892a3c44436ea465b0f7403b5ce1cc0e80e6cf0f885f7213e1a5b5725a"
+  name = "github.com/gobuffalo/packr"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "147bee9cde84aeca6693d1b1aedc595298f24d5b"
+  version = "v1.12.0"
+
+[[projects]]
   digest = "1:c01767916c59f084bb7c41a7d5877c0f3099b1595cfa066e84ec6ad6b084dd89"
   name = "github.com/gorilla/context"
   packages = ["."]
@@ -53,6 +61,14 @@
   version = "v1.1"
 
 [[projects]]
+  digest = "1:5cf3f025cbee5951a4ee961de067c8a89fc95a5adabead774f82822efabab121"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
   branch = "master"
   digest = "1:aa8ce5de592183223ce118e540ec586fe68c2b687dd7c857cd3c6b8e5dc1f5f1"
   name = "github.com/wtolson/go-taglib"
@@ -80,6 +96,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/gobuffalo/packr",
     "github.com/gorilla/mux",
     "github.com/howeyc/fsnotify",
     "github.com/ironsmile/sql-migrate",
