@@ -37,7 +37,7 @@
         <!-- ****** faviconit.com favicons ****** -->
     </head>
     <body>
-        <div class="login-container">
+        <div class="login-container vcenter">
             <div class="container">
                 <div class="row">
                     <div class="col-md-12 text-center">
@@ -76,7 +76,18 @@
                             </div>
 
                             <div class="form-group">
-                                <button type="submit" class="btn btn-primary">Login</button>
+                                <div class="row vcenter">
+                                  <div class="col-xs-2">
+                                    <button type="submit" class="btn btn-primary">Login</button>
+                                  </div>
+                                  <div class="col-xs-10 text-right">
+                                    <input
+                                        type="checkbox"
+                                        id="remember_me"
+                                        name="remember_me">
+                                    <label for="remember_me">Remember me</label>
+                                  </div>
+                                </div>
                             </div>
                         </form>
                     </div>

@@ -13,7 +13,15 @@ import (
 	"github.com/ironsmile/httpms/src/config"
 )
 
-var cookieTokenDuration = 7 * 24 * time.Hour
+var (
+	// Session cookie is when the user has *not* clicked the "remember me" check box.
+	// It will expire with the browser session. Remember me cookie (!sessionCookie)
+	// on the other hand should live for far longer. We set the session token
+	// optimistically to expire in seven days. Hopefully the session will not be that
+	// long. The remember me cookie on the other hand gets to live for longer.
+	sessionTokenDuration = 7 * 24 * time.Hour
+	rememberMeDuration   = 62 * 24 * time.Hour
+)
 
 type loginHandler struct {
 	auth config.Auth
@@ -68,7 +76,20 @@ func (h *loginHandler) respondCorrect(
 	r *http.Request,
 	returnTo string,
 ) {
-	expiresAt := time.Now().Add(cookieTokenDuration)
+	sessionCookie := true
+
+	if r.PostFormValue("remember_me") == "on" {
+		sessionCookie = false
+	}
+
+	var expiresAt time.Time
+
+	if sessionCookie {
+		expiresAt = time.Now().Add(sessionTokenDuration)
+	} else {
+		expiresAt = time.Now().Add(rememberMeDuration)
+	}
+
 	tokenOpts := &jwt.Options{
 		Timestamp:      true,
 		ExpirationTime: expiresAt,
@@ -83,9 +104,11 @@ func (h *loginHandler) respondCorrect(
 	cookie := &http.Cookie{
 		Name:     sessionCookieName,
 		Value:    token,
-		Expires:  expiresAt,
 		Path:     "/",
 		HttpOnly: true,
+	}
+	if !sessionCookie {
+		cookie.Expires = expiresAt
 	}
 	http.SetCookie(w, cookie)
 
