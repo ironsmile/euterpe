@@ -10,6 +10,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -66,6 +67,43 @@ type ScanSection struct {
 	FilesPerOperation int64         `json:"files_per_operation,omitempty"`
 	SleepPerOperation time.Duration `json:"sleep_after_operation,omitempty"`
 	InitialWait       time.Duration `json:"initial_wait_duration,omitempty"`
+}
+
+// UnmarshalJSON parses a JSON and populets its ScanSection. Satisfies the
+// Unmrashaller interface.
+func (ss *ScanSection) UnmarshalJSON(input []byte) error {
+	ssProxy := &struct {
+		FilesPerOperation int64  `json:"files_per_operation"`
+		SleepPerOperation string `json:"sleep_after_operation"`
+		InitialWait       string `json:"initial_wait_duration"`
+	}{}
+	if err := json.Unmarshal(input, ssProxy); err != nil {
+		return err
+	}
+
+	ss.FilesPerOperation = ssProxy.FilesPerOperation
+
+	if ssProxy.SleepPerOperation != "" {
+		spo, err := time.ParseDuration(ssProxy.SleepPerOperation)
+		if err != nil {
+			return err
+		}
+		ss.SleepPerOperation = spo
+	}
+
+	if ssProxy.InitialWait != "" {
+		iwd, err := time.ParseDuration(ssProxy.InitialWait)
+		if err != nil {
+			return err
+		}
+		ss.InitialWait = iwd
+	}
+
+	if ss.FilesPerOperation <= 0 {
+		return errors.New("files_per_operation must be a positive integer")
+	}
+
+	return nil
 }
 
 // Cert represents a configuration for TLS certificate
