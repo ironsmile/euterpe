@@ -77,6 +77,17 @@
   version = "v0.8.0"
 
 [[projects]]
+  digest = "1:6d5f91e94b84274a726f31e8d98f1f789e9afae639bd7555d3ca610c966823c4"
+  name = "github.com/skip2/go-qrcode"
+  packages = [
+    ".",
+    "bitset",
+    "reedsolomon",
+  ]
+  pruneopts = "NUT"
+  revision = "cf5f9fa2f0d847edb8e038db7ed975e239095e1a"
+
+[[projects]]
   branch = "master"
   digest = "1:aa8ce5de592183223ce118e540ec586fe68c2b687dd7c857cd3c6b8e5dc1f5f1"
   name = "github.com/wtolson/go-taglib"
@@ -110,6 +121,7 @@
     "github.com/howeyc/fsnotify",
     "github.com/ironsmile/sql-migrate",
     "github.com/mattn/go-sqlite3",
+    "github.com/skip2/go-qrcode",
     "github.com/wtolson/go-taglib",
     "gopkg.in/mineo/gocaa.v1",
   ]
