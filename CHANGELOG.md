@@ -1,5 +1,13 @@
 # Change Log
 
+## v1.2.2 - 2018-07-31
+
+Two small bug fixes:
+
+* A regression in config parsing where duration values (such as "20ms") could not be parsed.
+
+* Fix a bug where the address scheme in generated QR barcode is always http.
+
 ## v1.2.1 - 2018-07-31
 
 Added a page for generating token in a QR barcode suitable for scaning in the HTTPMS mobile app.
