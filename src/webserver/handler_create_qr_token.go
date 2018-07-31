@@ -20,7 +20,7 @@ func NewCreateQRTokenHandler(needsAuth bool, auth config.Auth) http.Handler {
 			Address  string `json:"address"`
 		}{
 			Software: "httpms",
-			Address:  fmt.Sprintf("http://%s", r.Host),
+			Address:  r.URL.Query().Get("address"),
 		}
 
 		if needsAuth {
