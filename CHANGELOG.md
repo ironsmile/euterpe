@@ -1,5 +1,9 @@
 # Change Log
 
+## v1.2.1 - 2018-07-31
+
+Added a page for generating token in a QR barcode suitable for scaning in the HTTPMS mobile app.
+
 ## v1.2.0 - 2018-07-29
 
 Album artwork support is added into the server. Now artwork will be searched on disk or if configured - using the [Cover Art Archive](https://musicbrainz.org/doc/Cover_Art_Archive/). For this new API endpoints are created for working with the artwork.
