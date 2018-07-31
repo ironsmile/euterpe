@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="/css/squashed.css" />
+        <link rel="stylesheet" href="/skin/blue.monday/jplayer.blue.monday.css" />
+        <title>{{if .Title -}} {{.Title}} | {{end -}} HTTPMS</title>
+
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+          <script src="/js/ie8/html5shiv.js"></script>
+          <script src="/js/ie8/respond.min.js"></script>
+        <![endif]-->
+
+        <!-- ****** faviconit.com favicons ****** -->
+        <link rel="shortcut icon" href="/favicon/favicon.ico">
+        <link rel="icon" sizes="16x16 32x32 64x64" href="/favicon/favicon.ico">
+        <link rel="icon" type="image/png" sizes="196x196" href="/favicon/favicon-192.png">
+        <link rel="icon" type="image/png" sizes="160x160" href="/favicon/favicon-160.png">
+        <link rel="icon" type="image/png" sizes="96x96" href="/favicon/favicon-96.png">
+        <link rel="icon" type="image/png" sizes="64x64" href="/favicon/favicon-64.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16.png">
+        <link rel="apple-touch-icon" href="/favicon/favicon-57.png">
+        <link rel="apple-touch-icon" sizes="114x114" href="/favicon/favicon-114.png">
+        <link rel="apple-touch-icon" sizes="72x72" href="/favicon/favicon-72.png">
+        <link rel="apple-touch-icon" sizes="144x144" href="/favicon/favicon-144.png">
+        <link rel="apple-touch-icon" sizes="60x60" href="/favicon/favicon-60.png">
+        <link rel="apple-touch-icon" sizes="120x120" href="/favicon/favicon-120.png">
+        <link rel="apple-touch-icon" sizes="76x76" href="/favicon/favicon-76.png">
+        <link rel="apple-touch-icon" sizes="152x152" href="/favicon/favicon-152.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="/favicon/favicon-180.png">
+        <meta name="msapplication-TileColor" content="#FFFFFF">
+        <meta name="msapplication-TileImage" content="/favicon/favicon-144.png">
+        <meta name="msapplication-config" content="/favicon/browserconfig.xml">
+        <!-- ****** faviconit.com favicons ****** -->
+
+    </head>
+    <body>
+        <nav class="navbar navbar-default">
+          <div class="container-fluid">
+
+            <div class="navbar-header">
+              <a class="navbar-brand" href="/">
+                <img alt="HTTPMS" src="/favicon/favicon-32.png">
+              </a>
+
+              <button
+                type="button"
+                class="navbar-toggle collapsed"
+                data-toggle="collapse"
+                data-target="#navbar-collapse-main">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            </div>
+
+            <div class="collapse navbar-collapse" id="navbar-collapse-main">
+                <ul class="nav navbar-nav">
+                    {{range .Menu}}
+                        <li {{if .Active -}} class="active" {{- end}}>
+                            <a href="{{.URI}}">{{ .Name }}
+                                {{- if .Active -}}
+                                    <span class="sr-only">(current)</span>
+                                {{- end -}}
+                            </a>
+                        </li>
+                    {{end}}
+                </ul>
+
+                <ul class="nav navbar-nav navbar-right">
+                      <li><a href="/logout/" class="navbar-link">Log Out</a></li>
+                </ul>
+            </div>
+          </div>
+        </nav>
+
+        {{template "content"}}
+
+        <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    Powered by
+                    <a href="https://github.com/ironsmile/httpms">
+                        HTTPMS    
+                    </a>
+                    from
+                    <a href="https://github.com/ironsmile">
+                        Doychin Atanasov.
+                    </a>
+                </div>
+                <div class="col-md-12">
+                    Logo made by Iconnice from
+                    <a href="//www.flaticon.com">www.flaticon.com</a>
+                </div>
+            </div>
+        </div>
+        </footer>
+        <script type="text/javascript" src="/js/squashed.js"></script>
+    </body>
+</html>

@@ -13,6 +13,10 @@ type Templates interface {
 
 	// Get find and parses a template based on its file name.
 	Get(path string) (*template.Template, error)
+
+	// All returns a struct which contains all templates in
+	// non-exported attributes.
+	All() (*AllTemplates, error)
 }
 
 // PackrTemplates is Templates implementation which uses packr.Box to
@@ -38,10 +42,42 @@ func (t *PackrTemplates) Get(path string) (*template.Template, error) {
 	return parsed, nil
 }
 
+// All implements the Templates interface.
+func (t *PackrTemplates) All() (*AllTemplates, error) {
+	layout, err := t.Get("layout.html")
+	if err != nil {
+		return nil, fmt.Errorf("parsing layout: %s", err)
+	}
+
+	tplString, err := t.box.MustString("player.html")
+	if err != nil {
+		return nil, fmt.Errorf("finding index template in box: %s", err)
+	}
+	index := template.Must(layout.Clone())
+	template.Must(index.New("content").Parse(tplString))
+
+	tplString, err = t.box.MustString("add_device.html")
+	if err != nil {
+		return nil, fmt.Errorf("finding add_device template in box: %s", err)
+	}
+	addDevice := template.Must(layout.Clone())
+	template.Must(addDevice.New("content").Parse(tplString))
+
+	return &AllTemplates{
+		index:     index,
+		addDevice: addDevice,
+	}, nil
+}
+
 // NewPackrTemplates returns a new PackrTemplates which will use the argument
 // box for finding and reading files.
 func NewPackrTemplates(box packr.Box) *PackrTemplates {
 	return &PackrTemplates{
 		box: box,
 	}
+}
+
+type AllTemplates struct {
+	index     *template.Template
+	addDevice *template.Template
 }

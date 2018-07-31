@@ -1,0 +1,176 @@
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="input-group">
+                <input
+                    id="search"
+                    type="text"
+                    class="form-control"
+                    autofocus=""
+                    placeholder="Search for track, album or artist" />
+                <span class="input-group-btn">
+                    <button
+                        class="btn btn-primary search-form-button"
+                        type="button">
+                        <span class="glyphicon glyphicon-search"></span>
+                    </button>
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6 col-xs-6">
+            <h3>Artist</h3>
+            <select name="artist"
+                id="artist"
+                class="form-control filter-list"
+                size="10">
+                
+            </select>
+        </div>
+        <div class="col-md-6 col-xs-6">
+            <h3>Album</h3>
+            <select name="album"
+                id="album"
+                class="form-control filter-list"
+                size="10">
+                
+            </select>
+        </div>
+    </div>
+
+    <div id="jp_container_bootstrap" class="jp-video">
+        <div class="jp-type-playlist">
+
+            <div class="row">
+                <div class="col-md-12 hidden">
+                    <div id="jquery_jplayer_bootstrap" class="jp-jplayer"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12 hidden">
+                    <div class="jp-video-play">
+                        <a href="javascript:;"
+                            class="jp-video-play-icon"
+                            tabindex="1">
+                            play
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="jp-progress">
+                        <div class="jp-seek-bar">
+                            <div class="jp-play-bar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="jp-current-time"></div>
+                </div>
+                <div class="col-md-6">
+                    <div class="jp-duration"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="jp-title">
+                        <ul>
+                            <li></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="row jp-controls">
+
+                <div class="col-md-4 col-sm-3 hidden-xs text-right jp-volume-controls">
+
+                    <button class="btn btn-default btn-xs jp-mute" title="mute">
+                        <span class="glyphicon glyphicon-volume-down"></span>
+                    </button>
+
+                    <button class="btn btn-default btn-xs jp-unmute active" title="unmute">
+                        <span class="glyphicon glyphicon-volume-off"></span>
+                    </button>
+
+                    <div class="jp-volume-bar">
+                        <div class="jp-volume-bar-value"></div>
+                    </div>
+
+                    <button class="btn btn-default btn-xs jp-volume-max" title="max volume">
+                        <span class="glyphicon glyphicon-volume-up"></span>
+                    </button>
+
+                </div>
+
+                <div class="col-md-4 col-sm-6 col-xs-12 text-center jp-media-controls">
+                    <button class="btn btn-primary jp-previous" title="previous">
+                        <span class="glyphicon glyphicon-backward"></span>
+                    </button>
+
+                    <button class="btn btn-primary btn-lg jp-play" title="play">
+                        <span class="glyphicon glyphicon-play"></span>
+                    </button>
+
+                    <button class="btn btn-primary btn-lg jp-pause" title="pause">
+                        <span class="glyphicon glyphicon-pause"></span>
+                    </button>
+
+                    <button class="btn btn-primary jp-next" title="next">
+                        <span class="glyphicon glyphicon-forward"></span>
+                    </button>
+
+                    <button class="btn btn-primary jp-stop" title="stop">
+                        <span class="glyphicon glyphicon-stop"></span>
+                    </button>
+                </div>
+
+                <div class="col-md-4 col-sm-3 hidden-xs text-left jp-toggles">
+                    <button class="btn btn-default jp-shuffle" title="shuffle">
+                        <span class="glyphicon glyphicon-random"></span>
+                    </button>
+
+                    <button class="btn btn-default jp-shuffle-off active" title="shuffle off">
+                        <span class="glyphicon glyphicon-random"></span>
+                    </button>
+
+                    <button class="btn btn-default jp-repeat" title="repeat">
+                        <span class="glyphicon glyphicon-repeat"></span>
+                    </button>
+
+                    <button class="btn btn-default jp-repeat-off active" title="repeat off">
+                        <span class="glyphicon glyphicon-repeat"></span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="jp-playlist table-responsive">
+                        <ul>
+                            <!--
+                                The method Playlist.displayPlaylist() uses this
+                                unordered list
+                            -->
+                            <li></li>
+                        </ul>
+                    </div>
+                    <div class="jp-no-solution">
+                        <span>Update Required</span>
+                        To play the media you will need to either update
+                        your browser to a recent version or update your
+                        <a href="http://get.adobe.com/flashplayer/"
+                            target="_blank">
+                            Flash plugin
+                        </a>.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

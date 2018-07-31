@@ -56,3 +56,11 @@ footer {
 .navbar-brand {
     padding: 8px 15px;
 }
+
+.footer {
+    margin-bottom: 20px;
+}
+
+.barcode {
+    margin-bottom: 20px;
+}

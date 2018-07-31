@@ -167,6 +167,9 @@ $(document).ready(function(){
         case "/login/":
             loginPageInit();
             break;
+        case "/add_device/":
+            addDevicePageInit();
+            break;
     }
 });
 
@@ -448,6 +451,17 @@ function loginPageInit() {
     if (window.location.search.includes("wrongCreds=1")) {
         $('.wrong-creds').show();
     }
+}
+
+function addDevicePageInit() {
+    var serverAddress = window.location.protocol + "//" + window.location.host;
+    var img = $("<img>");
+    img.attr("src", "/new_qr_token/?address=" + encodeURIComponent(serverAddress));
+    img.attr("alt", "New Token QR Barcode");
+
+    var barcode = $('.barcode');
+    barcode.empty();
+    barcode.append(img)
 }
 
 _ajax_query = null;

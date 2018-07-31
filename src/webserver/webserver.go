@@ -82,6 +82,11 @@ func (srv *Server) Serve() {
 func (srv *Server) serveGoroutine() {
 	templatesBox := packr.NewBox(htmlTeplatesDir)
 	rootBox := packr.NewBox(httpRootPath)
+	templatesResolver := NewPackrTemplates(templatesBox)
+	allTpls, err := templatesResolver.All()
+	if err != nil {
+		panic(err)
+	}
 
 	staticFilesHandler := http.FileServer(rootBox)
 	searchHandler := NewSearchHandler(srv.library)
@@ -95,6 +100,9 @@ func (srv *Server) serveGoroutine() {
 	mediaFileHandler := NewFileHandler(srv.library)
 	loginHandler := NewLoginHandler(srv.cfg.Authenticate)
 	logoutHandler := NewLogoutHandler()
+	createQRTokenHandler := NewCreateQRTokenHandler(srv.cfg.Auth, srv.cfg.Authenticate)
+	indexHandler := NewTemplateHandler(allTpls.index, "")
+	addDeviceHandler := NewTemplateHandler(allTpls.addDevice, "Add Device")
 
 	router := mux.NewRouter()
 	router.StrictSlash(true)
@@ -107,6 +115,9 @@ func (srv *Server) serveGoroutine() {
 	router.Handle("/search", searchHandler).Methods("GET")
 	router.Handle("/login/", loginHandler).Methods("POST")
 	router.Handle("/logout/", logoutHandler).Methods("GET")
+	router.Handle("/", indexHandler).Methods("GET")
+	router.Handle("/add_device/", addDeviceHandler).Methods("GET")
+	router.Handle("/new_qr_token/", createQRTokenHandler).Methods("GET")
 	router.PathPrefix("/").Handler(staticFilesHandler).Methods("GET")
 
 	handler := NewTerryHandler(router)
@@ -120,7 +131,7 @@ func (srv *Server) serveGoroutine() {
 			wrapped:   handler,
 			username:  srv.cfg.Authenticate.User,
 			password:  srv.cfg.Authenticate.Password,
-			templates: NewPackrTemplates(templatesBox),
+			templates: templatesResolver,
 			secret:    srv.cfg.Authenticate.Secret,
 			exceptions: []string{
 				"/login/",
