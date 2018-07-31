@@ -12,6 +12,9 @@ import (
 	"github.com/ironsmile/httpms/src/config"
 )
 
+// NewCreateQRTokenHandler returns a http.Handler which will generate an access token
+// in a QR bar code and serve it as a png image as a response. In the bar code the
+// server address from the query value "address" is included.
 func NewCreateQRTokenHandler(needsAuth bool, auth config.Auth) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		qrConts := struct {

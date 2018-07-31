@@ -77,6 +77,8 @@ func NewPackrTemplates(box packr.Box) *PackrTemplates {
 	}
 }
 
+// AllTemplates is a structure which contains all parsed templates for different pages.
+// They are ready for usage in http handlers which return HTML.
 type AllTemplates struct {
 	index     *template.Template
 	addDevice *template.Template
