@@ -1,7 +1,6 @@
 package webserver
 
 import (
-	"crypto/subtle"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -37,20 +36,15 @@ func NewLoginHandler(auth config.Auth) http.Handler {
 }
 
 func (h *loginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	user := r.PostFormValue("username")
-	pass := r.PostFormValue("password")
 	returnTo := r.URL.Query().Get(returnToQueryParam)
 	if !strings.HasPrefix(returnTo, "/") {
 		returnTo = "/"
 	}
 
-	// The following check is carefully orchestrated so that it will take constant
-	// time for wrong and correct pairs of username and password. This mitigates
-	// simple timing attacks.
-	userCheck := subtle.ConstantTimeCompare([]byte(user), []byte(h.auth.User))
-	passCheck := subtle.ConstantTimeCompare([]byte(pass), []byte(h.auth.Password))
+	user := r.PostFormValue("username")
+	pass := r.PostFormValue("password")
 
-	if userCheck&passCheck != 1 {
+	if !checkLoginCreds(user, pass, h.auth) {
 		h.respondWrong(w, r, returnTo)
 		return
 	}
