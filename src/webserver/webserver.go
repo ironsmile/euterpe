@@ -104,6 +104,7 @@ func (srv *Server) serveGoroutine() {
 	createQRTokenHandler := NewCreateQRTokenHandler(srv.cfg.Auth, srv.cfg.Authenticate)
 	indexHandler := NewTemplateHandler(allTpls.index, "")
 	addDeviceHandler := NewTemplateHandler(allTpls.addDevice, "Add Device")
+	registerDeviceHandler := NewRigisterDeviceHandler()
 
 	router := mux.NewRouter()
 	router.StrictSlash(true)
@@ -116,6 +117,7 @@ func (srv *Server) serveGoroutine() {
 	router.Handle("/search", searchHandler).Methods("GET")
 	router.Handle("/login/device/", loginDeviceHandler).Methods("POST")
 	router.Handle("/login/", loginHandler).Methods("POST")
+	router.Handle("/register/device/", registerDeviceHandler).Methods("POST")
 	router.Handle("/logout/", logoutHandler).Methods("GET")
 	router.Handle("/", indexHandler).Methods("GET")
 	router.Handle("/add_device/", addDeviceHandler).Methods("GET")

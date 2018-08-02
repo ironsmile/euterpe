@@ -48,8 +48,16 @@ func (hl *AuthHandler) challengeAuthentication(
 	req *http.Request,
 ) error {
 	accepts := strings.Split(req.Header.Get("Accept"), ",")
+
 	if contains(accepts, "text/html") {
 		return hl.redirectToLogin(writer, req)
+	}
+
+	if contains(accepts, "application/json") {
+		writer.Header().Set("Content-Type", "application/json; charset=utf8")
+		writer.WriteHeader(http.StatusUnauthorized)
+		writer.Write([]byte(wrongLoginJSON))
+		return nil
 	}
 
 	return hl.basicAuthChallenge(writer, req)
