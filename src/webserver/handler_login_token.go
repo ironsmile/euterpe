@@ -15,19 +15,20 @@ const (
 	wrongLoginJSON = `{"error": "wrong username or password"}`
 )
 
-type loginDeviceHandler struct {
+type loginTokenHandler struct {
 	auth config.Auth
 }
 
-// NewLoginDeviceHandler returns a new login handler which will use the information in
-// auth for deciding when divce was logged in correctly by entering username and password.
-func NewLoginDeviceHandler(auth config.Auth) http.Handler {
-	return &loginDeviceHandler{
+// NewLoginTokenHandler returns a new login handler which will use the information in
+// auth for deciding when device or program was logged in correctly by entering
+// username and password.
+func NewLoginTokenHandler(auth config.Auth) http.Handler {
+	return &loginTokenHandler{
 		auth: auth,
 	}
 }
 
-func (h *loginDeviceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *loginTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	reqBody := struct {
 		User string `json:"username"`
 		Pass string `json:"password"`
