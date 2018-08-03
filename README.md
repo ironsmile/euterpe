@@ -184,7 +184,23 @@ As an API
 
 You can use HTTPMS as a REST API and write your own player. Or maybe a plugin for your favourite player which would use your HTTPMS installation as a backend.
 
-Essentially, there are just a few API calls.
+### Authentication
+
+When your server is open you don't have to authenticate requests to the API. Installations protected by username and password require you to authenticate requests when using the API. For this the following methods are supported:
+
+* Bearer token in the `Authorization` HTTP header (as described in [RFC 6750](https://tools.ietf.org/html/rfc6750)):
+
+```
+Authorization: Bearer token
+```
+
+* Basic authentication ([RFC 2617](https://tools.ietf.org/html/rfc2617)) with your username and password:
+
+```
+Authorization: Basic base64(username:password)
+```
+
+Authentication tokens can be acquired using the `/login/token/` endpoint described below. Using tokens is the preferred method since it does not expose your username and password in every request. Once acquired users must _register_ the tokens using the `/register/token/` endpoint in order to "activate" them. Tokens which are not registered may or may not work. Tokens may have expiration date or they may not. Integration applications must provide a mechanism for token renewal.
 
 ### Search
 
@@ -276,7 +292,7 @@ _order_: controls if the order would ascending (with value `asc`) or descending 
 
 ### Play a Song
 
-```sh
+```
 GET /file/{trackID}
 ```
 
@@ -284,7 +300,7 @@ This endpoint would return you the media file as is. A song's `trackID` can be f
 
 ### Download an Album
 
-```sh
+```
 GET /album/{albumID}
 ```
 
@@ -297,7 +313,7 @@ HTTPMS supports album artwork. Here are all the methods for managing it through 
 
 #### Get Artwork
 
-```sh
+```
 GET /album/{albumID}/artwork
 ```
 
@@ -305,7 +321,7 @@ Returns a bitmap image with artwork for this album if one is available. Searchin
 
 #### Upload Artwork
 
-```sh
+```
 PUT /album/{albumID}/artwork
 ```
 
@@ -319,11 +335,42 @@ curl -i -X PUT \
 
 #### Remove Artwork
 
-```sh
+```
 DELETE /album/{albumID}/artwork
 ```
 
 Will remove the artwork from the server database. Note, this will not touch any files on the file system. Thus it is futile to call it for artwork which was found on disk.
+
+### Token Request
+
+```
+POST /login/token/
+{
+  "username": "your-username",
+  "password": "your-password"
+}
+```
+
+You have to send your username and password as a JSON in the body of the request as described above. Provided they are correct you will receive the following response:
+
+```js
+{
+  "token": "new-authentication-token"
+}
+```
+
+Before you can use this token for accessing the API you will have to register it with on "Register Token" endpoint.
+
+### Register Token
+
+```
+POST /register/token/
+{
+  "token": "token-acquired-by-token-request"
+}
+```
+
+This endpoint registers the newly generated tokens with HTTPMS. Only registered tokens will work.
 
 Media Keys Control For OSX
 ======
