@@ -29,6 +29,8 @@ func NewLoginTokenHandler(auth config.Auth) http.Handler {
 }
 
 func (h *loginTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf8")
+
 	reqBody := struct {
 		User string `json:"username"`
 		Pass string `json:"password"`
@@ -42,7 +44,6 @@ func (h *loginTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !checkLoginCreds(reqBody.User, reqBody.Pass, h.auth) {
-		w.Header().Set("Content-Type", "application/json; charset=utf8")
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(wrongLoginJSON))
 		return
@@ -67,6 +68,7 @@ func (h *loginTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
+		w.Header().Set("Content-Type", "text/plain; charset=utf8")
 		errMessage := fmt.Sprintf("Error writing token response: %s.", err)
 		http.Error(w, errMessage, http.StatusInternalServerError)
 		return
