@@ -90,7 +90,7 @@ func (aah AlbumArtworkHandler) find(
 	}
 
 	if err != nil {
-		log.Printf("Error finding album artwork: %s\n", err)
+		log.Printf("Error finding album %d artwork: %s\n", id, err)
 		return err
 	}
 
