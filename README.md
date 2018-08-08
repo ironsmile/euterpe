@@ -378,12 +378,9 @@ Before you can use this token for accessing the API you will have to register it
 
 ```
 POST /register/token/
-{
-  "token": "token-acquired-by-token-request"
-}
 ```
 
-This endpoint registers the newly generated tokens with HTTPMS. Only registered tokens will work.
+This endpoint registers the newly generated tokens with HTTPMS. Only registered tokens will work. Requests at this endpoint must authenticate themselves using a previously generated token.
 
 Media Keys Control For OSX
 ======
