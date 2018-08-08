@@ -11,6 +11,10 @@ import (
 	"github.com/gbrlsnchs/jwt"
 )
 
+const (
+	authRequiredJSON = `{"error": "authentication required"}`
+)
+
 // AuthHandler is a handler wrapper used for authenticaation. Its only job is
 // to do the authentication and then pass the work to the Handler it wraps around.
 // Possible methods for authentication:
@@ -56,7 +60,7 @@ func (hl *AuthHandler) challengeAuthentication(
 	if contains(accepts, "application/json") {
 		writer.Header().Set("Content-Type", "application/json; charset=utf8")
 		writer.WriteHeader(http.StatusUnauthorized)
-		writer.Write([]byte(wrongLoginJSON))
+		writer.Write([]byte(authRequiredJSON))
 		return nil
 	}
 
