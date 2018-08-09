@@ -96,6 +96,7 @@ func (aah AlbumArtworkHandler) find(
 
 	defer imgReader.Close()
 
+	writer.Header().Set("Cache-Control", "max-age=604800")
 	_, err = io.Copy(writer, imgReader)
 
 	if err != nil {
