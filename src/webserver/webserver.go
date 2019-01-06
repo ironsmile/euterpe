@@ -127,7 +127,13 @@ func (srv *Server) serveGoroutine() {
 	handler := NewTerryHandler(router)
 
 	if srv.cfg.Gzip {
-		handler = NewGzipHandler(handler)
+		handler = NewGzipHandler(
+			handler,
+			[]string{
+				"/file/",
+				"/album/",
+			},
+		)
 	}
 
 	if srv.cfg.Auth {

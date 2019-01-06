@@ -392,6 +392,14 @@ function playerPageInit() {
 
         document.title = media.title + ' by ' + media.artist + ' | HTTPMS';
 
+        var artwork_el = $('#artwork');
+        var artwork_url = '/album/' + escape(media.album_id) + '/artwork';
+        var current_artwork_url = artwork_el.css("background-image");
+
+        if (artwork_url !== current_artwork_url) {
+            artwork_el.css("background-image", 'url(' + artwork_url + ')');
+        }
+
         if (history.pushState) {
             var uri = new URI(window.location);
             var query_data = uri.search(true);

@@ -69,3 +69,16 @@ footer {
 .barcode {
     margin-bottom: 20px;
 }
+
+#artwork {
+    height: 188px;
+    width: 100%;
+    overflow: hidden;
+    background-image: url(../images/unknownAlbum.png);
+    background-position: center;
+    background-size: cover;
+}
+
+select[multiple], select[size] {
+    max-height: 188px;
+}
