@@ -233,12 +233,14 @@ wich would return an JSON array with tracks. Every object in the JSON represents
       "track" : 10,
       "artist" : "Jefferson Airplane",
       "id" : 18,
-      "album_id" : 2
+      "album_id" : 2,
+      "format": "mp3"
    },
    {
       "album" : "Battlefield Vietnam",
       "artist" : "Jefferson Airplane",
       "track" : 14,
+      "format": "flac",
       "title" : "White Rabbit",
       "album_id" : 2,
       "id" : 22

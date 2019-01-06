@@ -26,6 +26,9 @@ type SearchResult struct {
 
 	// Meta info: track number for music
 	TrackNumber int64 `json:"track"`
+
+	// File format of the underlying data file. Examples: "mp3", "flac", "ogg" etc.
+	Format string `json:"format"`
 }
 
 // Artist represents an artist from the database

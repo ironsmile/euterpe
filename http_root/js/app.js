@@ -175,7 +175,7 @@ function playerPageInit() {
 
     var options = {
         swfPath: "/js",
-        supplied: "mp3, oga, m4a, wav, fla",
+        supplied: "mp3, oga, m4a, wav, flac",
         preload: "none",
         playlistOptions: {
             autoPlay: false,
@@ -415,17 +415,25 @@ function load_playlist (songs) {
     var new_playlist = [];
     for (var i = 0; i < songs.length; i++) {
         var song_url = "/file/"+songs[i].id;
-
-        new_playlist.push({
+        var song = {
             title: songs[i].title,
             artist: songs[i].artist,
             album: songs[i].album,
-            mp3: song_url,
             free: true,
             number: songs[i].track,
             album_id: songs[i].album_id,
             media_id: songs[i].id
-        });
+        };
+
+        // For certain formats the jPlayer does not use their file extension name so
+        // we check for them explicitly here.
+        var format = songs[i].format;
+        if (format === 'ogg') {
+            format = 'oga';
+        }
+        song[format] = song_url;
+
+        new_playlist.push(song);
 
         if (currently_playing !== null && currently_playing == songs[i].id) {
             selected_index = i;

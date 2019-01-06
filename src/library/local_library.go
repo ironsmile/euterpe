@@ -169,7 +169,8 @@ func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 				al.name as album,
 				at.name as artist,
 				t.number as track_number,
-				t.album_id as album_id
+				t.album_id as album_id,
+				t.fs_path as fs_path
 			FROM
 				tracks as t
 					LEFT JOIN albums as al ON al.id = t.album_id
@@ -190,7 +191,13 @@ func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 		for rows.Next() {
 			var res SearchResult
 			rows.Scan(&res.ID, &res.Title, &res.Album, &res.Artist,
-				&res.TrackNumber, &res.AlbumID)
+				&res.TrackNumber, &res.AlbumID, &res.Format)
+
+			res.Format = strings.TrimLeft(filepath.Ext(res.Format), ".")
+			if res.Format == "" {
+				res.Format = "mp3"
+			}
+
 			output = append(output, res)
 		}
 
