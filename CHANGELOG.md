@@ -1,5 +1,10 @@
 # Change Log
 
+## v1.3.0 - 2019-01-06
+
+* Connecting with devices via QR code is now possible.
+* Explicitly show which format a media file is in the web UI.
+
 ## v1.2.2 - 2018-07-31
 
 Two small bug fixes:
