@@ -94,7 +94,7 @@ func init() {
 	flag.BoolVar(&LibraryFastScan, "fast-library-scan", false, "Do not honour"+
 		" the configuration set in 'library_scan'. With this flag,"+
 		" scanning will be done as fast as possible. This may be useful when"+
-		" running the daemon for the fists time with big libraries.")
+		" running the daemon for the first time with big libraries.")
 }
 
 // LocalLibrary implements the Library interface. Will represent files found on the
@@ -128,6 +128,12 @@ type LocalLibrary struct {
 	coverArtFinder ca.CovertArtFinder
 
 	sqlFiles packr.Box
+
+	// cleanupLock is used to secure a thread safe access to the runningCleanup property.
+	cleanupLock *sync.RWMutex
+
+	// runningCleanup shows whether there is an already running cleanup.
+	runningCleanup bool
 }
 
 // Close closes the database connection. It is safe to call it as many times as you want.
@@ -881,6 +887,8 @@ func NewLocalLibrary(ctx context.Context, databasePath string) (*LocalLibrary, e
 
 	lib.watchLock = &sync.RWMutex{}
 	lib.artworkSem = make(chan struct{}, 10)
+
+	lib.cleanupLock = &sync.RWMutex{}
 
 	var wg sync.WaitGroup
 	wg.Add(1)

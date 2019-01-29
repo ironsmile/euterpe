@@ -9,7 +9,6 @@ import (
 
 // Scan scans all of the folders in paths for media files. New files will be added to the
 // database.
-//!TODO: make scan also remove files which have been deleted since the previous scan
 func (lib *LocalLibrary) Scan() {
 	// Make sure there are no other scans working at the moment
 	lib.waitScanLock.RLock()
@@ -36,6 +35,10 @@ func (lib *LocalLibrary) Scan() {
 	lib.walkWG.Wait()
 	lib.waitScanLock.RUnlock()
 	log.Printf("Scaning took %s", time.Since(start))
+
+	start = time.Now()
+	lib.cleanUpDatabase()
+	log.Printf("Cleaning up took %s", time.Since(start))
 }
 
 // This is the goroutine which actually scans a library path.
