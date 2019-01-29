@@ -48,6 +48,29 @@ func (lib *LocalLibrary) executeDBJob(executable DatabaseExecutable) error {
 	}
 }
 
+// executeDBJobAndWait executes the `executable`, waits for it to finish. Then returns
+// its error.
+func (lib *LocalLibrary) executeDBJobAndWait(executable DatabaseExecutable) error {
+	var executableErr error
+	done := make(chan struct{})
+	defer close(done)
+
+	work := func(db *sql.DB) error {
+		defer func() {
+			done <- struct{}{}
+		}()
+		executableErr = executable(db)
+		return nil
+	}
+
+	if err := lib.executeDBJob(work); err != nil {
+		return err
+	}
+
+	<-done
+	return executableErr
+}
+
 // Returns the last ID insert in the database.
 func lastInsertID(db *sql.DB) (int64, error) {
 	var id int64

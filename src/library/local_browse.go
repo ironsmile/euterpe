@@ -27,15 +27,7 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 	artistsCount := lib.getTableSize("artists")
 	var output []Artist
 
-	var outErr error
-	done := make(chan struct{})
-	defer close(done)
-
 	work := func(db *sql.DB) error {
-		defer func() {
-			done <- struct{}{}
-		}()
-
 		rows, err := db.Query(fmt.Sprintf(`
             SELECT
                 ar.id,
@@ -49,8 +41,7 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
         `, orderBy, order), page*perPage, perPage)
 
 		if err != nil {
-			outErr = err
-			return nil
+			return err
 		}
 
 		defer rows.Close()
@@ -62,14 +53,9 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 
 		return nil
 	}
-	if err := lib.executeDBJob(work); err != nil {
+	if err := lib.executeDBJobAndWait(work); err != nil {
 		log.Printf("Error browse artist query: %s", err)
 		return output, artistsCount
-	}
-
-	<-done
-	if outErr != nil {
-		log.Printf("Query for browsing artists not successful: %s\n", outErr)
 	}
 
 	return output, artistsCount
@@ -86,15 +72,7 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 		albumsCount int
 	)
 
-	var outErr error
-	done := make(chan struct{})
-	defer close(done)
-
 	work := func(db *sql.DB) error {
-		defer func() {
-			done <- struct{}{}
-		}()
-
 		smt, err := db.Prepare(`
             SELECT
                 COUNT(DISTINCT tr.album_id) as cnt
@@ -146,8 +124,7 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
         `, orderBy, order), page*perPage, perPage)
 
 		if err != nil {
-			outErr = err
-			return nil
+			return err
 		}
 
 		defer rows.Close()
@@ -159,14 +136,9 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 
 		return nil
 	}
-	if err := lib.executeDBJob(work); err != nil {
+	if err := lib.executeDBJobAndWait(work); err != nil {
 		log.Printf("Error browse artist query: %s", err)
 		return output, albumsCount
-	}
-
-	<-done
-	if outErr != nil {
-		log.Printf("Query for browsing albums not successful: %s\n", outErr)
 	}
 
 	return output, albumsCount
@@ -175,14 +147,7 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 func (lib *LocalLibrary) getTableSize(table string) int {
 
 	var count int
-	done := make(chan struct{})
-	defer close(done)
-
 	work := func(db *sql.DB) error {
-		defer func() {
-			done <- struct{}{}
-		}()
-
 		smt, err := db.Prepare(fmt.Sprintf(`
             SELECT
                 COUNT(*) as cnt
@@ -204,11 +169,10 @@ func (lib *LocalLibrary) getTableSize(table string) int {
 
 		return nil
 	}
-	if err := lib.executeDBJob(work); err != nil {
+	if err := lib.executeDBJobAndWait(work); err != nil {
 		log.Printf("Error browse artist query: %s", err)
 		return count
 	}
 
-	<-done
 	return count
 }
