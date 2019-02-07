@@ -2,7 +2,6 @@ package library
 
 import (
 	"database/sql"
-	"errors"
 	"log"
 	"runtime"
 	"sync"
@@ -69,21 +68,4 @@ func (lib *LocalLibrary) executeDBJobAndWait(executable DatabaseExecutable) erro
 
 	<-done
 	return executableErr
-}
-
-// Returns the last ID insert in the database.
-func lastInsertID(db *sql.DB) (int64, error) {
-	var id int64
-
-	if db == nil {
-		return 0, errors.New("The db connection property was nil")
-	}
-
-	err := db.QueryRow("SELECT last_insert_rowid();").Scan(&id)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return id, nil
 }

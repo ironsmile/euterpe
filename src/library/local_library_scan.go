@@ -66,7 +66,10 @@ func (lib *LocalLibrary) scanPath(scannedPath string) {
 		}
 
 		if lib.isSupportedFormat(path) {
-			lib.AddMedia(path)
+			err := lib.AddMedia(path)
+			if err != nil {
+				log.Printf("Error adding `%s`: %s\n", path, err)
+			}
 		}
 
 		lib.watchLock.RLock()

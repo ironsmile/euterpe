@@ -523,12 +523,12 @@ func (lib *LocalLibrary) setArtistID(artist string) (int64, error) {
 
 		defer stmt.Close()
 
-		_, err = stmt.Exec(artist)
+		res, err := stmt.Exec(artist)
 		if err != nil {
 			return err
 		}
 
-		newID, err = lastInsertID(db)
+		newID, err = res.LastInsertId()
 		log.Printf("Inserted artist id: %d, name: %s\n", newID, artist)
 		return err
 	}
@@ -605,12 +605,12 @@ func (lib *LocalLibrary) setAlbumID(album string, fsPath string) (int64, error) 
 
 		defer stmt.Close()
 
-		_, err = stmt.Exec(album, fsPath)
+		res, err := stmt.Exec(album, fsPath)
 		if err != nil {
 			return err
 		}
 
-		newID, err = lastInsertID(db)
+		newID, err = res.LastInsertId()
 		log.Printf("Inserted album id: %d, name: %s, path: %s\n", newID, album, fsPath)
 
 		return err
@@ -774,12 +774,12 @@ func (lib *LocalLibrary) setTrackID(title, fsPath string,
 
 		defer stmt.Close()
 
-		_, err = stmt.Exec(title, albumID, artistID, fsPath, trackNumber)
+		res, err := stmt.Exec(title, albumID, artistID, fsPath, trackNumber)
 		if err != nil {
 			return err
 		}
 
-		newID, err = lastInsertID(db)
+		newID, err = res.LastInsertId()
 		log.Printf("Inserted id: %d, name: %s, album ID: %d, artist ID: %d, number: %d, fs_path: %s\n",
 			newID, title, albumID, artistID, trackNumber, fsPath)
 
