@@ -189,8 +189,13 @@ func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 		defer rows.Close()
 		for rows.Next() {
 			var res SearchResult
-			rows.Scan(&res.ID, &res.Title, &res.Album, &res.Artist,
+
+			err := rows.Scan(&res.ID, &res.Title, &res.Album, &res.Artist,
 				&res.TrackNumber, &res.AlbumID, &res.Format)
+			if err != nil {
+				log.Printf("Error scanning search result: %s\n", err)
+				continue
+			}
 
 			res.Format = strings.TrimLeft(filepath.Ext(res.Format), ".")
 			if res.Format == "" {
