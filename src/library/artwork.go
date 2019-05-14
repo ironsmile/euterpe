@@ -351,13 +351,9 @@ func (lib *LocalLibrary) albumArtworkFromFS(
 
 		if strings.HasPrefix(fileBase, "cover.") || strings.HasPrefix(fileBase, "front.") {
 			pathScore = 15
-		}
-
-		if strings.Contains(fileBase, "cover") || strings.Contains(fileBase, "front") {
+		} else if strings.Contains(fileBase, "cover") || strings.Contains(fileBase, "front") {
 			pathScore = 10
-		}
-
-		if strings.Contains(fileBase, "artwork") {
+		} else if strings.Contains(fileBase, "artwork") {
 			pathScore = 8
 		}
 
