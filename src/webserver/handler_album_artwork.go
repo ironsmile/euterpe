@@ -70,7 +70,7 @@ func (aah AlbumArtworkHandler) find(
 
 	imgReader, err := aah.artworkManager.FindAndSaveAlbumArtwork(ctx, id)
 
-	if err != nil && err == library.ErrArtworkNotFound || os.IsNotExist(err) {
+	if err == library.ErrArtworkNotFound || os.IsNotExist(err) {
 		notFoundImage, err := aah.rootBox.Open(aah.notFoundPath)
 		if err == nil {
 			defer notFoundImage.Close()
