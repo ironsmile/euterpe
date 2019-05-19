@@ -357,6 +357,11 @@ func (lib *LocalLibrary) albumArtworkFromFS(
 			pathScore = 8
 		}
 
+		if strings.HasPrefix(fileBase, ".") {
+			// Hidden file, it should have a lower score when compared to normal files.
+			pathScore -= 4
+		}
+
 		if pathScore > score {
 			selectedArtwork = path
 			score = pathScore
