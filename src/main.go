@@ -58,14 +58,14 @@ func Main() {
 		os.Exit(0)
 	}
 
-	if err := ParseConfigAndStartWebserver(); err != nil {
+	if err := parseConfigAndStartWebserver(); err != nil {
 		log.Println(err)
 		os.Exit(1)
 	}
 }
 
-// SetupPidFileAndSignals creates a pidfile and starts a signal receiver goroutine
-func SetupPidFileAndSignals(pidFile string, stopFunc context.CancelFunc) {
+// setupPidFileAndSignals creates a pidfile and starts a signal receiver goroutine
+func setupPidFileAndSignals(pidFile string, stopFunc context.CancelFunc) {
 	helpers.SetUpPidFile(pidFile)
 
 	signalChannel := make(chan os.Signal, 2)
@@ -115,9 +115,9 @@ func getLibrary(ctx context.Context, userPath string,
 	return lib, nil
 }
 
-// ParseConfigAndStartWebserver parses the config, sets the logfile, setups the
+// parseConfigAndStartWebserver parses the config, sets the logfile, setups the
 // pidfile, and makes an signal handler goroutine
-func ParseConfigAndStartWebserver() error {
+func parseConfigAndStartWebserver() error {
 	cfg, err := config.FindAndParse()
 	if err != nil {
 		return fmt.Errorf("parsing configuration: %s", err)
@@ -136,7 +136,7 @@ func ParseConfigAndStartWebserver() error {
 	defer cancelCtx()
 
 	pidFile := helpers.AbsolutePath(PidFile, userPath)
-	SetupPidFileAndSignals(pidFile, cancelCtx)
+	setupPidFileAndSignals(pidFile, cancelCtx)
 	defer helpers.RemovePidFile(pidFile)
 
 	lib, err := getLibrary(ctx, userPath, cfg)
