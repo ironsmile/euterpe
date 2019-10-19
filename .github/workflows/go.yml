@@ -1,0 +1,34 @@
+name: Go
+on: [push]
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Set up Go 1.13
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.13
+      id: go
+
+    - name: Install OS dependencies
+      run: sudo apt-get install libtagc0-dev upx-ucl
+
+    - name: Install packr (v1)
+      run: |
+        go get github.com/gobuffalo/packr/packr
+        sudo mv "${HOME}/go/bin/packr" /usr/local/bin/
+
+    - name: Check out code
+      uses: actions/checkout@v1
+
+    - name: Build
+      env:
+        GOFLAGS: -mod=vendor
+        GO111MODULE: on
+      run: |
+        go mod init "github.com/${GITHUB_REPOSITORY}"
+        make release
+
