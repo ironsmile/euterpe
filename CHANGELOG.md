@@ -1,5 +1,10 @@
 # Change Log
 
+## v1.3.1 - 2020-08-24
+
+* Show album artwork in the web UI.
+* Cleanup database on startup. Artists and albums without tracks are removed.
+
 ## v1.3.0 - 2019-01-06
 
 * Connecting with devices via QR code is now possible.
