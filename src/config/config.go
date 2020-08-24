@@ -64,6 +64,7 @@ type Config struct {
 // ScanSection is used for merging the two configs. Its purpose is to essentially
 // hold the default values for its properties.
 type ScanSection struct {
+	Disable           bool          `json:"disable,omitempty"`
 	FilesPerOperation int64         `json:"files_per_operation,omitempty"`
 	SleepPerOperation time.Duration `json:"sleep_after_operation,omitempty"`
 	InitialWait       time.Duration `json:"initial_wait_duration,omitempty"`
@@ -73,6 +74,7 @@ type ScanSection struct {
 // Unmrashaller interface.
 func (ss *ScanSection) UnmarshalJSON(input []byte) error {
 	ssProxy := &struct {
+		Disable           bool   `json:"disable"`
 		FilesPerOperation int64  `json:"files_per_operation"`
 		SleepPerOperation string `json:"sleep_after_operation"`
 		InitialWait       string `json:"initial_wait_duration"`
@@ -81,6 +83,7 @@ func (ss *ScanSection) UnmarshalJSON(input []byte) error {
 		return err
 	}
 
+	ss.Disable = ssProxy.Disable
 	ss.FilesPerOperation = ssProxy.FilesPerOperation
 
 	if ssProxy.SleepPerOperation != "" {

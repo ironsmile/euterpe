@@ -143,7 +143,10 @@ func parseConfigAndStartWebserver() error {
 	if err != nil {
 		return err
 	}
-	go lib.Scan()
+
+	if !cfg.LibraryScan.Disable {
+		go lib.Scan()
+	}
 
 	log.Printf("Release %s\n", Version)
 	srv := webserver.NewServer(ctx, cfg, lib)
