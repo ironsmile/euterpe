@@ -1,0 +1,16 @@
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = false
+indent_size = 2
+indent_style = space
+
+[Makefile]
+indent_size = 4
+
+[{README.md,*.go}]
+indent_size = 8
+
+[{README.md,*.go,Makefile}]
+indent_style = tab

@@ -1,0 +1,8 @@
+version: "{build}"
+clone_folder: c:\gopath\src\github.com\gbrlsnchs\jwt
+environment:
+  GOPATH: c:\gopath
+build: false
+deploy: false
+test_script:
+  - for %%g in (go19 go110) do (set GOROOT=c:\%%g&& c:\%%g\bin\go.exe test -v ./... & IF ERRORLEVEL == 1 EXIT 1)
