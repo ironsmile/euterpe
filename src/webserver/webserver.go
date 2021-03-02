@@ -5,13 +5,13 @@ package webserver
 import (
 	"context"
 	"crypto/tls"
+	"io/fs"
 	"log"
 	"net"
 	"net/http"
 	"sync"
 	"time"
 
-	"github.com/gobuffalo/packr"
 	"github.com/gorilla/mux"
 
 	"github.com/ironsmile/httpms/src/config"
@@ -19,18 +19,8 @@ import (
 )
 
 const (
-	// httpRootPath is the path to the directory which contains the
-	// static files served by HTTPMS. This directory must be relative to
-	// this package directory. Its contents will be packed in the binary
-	// for release builds.
-	httpRootPath = "../../http_root/"
-
-	// htmlTeplatesDir is the path to the directory with HTML templates.
-	// It must be relative to this package.
-	htmlTeplatesDir = "../../templates/"
-
 	// notFoundAlbumImage is path to the image shown when there is no image
-	// for particular album. It must be relative то httpRootPath.
+	// for particular album. It must be relative path in httpRootFS.
 	notFoundAlbumImage = "images/unknownAlbum.png"
 
 	sessionCookieName  = "session"
@@ -60,6 +50,13 @@ type Server struct {
 	// This server's library with media
 	library *library.LocalLibrary
 
+	// htmlTemplatesFS is the directory with HTML templates.
+	htmlTemplatesFS fs.FS
+
+	// httpRootFS is the directory which contains the
+	// static files served by HTTPMS.
+	httpRootFS fs.FS
+
 	// Makes the server lockable. This lock should be used for accessing the
 	// listener
 	sync.Mutex
@@ -80,20 +77,18 @@ func (srv *Server) Serve() {
 }
 
 func (srv *Server) serveGoroutine() {
-	templatesBox := packr.NewBox(htmlTeplatesDir)
-	rootBox := packr.NewBox(httpRootPath)
-	templatesResolver := NewPackrTemplates(templatesBox)
+	templatesResolver := NewFSTemplates(srv.htmlTemplatesFS)
 	allTpls, err := templatesResolver.All()
 	if err != nil {
 		panic(err)
 	}
 
-	staticFilesHandler := http.FileServer(rootBox)
+	staticFilesHandler := http.FileServer(http.FS(srv.httpRootFS))
 	searchHandler := NewSearchHandler(srv.library)
 	albumHandler := NewAlbumHandler(srv.library)
 	artoworkHandler := NewAlbumArtworkHandler(
 		srv.library,
-		rootBox,
+		srv.httpRootFS,
 		notFoundAlbumImage,
 	)
 	browseHandler := NewBrowseHandler(srv.library)
@@ -264,12 +259,20 @@ func (srv *Server) Wait() {
 
 // NewServer Returns a new Server using the supplied configuration cfg. The returned
 // server is ready and calling its Serve method will start it.
-func NewServer(ctx context.Context, cfg config.Config, lib *library.LocalLibrary) *Server {
+func NewServer(
+	ctx context.Context,
+	cfg config.Config,
+	lib *library.LocalLibrary,
+	httpRootFS fs.FS,
+	htmlTemplatesFS fs.FS,
+) *Server {
 	ctx, cancelCtx := context.WithCancel(ctx)
 	return &Server{
-		ctx:        ctx,
-		cancelFunc: cancelCtx,
-		cfg:        cfg,
-		library:    lib,
+		ctx:             ctx,
+		cancelFunc:      cancelCtx,
+		cfg:             cfg,
+		library:         lib,
+		httpRootFS:      httpRootFS,
+		htmlTemplatesFS: htmlTemplatesFS,
 	}
 }

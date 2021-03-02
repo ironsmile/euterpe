@@ -1,9 +1,6 @@
 # github.com/gbrlsnchs/jwt v1.0.2
 ## explicit
 github.com/gbrlsnchs/jwt
-# github.com/gobuffalo/packr v1.12.0
-## explicit
-github.com/gobuffalo/packr
 # github.com/gorilla/context v1.1.1
 ## explicit
 github.com/gorilla/context
@@ -25,7 +22,6 @@ github.com/mattn/go-sqlite3
 github.com/pborman/uuid
 # github.com/pkg/errors v0.8.0
 ## explicit
-github.com/pkg/errors
 # github.com/skip2/go-qrcode v0.0.0-20171229120447-cf5f9fa2f0d8
 ## explicit
 github.com/skip2/go-qrcode

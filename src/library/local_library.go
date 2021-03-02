@@ -6,13 +6,14 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 
-	"github.com/gobuffalo/packr"
 	"github.com/howeyc/fsnotify"
 	taglib "github.com/wtolson/go-taglib"
 
@@ -40,12 +41,8 @@ const (
 	// would end up creating a new memory database.
 	SQLiteMemoryFile = "file::memory:?cache=shared"
 
-	// sqlFilesPath is path to the directory which contains the `.sql` schme and
-	// migrations files. It must be relative to this package.
-	sqlFilesPath = "../../sqls/"
-
 	// sqlSchemaFile is the file which contains the initial SQL Schema for the
-	// media library. It must be relateive to `sqlFilesPath`.
+	// media library. It must be one of the files in `sqlFilesFS`.
 	sqlSchemaFile = "library_schema.sql"
 )
 
@@ -127,7 +124,7 @@ type LocalLibrary struct {
 
 	coverArtFinder ca.CovertArtFinder
 
-	sqlFiles packr.Box
+	sqlFilesFS fs.FS
 
 	// cleanupLock is used to secure a thread safe access to the runningCleanup property.
 	cleanupLock *sync.RWMutex
@@ -835,7 +832,16 @@ func (lib *LocalLibrary) Initialize() error {
 // Returns the SQL schema for the library. It is stored in the project root directory
 // under sqls/library_schema.sql
 func (lib *LocalLibrary) readSchema() (string, error) {
-	out, err := lib.sqlFiles.MustString(sqlSchemaFile)
+	out, err := lib.sqlFilesFS.Open(sqlSchemaFile)
+	if err != nil {
+		return "", fmt.Errorf(
+			"error opening schema file: %s",
+			err,
+		)
+	}
+	defer out.Close()
+
+	schema, err := io.ReadAll(out)
 	if err != nil {
 		return "", fmt.Errorf(
 			"error reading schema file `%s`: %s",
@@ -844,14 +850,14 @@ func (lib *LocalLibrary) readSchema() (string, error) {
 		)
 	}
 
-	if len(out) < 1 {
+	if len(schema) < 1 {
 		return "", fmt.Errorf("SQL schema was empty")
 	}
 
-	return out, nil
+	return string(schema), nil
 }
 
-// Truncate Closes the library and removes its database file leaving no traces at all.
+// Truncate closes the library and removes its database file leaving no traces at all.
 func (lib *LocalLibrary) Truncate() error {
 	lib.Close()
 
@@ -872,10 +878,14 @@ func (lib *LocalLibrary) SetCoverArtFinder(caf ca.CovertArtFinder) {
 // specified by databasePath. Also creates the database connection so you does not
 // need to worry about that. It accepts the parent's context and create its own
 // child context.
-func NewLocalLibrary(ctx context.Context, databasePath string) (*LocalLibrary, error) {
+func NewLocalLibrary(
+	ctx context.Context,
+	databasePath string,
+	sqlFilesFS fs.FS,
+) (*LocalLibrary, error) {
 	lib := new(LocalLibrary)
 	lib.database = databasePath
-	lib.sqlFiles = packr.NewBox(sqlFilesPath)
+	lib.sqlFilesFS = sqlFilesFS
 
 	libContext, cancelFunc := context.WithCancel(ctx)
 

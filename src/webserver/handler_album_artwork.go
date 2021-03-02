@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
-	"github.com/gobuffalo/packr"
 	"github.com/gorilla/mux"
 
 	"github.com/ironsmile/httpms/src/library"
@@ -20,7 +20,7 @@ import (
 // a particular album.
 type AlbumArtworkHandler struct {
 	artworkManager library.ArtworkManager
-	rootBox        packr.Box
+	rootFS         fs.FS
 	notFoundPath   string
 }
 
@@ -71,7 +71,7 @@ func (aah AlbumArtworkHandler) find(
 	imgReader, err := aah.artworkManager.FindAndSaveAlbumArtwork(ctx, id)
 
 	if err == library.ErrArtworkNotFound || os.IsNotExist(err) {
-		notFoundImage, err := aah.rootBox.Open(aah.notFoundPath)
+		notFoundImage, err := aah.rootFS.Open(aah.notFoundPath)
 		if err == nil {
 			defer notFoundImage.Close()
 			writer.WriteHeader(http.StatusNotFound)
@@ -140,12 +140,12 @@ func (aah AlbumArtworkHandler) upload(
 // It needs an implementaion of the ArtworkManager.
 func NewAlbumArtworkHandler(
 	am library.ArtworkManager,
-	rootBox packr.Box,
+	httpRootFS fs.FS,
 	notFoundImagePath string,
 ) *AlbumArtworkHandler {
 
 	return &AlbumArtworkHandler{
-		rootBox:        rootBox,
+		rootFS:         httpRootFS,
 		artworkManager: am,
 		notFoundPath:   notFoundImagePath,
 	}

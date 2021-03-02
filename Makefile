@@ -4,8 +4,7 @@ all:
 
 # Build a release binary which could be used in the distribution archive.
 release:
-	# Build with packer in order to produce a single binary
-	packr build \
+	go build \
 		-ldflags "-X github.com/ironsmile/httpms/src.Version=`git describe --tags --always`" \
 		-o httpms
 
@@ -15,7 +14,7 @@ release:
 
 # Install in $GOPATH/bin.
 install:
-	packr install -ldflags "-X github.com/ironsmile/httpms/src.Version=`git describe --tags --always`"
+	go install -ldflags "-X github.com/ironsmile/httpms/src.Version=`git describe --tags --always`"
 
 # Build distribution archive.
 dist-archive:

@@ -9,6 +9,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"os/signal"
@@ -50,7 +51,7 @@ func init() {
 
 // Main is the only thing run in the project's root main.go file.
 // For all intent and purposes this is the main function.
-func Main() {
+func Main(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) {
 	flag.Parse()
 
 	if ShowVersion {
@@ -58,7 +59,11 @@ func Main() {
 		os.Exit(0)
 	}
 
-	if err := parseConfigAndStartWebserver(); err != nil {
+	if err := parseConfigAndStartWebserver(
+		httpRootFS,
+		htmlTemplatesFS,
+		sqlFilesFS,
+	); err != nil {
 		log.Println(err)
 		os.Exit(1)
 	}
@@ -84,11 +89,15 @@ func setupPidFileAndSignals(pidFile string, stopFunc context.CancelFunc) {
 // Returns a new Library object using the application config.
 // For the moment this is a LocalLibrary which will place its sqlite db file
 // in the UserPath directory
-func getLibrary(ctx context.Context, userPath string,
-	cfg config.Config) (*library.LocalLibrary, error) {
+func getLibrary(
+	ctx context.Context,
+	userPath string,
+	cfg config.Config,
+	sqlFilesFS fs.FS,
+) (*library.LocalLibrary, error) {
 
 	dbPath := helpers.AbsolutePath(cfg.SqliteDatabase, userPath)
-	lib, err := library.NewLocalLibrary(ctx, dbPath)
+	lib, err := library.NewLocalLibrary(ctx, dbPath, sqlFilesFS)
 
 	if err != nil {
 		return nil, err
@@ -117,7 +126,7 @@ func getLibrary(ctx context.Context, userPath string,
 
 // parseConfigAndStartWebserver parses the config, sets the logfile, setups the
 // pidfile, and makes an signal handler goroutine
-func parseConfigAndStartWebserver() error {
+func parseConfigAndStartWebserver(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) error {
 	cfg, err := config.FindAndParse()
 	if err != nil {
 		return fmt.Errorf("parsing configuration: %s", err)
@@ -139,7 +148,7 @@ func parseConfigAndStartWebserver() error {
 	setupPidFileAndSignals(pidFile, cancelCtx)
 	defer helpers.RemovePidFile(pidFile)
 
-	lib, err := getLibrary(ctx, userPath, cfg)
+	lib, err := getLibrary(ctx, userPath, cfg, sqlFilesFS)
 	if err != nil {
 		return err
 	}
@@ -149,7 +158,7 @@ func parseConfigAndStartWebserver() error {
 	}
 
 	log.Printf("Release %s\n", Version)
-	srv := webserver.NewServer(ctx, cfg, lib)
+	srv := webserver.NewServer(ctx, cfg, lib, httpRootFS, htmlTemplatesFS)
 	srv.Serve()
 	srv.Wait()
 	return nil

@@ -3,8 +3,8 @@ package webserver
 import (
 	"fmt"
 	"html/template"
-
-	"github.com/gobuffalo/packr"
+	"io"
+	"io/fs"
 )
 
 // Templates is a type which knows how to find and parse HTML templates
@@ -19,22 +19,17 @@ type Templates interface {
 	All() (*AllTemplates, error)
 }
 
-// PackrTemplates is Templates implementation which uses packr.Box to
+// FSTemplates is Templates implementation which uses fs.FS to
 // extract template data.
-type PackrTemplates struct {
-	box packr.Box
+type FSTemplates struct {
+	fs fs.FS
 }
 
-// Get implements Templates for the box in PackrTemplate.
-func (t *PackrTemplates) Get(path string) (*template.Template, error) {
-	tplString, err := t.box.MustString(path)
-	if err != nil {
-		return nil, fmt.Errorf("finding template in box: %s", err)
-	}
-
+// Get implements Templates for the box in FSTemplates.
+func (t *FSTemplates) Get(path string) (*template.Template, error) {
 	tpl := template.New(path)
 
-	parsed, err := tpl.Parse(tplString)
+	parsed, err := tpl.ParseFS(t.fs, path)
 	if err != nil {
 		return nil, fmt.Errorf("parsing template: %s", err)
 	}
@@ -43,25 +38,41 @@ func (t *PackrTemplates) Get(path string) (*template.Template, error) {
 }
 
 // All implements the Templates interface.
-func (t *PackrTemplates) All() (*AllTemplates, error) {
+func (t *FSTemplates) All() (*AllTemplates, error) {
 	layout, err := t.Get("layout.html")
 	if err != nil {
 		return nil, fmt.Errorf("parsing layout: %s", err)
 	}
 
-	tplString, err := t.box.MustString("player.html")
+	pfh, err := t.fs.Open("player.html")
 	if err != nil {
-		return nil, fmt.Errorf("finding index template in box: %s", err)
+		return nil, fmt.Errorf("could not find player.html template: %s", err)
 	}
-	index := template.Must(layout.Clone())
-	template.Must(index.New("content").Parse(tplString))
+	defer pfh.Close()
+	tplContents, err := io.ReadAll(pfh)
+	if err != nil {
+		return nil, fmt.Errorf("error reading player.html: %s", err)
+	}
 
-	tplString, err = t.box.MustString("add_device.html")
-	if err != nil {
-		return nil, fmt.Errorf("finding add_device template in box: %s", err)
+	index := template.Must(layout.Clone())
+	if _, err = index.New("content").Parse(string(tplContents)); err != nil {
+		return nil, fmt.Errorf("finding index template: %s", err)
 	}
+
+	adfh, err := t.fs.Open("add_device.html")
+	if err != nil {
+		return nil, fmt.Errorf("could not find add_device.html template: %s", err)
+	}
+	defer adfh.Close()
+	tplContents, err = io.ReadAll(adfh)
+	if err != nil {
+		return nil, fmt.Errorf("error reading add_device.html: %s", err)
+	}
+
 	addDevice := template.Must(layout.Clone())
-	template.Must(addDevice.New("content").Parse(tplString))
+	if _, err := addDevice.New("content").Parse(string(tplContents)); err != nil {
+		return nil, fmt.Errorf("finding add_device template: %s", err)
+	}
 
 	return &AllTemplates{
 		index:     index,
@@ -69,11 +80,11 @@ func (t *PackrTemplates) All() (*AllTemplates, error) {
 	}, nil
 }
 
-// NewPackrTemplates returns a new PackrTemplates which will use the argument
-// box for finding and reading files.
-func NewPackrTemplates(box packr.Box) *PackrTemplates {
-	return &PackrTemplates{
-		box: box,
+// NewFSTemplates returns a new FSTemplates which will use the argument
+// fs.FS for finding and reading files.
+func NewFSTemplates(fs fs.FS) *FSTemplates {
+	return &FSTemplates{
+		fs: fs,
 	}
 }
 

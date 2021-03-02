@@ -52,11 +52,11 @@ Requirements
 ======
 If you want to install it from source (from here) you will need:
 
-* [Go](http://golang.org/) 1.10 or later [installed and properly configured](http://golang.org/doc/install).
+* [Go](http://golang.org/) 1.16 or later [installed and properly configured](http://golang.org/doc/install).
 
 * [go-taglib](https://github.com/landr0id/go-taglib) - Read the [install notes](https://github.com/landr0id/go-taglib#install)
 
-* [go-sqlite3](https://github.com/mattn/go-sqlite3) - `go get github.com/mattn/go-sqlite3` would probably be enough.
+* [go-sqlite3](https://github.com/mattn/go-sqlite3) - `go install github.com/mattn/go-sqlite3` would probably be enough.
 
 
 Install
@@ -71,10 +71,10 @@ If installing from source running `go install` in the project root directory wil
 If you want to install the latest development version from the `master` branch, you can just run
 
 ```
-go get github.com/ironsmile/httpms
+go install github.com/ironsmile/httpms
 ```
 
-For building a release version you will need [packr](https://godoc.org/github.com/gobuffalo/packr) installed. Then in the root of the project run
+In the root of the project run
 
 ```
 make release

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"log"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	// Needed for tests as the go-sqlite3 must be imported during tests too.
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/ironsmile/httpms/src/helpers"
@@ -59,7 +61,7 @@ func getTestLibraryPath() (string, error) {
 
 // It is the caller's resposibility to remove the library SQLite database file
 func getLibrary(ctx context.Context, t *testing.T) *LocalLibrary {
-	lib, err := NewLocalLibrary(ctx, SQLiteMemoryFile)
+	lib, err := NewLocalLibrary(ctx, SQLiteMemoryFile, getTestMigrationFiles())
 
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -72,6 +74,10 @@ func getLibrary(ctx context.Context, t *testing.T) *LocalLibrary {
 	}
 
 	testLibraryPath, err := getTestLibraryPath()
+
+	if err != nil {
+		t.Fatalf("Failed to get test library path: %s", err)
+	}
 
 	_ = lib.AddMedia(filepath.Join(testLibraryPath, "test_file_two.mp3"))
 	_ = lib.AddMedia(filepath.Join(testLibraryPath, "folder_one", "third_file.mp3"))
@@ -89,7 +95,7 @@ func getPathedLibrary(ctx context.Context, t *testing.T) *LocalLibrary {
 
 	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
 
-	lib, err := NewLocalLibrary(ctx, SQLiteMemoryFile)
+	lib, err := NewLocalLibrary(ctx, SQLiteMemoryFile, getTestMigrationFiles())
 
 	if err != nil {
 		t.Fatal(err)
@@ -144,7 +150,7 @@ func TestInitialize(t *testing.T) {
 		t.Fatalf("Error creating temporary library: %s", err)
 	}
 
-	lib, err := NewLocalLibrary(context.Background(), libDB.Name())
+	lib, err := NewLocalLibrary(context.Background(), libDB.Name(), getTestMigrationFiles())
 
 	if err != nil {
 		t.Fatal(err)
@@ -201,7 +207,7 @@ func TestTruncate(t *testing.T) {
 		t.Fatalf("Error creating temporary library: %s", err)
 	}
 
-	lib, err := NewLocalLibrary(context.TODO(), libDB.Name())
+	lib, err := NewLocalLibrary(context.TODO(), libDB.Name(), getTestMigrationFiles())
 
 	if err != nil {
 		t.Fatal(err)
@@ -213,7 +219,7 @@ func TestTruncate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	lib.Truncate()
+	_ = lib.Truncate()
 
 	_, err = os.Stat(libDB.Name())
 
@@ -590,8 +596,8 @@ func checkAddedSong(lib *LocalLibrary, t *testing.T) {
 			filePath := lib.GetFilePath(track.ID)
 			filePaths = append(filePaths, fmt.Sprintf("%d: %s", track.ID, filePath))
 		}
-		t.Fatalf("Expected one result, got %d for Added Song: %+v. Paths:\n%s", len(found), found,
-			strings.Join(filePaths, "\n"))
+		t.Fatalf("Expected one result, got %d for Added Song: %+v. Paths:\n%s",
+			len(found), found, strings.Join(filePaths, "\n"))
 	}
 
 	track := found[0]
@@ -617,7 +623,8 @@ func checkSong(lib *LocalLibrary, song MediaFile, t *testing.T) {
 	found := lib.Search(song.Title())
 
 	if len(found) != 1 {
-		t.Fatalf("Expected one result, got %d for %s: %+v", len(found), song.Title(), found)
+		t.Fatalf("Expected one result, got %d for %s: %+v",
+			len(found), song.Title(), found)
 	}
 
 	track := found[0]
@@ -674,8 +681,9 @@ func TestAddingManyFilesSimultaniously(t *testing.T) {
 	}
 }
 
-// Here an album which has different artists is simulated. This album must have the same
-// album ID since all of the tracks are in the same directory and the same album name.
+// TestAlbumsWithDifferentArtists simulates an album which has different artists.
+// This album must have the same album ID since all of the tracks are in the same
+// directory and the same album name.
 func TestAlbumsWithDifferentArtists(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
@@ -743,8 +751,9 @@ func TestAlbumsWithDifferentArtists(t *testing.T) {
 	}
 }
 
-// Albums with the same name which are for different artists should have different IDs
-// when the album is in a different directory
+// TestDifferentAlbumsWithTheSameName makes sure that albums with the same name which
+// are for different artists should have different IDs when the album is in a different
+// directory.
 func TestDifferentAlbumsWithTheSameName(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
@@ -816,4 +825,11 @@ func TestDifferentAlbumsWithTheSameName(t *testing.T) {
 			len(albumIDs),
 		)
 	}
+}
+
+// getTestMigrationFiles returns the SQLs directory used by the application itself
+// normally. This way tests will be done with the exact same files which will be
+// bundled into the binary on build.
+func getTestMigrationFiles() fs.FS {
+	return os.DirFS("../../sqls")
 }

@@ -1,10 +1,9 @@
 module github.com/ironsmile/httpms
 
-go 1.15
+go 1.16
 
 require (
 	github.com/gbrlsnchs/jwt v1.0.2
-	github.com/gobuffalo/packr v1.12.0
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.6.2
 	github.com/howeyc/fsnotify v0.9.0

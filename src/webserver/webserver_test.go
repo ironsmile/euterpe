@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -23,11 +24,11 @@ import (
 )
 
 const (
-	TestPort = 9092
+	testPort = 9092
 )
 
 func testURL() string {
-	return fmt.Sprintf("http://127.0.0.1:%d/", TestPort)
+	return fmt.Sprintf("http://127.0.0.1:%d/", testPort)
 }
 
 func testErrorAfter(seconds time.Duration, message string) chan int {
@@ -48,12 +49,20 @@ func testErrorAfter(seconds time.Duration, message string) chan int {
 	return ch
 }
 
+// getTestFileSystems returns the HTTP root FS and the HTML templates FS to be
+// used throughout webserver tests. They are the same as the one to be used
+// in the actual binary. But using os.DirFS instead of embed.FS.
+func getTestFileSystems() (fs.FS, fs.FS) {
+	return os.DirFS("../../http_root"), os.DirFS("../../templates")
+}
+
 func setUpServer() *Server {
 	var wsCfg config.Config
-	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
+	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", testPort)
 	wsCfg.Gzip = true
 
-	return NewServer(context.Background(), wsCfg, nil)
+	httpFS, templatesFS := getTestFileSystems()
+	return NewServer(context.Background(), wsCfg, nil, httpFS, templatesFS)
 }
 
 func tearDownServer(srv *Server) {
@@ -66,10 +75,10 @@ func tearDownServer(srv *Server) {
 	if srv.cfg.SSL {
 		proto = "https"
 	}
-	url := fmt.Sprintf("%s://127.0.0.1:%d", proto, TestPort)
+	url := fmt.Sprintf("%s://127.0.0.1:%d", proto, testPort)
 
+	_, _ = http.Get(url)
 	_, err := http.Get(url)
-	_, err = http.Get(url)
 
 	if err == nil {
 		println("Web server did not stop")
@@ -88,7 +97,12 @@ func getProjectRoot() (string, error) {
 func getLibraryServer(t *testing.T) (*Server, library.Library) {
 	projRoot, _ := getProjectRoot()
 
-	lib, err := library.NewLocalLibrary(context.TODO(), library.SQLiteMemoryFile)
+	sqlsFS := os.DirFS("../../sqls")
+	lib, err := library.NewLocalLibrary(
+		context.TODO(),
+		library.SQLiteMemoryFile,
+		sqlsFS,
+	)
 
 	if err != nil {
 		t.Fatal(err)
@@ -107,9 +121,16 @@ func getLibraryServer(t *testing.T) (*Server, library.Library) {
 	ch <- 42
 
 	var wsCfg config.Config
-	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
+	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", testPort)
 
-	srv := NewServer(context.Background(), wsCfg, lib)
+	httpFS, templatesFS := getTestFileSystems()
+	srv := NewServer(
+		context.Background(),
+		wsCfg,
+		lib,
+		httpFS,
+		templatesFS,
+	)
 	srv.Serve()
 
 	return srv, lib
@@ -120,7 +141,7 @@ func TestStaticFilesServing(t *testing.T) {
 	srv.Serve()
 	defer tearDownServer(srv)
 
-	url := fmt.Sprintf("http://127.0.0.1:%d/index.html", TestPort)
+	url := fmt.Sprintf("http://127.0.0.1:%d/index.html", testPort)
 	resp, err := http.Get(url)
 
 	if err != nil {
@@ -143,7 +164,7 @@ func TestStartAndStop(t *testing.T) {
 	_, err := http.Get(testURL())
 
 	if err == nil {
-		t.Fatalf("Something is running on testing port %d", TestPort)
+		t.Fatalf("Something is running on testing port %d", testPort)
 	}
 
 	srv := setUpServer()
@@ -152,7 +173,7 @@ func TestStartAndStop(t *testing.T) {
 	_, err = http.Get(testURL())
 
 	if err != nil {
-		t.Errorf("Web server is not running %d", TestPort)
+		t.Errorf("Web server is not running %d", testPort)
 	}
 
 	srv.Stop()
@@ -177,14 +198,15 @@ func TestSSL(t *testing.T) {
 	certDir := filepath.Join(projectRoot, "test_files", "ssl")
 
 	var wsCfg config.Config
-	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
+	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", testPort)
 	wsCfg.SSL = true
 	wsCfg.SSLCertificate = config.Cert{
 		Crt: filepath.Join(certDir, "cert.pem"),
 		Key: filepath.Join(certDir, "key.pem"),
 	}
 
-	srv := NewServer(context.Background(), wsCfg, nil)
+	httpFS, templatesFS := getTestFileSystems()
+	srv := NewServer(context.Background(), wsCfg, nil, httpFS, templatesFS)
 	srv.Serve()
 
 	defer tearDownServer(srv)
@@ -193,7 +215,7 @@ func TestSSL(t *testing.T) {
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	} // #nosec
 	client := &http.Client{Transport: tr}
-	_, err = client.Get(fmt.Sprintf("https://127.0.0.1:%d", TestPort))
+	_, err = client.Get(fmt.Sprintf("https://127.0.0.1:%d", testPort))
 
 	if err != nil {
 		t.Errorf("Error GETing a SSL url: %s", err)
@@ -201,17 +223,18 @@ func TestSSL(t *testing.T) {
 }
 
 func TestUserAuthentication(t *testing.T) {
-	url := fmt.Sprintf("http://127.0.0.1:%d/", TestPort)
+	url := fmt.Sprintf("http://127.0.0.1:%d/", testPort)
 
 	var wsCfg config.Config
-	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
+	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", testPort)
 	wsCfg.Auth = true
 	wsCfg.Authenticate = config.Auth{
 		User:     "testuser",
 		Password: "testpass",
 	}
 
-	srv := NewServer(context.Background(), wsCfg, nil)
+	httpFS, templatesFS := getTestFileSystems()
+	srv := NewServer(context.Background(), wsCfg, nil, httpFS, templatesFS)
 	srv.Serve()
 	defer tearDownServer(srv)
 
@@ -257,7 +280,8 @@ func TestUserAuthentication(t *testing.T) {
 func TestSearchUrl(t *testing.T) {
 	projRoot, _ := getProjectRoot()
 
-	lib, _ := library.NewLocalLibrary(context.TODO(), library.SQLiteMemoryFile)
+	sqlsFS := os.DirFS("../../sqls")
+	lib, _ := library.NewLocalLibrary(context.TODO(), library.SQLiteMemoryFile, sqlsFS)
 	err := lib.Initialize()
 
 	if err != nil {
@@ -273,9 +297,10 @@ func TestSearchUrl(t *testing.T) {
 	ch <- 42
 
 	var wsCfg config.Config
-	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
+	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", testPort)
 
-	srv := NewServer(context.Background(), wsCfg, lib)
+	httpFS, templatesFS := getTestFileSystems()
+	srv := NewServer(context.Background(), wsCfg, lib, httpFS, templatesFS)
 	srv.Serve()
 	defer tearDownServer(srv)
 
@@ -290,11 +315,11 @@ func TestSearchUrl(t *testing.T) {
 
 	searchURLs := []string{
 		// Backward compatibility must be kept for the sake of all 1.0.0 clients
-		fmt.Sprintf("http://127.0.0.1:%d/search/Album+Of+Tests", TestPort),
+		fmt.Sprintf("http://127.0.0.1:%d/search/Album+Of+Tests", testPort),
 
 		// The new way of searching which makes it possible to add additional parameters
 		// to the search.
-		fmt.Sprintf("http://127.0.0.1:%d/search/?q=Album+Of+Tests", TestPort),
+		fmt.Sprintf("http://127.0.0.1:%d/search/?q=Album+Of+Tests", testPort),
 	}
 
 	for _, searchURL := range searchURLs {
@@ -341,7 +366,7 @@ func TestSearchUrl(t *testing.T) {
 		}
 	}
 
-	url := fmt.Sprintf("http://127.0.0.1:%d/search/Not+There", TestPort)
+	url := fmt.Sprintf("http://127.0.0.1:%d/search/Not+There", testPort)
 	resp, err := http.Get(url)
 
 	if err != nil {
@@ -382,7 +407,7 @@ func TestGetFileUrl(t *testing.T) {
 
 	trackID := found[0].ID
 
-	url := fmt.Sprintf("http://127.0.0.1:%d/file/%d", TestPort, trackID)
+	url := fmt.Sprintf("http://127.0.0.1:%d/file/%d", testPort, trackID)
 
 	resp, err := http.Get(url)
 
@@ -409,7 +434,7 @@ func TestGetFileUrl(t *testing.T) {
 
 func TestGzipEncoding(t *testing.T) {
 	testGzipResponse := func(tests [][2]string) {
-		url := fmt.Sprintf("http://127.0.0.1:%d/", TestPort)
+		url := fmt.Sprintf("http://127.0.0.1:%d/", testPort)
 		for _, test := range tests {
 			header := test[0]
 			expected := test[1]
@@ -449,10 +474,11 @@ func TestGzipEncoding(t *testing.T) {
 	}
 
 	var wsCfg config.Config
-	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", TestPort)
+	wsCfg.Listen = fmt.Sprintf("127.0.0.1:%d", testPort)
 	wsCfg.Gzip = true
+	httpFS, templatesFS := getTestFileSystems()
 
-	srv := NewServer(context.Background(), wsCfg, nil)
+	srv := NewServer(context.Background(), wsCfg, nil, httpFS, templatesFS)
 	srv.Serve()
 
 	tests := [][2]string{
@@ -466,7 +492,7 @@ func TestGzipEncoding(t *testing.T) {
 	tearDownServer(srv)
 
 	wsCfg.Gzip = false
-	srv = NewServer(context.Background(), wsCfg, nil)
+	srv = NewServer(context.Background(), wsCfg, nil, httpFS, templatesFS)
 	srv.Serve()
 	defer tearDownServer(srv)
 
@@ -492,7 +518,7 @@ func TestFileNameHeaders(t *testing.T) {
 
 	trackID := found[0].ID
 
-	url := fmt.Sprintf("http://127.0.0.1:%d/file/%d", TestPort, trackID)
+	url := fmt.Sprintf("http://127.0.0.1:%d/file/%d", testPort, trackID)
 
 	resp, err := http.Get(url)
 
@@ -527,7 +553,7 @@ func TestAlbumHandlerOverHttp(t *testing.T) {
 
 	albumID, _ := lib.(*library.LocalLibrary).GetAlbumID("Album Of Tests", albumPaths[0])
 
-	albumURL := fmt.Sprintf("http://127.0.0.1:%d/album/%d", TestPort, albumID)
+	albumURL := fmt.Sprintf("http://127.0.0.1:%d/album/%d", testPort, albumID)
 
 	resp, err := http.Get(albumURL)
 
@@ -554,7 +580,7 @@ func TestAlbumHandlerOverHttp(t *testing.T) {
 		}
 	}
 
-	albumURL = fmt.Sprintf("http://127.0.0.1:%d/album/666", TestPort)
+	albumURL = fmt.Sprintf("http://127.0.0.1:%d/album/666", testPort)
 
 	resp, err = http.Get(albumURL)
 
