@@ -2,7 +2,6 @@
 package helpers
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -10,68 +9,35 @@ import (
 	"os/user"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
-	"strings"
 )
 
+// projectRoot is used to cache project root directory and save repeated
+// calculations.
 var projectRoot string
 
-func cacheProjRoot(path string) string {
-	projectRoot = path
-	return path
-}
-
-// ProjectRoot returns the root directory. This is the place where the app is installed
-// or the place where the source is stored if in development or installed with go get
-func ProjectRoot() (string, error) {
+// ProjectRoot returns the source root directory. This function is useful only for
+// tests which seek to find test files relative to the root of the repository.
+func ProjectRoot() (rootPath string, err error) {
 
 	if len(projectRoot) > 0 {
 		return projectRoot, nil
 	}
 
-	// first trying the gopath
-	gopath := os.ExpandEnv("$GOPATH")
-	relPath := filepath.FromSlash("src/github.com/ironsmile/httpms")
-	for _, path := range strings.Split(gopath, ":") {
-		rootPath := filepath.Join(path, relPath)
-		entry, err := os.Stat(rootPath)
-		if err != nil {
-			continue
+	defer func() {
+		if err == nil && rootPath != "" {
+			projectRoot = rootPath
 		}
+	}()
 
-		if entry.IsDir() {
-			return cacheProjRoot(rootPath), nil
-		}
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		return "", fmt.Errorf("no runtime.Caller information")
 	}
 
-	etcPath := filepath.FromSlash("/etc/httpms")
-
-	st, err := os.Stat(etcPath)
-
-	if err == nil && st.IsDir() {
-		return cacheProjRoot(etcPath), nil
-	}
-
-	// now we try the directory of the binary
-	if len(os.Args) < 1 {
-		// highly unlikely but still!
-		return "", errors.New("os.Args is empty. " +
-			"Cannot find the project root directory.")
-	}
-
-	noSymlinkPath, err := filepath.EvalSymlinks(os.Args[0])
-
-	if err != nil {
-		return "", err
-	}
-
-	abs, err := filepath.Abs(filepath.Dir(noSymlinkPath))
-
-	if err != nil {
-		return "", err
-	}
-
-	return cacheProjRoot(abs), nil
+	dirname := filepath.Dir(filename)
+	return filepath.Clean(filepath.Join(dirname, "..", "..")), nil
 }
 
 // SetLogsFile sets the logfile of the server
