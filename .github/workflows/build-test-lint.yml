@@ -1,0 +1,59 @@
+name: Continuous Integration
+on: [push, pull_request]
+jobs:
+
+  build:
+    name: Build, test and lint
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Set up Go
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.16
+      id: go
+
+    - name: Install OS dependencies
+      run: sudo apt-get install libtagc0-dev upx-ucl
+
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Build
+      run: |
+        make release
+
+    - name: Unit Tests
+      run: |
+        go test ./...
+
+    - name: Lint
+      uses: golangci/golangci-lint-action@v2
+      with:
+        version: v1.38.0
+        skip-go-installation: true
+
+  cover:
+    name: Code Test Coverage
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Set up Go
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.16
+
+    - name: Install OS dependencies
+      run: sudo apt-get install libtagc0-dev upx-ucl
+
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Generate cover profile
+      run: |
+        go test -race -covermode atomic -coverprofile=covprofile ./...
+
+    - name: Send coverage
+      uses: shogo82148/actions-goveralls@v1
+      with:
+        path-to-profile: covprofile
