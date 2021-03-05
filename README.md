@@ -18,7 +18,6 @@ No more!
 * [As an API](#as-an-api)
 * [OSX Media Keys Control](#media-keys-control-for-osx)
 * [Clients](#clients)
-* [Known Issues](#known-issues)
 * [Change Log](CHANGELOG.md)
 
 
@@ -419,9 +418,3 @@ You are not restricted to using the web UI. The server has a RESTful API which c
 
 * [httpms-android](https://github.com/ironsmile/httpms-android) is a Android client for HTTPMS
 * [httpms-rhythmbox](https://github.com/ironsmile/httpms-rhythmbox) is HTTPMS client plugin for Gnome's Rhythmbox
-
-
-Known Issues
-======
-
-* Non-ASCII searches are case sensitive.

@@ -8,7 +8,7 @@ require (
 	github.com/gorilla/mux v1.6.2
 	github.com/howeyc/fsnotify v0.9.0
 	github.com/ironsmile/sql-migrate v0.0.0-20180302150855-e167f4809da4
-	github.com/mattn/go-sqlite3 v1.9.0
+	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c // indirect
 	github.com/pkg/errors v0.8.0 // indirect
 	github.com/skip2/go-qrcode v0.0.0-20171229120447-cf5f9fa2f0d8

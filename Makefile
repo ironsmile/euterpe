@@ -1,10 +1,13 @@
 # Build a normal binary for development.
 all:
-	go build -ldflags "-X github.com/ironsmile/httpms/src.Version=`git describe --tags --always`"
+	go build \
+		--tags "sqlite_icu" \
+		-ldflags "-X github.com/ironsmile/httpms/src.Version=`git describe --tags --always`"
 
 # Build a release binary which could be used in the distribution archive.
 release:
 	go build \
+		--tags "sqlite_icu" \
 		-ldflags "-X github.com/ironsmile/httpms/src.Version=`git describe --tags --always`" \
 		-o httpms
 
@@ -14,7 +17,9 @@ release:
 
 # Install in $GOPATH/bin.
 install:
-	go install -ldflags "-X github.com/ironsmile/httpms/src.Version=`git describe --tags --always`"
+	go install \
+		--tags "sqlite_icu" \
+		-ldflags "-X github.com/ironsmile/httpms/src.Version=`git describe --tags --always`"
 
 # Build distribution archive.
 dist-archive:
@@ -22,4 +27,4 @@ dist-archive:
 
 # Start HTTPMS after building it from source.
 run:
-	go run main.go -D
+	go run --tags "sqlite_icu" main.go -D
