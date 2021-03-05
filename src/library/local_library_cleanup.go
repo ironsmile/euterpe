@@ -80,7 +80,9 @@ func (lib *LocalLibrary) cleanupTracks() {
 			defer rows.Close()
 
 			for rows.Next() {
-				rows.Scan(&tr.id, &tr.fsPath)
+				if err := rows.Scan(&tr.id, &tr.fsPath); err != nil {
+					log.Printf("Scanning db error during track cleanup: %s", err)
+				}
 				tracks = append(tracks, tr)
 			}
 
@@ -135,7 +137,9 @@ func (lib *LocalLibrary) cleanupAlbums() {
 			defer rows.Close()
 
 			for rows.Next() {
-				rows.Scan(&albumID)
+				if err := rows.Scan(&albumID); err != nil {
+					log.Printf("Scanning db error during album cleanup: %s", err)
+				}
 				albumIDs = append(albumIDs, albumID)
 			}
 
@@ -188,7 +192,9 @@ func (lib *LocalLibrary) cleanupArtists() {
 			defer rows.Close()
 
 			for rows.Next() {
-				rows.Scan(&artistID)
+				if err := rows.Scan(&artistID); err != nil {
+					log.Printf("Scanning db error during artist cleanup: %s", err)
+				}
 				artistIDs = append(artistIDs, artistID)
 			}
 

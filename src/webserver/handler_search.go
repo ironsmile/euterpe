@@ -49,19 +49,12 @@ func (sh SearchHandler) search(writer http.ResponseWriter, req *http.Request) er
 	results := sh.library.Search(query)
 
 	if len(results) == 0 {
-		writer.Write([]byte("[]"))
-		return nil
-	}
-
-	marshalled, err := json.Marshal(results)
-
-	if err != nil {
+		_, err := writer.Write([]byte("[]"))
 		return err
 	}
 
-	writer.Write(marshalled)
-
-	return nil
+	enc := json.NewEncoder(writer)
+	return enc.Encode(results)
 }
 
 // NewSearchHandler returns a new SearchHandler for processing search queries. They

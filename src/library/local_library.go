@@ -274,8 +274,17 @@ func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []SearchResult {
 		defer rows.Close()
 		for rows.Next() {
 			var res SearchResult
-			rows.Scan(&res.ID, &res.Title, &res.Album, &res.Artist,
-				&res.TrackNumber, &res.AlbumID)
+			err := rows.Scan(
+				&res.ID,
+				&res.Title,
+				&res.Album,
+				&res.Artist,
+				&res.TrackNumber,
+				&res.AlbumID,
+			)
+			if err != nil {
+				return fmt.Errorf("scanning error: %w", err)
+			}
 			output = append(output, res)
 		}
 
@@ -680,7 +689,7 @@ func (lib *LocalLibrary) GetAlbumFSPathByID(albumID int64) (string, error) {
 
 		defer row.Close()
 
-		for row.Next() {
+		if row.Next() {
 			if err := row.Scan(&path); err != nil {
 				return err
 			}

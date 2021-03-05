@@ -288,7 +288,7 @@ func TestSearchUrl(t *testing.T) {
 		t.Error(err)
 	}
 
-	defer lib.Truncate()
+	defer func() { _ = lib.Truncate() }()
 
 	lib.AddLibraryPath(filepath.Join(projRoot, "test_files", "library"))
 
@@ -380,6 +380,9 @@ func TestSearchUrl(t *testing.T) {
 	}
 
 	responseBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Error(err)
+	}
 
 	var noResults []library.SearchResult
 
@@ -396,7 +399,7 @@ func TestSearchUrl(t *testing.T) {
 
 func TestGetFileUrl(t *testing.T) {
 	srv, lib := getLibraryServer(t)
-	defer lib.Truncate()
+	defer func() { _ = lib.Truncate() }()
 	defer tearDownServer(srv)
 
 	found := lib.Search("Buggy Bugoff")
@@ -507,7 +510,7 @@ func TestGzipEncoding(t *testing.T) {
 
 func TestFileNameHeaders(t *testing.T) {
 	srv, lib := getLibraryServer(t)
-	defer lib.Truncate()
+	defer func() { _ = lib.Truncate() }()
 	defer tearDownServer(srv)
 
 	found := lib.Search("Buggy Bugoff")
@@ -542,7 +545,7 @@ func TestFileNameHeaders(t *testing.T) {
 
 func TestAlbumHandlerOverHttp(t *testing.T) {
 	srv, lib := getLibraryServer(t)
-	defer lib.Truncate()
+	defer func() { _ = lib.Truncate() }()
 	defer tearDownServer(srv)
 
 	albumPaths, err := lib.(*library.LocalLibrary).GetAlbumFSPathByName("Album Of Tests")
@@ -613,8 +616,7 @@ func TestAlbumHandlerZipFunction(t *testing.T) {
 
 	albumHandler := new(AlbumHandler)
 
-	err = albumHandler.writeZipContents(buf, files)
-
+	_, err = albumHandler.writeZipContents(buf, files)
 	if err != nil {
 		t.Error(err)
 	}

@@ -122,11 +122,11 @@ func (aah AlbumArtworkHandler) upload(
 	err := aah.artworkManager.SaveAlbumArtwork(req.Context(), id, req.Body)
 	if err == library.ErrArtworkTooBig {
 		writer.WriteHeader(413)
-		writer.Write([]byte("Uploaded artwork is too large."))
+		_, _ = writer.Write([]byte("Uploaded artwork is too large."))
 		return nil
 	} else if _, ok := err.(*library.ArtworkError); ok {
 		writer.WriteHeader(http.StatusBadRequest)
-		writer.Write([]byte(err.Error()))
+		_, _ = writer.Write([]byte(err.Error()))
 		return nil
 	} else if err != nil {
 		return err

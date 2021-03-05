@@ -116,31 +116,24 @@ func getPathedLibrary(ctx context.Context, t *testing.T) *LocalLibrary {
 func getScannedLibrary(ctx context.Context, t *testing.T) *LocalLibrary {
 	lib := getPathedLibrary(ctx, t)
 
-	ch := testErrorAfter(t, 10*time.Second, "Scanning library took too long")
-	lib.Scan()
-	ch <- 42
+	ch := make(chan int)
+	go func() {
+		lib.Scan()
+		ch <- 42
+	}()
+
+	testErrorAfter(t, 10*time.Second, ch, "Scanning library took too long")
 
 	return lib
 }
 
-func testErrorAfter(t *testing.T, dur time.Duration, message string) chan int {
-	ch := make(chan int)
-
-	go func() {
-		select {
-		case <-ch:
-			close(ch)
-			return
-		case <-time.After(dur):
-			log.Printf("Test timed out: %s", message)
-			close(ch)
-			t.Errorf(message)
-			t.FailNow()
-			os.Exit(1)
-		}
-	}()
-
-	return ch
+func testErrorAfter(t *testing.T, dur time.Duration, done chan int, message string) {
+	select {
+	case <-done:
+	case <-time.After(dur):
+		t.Errorf("Test timed out after %s: %s", dur, message)
+		t.FailNow()
+	}
 }
 
 func TestInitialize(t *testing.T) {
@@ -165,7 +158,7 @@ func TestInitialize(t *testing.T) {
 	}
 
 	defer func() {
-		lib.Truncate()
+		_ = lib.Truncate()
 		os.Remove(libDB.Name())
 	}()
 
@@ -233,7 +226,9 @@ func TestSearch(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getLibrary(ctx, t)
-	defer lib.Truncate()
+	defer func() {
+		_ = lib.Truncate()
+	}()
 
 	found := lib.Search("Buggy")
 
@@ -279,7 +274,9 @@ func TestAddingNewFiles(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	library := getLibrary(ctx, t)
-	defer library.Truncate()
+	defer func() {
+		_ = library.Truncate()
+	}()
 
 	tracksCount := func() int {
 		rows, err := library.db.Query("SELECT count(id) as cnt FROM tracks")
@@ -292,7 +289,9 @@ func TestAddingNewFiles(t *testing.T) {
 		var count int
 
 		for rows.Next() {
-			rows.Scan(&count)
+			if err := rows.Scan(&count); err != nil {
+				t.Errorf("error counting tracks: %s", err)
+			}
 		}
 
 		return count
@@ -350,7 +349,7 @@ func TestAlbumFSPath(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	library := getLibrary(ctx, t)
-	defer library.Truncate()
+	defer func() { _ = library.Truncate() }()
 
 	testLibraryPath, err := getTestLibraryPath()
 
@@ -378,7 +377,7 @@ func TestPreAddedFiles(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	library := getLibrary(ctx, t)
-	defer library.Truncate()
+	defer func() { _ = library.Truncate() }()
 
 	_, err := library.GetArtistID("doycho")
 
@@ -431,7 +430,7 @@ func TestGettingAFile(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	library := getLibrary(ctx, t)
-	defer library.Truncate()
+	defer func() { _ = library.Truncate() }()
 
 	artistID, _ := library.GetArtistID("Artist Testoff")
 	albumPaths, err := library.GetAlbumFSPathByName("Album Of Tests")
@@ -469,7 +468,9 @@ func TestAddingLibraryPaths(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getPathedLibrary(ctx, t)
-	defer lib.Truncate()
+	defer func() {
+		_ = lib.Truncate()
+	}()
 
 	if len(lib.paths) != 1 {
 		t.Fatalf("Expected 1 library path but found %d", len(lib.paths))
@@ -489,11 +490,14 @@ func TestScaning(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getPathedLibrary(ctx, t)
-	defer lib.Truncate()
+	defer func() { _ = lib.Truncate() }()
 
-	ch := testErrorAfter(t, 10*time.Second, "Scanning library took too long")
-	lib.Scan()
-	ch <- 42
+	ch := make(chan int)
+	go func() {
+		lib.Scan()
+		ch <- 42
+	}()
+	testErrorAfter(t, 10*time.Second, ch, "Scanning library took too long")
 
 	for _, track := range []string{"Another One", "Payback", "Tittled Track"} {
 		found := lib.Search(track)
@@ -508,7 +512,7 @@ func TestSQLInjections(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getScannedLibrary(ctx, t)
-	defer lib.Truncate()
+	defer func() { _ = lib.Truncate() }()
 
 	found := lib.Search(`not-such-thing" OR 1=1 OR t.name="kleopatra`)
 
@@ -521,7 +525,7 @@ func TestGetAlbumFiles(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getScannedLibrary(ctx, t)
-	defer lib.Truncate()
+	defer func() { _ = lib.Truncate() }()
 
 	albumPaths, err := lib.GetAlbumFSPathByName("Album Of Tests")
 
@@ -567,7 +571,7 @@ func TestRemoveFileFunction(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getScannedLibrary(ctx, t)
-	defer lib.Truncate()
+	defer func() { _ = lib.Truncate() }()
 
 	found := lib.Search("Another One")
 
@@ -654,7 +658,7 @@ func TestAddingManyFilesSimultaniously(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getPathedLibrary(ctx, t)
-	defer lib.Truncate()
+	defer func() { _ = lib.Truncate() }()
 
 	numberOfFiles := 100
 	mediaFiles := make([]MediaFile, 0, numberOfFiles)
@@ -688,26 +692,26 @@ func TestAlbumsWithDifferentArtists(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getPathedLibrary(ctx, t)
-	defer lib.Truncate()
+	defer func() { _ = lib.Truncate() }()
 
 	var err error
 
 	tracks := []MockMedia{
-		MockMedia{
+		{
 			artist: "Buggy Bugoff",
 			album:  "Return Of The Bugs",
 			title:  "Payback",
 			track:  1,
 			length: 340 * time.Second,
 		},
-		MockMedia{
+		{
 			artist: "Buggy Bugoff",
 			album:  "Return Of The Bugs",
 			title:  "Realization",
 			track:  2,
 			length: 345 * time.Second,
 		},
-		MockMedia{
+		{
 			artist: "Off By One",
 			album:  "Return Of The Bugs",
 			title:  "Index By Index",
@@ -758,41 +762,41 @@ func TestDifferentAlbumsWithTheSameName(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getPathedLibrary(ctx, t)
-	defer lib.Truncate()
+	defer func() { _ = lib.Truncate() }()
 
 	tracks := []struct {
 		track MockMedia
 		path  string
 	}{
 		{
-			MockMedia{
+			track: MockMedia{
 				artist: "Buggy Bugoff",
 				album:  "Return Of The Bugs",
 				title:  "Payback",
 				track:  1,
 				length: 340 * time.Second,
 			},
-			"/media/return-of-the-bugs/track-1.mp3",
+			path: "/media/return-of-the-bugs/track-1.mp3",
 		},
 		{
-			MockMedia{
+			track: MockMedia{
 				artist: "Buggy Bugoff",
 				album:  "Return Of The Bugs",
 				title:  "Realization",
 				track:  2,
 				length: 345 * time.Second,
 			},
-			"/media/return-of-the-bugs/track-2.mp3",
+			path: "/media/return-of-the-bugs/track-2.mp3",
 		},
 		{
-			MockMedia{
+			track: MockMedia{
 				artist: "Off By One",
 				album:  "Return Of The Bugs",
 				title:  "Index By Index",
 				track:  1,
 				length: 244 * time.Second,
 			},
-			"/media/second-return-of-the-bugs/track-1.mp3", // different directory
+			path: "/media/second-return-of-the-bugs/track-1.mp3", // different directory
 		},
 	}
 

@@ -1,6 +1,7 @@
 package library
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -94,15 +95,21 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 		} else {
 			// It was a directory... probably
 			lib.watchLock.Lock()
-			lib.watch.RemoveWatch(event.Name)
+			err := lib.watch.RemoveWatch(event.Name)
 			lib.watchLock.Unlock()
+			if err != nil {
+				fmt.Printf("error removing watcher for %s: %s\n", event.Name, err)
+			}
+
 			lib.removeDirectory(event.Name)
 		}
 		return
 	}
 
 	if event.IsCreate() && st.IsDir() {
-		lib.watch.Watch(event.Name)
+		if err := lib.watch.Watch(event.Name); err != nil {
+			fmt.Printf("error starting a watcher for %s: %s\n", event.Name, err)
+		}
 
 		lib.waitScanLock.Lock()
 		lib.walkWG.Add(1)
@@ -114,7 +121,9 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 
 	if event.IsCreate() && !st.IsDir() {
 		if lib.isSupportedFormat(event.Name) {
-			lib.AddMedia(event.Name)
+			if err := lib.AddMedia(event.Name); err != nil {
+				fmt.Printf("error adding newly created file: %s\n", err)
+			}
 		}
 		return
 	}
@@ -122,7 +131,9 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 	if event.IsModify() && !st.IsDir() {
 		if lib.isSupportedFormat(event.Name) {
 			lib.removeFile(event.Name)
-			lib.AddMedia(event.Name)
+			if err := lib.AddMedia(event.Name); err != nil {
+				fmt.Printf("error adding modified file: %s\n", err)
+			}
 		}
 		return
 	}

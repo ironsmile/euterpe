@@ -60,7 +60,7 @@ func (hl *AuthHandler) challengeAuthentication(
 	if contains(accepts, "application/json") {
 		writer.Header().Set("Content-Type", "application/json; charset=utf8")
 		writer.WriteHeader(http.StatusUnauthorized)
-		writer.Write([]byte(authRequiredJSON))
+		_, _ = writer.Write([]byte(authRequiredJSON))
 		return nil
 	}
 

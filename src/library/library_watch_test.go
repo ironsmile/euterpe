@@ -19,7 +19,7 @@ func TestMovingFileIntoLibrary(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getScannedLibrary(ctx, t)
-	defer lib.Truncate()
+	defer func() { _ = lib.Truncate() }()
 	projRoot, _ := helpers.ProjectRoot()
 	testFiles := filepath.Join(projRoot, "test_files")
 
@@ -61,7 +61,7 @@ func TestRemovingFile(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getScannedLibrary(ctx, t)
-	defer lib.Truncate()
+	defer func() { _ = lib.Truncate() }()
 
 	results := lib.Search("")
 
@@ -105,7 +105,7 @@ func TestAddingAndRemovingDirectory(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getScannedLibrary(ctx, t)
-	defer lib.Truncate()
+	defer func() { _ = lib.Truncate() }()
 
 	if err := os.Mkdir(testDir, 0700); err != nil {
 		t.Fatal(err)
@@ -176,7 +176,7 @@ func TestMovingDirectory(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getScannedLibrary(ctx, t)
-	defer lib.Truncate()
+	defer func() { _ = lib.Truncate() }()
 
 	checkAddedSong(lib, t)
 
@@ -224,7 +224,7 @@ func TestAddingNewFile(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getScannedLibrary(ctx, t)
-	defer lib.Truncate()
+	defer func() { _ = lib.Truncate() }()
 	projRoot, _ := helpers.ProjectRoot()
 	testFiles := filepath.Join(projRoot, "test_files")
 
@@ -250,7 +250,7 @@ func TestAddingNonRelatedFile(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getScannedLibrary(ctx, t)
-	defer lib.Truncate()
+	defer func() { _ = lib.Truncate() }()
 	projRoot, _ := helpers.ProjectRoot()
 	testFiles := filepath.Join(projRoot, "test_files")
 	newFile := filepath.Join(testFiles, "library", "not_related")
@@ -268,8 +268,11 @@ func TestAddingNonRelatedFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fh.WriteString("Some contents")
+	_, err = fh.WriteString("Some contents")
 	fh.Close()
+	if err != nil {
+		t.Error(err)
+	}
 
 	time.Sleep(100 * time.Millisecond)
 	testLibFiles()

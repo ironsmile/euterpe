@@ -47,7 +47,9 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 		defer rows.Close()
 		for rows.Next() {
 			var res Artist
-			rows.Scan(&res.ID, &res.Name)
+			if err := rows.Scan(&res.ID, &res.Name); err != nil {
+				return fmt.Errorf("scanning db failed: %w", err)
+			}
 			output = append(output, res)
 		}
 
@@ -131,7 +133,9 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 		defer rows.Close()
 		for rows.Next() {
 			var res Album
-			rows.Scan(&res.ID, &res.Name, &res.Artist)
+			if err := rows.Scan(&res.ID, &res.Name, &res.Artist); err != nil {
+				return fmt.Errorf("scanning db failed: %w", err)
+			}
 			output = append(output, res)
 		}
 

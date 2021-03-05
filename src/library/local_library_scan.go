@@ -74,7 +74,9 @@ func (lib *LocalLibrary) scanPath(scannedPath string) {
 
 		lib.watchLock.RLock()
 		if lib.watch != nil && info.IsDir() {
-			lib.watch.Watch(path)
+			if err := lib.watch.Watch(path); err != nil {
+				log.Printf("Staring a file system watch for %s failed: %s", path, err)
+			}
 		}
 		lib.watchLock.RUnlock()
 

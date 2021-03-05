@@ -115,15 +115,8 @@ func (bh BrowseHandler) browseAlbums(
 		Previous:   prevPage,
 	}
 
-	marshalled, err := json.Marshal(retData)
-
-	if err != nil {
-		return err
-	}
-
-	writer.Write(marshalled)
-
-	return nil
+	enc := json.NewEncoder(writer)
+	return enc.Encode(retData)
 }
 
 func (bh BrowseHandler) browseArtists(
@@ -155,15 +148,8 @@ func (bh BrowseHandler) browseArtists(
 		Previous:   prevPage,
 	}
 
-	marshalled, err := json.Marshal(retData)
-
-	if err != nil {
-		return err
-	}
-
-	writer.Write(marshalled)
-
-	return nil
+	enc := json.NewEncoder(writer)
+	return enc.Encode(retData)
 }
 
 func (bh BrowseHandler) badRequest(writer http.ResponseWriter, message string) {

@@ -33,7 +33,7 @@ func NewTemplateHandler(tpl *template.Template, title string) http.Handler {
 		}
 		if err := tpl.Execute(w, data); err != nil {
 			errorMessage := fmt.Sprintf("Error executing template: %s.\n", err)
-			log.Printf(errorMessage)
+			log.Print(errorMessage)
 			http.Error(w, errorMessage, http.StatusInternalServerError)
 		}
 	})

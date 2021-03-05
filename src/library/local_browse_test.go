@@ -12,7 +12,7 @@ func TestBrowsingArtists(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	lib := getPathedLibrary(ctx, t)
-	defer lib.Truncate()
+	defer func() { _ = lib.Truncate() }()
 
 	tracks := []struct {
 		track MockMedia

@@ -45,7 +45,7 @@ func (h *loginTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !checkLoginCreds(reqBody.User, reqBody.Pass, h.auth) {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(wrongLoginJSON))
+		_, _ = w.Write([]byte(wrongLoginJSON))
 		return
 	}
 
