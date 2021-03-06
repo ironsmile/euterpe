@@ -46,7 +46,7 @@ func TestBrowsingArtists(t *testing.T) {
 				track:  3,
 				length: 218 * time.Second,
 			},
-			"/media/return-of-the-bugs/track-2.mp3",
+			"/media/return-of-the-bugs/track-3.mp3",
 		},
 		{
 			MockMedia{
@@ -56,7 +56,7 @@ func TestBrowsingArtists(t *testing.T) {
 				track:  4,
 				length: 602 * time.Second,
 			},
-			"/media/return-of-the-bugs/track-2.mp3",
+			"/media/return-of-the-bugs/track-4.mp3",
 		},
 		{
 			MockMedia{

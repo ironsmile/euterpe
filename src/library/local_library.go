@@ -373,6 +373,8 @@ func (lib *LocalLibrary) isSupportedFormat(path string) bool {
 // AddMedia adds a file specified by its filesystem name to the library. Will create the
 // needed Artist, Album if neccessery.
 func (lib *LocalLibrary) AddMedia(filename string) error {
+	filename = filepath.Clean(filename)
+
 	if lib.MediaExistsInLibrary(filename) {
 		return nil
 	}
@@ -514,8 +516,7 @@ func (lib *LocalLibrary) setArtistID(artist string) (int64, error) {
 		return id, nil
 	}
 
-	var newID int64
-
+	var lastInsertID int64
 	work := func(db *sql.DB) error {
 		stmt, err := db.Prepare(`
 				INSERT INTO
@@ -534,13 +535,33 @@ func (lib *LocalLibrary) setArtistID(artist string) (int64, error) {
 			return err
 		}
 
-		newID, err = res.LastInsertId()
-		log.Printf("Inserted artist id: %d, name: %s\n", newID, artist)
-		return err
+		lastInsertID, _ = res.LastInsertId()
+		return nil
 	}
 
 	if err := lib.executeDBJobAndWait(work); err != nil {
 		return 0, err
+	}
+
+	newID, err := lib.GetArtistID(artist)
+	if err != nil {
+		return lastInsertID, fmt.Errorf(
+			"getting the ID of inserted artist failed: %w", err)
+	}
+
+	log.Printf("Inserted artist id: %d, name: %s\n", newID, artist)
+	if lastInsertID != newID {
+		// In case this log is never seen for a long time it would mean that
+		// the LastInsertId() bug has been fixed and it is probably safe to
+		// remove the second SQL request which explicitly queries the DB for
+		// the ID.
+		log.Printf(
+			"Wrong ID returned for artist `%s` by .LastInsertId(). "+
+				"Returned: %d, actual: %d.",
+			artist,
+			lastInsertID,
+			newID,
+		)
 	}
 
 	return newID, nil
@@ -596,8 +617,7 @@ func (lib *LocalLibrary) setAlbumID(album string, fsPath string) (int64, error) 
 		return id, nil
 	}
 
-	var newID int64
-
+	var lastInsertID int64
 	work := func(db *sql.DB) error {
 		stmt, err := db.Prepare(`
 				INSERT INTO
@@ -613,16 +633,38 @@ func (lib *LocalLibrary) setAlbumID(album string, fsPath string) (int64, error) 
 
 		res, err := stmt.Exec(album, fsPath)
 		if err != nil {
-			return err
+			return fmt.Errorf("executing album insert: %w", err)
 		}
 
-		newID, err = res.LastInsertId()
-		log.Printf("Inserted album id: %d, name: %s, path: %s\n", newID, album, fsPath)
-
-		return err
+		lastInsertID, _ = res.LastInsertId()
+		return nil
 	}
 	if err := lib.executeDBJobAndWait(work); err != nil {
 		return 0, err
+	}
+
+	// For some reason the sql.Result.LastInsertId() function does not always
+	// return the correct ID. This might be a problem with the particular SQL
+	// driver used. In any case, explicitly selecting it is the safest option.
+	newID, err := lib.GetAlbumID(album, fsPath)
+	if err != nil {
+		return 0, fmt.Errorf("could not get ID of inserted album: %s", err)
+	}
+
+	log.Printf("Inserted album id: %d, name: %s, path: %s\n", newID, album, fsPath)
+	if lastInsertID != newID {
+		// In case this log is never seen for a long time it would mean that
+		// the LastInsertId() bug has been fixed and it is probably safe to
+		// remove the second SQL request which explicitly queries the DB for
+		// the ID.
+		log.Printf(
+			"Wrong ID returned for album `%s` (%s) by .LastInsertId(). "+
+				"Returned: %d, actual: %d.",
+			album,
+			fsPath,
+			lastInsertID,
+			newID,
+		)
 	}
 
 	return newID, nil
@@ -751,8 +793,8 @@ func (lib *LocalLibrary) GetTrackID(
 // Sets a new ID for this track if it is new to the library. If not, returns
 // its current id. Tracks with the same name but by different artists and/or album
 // need to have separate IDs hence the artistID and albumID parameters.
-// Additionally trackNumber and filesystem path (fsPath) are required. They are
-// used when retreiving this particular song for playing.
+// Additionally trackNumber and file system path (fsPath) are required. They are
+// used when retrieving this particular song for playing.
 func (lib *LocalLibrary) setTrackID(title, fsPath string,
 	trackNumber, artistID, albumID int64) (int64, error) {
 
@@ -765,8 +807,7 @@ func (lib *LocalLibrary) setTrackID(title, fsPath string,
 		return id, nil
 	}
 
-	var newID int64
-
+	var lastInsertID int64
 	work := func(db *sql.DB) error {
 		stmt, err := db.Prepare(`
 			INSERT INTO
@@ -785,15 +826,61 @@ func (lib *LocalLibrary) setTrackID(title, fsPath string,
 			return err
 		}
 
-		newID, err = res.LastInsertId()
-		log.Printf("Inserted id: %d, name: %s, album ID: %d, artist ID: %d, number: %d, fs_path: %s\n",
-			newID, title, albumID, artistID, trackNumber, fsPath)
-
-		return err
+		lastInsertID, _ = res.LastInsertId()
+		return nil
 	}
 
 	if err := lib.executeDBJobAndWait(work); err != nil {
 		return 0, err
+	}
+
+	// Getting the track by its fs_path.
+	var newID int64
+	work = func(db *sql.DB) error {
+		smt, err := db.Prepare(`
+			SELECT
+				id
+			FROM
+				tracks
+			WHERE
+				fs_path = ?
+		`)
+		if err != nil {
+			return err
+		}
+
+		defer smt.Close()
+
+		var id int64
+		err = smt.QueryRow(fsPath).Scan(&id)
+		if err != nil {
+			return err
+		}
+
+		newID = id
+		return nil
+	}
+
+	if err := lib.executeDBJobAndWait(work); err != nil {
+		return 0, err
+	}
+
+	log.Printf("Inserted id: %d, name: %s, album ID: %d, artist ID: %d, "+
+		"number: %d, fs_path: %s\n", newID, title, albumID, artistID,
+		trackNumber, fsPath)
+
+	if lastInsertID != newID {
+		// In case this log is never seen for a long time it would mean that
+		// the LastInsertId() bug has been fixed and it is probably safe to
+		// remove the second SQL request which explicitly queries the DB for
+		// the ID.
+		log.Printf(
+			"Wrong ID returned for track `%s` by .LastInsertId(). "+
+				"Returned: %d, actual: %d.",
+			fsPath,
+			lastInsertID,
+			newID,
+		)
 	}
 
 	return newID, nil
