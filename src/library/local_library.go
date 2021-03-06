@@ -361,11 +361,19 @@ func (lib *LocalLibrary) isSupportedFormat(path string) bool {
 		".m4a",
 	}
 
+	base := filepath.Base(path)
+	ext := filepath.Ext(base)
+	if base == ext {
+		// This is a file such as "path/to/.hidden". There is no point in
+		// checking these. They really don't have extension. What is after
+		// the dot is the actual file name. It is just hidden.
+		return false
+	}
+
 	for _, format := range supportedFormats {
-		if !strings.HasSuffix(path, format) {
-			continue
+		if strings.EqualFold(ext, format) {
+			return true
 		}
-		return true
 	}
 	return false
 }

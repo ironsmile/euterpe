@@ -831,6 +831,82 @@ func TestDifferentAlbumsWithTheSameName(t *testing.T) {
 	}
 }
 
+// TestLocalLibrarySupportedFormats makes sure that format recognition from file name
+// does return true only for supported formats.
+func TestLocalLibrarySupportedFormats(t *testing.T) {
+	tests := []struct {
+		path     string
+		expected bool
+	}{
+		{
+			path:     "some/path.mp3",
+			expected: true,
+		},
+		{
+			path:     "path.mp3",
+			expected: true,
+		},
+		{
+			path:     "some/path.ogg",
+			expected: true,
+		},
+		{
+			path:     "some/path.wav",
+			expected: true,
+		},
+		{
+			path:     "some/path.fla",
+			expected: true,
+		},
+		{
+			path:     "some/path.flac",
+			expected: true,
+		},
+		{
+			path:     "path.flac",
+			expected: true,
+		},
+		{
+			path:     "some/.mp3",
+			expected: false,
+		},
+		{
+			path:     "file.MP3",
+			expected: true,
+		},
+		{
+			path:     "some/file.pdf",
+			expected: false,
+		},
+		{
+			path:     "some/mp3",
+			expected: false,
+		},
+		{
+			path:     "mp3",
+			expected: false,
+		},
+		{
+			path:     "/proc/cpuinfo",
+			expected: false,
+		},
+	}
+
+	// lib does not need to be initialized. The isSupportedFormat method does not
+	// touch any of its properties.
+	lib := LocalLibrary{}
+
+	for _, test := range tests {
+		t.Run(test.path, func(t *testing.T) {
+			actual := lib.isSupportedFormat(test.path)
+			if test.expected != actual {
+				t.Errorf("Support for %s is wrong. Expected %t but got %t.",
+					test.path, test.expected, actual)
+			}
+		})
+	}
+}
+
 // getTestMigrationFiles returns the SQLs directory used by the application itself
 // normally. This way tests will be done with the exact same files which will be
 // bundled into the binary on build.
