@@ -22,9 +22,9 @@ import (
 )
 
 const (
-	// ConfigName contains the name of the actual configuration file. This is the one
+	// configName contains the name of the actual configuration file. This is the one
 	// the user is supposed to change.
-	ConfigName = "config.json"
+	configName = "config.json"
 
 	defaultlistAddress = ":9996"
 	defaultSecretBytes = 64
@@ -158,7 +158,7 @@ func UserConfigPath() string {
 		log.Println(err)
 		return ""
 	}
-	return filepath.Join(path, ConfigName)
+	return filepath.Join(path, configName)
 }
 
 // UserConfigExists returns true if the user configuration is present and in order.
