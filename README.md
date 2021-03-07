@@ -53,10 +53,11 @@ If you want to install it from source (from here) you will need:
 
 * [Go](http://golang.org/) 1.16 or later [installed and properly configured](http://golang.org/doc/install).
 
-* [go-taglib](https://github.com/landr0id/go-taglib) - Read the [install notes](https://github.com/landr0id/go-taglib#install)
+* [go-taglib](https://github.com/wtolson/go-taglib) - Read the [install notes](https://github.com/wtolson/go-taglib#install)
 
 * [go-sqlite3](https://github.com/mattn/go-sqlite3) - `go install github.com/mattn/go-sqlite3` would probably be enough.
 
+* [International Components for Unicode](http://site.icu-project.org/) - The HTTPMS binary dynamically links to libicu. Your friendly Linux distribution probably already has a package. For other OSs one should [go here](http://site.icu-project.org/download).
 
 Install
 ======
