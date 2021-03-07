@@ -51,7 +51,6 @@ type Config struct {
 	Authenticate    Auth        `json:"authentication,omitempty"`
 	Libraries       []string    `json:"libraries,omitempty"`
 	LibraryScan     ScanSection `json:"library_scan,omitempty"`
-	UserPath        string      `json:"user_path,omitempty"`
 	LogFile         string      `json:"log_file,omitempty"`
 	SqliteDatabase  string      `json:"sqlite_database,omitempty"`
 	Gzip            bool        `json:"gzip,omitempty"`
