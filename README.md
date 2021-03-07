@@ -256,7 +256,7 @@ wich would return an JSON array with tracks. Every object in the JSON represents
 ]
 ```
 
-The most importat thing here is the track ID at the `id` key. It can be used for playing this track. The other interesting thing is `album_id`. Tracks can be grouped in albums using this value. And the last field of particular interest is `track`. It is the position of this track in the album.
+The most important thing here is the track ID at the `id` key. It can be used for playing this track. The other interesting thing is `album_id`. Tracks can be grouped in albums using this value. And the last field of particular interest is `track`. It is the position of this track in the album.
 
 ### Browse
 
