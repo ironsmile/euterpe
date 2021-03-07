@@ -101,7 +101,7 @@ func (ss *ScanSection) UnmarshalJSON(input []byte) error {
 		ss.InitialWait = iwd
 	}
 
-	if ss.FilesPerOperation <= 0 {
+	if ss.FilesPerOperation < 0 {
 		return errors.New("files_per_operation must be a positive integer")
 	}
 
