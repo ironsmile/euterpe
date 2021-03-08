@@ -380,8 +380,8 @@ func (lib *LocalLibrary) isSupportedFormat(path string) bool {
 	return false
 }
 
-// AddMedia adds a file specified by its filesystem name to the library. Will create the
-// needed Artist, Album if neccessery.
+// AddMedia adds a file specified by its file system name to the library. Will create the
+// needed Artist, Album if necessary.
 func (lib *LocalLibrary) AddMedia(filename string) error {
 	filename = filepath.Clean(filename)
 
