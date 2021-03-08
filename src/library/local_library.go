@@ -403,37 +403,34 @@ func (lib *LocalLibrary) AddMedia(filename string) error {
 
 	defer file.Close()
 
-	// log.Printf("New Song:\nArtist: %s\nAlbum: %s\nTitle: %s\nTrack: %d\n",
-	// 	file.Artist(), file.Album(), file.Title(), int(file.Track()))
-
 	return lib.insertMediaIntoDatabase(file, filename)
 }
 
 // insertMediaIntoDatabase accepts an already parsed media info object, its path.
 // The method inserts this media into the library database.
 func (lib *LocalLibrary) insertMediaIntoDatabase(file MediaFile, filePath string) error {
-	artistID, err := lib.setArtistID(file.Artist())
-
+	artist := strings.TrimSpace(file.Artist())
+	artistID, err := lib.setArtistID(artist)
 	if err != nil {
 		return err
 	}
 
 	fileDir := filepath.Dir(filePath)
 
-	albumID, err := lib.setAlbumID(file.Album(), fileDir)
+	album := strings.TrimSpace(file.Album())
+	albumID, err := lib.setAlbumID(album, fileDir)
 
 	if err != nil {
 		return err
 	}
 
 	trackNumber := int64(file.Track())
-
 	if trackNumber == 0 {
 		trackNumber = helpers.GuessTrackNumber(filePath)
 	}
 
-	_, err = lib.setTrackID(file.Title(), filePath, trackNumber, artistID, albumID)
-
+	title := strings.TrimSpace(file.Title())
+	_, err = lib.setTrackID(title, filePath, trackNumber, artistID, albumID)
 	return err
 }
 
