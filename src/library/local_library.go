@@ -802,6 +802,9 @@ func (lib *LocalLibrary) GetTrackID(
 // need to have separate IDs hence the artistID and albumID parameters.
 // Additionally trackNumber and file system path (fsPath) are required. They are
 // used when retrieving this particular song for playing.
+//
+// In case the track with this file system path already exists in the library it
+// is updated with new values for title, number, artist ID and album ID.
 func (lib *LocalLibrary) setTrackID(title, fsPath string,
 	trackNumber, artistID, albumID int64) (int64, error) {
 
@@ -820,7 +823,13 @@ func (lib *LocalLibrary) setTrackID(title, fsPath string,
 			INSERT INTO
 				tracks (name, album_id, artist_id, fs_path, number)
 			VALUES
-				(?, ?, ?, ?, ?)
+				($1, $2, $3, $4, $5)
+			ON CONFLICT (fs_path) DO
+			UPDATE SET
+				name = $1,
+				album_id = $2,
+				artist_id = $3,
+				number = $5
 		`)
 		if err != nil {
 			return err
