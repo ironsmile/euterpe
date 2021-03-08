@@ -194,10 +194,7 @@ func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 				continue
 			}
 
-			res.Format = strings.TrimLeft(filepath.Ext(res.Format), ".")
-			if res.Format == "" {
-				res.Format = "mp3"
-			}
+			res.Format = mediaFormatFromFileName(res.Format)
 
 			output = append(output, res)
 		}
@@ -256,7 +253,8 @@ func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []SearchResult {
 				al.name as album,
 				at.name as artist,
 				t.number as track_number,
-				t.album_id as album_id
+				t.album_id as album_id,
+				t.fs_path as fs_path
 			FROM
 				tracks as t
 					LEFT JOIN albums as al ON al.id = t.album_id
@@ -281,10 +279,14 @@ func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []SearchResult {
 				&res.Artist,
 				&res.TrackNumber,
 				&res.AlbumID,
+				&res.Format,
 			)
 			if err != nil {
 				return fmt.Errorf("scanning error: %w", err)
 			}
+
+			res.Format = mediaFormatFromFileName(res.Format)
+
 			output = append(output, res)
 		}
 
