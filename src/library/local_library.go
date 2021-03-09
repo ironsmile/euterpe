@@ -88,10 +88,10 @@ func NewArtworkError(err string) *ArtworkError {
 }
 
 func init() {
-	flag.BoolVar(&LibraryFastScan, "fast-library-scan", false, "Do not honour"+
-		" the configuration set in 'library_scan'. With this flag,"+
-		" scanning will be done as fast as possible. This may be useful when"+
-		" running the daemon for the first time with big libraries.")
+	flag.BoolVar(&LibraryFastScan, "fast-library-scan", false,
+		"Do not honour the configuration set in 'library_scan'. With this flag,\n"+
+			"scanning will be done as fast as possible. This may be useful when\n"+
+			"running the daemon for the first time with big libraries.")
 }
 
 // LocalLibrary implements the Library interface. Will represent files found on the

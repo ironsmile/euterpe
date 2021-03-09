@@ -25,28 +25,34 @@ import (
 )
 
 var (
-	// PidFile is populated by an command line argument. Will be a filesystem path.
+	// pidFile is populated by an command line argument. Will be a filesystem path.
 	// Nedomi will save its Process ID in this file.
-	PidFile string
+	pidFile string
 
-	// Debug is populated by an command line argument.
-	Debug bool
+	// debug is populated by an command line argument.
+	debug bool
 
-	// ShowVersion would be true when the -v flag is used
-	ShowVersion bool
+	// showVersion would be true when the -v flag is used
+	showVersion bool
+
+	// rescanLibrary is populated by the -rescan flag and will cause a single
+	// scan to move through all the items in the database and update their
+	// meta data with whatever is present in the source.
+	rescanLibrary bool
 )
 
-const (
-	userAgentFormat = "HTTP Media Server/%s (github.com/ironsmile/httpms)"
-)
+const userAgentFormat = "HTTP Media Server/%s (github.com/ironsmile/httpms)"
 
 func init() {
-	pidUsage := "Pidfile. Default is [user_path]/pidfile.pid"
-	pidDefault := "pidfile.pid"
-	flag.StringVar(&PidFile, "p", pidDefault, pidUsage)
-
-	flag.BoolVar(&Debug, "D", false, "Debug mode. Will log everything to the stdout.")
-	flag.BoolVar(&ShowVersion, "v", false, "Show version and build information.")
+	flag.StringVar(&pidFile, "p", "pidfile.pid",
+		"Lock file which will be used for making sure only one\n"+
+			"instance of the server is currently runnig. The default\n"+
+			"location is is [user_path]/pidfile.pid.")
+	flag.BoolVar(&debug, "D", false, "Debug mode. Will log everything to the stdout.")
+	flag.BoolVar(&showVersion, "v", false, "Show version and build information.")
+	flag.BoolVar(&rescanLibrary, "rescan", false,
+		"Will metadata synchronization with the source. All media in\n"+
+			"the database will be updated. Without starting the server proper.")
 }
 
 // Main is the only thing run in the project's root main.go file.
@@ -54,12 +60,17 @@ func init() {
 func Main(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) {
 	flag.Parse()
 
-	if ShowVersion {
+	if showVersion {
 		printVersionInformation()
 		os.Exit(0)
 	}
 
-	if err := parseConfigAndStartWebserver(
+	if rescanLibrary {
+		log.Println("TODO: implement rescan")
+		os.Exit(0)
+	}
+
+	if err := runServer(
 		httpRootFS,
 		htmlTemplatesFS,
 		sqlFilesFS,
@@ -69,9 +80,9 @@ func Main(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) {
 	}
 }
 
-// setupPidFileAndSignals creates a pidfile and starts a signal receiver goroutine
-func setupPidFileAndSignals(pidFile string, stopFunc context.CancelFunc) {
-	helpers.SetUpPidFile(pidFile)
+// setupPidFileAndSignals creates a pidfile and starts a signal receiver goroutine.
+func setupPidFileAndSignals(pidFileName string, stopFunc context.CancelFunc) {
+	helpers.SetUpPidFile(pidFileName)
 
 	signalChannel := make(chan os.Signal, 2)
 	for _, sig := range daemon.StopSignals {
@@ -81,7 +92,7 @@ func setupPidFileAndSignals(pidFile string, stopFunc context.CancelFunc) {
 		for range signalChannel {
 			log.Println("Stop signal received. Removing pidfile and stopping.")
 			stopFunc()
-			helpers.RemovePidFile(pidFile)
+			helpers.RemovePidFile(pidFileName)
 		}
 	}()
 }
@@ -124,9 +135,9 @@ func getLibrary(
 	return lib, nil
 }
 
-// parseConfigAndStartWebserver parses the config, sets the logfile, setups the
+// runServer parses the config, sets the logfile, setups the
 // pidfile, and makes an signal handler goroutine
-func parseConfigAndStartWebserver(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) error {
+func runServer(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) error {
 	cfg, err := config.FindAndParse()
 	if err != nil {
 		return fmt.Errorf("parsing configuration: %s", err)
@@ -134,7 +145,7 @@ func parseConfigAndStartWebserver(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS)
 
 	userPath := filepath.Dir(config.UserConfigPath())
 
-	if !Debug {
+	if !debug {
 		err = helpers.SetLogsFile(helpers.AbsolutePath(cfg.LogFile, userPath))
 		if err != nil {
 			return fmt.Errorf("setting debug file: %s", err)
@@ -144,9 +155,9 @@ func parseConfigAndStartWebserver(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS)
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	pidFile := helpers.AbsolutePath(PidFile, userPath)
-	setupPidFileAndSignals(pidFile, cancelCtx)
-	defer helpers.RemovePidFile(pidFile)
+	pidFileName := helpers.AbsolutePath(pidFile, userPath)
+	setupPidFileAndSignals(pidFileName, cancelCtx)
+	defer helpers.RemovePidFile(pidFileName)
 
 	lib, err := getLibrary(ctx, userPath, cfg, sqlFilesFS)
 	if err != nil {
