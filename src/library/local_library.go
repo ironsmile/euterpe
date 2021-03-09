@@ -131,6 +131,9 @@ type LocalLibrary struct {
 
 	// runningCleanup shows whether there is an already running cleanup.
 	runningCleanup bool
+
+	// runningRescan shows that at the moment a complete rescan is running.
+	runningRescan bool
 }
 
 // Close closes the database connection. It is safe to call it as many times as you want.
@@ -812,11 +815,6 @@ func (lib *LocalLibrary) setTrackID(title, fsPath string,
 		title = filepath.Base(fsPath)
 	}
 
-	id, err := lib.GetTrackID(title, artistID, albumID)
-	if err == nil {
-		return id, nil
-	}
-
 	var lastInsertID int64
 	work := func(db *sql.DB) error {
 		stmt, err := db.Prepare(`
@@ -851,7 +849,7 @@ func (lib *LocalLibrary) setTrackID(title, fsPath string,
 	}
 
 	// Getting the track by its fs_path.
-	var newID int64
+	var trackID int64
 	work = func(db *sql.DB) error {
 		smt, err := db.Prepare(`
 			SELECT
@@ -873,7 +871,7 @@ func (lib *LocalLibrary) setTrackID(title, fsPath string,
 			return err
 		}
 
-		newID = id
+		trackID = id
 		return nil
 	}
 
@@ -882,10 +880,10 @@ func (lib *LocalLibrary) setTrackID(title, fsPath string,
 	}
 
 	log.Printf("Inserted id: %d, name: %s, album ID: %d, artist ID: %d, "+
-		"number: %d, fs_path: %s\n", newID, title, albumID, artistID,
+		"number: %d, fs_path: %s\n", trackID, title, albumID, artistID,
 		trackNumber, fsPath)
 
-	if lastInsertID != newID {
+	if !lib.runningRescan && lastInsertID != trackID {
 		// In case this log is never seen for a long time it would mean that
 		// the LastInsertId() bug has been fixed and it is probably safe to
 		// remove the second SQL request which explicitly queries the DB for
@@ -895,11 +893,11 @@ func (lib *LocalLibrary) setTrackID(title, fsPath string,
 				"Returned: %d, actual: %d.",
 			fsPath,
 			lastInsertID,
-			newID,
+			trackID,
 		)
 	}
 
-	return newID, nil
+	return trackID, nil
 }
 
 // Initialize should be run once every time a library is created. It checks for the

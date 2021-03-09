@@ -66,7 +66,10 @@ func Main(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) {
 	}
 
 	if rescanLibrary {
-		log.Println("TODO: implement rescan")
+		if err := runLibraryRescan(sqlFilesFS); err != nil {
+			log.Println(err)
+			os.Exit(1)
+		}
 		os.Exit(0)
 	}
 
@@ -173,4 +176,33 @@ func runServer(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) error {
 	srv.Serve()
 	srv.Wait()
 	return nil
+}
+
+func runLibraryRescan(sqlFilesFS fs.FS) error {
+	ctx, cancelContext := context.WithCancel(context.Background())
+
+	signalChannel := make(chan os.Signal, 2)
+	for _, sig := range daemon.StopSignals {
+		signal.Notify(signalChannel, sig)
+	}
+
+	go func() {
+		for range signalChannel {
+			cancelContext()
+			break
+		}
+	}()
+
+	cfg, err := config.FindAndParse()
+	if err != nil {
+		return fmt.Errorf("parsing configuration: %s", err)
+	}
+
+	userPath := filepath.Dir(config.UserConfigPath())
+	lib, err := getLibrary(ctx, userPath, cfg, sqlFilesFS)
+	if err != nil {
+		return fmt.Errorf("creating library object: %w", err)
+	}
+
+	return lib.Rescan(ctx)
 }
