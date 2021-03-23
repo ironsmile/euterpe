@@ -169,7 +169,8 @@ func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 				at.name as artist,
 				t.number as track_number,
 				t.album_id as album_id,
-				t.fs_path as fs_path
+				t.fs_path as fs_path,
+				t.duration as duration
 			FROM
 				tracks as t
 					LEFT JOIN albums as al ON al.id = t.album_id
@@ -191,7 +192,7 @@ func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 			var res SearchResult
 
 			err := rows.Scan(&res.ID, &res.Title, &res.Album, &res.Artist,
-				&res.TrackNumber, &res.AlbumID, &res.Format)
+				&res.TrackNumber, &res.AlbumID, &res.Format, &res.Duration)
 			if err != nil {
 				log.Printf("Error scanning search result: %s\n", err)
 				continue
@@ -433,7 +434,14 @@ func (lib *LocalLibrary) insertMediaIntoDatabase(file MediaFile, filePath string
 	}
 
 	title := strings.TrimSpace(file.Title())
-	_, err = lib.setTrackID(title, filePath, trackNumber, artistID, albumID)
+	_, err = lib.setTrackID(
+		title,
+		filePath,
+		trackNumber,
+		artistID,
+		albumID,
+		file.Length().Milliseconds(),
+	)
 	return err
 }
 
@@ -809,7 +817,7 @@ func (lib *LocalLibrary) GetTrackID(
 // In case the track with this file system path already exists in the library it
 // is updated with new values for title, number, artist ID and album ID.
 func (lib *LocalLibrary) setTrackID(title, fsPath string,
-	trackNumber, artistID, albumID int64) (int64, error) {
+	trackNumber, artistID, albumID, duration int64) (int64, error) {
 
 	if len(title) < 1 {
 		title = filepath.Base(fsPath)
@@ -819,15 +827,16 @@ func (lib *LocalLibrary) setTrackID(title, fsPath string,
 	work := func(db *sql.DB) error {
 		stmt, err := db.Prepare(`
 			INSERT INTO
-				tracks (name, album_id, artist_id, fs_path, number)
+				tracks (name, album_id, artist_id, fs_path, number, duration)
 			VALUES
-				($1, $2, $3, $4, $5)
+				($1, $2, $3, $4, $5, $6)
 			ON CONFLICT (fs_path) DO
 			UPDATE SET
 				name = $1,
 				album_id = $2,
 				artist_id = $3,
-				number = $5
+				number = $5,
+				duration = $6
 		`)
 		if err != nil {
 			return err
@@ -835,7 +844,7 @@ func (lib *LocalLibrary) setTrackID(title, fsPath string,
 
 		defer stmt.Close()
 
-		res, err := stmt.Exec(title, albumID, artistID, fsPath, trackNumber)
+		res, err := stmt.Exec(title, albumID, artistID, fsPath, trackNumber, duration)
 		if err != nil {
 			return err
 		}
@@ -880,8 +889,8 @@ func (lib *LocalLibrary) setTrackID(title, fsPath string,
 	}
 
 	log.Printf("Inserted id: %d, name: %s, album ID: %d, artist ID: %d, "+
-		"number: %d, fs_path: %s\n", trackID, title, albumID, artistID,
-		trackNumber, fsPath)
+		"number: %d, dur: %d, fs_path: %s\n", trackID, title, albumID, artistID,
+		trackNumber, duration, fsPath)
 
 	if !lib.runningRescan && lastInsertID != trackID {
 		// In case this log is never seen for a long time it would mean that

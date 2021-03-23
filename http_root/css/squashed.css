@@ -22,6 +22,12 @@ div.jp-video {
     margin: 20px auto;
 }
 
+span.jp-duration {
+    font-size: .8em;
+    color: #333;
+    line-height: 2;
+}
+
 footer {
     text-align: center;
 }

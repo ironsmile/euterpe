@@ -242,7 +242,8 @@ wich would return an JSON array with tracks. Every object in the JSON represents
       "artist" : "Jefferson Airplane",
       "id" : 18,
       "album_id" : 2,
-      "format": "mp3"
+      "format": "mp3",
+      "duration": 180000
    },
    {
       "album" : "Battlefield Vietnam",
@@ -251,12 +252,15 @@ wich would return an JSON array with tracks. Every object in the JSON represents
       "format": "flac",
       "title" : "White Rabbit",
       "album_id" : 2,
-      "id" : 22
+      "id" : 22,
+      "duration": 308000
    }
 ]
 ```
 
 The most important thing here is the track ID at the `id` key. It can be used for playing this track. The other interesting thing is `album_id`. Tracks can be grouped in albums using this value. And the last field of particular interest is `track`. It is the position of this track in the album.
+
+Note that the track duration is in milliseconds.
 
 ### Browse
 

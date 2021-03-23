@@ -29,6 +29,9 @@ type SearchResult struct {
 
 	// File format of the underlying data file. Examples: "mp3", "flac", "ogg" etc.
 	Format string `json:"format"`
+
+	// Duration is the track length in milliseconds.
+	Duration int64 `json:"duration"`
 }
 
 // Artist represents an artist from the database

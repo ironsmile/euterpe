@@ -270,6 +270,13 @@ function playerPageInit() {
             listItem += ")</span>";
         }
 
+        var timeString = 'n/a';
+        if (media.duration && media.duration > 0) {
+            timeString = intToDuration(media.duration);
+        }
+        listItem += " <span class='jp-duration hidden-xs " +
+            options.freeGroupClass + "'>" + timeString + "</span>";
+
         if (media.album) {
             listItem += " <span class='hidden-xs " + options.freeGroupClass + "'>" +
                     "<a href='/album/"+media.album_id+"' title='download album' "+
@@ -587,7 +594,9 @@ function load_playlist (songs) {
             free: true,
             number: songs[i].track,
             album_id: songs[i].album_id,
-            media_id: songs[i].id
+            media_id: songs[i].id,
+            // convert nanoseconds to seconds
+            duration: songs[i].duration ? songs[i].duration / 1e3 : 0
         };
 
         // For certain formats the jPlayer does not use their file extension name so
@@ -795,6 +804,40 @@ function alpha_sort (a, b) {
         return 0;
     }
     return (a < b) ? -1 : 1;
+}
+
+function intToDuration(dur) {
+    if (dur === 0) {
+        return "0";
+    }
+
+    const durs = [
+        {n: 60, s: "s"},
+        {n: 60, s: "m"},
+        {n: 24, s: "h"},
+        {n: null, s: "d"},
+    ];
+
+    var str = "";
+    for (var i = 0; i < durs.length; i++) {
+        const t = durs[i];
+        if (t.n === null) {
+            str = dur + t.s + str;
+            break;
+        }
+
+        r = dur % t.n;
+        if (r !== 0) {
+            str = r + t.s + str;
+        }
+        dur = Math.floor(dur / t.n)
+
+        if (dur === 0) {
+            break;
+        }
+    }
+
+    return str;
 }
 /*! URI.js v1.18.7 http://medialize.github.io/URI.js/ */
 /* build contains: IPv6.js, punycode.js, SecondLevelDomains.js, URI.js, URITemplate.js */
