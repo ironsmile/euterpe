@@ -44,20 +44,21 @@ var defaultConfig = Config{
 
 // Config contains representation for everything in config.json
 type Config struct {
-	Listen          string      `json:"listen,omitempty"`
-	SSL             bool        `json:"ssl,omitempty"`
-	SSLCertificate  Cert        `json:"ssl_certificate,omitempty"`
-	Auth            bool        `json:"basic_authenticate,omitempty"`
-	Authenticate    Auth        `json:"authentication,omitempty"`
-	Libraries       []string    `json:"libraries,omitempty"`
-	LibraryScan     ScanSection `json:"library_scan,omitempty"`
-	LogFile         string      `json:"log_file,omitempty"`
-	SqliteDatabase  string      `json:"sqlite_database,omitempty"`
-	Gzip            bool        `json:"gzip,omitempty"`
-	ReadTimeout     int         `json:"read_timeout,omitempty"`
-	WriteTimeout    int         `json:"write_timeout,omitempty"`
-	MaxHeadersSize  int         `json:"max_header_bytes,omitempty"`
-	DownloadArtwork bool        `json:"download_artwork,omitempty"`
+	Listen           string      `json:"listen,omitempty"`
+	SSL              bool        `json:"ssl,omitempty"`
+	SSLCertificate   Cert        `json:"ssl_certificate,omitempty"`
+	Auth             bool        `json:"basic_authenticate,omitempty"`
+	Authenticate     Auth        `json:"authentication,omitempty"`
+	Libraries        []string    `json:"libraries,omitempty"`
+	LibraryScan      ScanSection `json:"library_scan,omitempty"`
+	LogFile          string      `json:"log_file,omitempty"`
+	SqliteDatabase   string      `json:"sqlite_database,omitempty"`
+	Gzip             bool        `json:"gzip,omitempty"`
+	ReadTimeout      int         `json:"read_timeout,omitempty"`
+	WriteTimeout     int         `json:"write_timeout,omitempty"`
+	MaxHeadersSize   int         `json:"max_header_bytes,omitempty"`
+	DownloadArtwork  bool        `json:"download_artwork,omitempty"`
+	DiscogsAuthToken string      `json:"discogs_auth_token,omitempty"`
 }
 
 // ScanSection is used for merging the two configs. Its purpose is to essentially

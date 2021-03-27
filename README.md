@@ -49,7 +49,7 @@ Features
 
 Requirements
 ======
-If you want to install it from source (from here) you will need:
+If you want to install it from source you will need:
 
 * [Go](http://golang.org/) 1.16 or later [installed and properly configured](http://golang.org/doc/install).
 
@@ -117,7 +117,7 @@ Then point your browser to [https://localhost:8080](https://localhost:8080) and 
 Configuration
 ======
 
-HTTPS configuration is saved in a json file, different for every user in the system. Its
+HTTPS configuration is saved in a JSON file, different for every user in the system. Its
 location is as follows:
 
 * Linux or BSD: ```$HOME/.httpms/config.json```
@@ -181,7 +181,16 @@ When started for the first time HTTPMS will create one for you. Here is an examp
     // When true, HTTPMS will search Cover Art Archive for album artworks when none is
     // found locally. Anything found will be saved in the HTTPMS database and later used
     // instead of further calls to the archive.
-    "download_artwork": true
+    "download_artwork": true,
+
+    // If download_artwork is true the server will try to find artist artwork in the
+    // Discogs database. In order for this to work an authentication is required
+    // with their API. This here must be a personal access token. In effect the server
+    // will make requests on your behalf.
+    //
+    // See the API docs for more information:
+    // https://www.discogs.com/developers/#page:authentication,header:authentication-discogs-auth-flow
+    "discogs_auth_token": "some-personal-token"
 }
 ```
 
@@ -220,6 +229,10 @@ Authentication tokens can be acquired using the `/login/token/` endpoint describ
     * [Get Artwork](#get-artwork)
     * [Upload Artwork](#upload-artwork)
     * [Remove Artwork](#remove-artwork)
+* [Artist Image](#artist-image)
+    * [Get Artist Image](#get-artist-image)
+    * [Upload Artist Image](#upload-artist-image)
+    * [Remove Artist Image](#remove-artist-image)
 * [Token Request](#token-request)
 * [Register Token](#register-token)
 
@@ -368,6 +381,40 @@ DELETE /album/{albumID}/artwork
 
 Will remove the artwork from the server database. Note, this will not touch any files on the file system. Thus it is futile to call it for artwork which was found on disk.
 
+### Artist Image
+
+HTTPMS supports getting artist images. Here are all the methods for managing it through the API.
+
+#### Get Artist Image
+
+```
+GET /artist/{artistID}/image
+```
+
+Returns a bitmap image representing an artist if one is available. Searching for artwork works like this: if artist image is found in the database then it will be used. In case there is not and HTTPMS is configured to download images from interned and has a Discogs access token then it will use the MusicBrainz and Discogs APIs in order to retrieve an image. By default no internet requests are made.
+
+#### Upload Artist Image
+
+```
+PUT /artist/{artistID}/image
+```
+
+Can be used to upload artist image directly on the HTTPMS server. It will be stored in the server database and will not create any files in the library paths. The image should  be send in the body of the request in binary format without any transformations. Only images up to 5MB are accepted. Example:
+
+```sh
+curl -i -X PUT \
+  --data-binary @/path/to/file.jpg \
+  http://127.0.0.1:9996/artist/23/image
+```
+
+#### Remove Artist Image
+
+```
+DELETE /artist/{artistID}/image
+```
+
+Will remove the artist image the server database. Note, this will not touch any files on the file system.
+
 ### Token Request
 
 ```
@@ -429,5 +476,5 @@ Clients
 
 You are not restricted to using the web UI. The server has a RESTful API which can easily be used from other clients. I will try to keep a list with all of the known clients here:
 
-* [httpms-android](https://github.com/ironsmile/httpms-android) is a Android client for HTTPMS
-* [httpms-rhythmbox](https://github.com/ironsmile/httpms-rhythmbox) is HTTPMS client plugin for Gnome's Rhythmbox
+* ~~[httpms-android](https://github.com/ironsmile/httpms-android) is a Android client for HTTPMS.~~ Long abandoned in favour of a React Native mobile client.
+* [httpms-rhythmbox](https://github.com/ironsmile/httpms-rhythmbox) is HTTPMS client plugin for Gnome's Rhythmbox.

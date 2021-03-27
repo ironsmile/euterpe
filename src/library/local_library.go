@@ -21,7 +21,7 @@ import (
 	// from the golang documentation.
 	_ "github.com/mattn/go-sqlite3"
 
-	"github.com/ironsmile/httpms/ca"
+	"github.com/ironsmile/httpms/src/art"
 	"github.com/ironsmile/httpms/src/config"
 	"github.com/ironsmile/httpms/src/helpers"
 )
@@ -56,8 +56,11 @@ var (
 	// IO load for the duration of the scan.
 	LibraryFastScan bool
 
-	// ErrAlbumNotFound is returned when no album could be found fr partilcuar operation.
+	// ErrAlbumNotFound is returned when no album could be found for partilcuar operation.
 	ErrAlbumNotFound = errors.New("Album Not Found")
+
+	// ErrArtistNotFound is returned when no artist could be found for partilcuar operation.
+	ErrArtistNotFound = errors.New("Artist Not Found")
 
 	// ErrArtworkNotFound is returned when no artwork can be found for particular album.
 	ErrArtworkNotFound = NewArtworkError("Artwork Not Found")
@@ -122,7 +125,7 @@ type LocalLibrary struct {
 
 	waitScanLock sync.RWMutex
 
-	coverArtFinder ca.CovertArtFinder
+	artFinder art.Finder
 
 	sqlFilesFS fs.FS
 
@@ -988,9 +991,9 @@ func (lib *LocalLibrary) Truncate() error {
 	return os.Remove(lib.database)
 }
 
-// SetCoverArtFinder bind a particular ca.CoverArtFinder to this library.
-func (lib *LocalLibrary) SetCoverArtFinder(caf ca.CovertArtFinder) {
-	lib.coverArtFinder = caf
+// SetArtFinder bind a particular art.Finder to this library.
+func (lib *LocalLibrary) SetArtFinder(caf art.Finder) {
+	lib.artFinder = caf
 }
 
 // NewLocalLibrary returns a new LocalLibrary which will use for database the file

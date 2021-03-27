@@ -91,6 +91,7 @@ func (srv *Server) serveGoroutine() {
 		srv.httpRootFS,
 		notFoundAlbumImage,
 	)
+	artistImageHandler := NewArtistImagesHandler(srv.library)
 	browseHandler := NewBrowseHandler(srv.library)
 	mediaFileHandler := NewFileHandler(srv.library)
 	loginHandler := NewLoginHandler(srv.cfg.Authenticate)
@@ -105,8 +106,13 @@ func (srv *Server) serveGoroutine() {
 	router.StrictSlash(true)
 	router.UseEncodedPath()
 	router.Handle("/file/{fileID}", mediaFileHandler).Methods("GET")
-	router.Handle("/album/{albumID}/artwork", artoworkHandler).Methods("GET", "PUT", "DELETE")
+	router.Handle("/album/{albumID}/artwork", artoworkHandler).Methods(
+		"GET", "PUT", "DELETE",
+	)
 	router.Handle("/album/{albumID}", albumHandler).Methods("GET")
+	router.Handle("/artist/{artistID}/image", artistImageHandler).Methods(
+		"GET", "PUT", "DELETE",
+	)
 	router.Handle("/browse", browseHandler).Methods("GET")
 	router.Handle("/search/{searchQuery}", searchHandler).Methods("GET")
 	router.Handle("/search", searchHandler).Methods("GET")

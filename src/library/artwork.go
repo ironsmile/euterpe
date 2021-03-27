@@ -3,6 +3,7 @@ package library
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -13,13 +14,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ironsmile/httpms/ca"
+	"github.com/ironsmile/httpms/src/art"
 )
 
 // FindAndSaveAlbumArtwork implements the ArtworkManager interface for the local library.
 // It would return a previously found artwork if any or try to find one in the
 // filesystem or _on the internet_! This function returns ReadCloser and the caller
-// is resposible for freeing the used resources by calling Close().
+// is responsible for freeing the used resources by calling Close().
 //
 // When an artwork is found it will be saved in the database and once there it will be
 // served from the db. Wait, wait! Serving binary files from the database?! Isn't that
@@ -47,7 +48,7 @@ func (lib *LocalLibrary) FindAndSaveAlbumArtwork(
 
 	if err := lib.aquireArtworkSem(ctx); err != nil {
 		// When error is returned it means that the semaphore was not acquired.
-		// So we can return safely without releaseing it.
+		// So we can return safely without releasing it.
 		return nil, err
 	}
 	defer lib.releaseArtworkSem()
@@ -68,7 +69,7 @@ func (lib *LocalLibrary) FindAndSaveAlbumArtwork(
 		return lib.saveAlbumArtwork(albumID, reader)
 	}
 
-	if err != ca.ErrImageNotFound && err != ErrArtworkNotFound {
+	if !errors.Is(err, art.ErrImageNotFound) && !errors.Is(err, ErrArtworkNotFound) {
 		log.Printf("Finding album %d artwork on the internet error: %s\n", albumID, err)
 	}
 
@@ -169,7 +170,7 @@ func (lib *LocalLibrary) albumArtworkFromInternet(
 	ctx context.Context,
 	albumID int64,
 ) (io.ReadCloser, error) {
-	if lib.coverArtFinder == nil {
+	if lib.artFinder == nil {
 		return nil, ErrArtworkNotFound
 	}
 
@@ -237,15 +238,15 @@ func (lib *LocalLibrary) albumArtworkFromInternet(
 		return nil, err
 	}
 
-	cover, err := lib.coverArtFinder.GetFrontImage(ctx, artistName, albumName)
-	if err == ca.ErrImageNotFound {
+	cover, err := lib.artFinder.GetFrontImage(ctx, artistName, albumName)
+	if errors.Is(err, art.ErrImageNotFound) {
 		return nil, ErrArtworkNotFound
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	return newBytesReadCloser(cover.Data), nil
+	return newBytesReadCloser(cover), nil
 }
 
 func (lib *LocalLibrary) albumArtworkFromDB(
@@ -289,8 +290,11 @@ func (lib *LocalLibrary) albumArtworkFromDB(
 		return nil, err
 	}
 
-	if len(buff) < 1 && time.Now().Before(time.Unix(unixTime, 0).Add(24*7*time.Hour)) {
-		return nil, ErrCachedArtworkNotFound
+	if len(buff) < 1 {
+		if time.Now().Before(time.Unix(unixTime, 0).Add(24 * 7 * time.Hour)) {
+			return nil, ErrCachedArtworkNotFound
+		}
+		return nil, ErrArtworkNotFound
 	}
 
 	return newBytesReadCloser(buff), nil

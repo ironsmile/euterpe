@@ -16,7 +16,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/ironsmile/httpms/ca"
+	"github.com/ironsmile/httpms/src/art"
 	"github.com/ironsmile/httpms/src/config"
 	"github.com/ironsmile/httpms/src/daemon"
 	"github.com/ironsmile/httpms/src/helpers"
@@ -131,8 +131,8 @@ func getLibrary(
 
 	if cfg.DownloadArtwork {
 		useragent := fmt.Sprintf(userAgentFormat, Version)
-		caf := ca.NewClient(useragent, time.Second)
-		lib.SetCoverArtFinder(caf)
+		caf := art.NewClient(useragent, time.Second, cfg.DiscogsAuthToken)
+		lib.SetArtFinder(caf)
 	}
 
 	return lib, nil
