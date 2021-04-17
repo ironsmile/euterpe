@@ -253,6 +253,7 @@ wich would return an JSON array with tracks. Every object in the JSON represents
       "title" : "Somebody to Love",
       "track" : 10,
       "artist" : "Jefferson Airplane",
+      "artist_id": 33,
       "id" : 18,
       "album_id" : 2,
       "format": "mp3",
@@ -266,6 +267,7 @@ wich would return an JSON array with tracks. Every object in the JSON represents
       "title" : "White Rabbit",
       "album_id" : 2,
       "id" : 22,
+      "artist_id": 33,
       "duration": 308000
    }
 ]

@@ -170,6 +170,7 @@ func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 				t.name as track,
 				al.name as album,
 				at.name as artist,
+				at.id as artist_id,
 				t.number as track_number,
 				t.album_id as album_id,
 				t.fs_path as fs_path,
@@ -195,7 +196,8 @@ func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 			var res SearchResult
 
 			err := rows.Scan(&res.ID, &res.Title, &res.Album, &res.Artist,
-				&res.TrackNumber, &res.AlbumID, &res.Format, &res.Duration)
+				&res.ArtistID, &res.TrackNumber, &res.AlbumID, &res.Format,
+				&res.Duration)
 			if err != nil {
 				log.Printf("Error scanning search result: %s\n", err)
 				continue
@@ -259,6 +261,7 @@ func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []SearchResult {
 				t.name as track,
 				al.name as album,
 				at.name as artist,
+				at.id as artist_id,
 				t.number as track_number,
 				t.album_id as album_id,
 				t.fs_path as fs_path
@@ -284,6 +287,7 @@ func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []SearchResult {
 				&res.Title,
 				&res.Album,
 				&res.Artist,
+				&res.ArtistID,
 				&res.TrackNumber,
 				&res.AlbumID,
 				&res.Format,

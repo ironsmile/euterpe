@@ -12,6 +12,9 @@ type SearchResult struct {
 	// ID in the library for a media file
 	ID int64 `json:"id"`
 
+	// Meta info: Artist ID
+	ArtistID int64 `json:"artist_id"`
+
 	// Meta info: Artist
 	Artist string `json:"artist"`
 
