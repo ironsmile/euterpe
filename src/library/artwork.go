@@ -372,6 +372,7 @@ func (lib *LocalLibrary) albumArtworkFromFS(
 		}
 	}
 
+	log.Printf("Selected album [%d] artwork: %s", albumID, selectedArtwork)
 	return os.Open(selectedArtwork)
 }
 

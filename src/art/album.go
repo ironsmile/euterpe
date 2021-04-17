@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -40,6 +41,12 @@ func (c *Client) GetFrontImage(
 			continue
 		}
 
+		log.Printf(
+			"Downloaded image for artist(%s) album(%s) with mbID %s",
+			artist,
+			album,
+			mbidStr,
+		)
 		return img.Data, err
 	}
 
