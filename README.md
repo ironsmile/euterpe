@@ -199,11 +199,17 @@ List with all directives can be found in the [configration wiki](https://github.
 As an API
 ======
 
-You can use HTTPMS as a REST API and write your own player. Or maybe a plugin for your favourite player which would use your HTTPMS installation as a backend.
+You can use HTTPMS as a REST API and write your own player. Or maybe a plugin for your favourite player which would use your HTTPMS installation as a back-end.
+
+### v1 Compatibility Promise
+
+The API presented in this README is stable and will continue to be supported as long as version one of the service is around. And this should be very _long time_. I don't plan to make backward incompatible changes. Ever. It has survived in this form since 2013. So it should be good for at least double than this amount of time in the future.
+
+This means that **clients written for HTTPMS will continue to work**. I will never break them on purpose and if this happened it will be considered a bug to be fixed as soon as possible.
 
 ### Authentication
 
-When your server is open you don't have to authenticate requests to the API. Installations protected by username and password require you to authenticate requests when using the API. For this the following methods are supported:
+When your server is open you don't have to authenticate requests to the API. Installations protected by user name and password require you to authenticate requests when using the API. For this the following methods are supported:
 
 * Bearer token in the `Authorization` HTTP header (as described in [RFC 6750](https://tools.ietf.org/html/rfc6750)):
 
@@ -241,7 +247,7 @@ Authentication tokens can be acquired using the `/login/token/` endpoint describ
 One can do a search query at the following endpoint
 
 ```sh
-GET /search/?q={query}
+GET /v1/search/?q={query}
 ```
 
 wich would return an JSON array with tracks. Every object in the JSON represents a single track which matches the `query`. Example:
@@ -282,7 +288,7 @@ Note that the track duration is in milliseconds.
 A way to browse through the whole collection is via the browse API call. It allows you to get its albums or artists in an ordered and paginated manner.
 
 ```sh
-GET /browse/[?by=artist|album][&per-page={number}][&page={number}][&order-by=id|name][&order=desc|asc]
+GET /v1/browse/[?by=artist|album][&per-page={number}][&page={number}][&order-by=id|name][&order=desc|asc]
 ```
 
 The returned JSON contains the data for the current page, the number of all pages for the current browse method and URLs of the next or previous pages.
@@ -292,7 +298,7 @@ The returned JSON contains the data for the current page, the number of all page
   "pages_count": 12,
   "next": "/browse/?page=4&per-page=10",
   "previous": "/browse/?page=2&per-page=10",
-  "data": [ /* different data types are returned, determined by the `by` parmeter */ ]
+  "data": [ /* different data types are returned, determined by the `by` parameter */ ]
 }
 ```
 
@@ -335,7 +341,7 @@ _order_: controls if the order would ascending (with value `asc`) or descending 
 ### Play a Song
 
 ```
-GET /file/{trackID}
+GET /v1/file/{trackID}
 ```
 
 This endpoint would return you the media file as is. A song's `trackID` can be found with the search API call.
@@ -343,7 +349,7 @@ This endpoint would return you the media file as is. A song's `trackID` can be f
 ### Download an Album
 
 ```
-GET /album/{albumID}
+GET /v1/album/{albumID}
 ```
 
 This endpoint would return you an archive which contains the songs of the whole album.
@@ -356,7 +362,7 @@ HTTPMS supports album artwork. Here are all the methods for managing it through 
 #### Get Artwork
 
 ```
-GET /album/{albumID}/artwork
+GET /v1/album/{albumID}/artwork
 ```
 
 Returns a bitmap image with artwork for this album if one is available. Searching for artwork works like this: the album's directory would be scanned for any images (png/jpeg/gif/tiff files) and if anyone of them looks like an artwork, it would be shown. If this fails, you can configure HTTPMS to search in the [MusicBrainz Cover Art Archive](https://musicbrainz.org/doc/Cover_Art_Archive/). By default no external calls are made.
@@ -364,7 +370,7 @@ Returns a bitmap image with artwork for this album if one is available. Searchin
 #### Upload Artwork
 
 ```
-PUT /album/{albumID}/artwork
+PUT /v1/album/{albumID}/artwork
 ```
 
 Can be used to upload artwork directly on the HTTPMS server. This artwork will be stored in the server database and will not create any files in the library paths. The image should  be send in the body of the request in binary format without any transformations. Only images up to 5MB are accepted. Example:
@@ -378,7 +384,7 @@ curl -i -X PUT \
 #### Remove Artwork
 
 ```
-DELETE /album/{albumID}/artwork
+DELETE /v1/album/{albumID}/artwork
 ```
 
 Will remove the artwork from the server database. Note, this will not touch any files on the file system. Thus it is futile to call it for artwork which was found on disk.
@@ -390,7 +396,7 @@ HTTPMS supports getting artist images. Here are all the methods for managing it 
 #### Get Artist Image
 
 ```
-GET /artist/{artistID}/image
+GET /v1/artist/{artistID}/image
 ```
 
 Returns a bitmap image representing an artist if one is available. Searching for artwork works like this: if artist image is found in the database then it will be used. In case there is not and HTTPMS is configured to download images from interned and has a Discogs access token then it will use the MusicBrainz and Discogs APIs in order to retrieve an image. By default no internet requests are made.
@@ -398,7 +404,7 @@ Returns a bitmap image representing an artist if one is available. Searching for
 #### Upload Artist Image
 
 ```
-PUT /artist/{artistID}/image
+PUT /v1/artist/{artistID}/image
 ```
 
 Can be used to upload artist image directly on the HTTPMS server. It will be stored in the server database and will not create any files in the library paths. The image should  be send in the body of the request in binary format without any transformations. Only images up to 5MB are accepted. Example:
@@ -412,7 +418,7 @@ curl -i -X PUT \
 #### Remove Artist Image
 
 ```
-DELETE /artist/{artistID}/image
+DELETE /v1/artist/{artistID}/image
 ```
 
 Will remove the artist image the server database. Note, this will not touch any files on the file system.
@@ -420,7 +426,7 @@ Will remove the artist image the server database. Note, this will not touch any 
 ### Token Request
 
 ```
-POST /login/token/
+POST /v1/login/token/
 {
   "username": "your-username",
   "password": "your-password"
@@ -440,7 +446,7 @@ Before you can use this token for accessing the API you will have to register it
 ### Register Token
 
 ```
-POST /register/token/
+POST /v1/register/token/
 ```
 
 This endpoint registers the newly generated tokens with HTTPMS. Only registered tokens will work. Requests at this endpoint must authenticate themselves using a previously generated token.

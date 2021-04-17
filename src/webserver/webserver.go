@@ -27,9 +27,9 @@ const (
 	returnToQueryParam = "return_to"
 )
 
-// Server represends our webserver. It will be controlled from here
+// Server represents our web server. It will be controlled from here
 type Server struct {
-	// Used for server-wide stopping, cancelation and stuff
+	// Used for server-wide stopping, cancellation and stuff
 	ctx context.Context
 
 	// Calling this function will stop the server
@@ -105,6 +105,25 @@ func (srv *Server) serveGoroutine() {
 	router := mux.NewRouter()
 	router.StrictSlash(true)
 	router.UseEncodedPath()
+
+	// API v1 methods.
+	router.Handle("/v1/file/{fileID}", mediaFileHandler).Methods("GET")
+	router.Handle("/v1/album/{albumID}/artwork", artoworkHandler).Methods(
+		"GET", "PUT", "DELETE",
+	)
+	router.Handle("/v1/album/{albumID}", albumHandler).Methods("GET")
+	router.Handle("/v1/artist/{artistID}/image", artistImageHandler).Methods(
+		"GET", "PUT", "DELETE",
+	)
+	router.Handle("/v1/browse", browseHandler).Methods("GET")
+	router.Handle("/v1/search/{searchQuery}", searchHandler).Methods("GET")
+	router.Handle("/v1/search", searchHandler).Methods("GET")
+	router.Handle("/v1/login/token/", loginTokenHandler).Methods("POST")
+	router.Handle("/v1/register/token/", registerTokenHandler).Methods("POST")
+
+	// Kept for backward compatibility with older clients created before the
+	// API v1 compatibility promise. Although no promise has been made for
+	// these it would be great if they are supported for some time.
 	router.Handle("/file/{fileID}", mediaFileHandler).Methods("GET")
 	router.Handle("/album/{albumID}/artwork", artoworkHandler).Methods(
 		"GET", "PUT", "DELETE",
@@ -117,8 +136,10 @@ func (srv *Server) serveGoroutine() {
 	router.Handle("/search/{searchQuery}", searchHandler).Methods("GET")
 	router.Handle("/search", searchHandler).Methods("GET")
 	router.Handle("/login/token/", loginTokenHandler).Methods("POST")
-	router.Handle("/login/", loginHandler).Methods("POST")
 	router.Handle("/register/token/", registerTokenHandler).Methods("POST")
+
+	// Static resources and web UI.
+	router.Handle("/login/", loginHandler).Methods("POST")
 	router.Handle("/logout/", logoutHandler).Methods("GET")
 	router.Handle("/", indexHandler).Methods("GET")
 	router.Handle("/add_device/", addDeviceHandler).Methods("GET")

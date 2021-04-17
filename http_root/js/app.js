@@ -122,7 +122,7 @@ function playerPageInit() {
 
         if (media.album) {
             listItem += " <span class='hidden-xs " + options.freeGroupClass + "'>" +
-                    "<a href='/album/"+media.album_id+"' title='download album' "+
+                    "<a href='/v1/album/"+media.album_id+"' title='download album' "+
                     "target='_blank'>" +  media.album + "</a></span>";
         }
         
@@ -243,7 +243,7 @@ function playerPageInit() {
         document.title = media.title + ' by ' + media.artist + ' | HTTPMS';
 
         var artwork_el = $('#artwork');
-        var artwork_url = '/album/' + escape(media.album_id) + '/artwork';
+        var artwork_url = '/v1/album/' + escape(media.album_id) + '/artwork';
         var current_artwork_url = artwork_el.css("background-image");
 
         if (artwork_url !== current_artwork_url) {
@@ -341,7 +341,7 @@ function search_database (query, opts) {
     _ajax_query = $.ajax({
         type: "GET",
         async: opts.async,
-        url: "/search/?q=" + encodeURIComponent(query),
+        url: "/v1/search?q=" + encodeURIComponent(query),
         success: function (msg) {
             load_filters(msg);
             filter_playlist();
@@ -429,7 +429,7 @@ function load_playlist (songs) {
 
     var new_playlist = [];
     for (var i = 0; i < songs.length; i++) {
-        var song_url = "/file/"+songs[i].id;
+        var song_url = "/v1/file/"+songs[i].id;
         var song = {
             title: songs[i].title,
             artist: songs[i].artist,
