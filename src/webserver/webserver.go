@@ -166,6 +166,7 @@ func (srv *Server) serveGoroutine() {
 			templates: templatesResolver,
 			secret:    srv.cfg.Authenticate.Secret,
 			exceptions: []string{
+				"/v1/login/token/",
 				"/login/",
 				"/css/",
 				"/js/",
