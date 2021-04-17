@@ -210,7 +210,7 @@ func getPrevNextPageURI(
 
 	if page-1 > 0 {
 		prevPage = fmt.Sprintf(
-			"/browse/?by=%s&page=%d&per-page=%d%s%s",
+			"/v1/browse/?by=%s&page=%d&per-page=%d%s%s",
 			by,
 			page-1,
 			perPage,
@@ -223,7 +223,7 @@ func getPrevNextPageURI(
 
 	if page*perPage < count {
 		nextPage = fmt.Sprintf(
-			"/browse/?by=%s&page=%d&per-page=%d%s%s",
+			"/v1/browse/?by=%s&page=%d&per-page=%d%s%s",
 			by,
 			page+1,
 			perPage,
