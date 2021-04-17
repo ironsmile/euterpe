@@ -366,6 +366,15 @@ func (lib *LocalLibrary) albumArtworkFromFS(
 			pathScore -= 4
 		}
 
+		// Artwork which is in the exact directory of the album should have slight
+		// advantage. This is to cover cases where there are directories of albums
+		// inside other albums.
+		if filepath.Dir(path) == albumPath {
+			pathScore += 4
+		} else {
+			pathScore -= 4
+		}
+
 		if pathScore > score {
 			selectedArtwork = path
 			score = pathScore
