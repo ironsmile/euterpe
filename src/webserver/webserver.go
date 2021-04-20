@@ -154,6 +154,8 @@ func (srv *Server) serveGoroutine() {
 			[]string{
 				"/file/",
 				"/album/",
+				"/v1/file/",
+				"/v1/album/",
 			},
 		)
 	}
