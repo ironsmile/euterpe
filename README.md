@@ -296,8 +296,8 @@ The returned JSON contains the data for the current page, the number of all page
 ```js
 {
   "pages_count": 12,
-  "next": "/browse/?page=4&per-page=10",
-  "previous": "/browse/?page=2&per-page=10",
+  "next": "/v1/browse/?page=4&per-page=10",
+  "previous": "/v1/browse/?page=2&per-page=10",
   "data": [ /* different data types are returned, determined by the `by` parameter */ ]
 }
 ```
@@ -378,7 +378,7 @@ Can be used to upload artwork directly on the HTTPMS server. This artwork will b
 ```sh
 curl -i -X PUT \
   --data-binary @/path/to/file.jpg \
-  http://127.0.0.1:9996/album/18/artwork
+  http://127.0.0.1:9996/v1/album/18/artwork
 ```
 
 #### Remove Artwork
@@ -412,7 +412,7 @@ Can be used to upload artist image directly on the HTTPMS server. It will be sto
 ```sh
 curl -i -X PUT \
   --data-binary @/path/to/file.jpg \
-  http://127.0.0.1:9996/artist/23/image
+  http://127.0.0.1:9996/v1/artist/23/image
 ```
 
 #### Remove Artist Image
