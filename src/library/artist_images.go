@@ -24,28 +24,70 @@ import (
 func (lib *LocalLibrary) FindAndSaveArtistImage(
 	ctx context.Context,
 	artistID int64,
+	size ImageSize,
 ) (io.ReadCloser, error) {
-	reader, err := lib.artistImageFromDB(ctx, artistID)
+	r, foundSize, err := lib.findAndSaveArtistImageOrOriginal(
+		ctx,
+		artistID,
+		size,
+	)
+	if err != nil {
+		return r, err
+	}
+
+	if foundSize == size {
+		return r, nil
+	}
+
+	// The returned artwork will have to be closed in any case now since it
+	// will not be returned to the caller.
+	defer func() {
+		_ = r.Close()
+	}()
+
+	if foundSize != OriginalImage {
+		return nil, fmt.Errorf("internal error, size mismatch")
+	}
+
+	converted, err := lib.scaleImage(ctx, r, size)
+	if err != nil {
+		return nil, fmt.Errorf("error scaling image: %w", err)
+	}
+
+	ret, _, err := lib.storeArtistImage(artistID, converted, size)
+	if err != nil {
+		return nil, err
+	}
+
+	return ret, nil
+}
+
+func (lib *LocalLibrary) findAndSaveArtistImageOrOriginal(
+	ctx context.Context,
+	artistID int64,
+	size ImageSize,
+) (io.ReadCloser, ImageSize, error) {
+	reader, foundSize, err := lib.artistImageFromDB(ctx, artistID, size)
 	if err == ErrCachedArtworkNotFound {
-		return nil, ErrArtworkNotFound
+		return nil, size, ErrArtworkNotFound
 	} else if err == nil || err != ErrArtworkNotFound {
-		return reader, err
+		return reader, foundSize, err
 	}
 
 	if err := lib.aquireArtworkSem(ctx); err != nil {
 		// When error is returned it means that the semaphore was not acquired.
 		// So we can return safely without releasing it.
-		return nil, err
+		return nil, size, err
 	}
 	defer lib.releaseArtworkSem()
 
 	if err := ctx.Err(); err != nil {
-		return nil, err
+		return nil, size, err
 	}
 
 	reader, err = lib.artistImageFromInternet(ctx, artistID)
 	if err == nil {
-		return lib.saveArtistImage(artistID, reader)
+		return lib.storeArtistImage(artistID, reader, OriginalImage)
 	}
 
 	if errors.Is(err, art.ErrNoDiscogsAuth) {
@@ -57,34 +99,85 @@ func (lib *LocalLibrary) FindAndSaveArtistImage(
 	}
 
 	if err := lib.saveArtistImageNotFound(artistID); err != nil {
-		return nil, err
+		return nil, size, err
 	}
 
-	return nil, ErrArtworkNotFound
+	return nil, size, ErrArtworkNotFound
 }
 
 func (lib *LocalLibrary) artistImageFromDB(
 	ctx context.Context,
 	artistID int64,
-) (io.ReadCloser, error) {
-	var (
-		buff     []byte
-		unixTime int64
-	)
+	size ImageSize,
+) (io.ReadCloser, ImageSize, error) {
+	buff, unixTime, err := lib.artistImageFromDBForSize(ctx, artistID, size)
+	if err != nil {
+		return nil, size, err
+	}
 
-	work := func(db *sql.DB) error {
-		smt, err := db.PrepareContext(ctx, `
+	if len(buff) >= 1 {
+		// The image with the desires size has been found!
+		return newBytesReadCloser(buff), size, nil
+	}
+
+	selectNotFound := func(lastChanged int64) (io.ReadCloser, ImageSize, error) {
+		if time.Now().Before(time.Unix(lastChanged, 0).Add(notFoundCacheTTL)) {
+			return nil, size, ErrCachedArtworkNotFound
+		}
+		return nil, size, ErrArtworkNotFound
+	}
+
+	// No image in the database. Is either a normal "not found" for images which
+	// haven't  been queried recently. For everything else it is "cached not found"
+	// which means that all the channels for obtaining the image have been tried out
+	// recently and nothing has been found.
+	if size == OriginalImage {
+		return selectNotFound(unixTime)
+	}
+
+	// No image of the desired size was found. Let us try and see if the original image
+	// is in the database and use it to generate the desired size.
+	buff, unixTime, err = lib.artistImageFromDBForSize(ctx, artistID, OriginalImage)
+	if err != nil {
+		return nil, size, err
+	}
+
+	if len(buff) < 1 {
+		return selectNotFound(unixTime)
+	}
+
+	return newBytesReadCloser(buff), OriginalImage, nil
+}
+
+func (lib *LocalLibrary) artistImageFromDBForSize(
+	ctx context.Context,
+	artistID int64,
+	size ImageSize,
+) ([]byte, int64, error) {
+
+	var (
+		buff          []byte
+		unixTime      int64
+		blobColumn    = "image"
+		imageSQLQuery = `
 			SELECT
-				image,
+				%s,
 				updated_at
 			FROM
 				artists_images
 			WHERE
 				artist_id = ?
-		`)
+		`
+	)
+	if size == SmallImage {
+		blobColumn = "image_small"
+	}
+
+	work := func(db *sql.DB) error {
+		smt, err := db.PrepareContext(ctx, fmt.Sprintf(imageSQLQuery, blobColumn))
 
 		if err != nil {
-			log.Printf("could not prepare artist image sql statement: %s", err)
+			log.Printf("could not prepare album artwork sql statement: %s", err)
 			return err
 		}
 		defer smt.Close()
@@ -93,24 +186,17 @@ func (lib *LocalLibrary) artistImageFromDB(
 		if err == sql.ErrNoRows {
 			return ErrArtworkNotFound
 		} else if err != nil {
-			log.Printf("error getting artist image from db: %s", err)
+			log.Printf("error getting album cover from db: %s", err)
 			return err
 		}
 
 		return nil
 	}
 	if err := lib.executeDBJobAndWait(work); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	if len(buff) < 1 {
-		if time.Now().Before(time.Unix(unixTime, 0).Add(24 * 7 * time.Hour)) {
-			return nil, ErrCachedArtworkNotFound
-		}
-		return nil, ErrArtistNotFound
-	}
-
-	return newBytesReadCloser(buff), nil
+	return buff, unixTime, nil
 }
 
 func (lib *LocalLibrary) artistImageFromInternet(
@@ -166,24 +252,36 @@ func (lib *LocalLibrary) artistImageFromInternet(
 	return newBytesReadCloser(cover), nil
 }
 
-func (lib *LocalLibrary) saveArtistImage(
+func (lib *LocalLibrary) storeArtistImage(
 	albumID int64,
 	image io.ReadCloser,
-) (io.ReadCloser, error) {
+	size ImageSize,
+) (io.ReadCloser, ImageSize, error) {
 	defer image.Close()
 
 	buff, err := ioutil.ReadAll(image)
 	if err != nil {
-		return nil, err
+		return nil, size, err
 	}
 
+	imageColumn := "image"
+	if size == SmallImage {
+		imageColumn = "image_small"
+	}
+
+	storeQuery := fmt.Sprintf(`
+		INSERT INTO
+			artists_images (artist_id, %s, updated_at)
+		VALUES				
+			($1, $2, $3)
+		ON CONFLICT (artist_id) DO
+		UPDATE SET
+			%s = $2,
+			updated_at = $3
+	`, imageColumn, imageColumn)
+
 	work := func(db *sql.DB) error {
-		stmt, err := db.Prepare(`
-				INSERT OR REPLACE INTO
-					artists_images (artist_id, image, updated_at)
-				VALUES
-					(?, ?, ?)
-		`)
+		stmt, err := db.Prepare(storeQuery)
 
 		if err != nil {
 			return err
@@ -201,10 +299,10 @@ func (lib *LocalLibrary) saveArtistImage(
 	}
 	if err := lib.executeDBJobAndWait(work); err != nil {
 		log.Printf("Error executing save artist image query: %s", err)
-		return nil, err
+		return nil, size, err
 	}
 
-	return newBytesReadCloser(buff), nil
+	return newBytesReadCloser(buff), size, nil
 }
 
 func (lib *LocalLibrary) saveArtistImageNotFound(artistID int64) error {

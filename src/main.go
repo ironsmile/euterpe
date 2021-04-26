@@ -21,6 +21,7 @@ import (
 	"github.com/ironsmile/httpms/src/daemon"
 	"github.com/ironsmile/httpms/src/helpers"
 	"github.com/ironsmile/httpms/src/library"
+	"github.com/ironsmile/httpms/src/scaler"
 	"github.com/ironsmile/httpms/src/webserver"
 )
 
@@ -166,6 +167,11 @@ func runServer(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) error {
 	if err != nil {
 		return err
 	}
+
+	scl := scaler.New(ctx)
+	defer scl.Cancel()
+
+	lib.SetScaler(scl)
 
 	if !cfg.LibraryScan.Disable {
 		go lib.Scan()

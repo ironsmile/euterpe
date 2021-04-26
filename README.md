@@ -178,9 +178,10 @@ When started for the first time HTTPMS will create one for you. Here is an examp
         "sleep_after_operation": "15ms"
     },
 
-    // When true, HTTPMS will search Cover Art Archive for album artworks when none is
-    // found locally. Anything found will be saved in the HTTPMS database and later used
-    // instead of further calls to the archive.
+    // When true, HTTPMS will search for images on the internet. This means album artwork
+    // and artists images. Cover Art Archive is used for album artworks when none is
+    // found locally. And Discogs for artist images. Anything found will be saved in
+    // the HTTPMS database and later used to prevent further calls to the archive.
     "download_artwork": true,
 
     // If download_artwork is true the server will try to find artist artwork in the
@@ -365,7 +366,9 @@ HTTPMS supports album artwork. Here are all the methods for managing it through 
 GET /v1/album/{albumID}/artwork
 ```
 
-Returns a bitmap image with artwork for this album if one is available. Searching for artwork works like this: the album's directory would be scanned for any images (png/jpeg/gif/tiff files) and if anyone of them looks like an artwork, it would be shown. If this fails, you can configure HTTPMS to search in the [MusicBrainz Cover Art Archive](https://musicbrainz.org/doc/Cover_Art_Archive/). By default no external calls are made.
+Returns a bitmap image with artwork for this album if one is available. Searching for artwork works like this: the album's directory would be scanned for any images (png/jpeg/gif/tiff files) and if anyone of them looks like an artwork, it would be shown. If this fails, you can configure HTTPMS to search in the [MusicBrainz Cover Art Archive](https://musicbrainz.org/doc/Cover_Art_Archive/). By default no external calls are made, see the 'download_artwork' configuration property.
+
+By default the full size image will be served. One could request a thumbnail by appending the `?size=small` query.
 
 #### Upload Artwork
 
@@ -400,6 +403,8 @@ GET /v1/artist/{artistID}/image
 ```
 
 Returns a bitmap image representing an artist if one is available. Searching for artwork works like this: if artist image is found in the database then it will be used. In case there is not and HTTPMS is configured to download images from interned and has a Discogs access token then it will use the MusicBrainz and Discogs APIs in order to retrieve an image. By default no internet requests are made.
+
+By default the full size image will be served. One could request a thumbnail by appending the `?size=small` query.
 
 #### Upload Artist Image
 

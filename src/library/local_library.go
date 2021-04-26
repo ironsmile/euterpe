@@ -24,6 +24,7 @@ import (
 	"github.com/ironsmile/httpms/src/art"
 	"github.com/ironsmile/httpms/src/config"
 	"github.com/ironsmile/httpms/src/helpers"
+	"github.com/ironsmile/httpms/src/scaler"
 )
 
 const (
@@ -128,6 +129,8 @@ type LocalLibrary struct {
 	artFinder art.Finder
 
 	sqlFilesFS fs.FS
+
+	imageScaler *scaler.Scaler
 
 	// cleanupLock is used to secure a thread safe access to the runningCleanup property.
 	cleanupLock *sync.RWMutex
@@ -1000,6 +1003,31 @@ func (lib *LocalLibrary) SetArtFinder(caf art.Finder) {
 	lib.artFinder = caf
 }
 
+// SetScaler bind a particular image scaler to this loca library.
+func (lib *LocalLibrary) SetScaler(scl *scaler.Scaler) {
+	lib.imageScaler = scl
+}
+
+func (lib *LocalLibrary) scaleImage(
+	ctx context.Context,
+	img io.ReadCloser,
+	toSize ImageSize,
+) (io.ReadCloser, error) {
+	if lib.imageScaler == nil {
+		return nil, fmt.Errorf("no image scaler set for the local library")
+	}
+	if toSize != SmallImage {
+		return nil, fmt.Errorf("scaling is supported only for small images atm")
+	}
+
+	res, err := lib.imageScaler.Scale(ctx, img, thumbnailWidth)
+	if err != nil {
+		return nil, fmt.Errorf("scaling failed: %w", err)
+	}
+
+	return newBytesReadCloser(res), nil
+}
+
 // NewLocalLibrary returns a new LocalLibrary which will use for database the file
 // specified by databasePath. Also creates the database connection so you does not
 // need to worry about that. It accepts the parent's context and create its own
@@ -1038,3 +1066,5 @@ func NewLocalLibrary(
 
 	return lib, nil
 }
+
+const thumbnailWidth = 60

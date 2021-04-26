@@ -65,11 +65,16 @@ func (aih ArtstImageHandler) find(
     ctx, cancel := context.WithTimeout(req.Context(), 5*time.Minute)
     defer cancel()
 
-    imgReader, err := aih.imageManager.FindAndSaveArtistImage(ctx, id)
+    imgSize := library.OriginalImage
+    if req.URL.Query().Get("size") == "small" {
+        imgSize = library.SmallImage
+    }
+
+    imgReader, err := aih.imageManager.FindAndSaveArtistImage(ctx, id, imgSize)
 
     if err == library.ErrArtworkNotFound || os.IsNotExist(err) {
         writer.WriteHeader(http.StatusNotFound)
-        fmt.Fprintln(writer, "404 page not found")
+        fmt.Fprintln(writer, "404 image not found")
         return nil
     }
 

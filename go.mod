@@ -13,6 +13,8 @@ require (
 	github.com/pkg/errors v0.8.0 // indirect
 	github.com/skip2/go-qrcode v0.0.0-20171229120447-cf5f9fa2f0d8
 	github.com/wtolson/go-taglib v0.0.0-20180718000046-586eb63c2628
+	golang.org/x/image v0.0.0-20210220032944-ac19c3e999fb
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	gopkg.in/gorp.v1 v1.7.1 // indirect
 	gopkg.in/mineo/gocaa.v1 v1.0.0-20180225115936-2500f801cd83
 )
