@@ -1,9 +1,11 @@
-HTTP Media Server
+Euterpe
 ======
 
 <img src="images/heavy-metal-128.png" alt="HTTPMS Icon" align="left" style="margin-right: 20px" title="HTTPMS Icon" />
 
-A way to listen to your music library from everywhere. Once set up you won't need anything but a browser. Think of it as your own Spotify service over which you have full control. HTTPMS will let you browse through and listen to your music over HTTP(s). Up until now I've had a really bad time listening to my music which is stored back home. I would create a mount over ftp, sshfs or something similar and point the local player to the mounted library. Every time it resulted in some upleasantries. Just imagine searching in a network mounted directory!
+Euterpe is self-hosted streaming service for music. Formerly known as "HTTPMS (HTTP Media Server)".
+
+A way to listen to your music library from everywhere. Once set up you won't need anything but a browser. Think of it as your own Spotify service over which you have full control. Euterpe will let you browse through and listen to your music over HTTP(s). Up until now I've had a really bad time listening to my music which is stored back home. I would create a mount over ftp, sshfs or something similar and point the local player to the mounted library. Every time it resulted in some upleasantries. Just imagine searching in a network mounted directory!
 
 No more!
 
@@ -19,6 +21,7 @@ No more!
 * [OSX Media Keys Control](#media-keys-control-for-osx)
 * [Clients](#clients)
 * [Change Log](CHANGELOG.md)
+* [Name Change](#name-change)
 
 
 Web UI
@@ -38,13 +41,15 @@ Features
 
 * Uses [jplayer](https://github.com/happyworm/jPlayer) to play your music so it will probably work in every browser
 * jplayer supports mp3, oga, wav, flac and m4a audio formats
-* Interface and media via HTTPS
-* HTTP Basic Authenticate
-* Playlists
+* Interface and media via http(s)
+* User authentication (HTTP Basic, query token, Bearer token)
 * Media artwork from local files or automatically downloaded from the [Cover Art Archive](https://musicbrainz.org/doc/Cover_Art_Archive)
+* Artist images could be downloaded automatically from [Discogs](https://www.discogs.com/)
 * Search by track name, artist or album
 * Download whole album in a zip file with one click
 * Controllable via media keys in OSX with the help of [BeardedSpice](https://beardedspice.github.io/)
+* Extensible via [stable API](#as-an-api)
+* Multiple [clients and player plugins](#clients)
 
 
 Requirements
@@ -57,14 +62,14 @@ If you want to install it from source you will need:
 
 * [go-sqlite3](https://github.com/mattn/go-sqlite3) - `go install github.com/mattn/go-sqlite3` would probably be enough.
 
-* [International Components for Unicode](http://site.icu-project.org/) - The HTTPMS binary dynamically links to libicu. Your friendly Linux distribution probably already has a package. For other OSs one should [go here](http://site.icu-project.org/download).
+* [International Components for Unicode](http://site.icu-project.org/) - The Euterpe binary dynamically links to libicu. Your friendly Linux distribution probably already has a package. For other OSs one should [go here](http://site.icu-project.org/download).
 
 Install
 ======
 
 The safest route is installing [one of the releases](https://github.com/ironsmile/httpms/releases).
 
-If you have an already built version (for example `https_1.1.0_linux.tar.gz`) it includes an `install` script which would install HTTPMS in `/usr/bin/httpms`. You will have to uninstall any previously installed versions first. An `uninstall` script is provided as well.
+If you have an already built version (for example `https_1.1.0_linux.tar.gz`) it includes an `install` script which would install Euterpe in `/usr/bin/httpms`. You will have to uninstall any previously installed versions first. An `uninstall` script is provided as well.
 
 If installing from source running `go install` in the project root directory will compile `httpms` and move its binary in your `$GOPATH`. Releases from `v1.0.1` onward have their go dependencies vendored in.
 
@@ -111,7 +116,7 @@ Once image is built you can start the server by:
 docker run -v "${HOME}/Music/:/root/Music" -p 8080:9996 -d ironsmile/httpms httpms
 ```
 
-Then point your browser to [https://localhost:8080](https://localhost:8080) and you will see the HTTPMS web UI. The `-v` flag in the Docker command will mount your `$HOME/Music` directory to be discoverable by HTTPMS.
+Then point your browser to [https://localhost:8080](https://localhost:8080) and you will see the Euterpe web UI. The `-v` flag in the Docker command will mount your `$HOME/Music` directory to be discoverable by Euterpe.
 
 
 Configuration
@@ -123,17 +128,17 @@ location is as follows:
 * Linux or BSD: ```$HOME/.httpms/config.json```
 * Windows: ```%APPDATA%\httpms\config.json```
 
-When started for the first time HTTPMS will create one for you. Here is an example:
+When started for the first time Euterpe will create one for you. Here is an example:
 
 ```javascript
 {
-    // Address and port on which HTTPMS will listen. It is in the form hostname[:port]
+    // Address and port on which Euterpe will listen. It is in the form hostname[:port]
     // For exact explanation see the Addr field in the Go's net.http.Server
-    // Make sure the user running HTTPMS have permission to bind on the specified
+    // Make sure the user running Euterpe have permission to bind on the specified
     // port number
     "listen": ":443",
 
-    // true if you want to access HTTPMS over HTTPS or false for plain HTTP.
+    // true if you want to access Euterpe over HTTPS or false for plain HTTP.
     // If set to true the "ssl_certificate" field must be configured as well.
     "ssl": true,
 
@@ -157,7 +162,7 @@ When started for the first time HTTPMS will create one for you. Here is an examp
     // An array with all the directories which will be scanned for media. They must be
     // full paths and formatted according to your OS. So for example a Windows path
     // have to be something like "D:\Media\Music".
-    // As expected HTTPMS will need permission to read in the library folders.
+    // As expected Euterpe will need permission to read in the library folders.
     "libraries": [
         "/path/to/my/files",
         "/some/more/files/can/be/found/here"
@@ -178,10 +183,10 @@ When started for the first time HTTPMS will create one for you. Here is an examp
         "sleep_after_operation": "15ms"
     },
 
-    // When true, HTTPMS will search for images on the internet. This means album artwork
+    // When true, Euterpe will search for images on the internet. This means album artwork
     // and artists images. Cover Art Archive is used for album artworks when none is
     // found locally. And Discogs for artist images. Anything found will be saved in
-    // the HTTPMS database and later used to prevent further calls to the archive.
+    // the Euterpe database and later used to prevent further calls to the archive.
     "download_artwork": true,
 
     // If download_artwork is true the server will try to find artist artwork in the
@@ -200,13 +205,13 @@ List with all directives can be found in the [configration wiki](https://github.
 As an API
 ======
 
-You can use HTTPMS as a REST API and write your own player. Or maybe a plugin for your favourite player which would use your HTTPMS installation as a back-end.
+You can use Euterpe as a REST API and write your own player. Or maybe a plugin for your favourite player which would use your Euterpe installation as a back-end.
 
 ### v1 Compatibility Promise
 
 The API presented in this README is stable and will continue to be supported as long as version one of the service is around. And this should be very _long time_. I don't plan to make backward incompatible changes. Ever. It has survived in this form since 2013. So it should be good for at least double than this amount of time in the future.
 
-This means that **clients written for HTTPMS will continue to work**. I will never break them on purpose and if this happened it will be considered a bug to be fixed as soon as possible.
+This means that **clients written for Euterpe will continue to work**. I will never break them on purpose and if this happened it will be considered a bug to be fixed as soon as possible.
 
 ### Authentication
 
@@ -358,7 +363,7 @@ This endpoint would return you an archive which contains the songs of the whole 
 
 ### Album Artwork
 
-HTTPMS supports album artwork. Here are all the methods for managing it through the API.
+Euterpe supports album artwork. Here are all the methods for managing it through the API.
 
 #### Get Artwork
 
@@ -366,7 +371,7 @@ HTTPMS supports album artwork. Here are all the methods for managing it through 
 GET /v1/album/{albumID}/artwork
 ```
 
-Returns a bitmap image with artwork for this album if one is available. Searching for artwork works like this: the album's directory would be scanned for any images (png/jpeg/gif/tiff files) and if anyone of them looks like an artwork, it would be shown. If this fails, you can configure HTTPMS to search in the [MusicBrainz Cover Art Archive](https://musicbrainz.org/doc/Cover_Art_Archive/). By default no external calls are made, see the 'download_artwork' configuration property.
+Returns a bitmap image with artwork for this album if one is available. Searching for artwork works like this: the album's directory would be scanned for any images (png/jpeg/gif/tiff files) and if anyone of them looks like an artwork, it would be shown. If this fails, you can configure Euterpe to search in the [MusicBrainz Cover Art Archive](https://musicbrainz.org/doc/Cover_Art_Archive/). By default no external calls are made, see the 'download_artwork' configuration property.
 
 By default the full size image will be served. One could request a thumbnail by appending the `?size=small` query.
 
@@ -376,7 +381,7 @@ By default the full size image will be served. One could request a thumbnail by 
 PUT /v1/album/{albumID}/artwork
 ```
 
-Can be used to upload artwork directly on the HTTPMS server. This artwork will be stored in the server database and will not create any files in the library paths. The image should  be send in the body of the request in binary format without any transformations. Only images up to 5MB are accepted. Example:
+Can be used to upload artwork directly on the Euterpe server. This artwork will be stored in the server database and will not create any files in the library paths. The image should  be send in the body of the request in binary format without any transformations. Only images up to 5MB are accepted. Example:
 
 ```sh
 curl -i -X PUT \
@@ -394,7 +399,7 @@ Will remove the artwork from the server database. Note, this will not touch any 
 
 ### Artist Image
 
-HTTPMS supports getting artist images. Here are all the methods for managing it through the API.
+Euterpe could build a database with artists' images. Which it could then be used throughout the interfaces. Here are all the methods for managing it through the API.
 
 #### Get Artist Image
 
@@ -402,7 +407,7 @@ HTTPMS supports getting artist images. Here are all the methods for managing it 
 GET /v1/artist/{artistID}/image
 ```
 
-Returns a bitmap image representing an artist if one is available. Searching for artwork works like this: if artist image is found in the database then it will be used. In case there is not and HTTPMS is configured to download images from interned and has a Discogs access token then it will use the MusicBrainz and Discogs APIs in order to retrieve an image. By default no internet requests are made.
+Returns a bitmap image representing an artist if one is available. Searching for artwork works like this: if artist image is found in the database then it will be used. In case there is not and Euterpe is configured to download images from interned and has a Discogs access token then it will use the MusicBrainz and Discogs APIs in order to retrieve an image. By default no internet requests are made.
 
 By default the full size image will be served. One could request a thumbnail by appending the `?size=small` query.
 
@@ -412,7 +417,7 @@ By default the full size image will be served. One could request a thumbnail by 
 PUT /v1/artist/{artistID}/image
 ```
 
-Can be used to upload artist image directly on the HTTPMS server. It will be stored in the server database and will not create any files in the library paths. The image should  be send in the body of the request in binary format without any transformations. Only images up to 5MB are accepted. Example:
+Can be used to upload artist image directly on the Euterpe server. It will be stored in the server database and will not create any files in the library paths. The image should  be send in the body of the request in binary format without any transformations. Only images up to 5MB are accepted. Example:
 
 ```sh
 curl -i -X PUT \
@@ -454,12 +459,12 @@ Before you can use this token for accessing the API you will have to register it
 POST /v1/register/token/
 ```
 
-This endpoint registers the newly generated tokens with HTTPMS. Only registered tokens will work. Requests at this endpoint must authenticate themselves using a previously generated token.
+This endpoint registers the newly generated tokens with Euterpe. Only registered tokens will work. Requests at this endpoint must authenticate themselves using a previously generated token.
 
 Media Keys Control For OSX
 ======
 
-You can control your HTTPMS web interface with the media keys the same way you can control any native media player. To achieve this a third-party program is required: [BearderSpice](https://beardedspice.github.io/). Sadly, HTTPMS is [not included](https://github.com/beardedspice/beardedspice/pull/684) in the default web strategies bundled-in with the program. You will have to import the [strategy](https://github.com/beardedspice/beardedspice/tree/disco-strategy-web#writing-a-media-strategy) [file](tools/bearded-spice.js) included in this repo yourself.
+You can control your Euterpe web interface with the media keys the same way you can control any native media player. To achieve this a third-party program is required: [BearderSpice](https://beardedspice.github.io/). Sadly, Euterpe (HTTPMS) is [not included](https://github.com/beardedspice/beardedspice/pull/684) in the default web strategies bundled-in with the program. You will have to import the [strategy](https://github.com/beardedspice/beardedspice/tree/disco-strategy-web#writing-a-media-strategy) [file](tools/bearded-spice.js) included in this repo yourself.
 
 How to do it:
 
@@ -490,4 +495,12 @@ Clients
 You are not restricted to using the web UI. The server has a RESTful API which can easily be used from other clients. I will try to keep a list with all of the known clients here:
 
 * ~~[httpms-android](https://github.com/ironsmile/httpms-android) is a Android client for HTTPMS.~~ Long abandoned in favour of a React Native mobile client.
-* [httpms-rhythmbox](https://github.com/ironsmile/httpms-rhythmbox) is HTTPMS client plugin for Gnome's Rhythmbox.
+* [httpms-rhythmbox](https://github.com/ironsmile/httpms-rhythmbox) is Euterpe client plugin for Gnome's Rhythmbox.
+
+
+Name Change
+======
+
+Euterpe was previously known as "HTTPMS" from "HTTP Media Server". This name is too generic, it proved to be very hard to remember and was all-around a bad choice. At the time I was mostly thinking about the function and not the presentation of the project. Since there are more pople using it now it makes sense to improve this aspect as well.
+
+"Euterpe" was chosen because of the obvious association with the muse of music. There are still places where internally the software refers to itself as "HTTPMS" but they will go away with time. Hopefully soon.
