@@ -88,3 +88,158 @@ footer {
 select[multiple], select[size] {
     max-height: 188px;
 }
+
+@media (prefers-color-scheme: dark) {
+
+    body {
+        background-color: #181818;
+        color: #aeafb3;
+    }
+
+    .navbar-default {
+        background-color: #222327;
+        border-color: #46474a;
+    }
+
+    .navbar-default .navbar-toggle,
+    .navbar-default .navbar-collapse,
+    .navbar-default .navbar-form {
+        border-color: #46474a;
+    }
+
+    .navbar-default .navbar-toggle:focus,
+    .navbar-default .navbar-toggle:hover {
+        background-color: #46474a;
+    }
+
+    .navbar-default .navbar-nav > .active > a,
+    .navbar-default .navbar-nav > .active > a:focus,
+    .navbar-default .navbar-nav > .active > a:hover {
+        background-color: #46474a;
+        color: white;
+    }
+
+    .navbar-default .navbar-nav > li > a:focus,
+    .navbar-default .navbar-nav > li > a:hover {
+        color: white;
+    }
+
+    .form-control {
+        background-color: #46474a;
+        border-color: #46474a;
+        color: white;
+    }
+
+    .btn-default {
+        border-color: #46474a;
+        background-color: #46474a;
+        color: #aeafb3;
+    }
+
+    .btn-default:hover {
+        background-color: #181818;
+        color: #aeafb3;
+        border-color: #181818;
+    }
+
+    .btn-default:hover:active,
+    .btn-default.active {
+        color: white;
+        background-color: #181818;
+    }
+
+    .btn-default.active.focus,
+    .btn-default.active:focus,
+    .btn-default.active:hover,
+    .btn-default:active.focus,
+    .btn-default:active:focus,
+    .btn-default:active:hover,
+    .open > .dropdown-toggle.btn-default.focus,
+    .open > .dropdown-toggle.btn-default:focus,
+    .open > .dropdown-toggle.btn-default:hover {
+        background-color: inherit;
+        color: white;
+    }
+
+    .btn-primary {
+        background-color: #1db954;
+        border-color: #1db954;
+    }
+
+    .btn-primary:hover {
+        background-color: #1e8342;
+        border-color: #1e8342;
+    }
+
+    .btn-primary.active,
+    .btn-primary:active,
+    .open > .dropdown-toggle.btn-primary,
+    .btn-primary.focus,
+    .btn-primary:focus {
+        background-color: #2e6643;
+        border-color: #2e6643;
+    }
+
+    .btn-primary:active:hover {
+        background-color: #2e6643;
+        border-color: #2e6643;
+    }
+
+    .form-control:focus {
+        border-color: #aeafb3;
+    }
+
+    div.jp-audio,
+    div.jp-audio-stream,
+    div.jp-video {
+        background-color: #222327;
+        color: #aeafb3;
+        border-color: #46474a;
+    }
+
+    div.jp-progress {
+        background-color: #46474a;
+    }
+
+    div.jp-volume-bar-value {
+        background-image: none;
+        background-color: #46474a;
+    }
+
+    div.jp-title,
+    div.jp-playlist {
+        background-color: #46474a;
+        border-top: #181818;
+    }
+
+    div.jp-type-playlist div.jp-playlist a,
+    div.jp-type-playlist div.jp-playlist span.jp-free-media a {
+        color: #aeafb3;
+    }
+
+    div.jp-type-playlist div.jp-playlist a.jp-playlist-current,
+    div.jp-type-playlist div.jp-playlist a:hover,
+    div.jp-type-playlist div.jp-playlist span.jp-free-media a:hover {
+        color: white;
+        font-weight: bold;
+    }
+
+    div.jp-playlist li {
+        border-color: #222327;
+    }
+
+    span.jp-artist,
+    span.jp-duration {
+        color: white;
+        font-weight: normal;
+    }
+
+    div.jp-seek-bar {
+        background-image: none;
+    }
+
+    div.jp-play-bar {
+        background-image: none;
+        background-color: #aeafb3;
+    }
+}
