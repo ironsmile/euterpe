@@ -74,6 +74,10 @@ func Main(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) {
 		os.Exit(0)
 	}
 
+	if debug {
+		httpRootFS = os.DirFS("http_root")
+	}
+
 	if err := runServer(
 		httpRootFS,
 		htmlTemplatesFS,
