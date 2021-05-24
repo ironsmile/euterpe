@@ -495,8 +495,8 @@ Clients
 You are not restricted to using the web UI. The server has a RESTful API which can easily be used from other clients. I will try to keep a list with all of the known clients here:
 
 * ~~[httpms-android](https://github.com/ironsmile/httpms-android) is a Android client for HTTPMS.~~ Long abandoned in favour of a React Native mobile client.
-* [httpms-mobile](https://github.com/ironsmile/httpms-mobile) is an iOS/Android mobile client written with React Native.
-* [httpms-rhythmbox](https://github.com/ironsmile/httpms-rhythmbox) is Euterpe client plugin for Gnome's Rhythmbox.
+* [euterpe-mobile](https://github.com/ironsmile/euterpe-mobile) is an iOS/Android mobile client written with React Native.
+* [euterpe-rhythmbox](https://github.com/ironsmile/euterpe-rhythmbox) is Euterpe client plugin for Gnome's Rhythmbox.
 
 
 Name Change
