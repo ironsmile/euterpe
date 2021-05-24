@@ -1,5 +1,22 @@
 # Change Log
 
+## v1.4.0 - 2021-04-26
+
+**What is New**
+
+* Track duration is returned from the API and is shwon in the web UI
+* Added support for artist images: `/v1/artist/{id}/image`
+* The artist ID is included in the search results for every track
+* There is support for album artwork or artist image thumbnails by appending `?size=small`
+
+**Bug fixes**
+
+* Fix the bug where non-ASCII searches were case sensitive
+* Fix a bug where some tracks were associated with the wrong album
+* Media files with uppercase extensions will not be included in the library
+* Added the 'rescan' command. Running `httpms -rescan` will cause all of the tracks in the database to be scanned for changes in their metadata. Useful for when the id3 metadata scanning is improved in further versions.
+* Fixed a bug where there might be duplicate tracks if the library in config.json was ending at "/"
+
 ## v1.3.1 - 2020-08-24
 
 * Show album artwork in the web UI.
