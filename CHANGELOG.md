@@ -1,5 +1,12 @@
 # Change Log
 
+## v1.4.1 - 2021-05-25
+
+**What is New**
+
+* Added dark mode to web UI, your eyes will be thankful!
+* The local file system is used as HTTP root when running in debug (-D) mode
+
 ## v1.4.0 - 2021-04-26
 
 **What is New**
