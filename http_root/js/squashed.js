@@ -449,6 +449,10 @@ function playerPageInit() {
         filter_playlist();
     });
 
+    $('.load-all-btn').click(function(e) {
+        search_immediately_on_enter(e);
+    })
+
     $('#artwork').popover({
         container: '#artwork',
         placement: 'left',
@@ -470,11 +474,19 @@ function playerPageInit() {
     $(document).ajaxStop(function(){
         var btn = $('.search-form-button > .glyphicon-refresh');
         btn.removeClass('glyphicon-refresh anim-revolving').addClass('glyphicon-search');
+
+        $('.load-all-btn > .glyphicon').
+            removeClass('glyphicon-refresh anim-revolving').
+            addClass('glyphicon-circle-arrow-down');
     });
 
     $(document).ajaxStart(function(){
         var btn = $('.search-form-button > .glyphicon-search');
         btn.removeClass('glyphicon-search').addClass('glyphicon-refresh anim-revolving');
+
+        $('.load-all-btn > .glyphicon').
+            removeClass('glyphicon-circle-arrow-down').
+            addClass('glyphicon-refresh anim-revolving');
     });
 
     restore_last_saved_search();
@@ -602,8 +614,11 @@ function load_playlist (songs) {
         currently_playing = parseInt(query_data.tr, 10);
     }
 
+    $('.empty-playlist').hide();
+
     var new_playlist = [];
-    for (var i = 0; i < songs.length; i++) {
+    var songs_length = songs.length;
+    for (var i = 0; i < songs_length; i++) {
         var song_url = "/v1/file/"+songs[i].id;
         var song = {
             title: songs[i].title,
@@ -630,6 +645,12 @@ function load_playlist (songs) {
         if (currently_playing !== null && currently_playing == songs[i].id) {
             selected_index = i;
         }
+    }
+
+    if (songs_length == 0) {
+        $('.no-songs-found').show();
+    } else {
+        $('.no-songs-found').hide();
     }
 
     pagePlaylist.setPlaylist(new_playlist);
@@ -791,7 +812,8 @@ function filter_playlist () {
     }
 
     var to_load = [];
-    for (var i = 0; i < found_songs.length; i++) {
+    var found_songs_length = found_songs.length;
+    for (var i = 0; i < found_songs_length; i++) {
         if (!artist_filter(found_songs[i])) {
             continue;
         }

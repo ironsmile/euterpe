@@ -94,6 +94,41 @@ select[multiple], select[size] {
     max-height: 170px;
 }
 
+.playlist-info {
+    border-top: 1px solid #46474a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 150px;
+    justify-content: center;
+}
+
+.playlist-info p {
+    text-align: center;
+}
+
+.not-found-container {
+    border-top: 1px solid #46474a;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    min-height: 150px;
+    justify-content: center;
+}
+
+.not-found-container p {
+    margin: 0;
+}
+
+.no-songs-found {
+    display: none;
+}
+
+.no-songs-found .glyphicon {
+    font-size: 64px;
+    margin-right: 10px;
+}
+
 @media (prefers-color-scheme: dark) {
 
     body {
@@ -135,7 +170,9 @@ select[multiple], select[size] {
         color: white;
     }
 
-    .btn-default {
+    .btn-default,
+    .btn-default.focus,
+    .btn-default:focus {
         border-color: #46474a;
         background-color: #46474a;
         color: #aeafb3;
