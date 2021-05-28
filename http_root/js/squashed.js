@@ -449,6 +449,24 @@ function playerPageInit() {
         filter_playlist();
     });
 
+    $('#artwork').popover({
+        container: '#artwork',
+        placement: 'left',
+        trigger: 'hover',
+        viewport: '.container',
+        html: true,
+        content: function() {
+            var bgImage = $('#artwork').css("background-image");
+            if (bgImage == "none") {
+                return;
+            }
+
+            var img = $('<img>');
+            img.attr('src', bgImage.replace(/url\("(.+)"\)/, '$1'));
+            return img;
+        }
+    });
+
     $(document).ajaxStop(function(){
         var btn = $('.search-form-button > .glyphicon-refresh');
         btn.removeClass('glyphicon-refresh anim-revolving').addClass('glyphicon-search');

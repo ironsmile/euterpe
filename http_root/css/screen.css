@@ -72,13 +72,22 @@ footer {
     margin-bottom: 20px;
 }
 
+.artwork-bg {
+    background-image: url(../images/unknownAlbum.png);
+    background-position: center;
+    background-size: cover;
+}
+
 #artwork {
     height: 170px;
     width: 100%;
     overflow: hidden;
-    background-image: url(../images/unknownAlbum.png);
     background-position: center;
     background-size: cover;
+}
+
+.popover {
+    max-width: none;
 }
 
 select[multiple], select[size] {
@@ -237,5 +246,13 @@ select[multiple], select[size] {
     div.jp-play-bar {
         background-image: none;
         background-color: #aeafb3;
+    }
+
+    .popover {
+        background-color: #46474a;
+    }
+
+    .popover.left > .arrow::after {
+        border-left-color: #46474a;
     }
 }
