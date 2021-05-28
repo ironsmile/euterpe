@@ -73,7 +73,7 @@ footer {
 }
 
 #artwork {
-    height: 188px;
+    height: 170px;
     width: 100%;
     overflow: hidden;
     background-image: url(../images/unknownAlbum.png);
@@ -82,7 +82,7 @@ footer {
 }
 
 select[multiple], select[size] {
-    max-height: 188px;
+    max-height: 170px;
 }
 
 @media (prefers-color-scheme: dark) {
