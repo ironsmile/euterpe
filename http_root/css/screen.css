@@ -21,6 +21,7 @@ span.jp-duration {
     font-size: .8em;
     color: #333;
     line-height: 2;
+    min-width: 45px;
 }
 
 footer {
