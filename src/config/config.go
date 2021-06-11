@@ -26,7 +26,7 @@ const (
 	// the user is supposed to change.
 	configName = "config.json"
 
-	defaultlistAddress = ":9996"
+	defaultlistAddress = "localhost:9996"
 	defaultSecretBytes = 64
 )
 

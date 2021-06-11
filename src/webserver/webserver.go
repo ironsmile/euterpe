@@ -217,7 +217,7 @@ func (srv *Server) serveGoroutine() {
 func (srv *Server) listenAndServe() error {
 	addr := srv.httpSrv.Addr
 	if addr == "" {
-		addr = ":http"
+		addr = "localhost:http"
 	}
 	lsn, err := net.Listen("tcp", addr)
 	if err != nil {
@@ -236,7 +236,7 @@ func (srv *Server) listenAndServe() error {
 func (srv *Server) listenAndServeTLS(certFile, keyFile string) error {
 	addr := srv.httpSrv.Addr
 	if addr == "" {
-		addr = ":https"
+		addr = "localhost:https"
 	}
 
 	var config *tls.Config
