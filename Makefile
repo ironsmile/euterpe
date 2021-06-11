@@ -2,13 +2,13 @@
 all:
 	go build \
 		--tags "sqlite_icu" \
-		-ldflags "-X github.com/ironsmile/euterpe/src.Version=`git describe --tags --always`"
+		-ldflags "-X github.com/ironsmile/euterpe/src/version.Version=`git describe --tags --always`"
 
 # Build a release binary which could be used in the distribution archive.
 release:
 	go build \
 		--tags "sqlite_icu" \
-		-ldflags "-X github.com/ironsmile/euterpe/src.Version=`git describe --tags --always`" \
+		-ldflags "-X github.com/ironsmile/euterpe/src/version.Version=`git describe --tags --always`" \
 		-o euterpe
 
 	# Compress it somewhat. It seems that the Euterpe binary gets more than 3 times smaller
@@ -19,7 +19,7 @@ release:
 install:
 	go install \
 		--tags "sqlite_icu" \
-		-ldflags "-X github.com/ironsmile/euterpe/src.Version=`git describe --tags --always`"
+		-ldflags "-X github.com/ironsmile/euterpe/src/version.Version=`git describe --tags --always`"
 
 # Build distribution archive.
 dist-archive:

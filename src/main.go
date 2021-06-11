@@ -22,6 +22,7 @@ import (
 	"github.com/ironsmile/euterpe/src/helpers"
 	"github.com/ironsmile/euterpe/src/library"
 	"github.com/ironsmile/euterpe/src/scaler"
+	"github.com/ironsmile/euterpe/src/version"
 	"github.com/ironsmile/euterpe/src/webserver"
 )
 
@@ -62,7 +63,7 @@ func Main(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) {
 	flag.Parse()
 
 	if showVersion {
-		printVersionInformation()
+		version.Print(os.Stdout)
 		os.Exit(0)
 	}
 
@@ -137,7 +138,7 @@ func getLibrary(
 	}
 
 	if cfg.DownloadArtwork {
-		useragent := fmt.Sprintf(userAgentFormat, Version)
+		useragent := fmt.Sprintf(userAgentFormat, version.Version)
 		caf := art.NewClient(useragent, time.Second, cfg.DiscogsAuthToken)
 		lib.SetArtFinder(caf)
 	}
@@ -183,7 +184,7 @@ func runServer(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) error {
 		go lib.Scan()
 	}
 
-	log.Printf("Release %s\n", Version)
+	log.Printf("Release %s\n", version.Version)
 	srv := webserver.NewServer(ctx, cfg, lib, httpRootFS, htmlTemplatesFS)
 	srv.Serve()
 	srv.Wait()

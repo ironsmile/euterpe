@@ -5,6 +5,8 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+
+	"github.com/ironsmile/euterpe/src/version"
 )
 
 // NewTemplateHandler returns a handler which will execute the page template inside
@@ -12,12 +14,14 @@ import (
 func NewTemplateHandler(tpl *template.Template, title string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		data := struct {
-			Title string
-			Req   *http.Request
-			Menu  []menu
+			Title   string
+			Version string
+			Req     *http.Request
+			Menu    []menu
 		}{
-			Title: title,
-			Req:   r,
+			Title:   title,
+			Version: version.Version,
+			Req:     r,
 			Menu: []menu{
 				{
 					Name:   "Player",
