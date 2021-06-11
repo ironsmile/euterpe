@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Still work in progress.
+
+CGO_ENABLED=1 \
+    CC=x86_64-w64-mingw32-gcc-win32 \
+    PKG_CONFIG=x86_64-w64-mingw32-pkg-config \
+    PKG_CONFIG_PATH=/home/iron4o/taglib/lib/pkgconfig/ \
+    ./build windows
+
+# removing --tags "sqlite_icu" makes the sqlite compile!
