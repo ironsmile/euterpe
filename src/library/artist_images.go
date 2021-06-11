@@ -10,7 +10,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/ironsmile/httpms/src/art"
+	"github.com/ironsmile/euterpe/src/art"
 )
 
 // FindAndSaveArtistImage implements the ArtistImageManager for the local library.

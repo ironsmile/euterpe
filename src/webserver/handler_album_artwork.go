@@ -13,7 +13,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ironsmile/httpms/src/library"
+	"github.com/ironsmile/euterpe/src/library"
 )
 
 // AlbumArtworkHandler is a http.Handler which will find and serve the artwork of

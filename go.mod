@@ -1,4 +1,4 @@
-module github.com/ironsmile/httpms
+module github.com/ironsmile/euterpe
 
 go 1.16
 

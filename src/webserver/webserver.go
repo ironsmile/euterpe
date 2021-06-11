@@ -14,8 +14,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ironsmile/httpms/src/config"
-	"github.com/ironsmile/httpms/src/library"
+	"github.com/ironsmile/euterpe/src/config"
+	"github.com/ironsmile/euterpe/src/library"
 )
 
 const (

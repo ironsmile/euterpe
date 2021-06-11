@@ -16,7 +16,7 @@ import (
 	// Needed for tests as the go-sqlite3 must be imported during tests too.
 	_ "github.com/mattn/go-sqlite3"
 
-	"github.com/ironsmile/httpms/src/helpers"
+	"github.com/ironsmile/euterpe/src/helpers"
 )
 
 // testTimeout is the maximum time a test is allowed to work.

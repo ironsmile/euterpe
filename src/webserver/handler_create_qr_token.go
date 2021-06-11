@@ -9,7 +9,7 @@ import (
 	"github.com/gbrlsnchs/jwt"
 	"github.com/skip2/go-qrcode"
 
-	"github.com/ironsmile/httpms/src/config"
+	"github.com/ironsmile/euterpe/src/config"
 )
 
 // NewCreateQRTokenHandler returns a http.Handler which will generate an access token

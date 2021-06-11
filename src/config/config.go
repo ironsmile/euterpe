@@ -18,7 +18,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/ironsmile/httpms/src/helpers"
+	"github.com/ironsmile/euterpe/src/helpers"
 )
 
 const (

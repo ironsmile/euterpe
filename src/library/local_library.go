@@ -21,10 +21,10 @@ import (
 	// from the golang documentation.
 	_ "github.com/mattn/go-sqlite3"
 
-	"github.com/ironsmile/httpms/src/art"
-	"github.com/ironsmile/httpms/src/config"
-	"github.com/ironsmile/httpms/src/helpers"
-	"github.com/ironsmile/httpms/src/scaler"
+	"github.com/ironsmile/euterpe/src/art"
+	"github.com/ironsmile/euterpe/src/config"
+	"github.com/ironsmile/euterpe/src/helpers"
+	"github.com/ironsmile/euterpe/src/scaler"
 )
 
 const (

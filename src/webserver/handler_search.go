@@ -7,7 +7,7 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
-	"github.com/ironsmile/httpms/src/library"
+	"github.com/ironsmile/euterpe/src/library"
 )
 
 // SearchHandler is a http.Handler responsible for search requests. It will use

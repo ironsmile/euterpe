@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ironsmile/httpms/src/library"
+	"github.com/ironsmile/euterpe/src/library"
 )
 
 // BrowseHandler is a http.Handler which will allow you to browse through artists or

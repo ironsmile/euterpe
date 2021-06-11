@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ironsmile/httpms/src/art"
+	"github.com/ironsmile/euterpe/src/art"
 )
 
 // FindAndSaveAlbumArtwork implements the ArtworkManager interface for the local library.

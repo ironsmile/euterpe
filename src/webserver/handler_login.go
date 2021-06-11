@@ -9,7 +9,7 @@ import (
 
 	"github.com/gbrlsnchs/jwt"
 
-	"github.com/ironsmile/httpms/src/config"
+	"github.com/ironsmile/euterpe/src/config"
 )
 
 var (

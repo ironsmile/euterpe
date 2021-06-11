@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/ironsmile/httpms/src/config"
+	"github.com/ironsmile/euterpe/src/config"
 )
 
 // HandlerFuncWithError is similar to http.HandlerFunc but returns an error when

@@ -36,7 +36,8 @@ logfile
 dist/*
 
 # The built binary
-httpms
+/httpms
+/euterpe
 
 # OSX bullshits
 **/.DS_Store

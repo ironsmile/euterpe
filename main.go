@@ -11,7 +11,7 @@ import (
 	"io/fs"
 	"os"
 
-	"github.com/ironsmile/httpms/src"
+	"github.com/ironsmile/euterpe/src"
 )
 
 var (

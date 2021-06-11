@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/ironsmile/httpms/src/library"
+	"github.com/ironsmile/euterpe/src/library"
 )
 
 // FileHandler will find and serve a media file by its ID

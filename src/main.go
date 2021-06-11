@@ -16,13 +16,13 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/ironsmile/httpms/src/art"
-	"github.com/ironsmile/httpms/src/config"
-	"github.com/ironsmile/httpms/src/daemon"
-	"github.com/ironsmile/httpms/src/helpers"
-	"github.com/ironsmile/httpms/src/library"
-	"github.com/ironsmile/httpms/src/scaler"
-	"github.com/ironsmile/httpms/src/webserver"
+	"github.com/ironsmile/euterpe/src/art"
+	"github.com/ironsmile/euterpe/src/config"
+	"github.com/ironsmile/euterpe/src/daemon"
+	"github.com/ironsmile/euterpe/src/helpers"
+	"github.com/ironsmile/euterpe/src/library"
+	"github.com/ironsmile/euterpe/src/scaler"
+	"github.com/ironsmile/euterpe/src/webserver"
 )
 
 var (
@@ -42,7 +42,7 @@ var (
 	rescanLibrary bool
 )
 
-const userAgentFormat = "HTTP Media Server/%s (github.com/ironsmile/httpms)"
+const userAgentFormat = "HTTP Media Server/%s (github.com/ironsmile/euterpe)"
 
 func init() {
 	flag.StringVar(&pidFile, "p", "pidfile.pid",

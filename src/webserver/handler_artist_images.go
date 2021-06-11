@@ -12,7 +12,7 @@ import (
 
     "github.com/gorilla/mux"
 
-    "github.com/ironsmile/httpms/src/library"
+    "github.com/ironsmile/euterpe/src/library"
 )
 
 // ArtstImageHandler is a http.Handler which provides CRUD operations for
