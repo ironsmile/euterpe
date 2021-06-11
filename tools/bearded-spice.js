@@ -1,20 +1,20 @@
-// Bearded spice strategy for the web interface of HTTPMS.
-// With this you can control your HTTPMS via media controls under OSX.
+// Bearded spice strategy for the web interface of Euterpe.
+// With this you can control your Euterpe via media controls under OSX.
 // What is bearded spice you ask? https://github.com/beardedspice/beardedspice
-// What about HTTPMS? https://github.com/ironsmile/httpms
+// What about Euterpe? https://github.com/ironsmile/euterpe
 
 BSStrategy = {
   version: 1,
-  displayName: "HTTPMS",
+  displayName: "Euterpe",
   accepts: {
     method: "predicateOnTab",
-    format: "%K LIKE[c] '*HTTPMS'",
+    format: "%K LIKE[c] '*Euterpe'",
     args: ["title"]
   },
 
-  isPlaying: function () { return document.title.match(/.*\| HTTPMS$/) !== null; },
+  isPlaying: function () { return document.title.match(/.*\| Euterpe$/) !== null; },
   toggle:    function () {
-    var playing = (document.title.match(/.*\| HTTPMS$/) !== null);
+    var playing = (document.title.match(/.*\| Euterpe$/) !== null);
     if (playing) {
       document.querySelector('.jp-pause').click();
     } else {

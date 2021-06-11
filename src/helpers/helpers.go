@@ -1,4 +1,4 @@
-// Package helpers contains few helpers functions which are used throughout the project
+// Package helpers contains few helpers functions which are used throughout the project.
 package helpers
 
 import (
@@ -91,17 +91,14 @@ func ProjectUserPath() (string, error) {
 		return "", err
 	}
 
-	path := filepath.Join(user.HomeDir, HttpmsDir)
-
-	_, err = os.Stat(path)
-
-	if err == nil {
-		return path, nil
+	deprecatedPath := filepath.Join(user.HomeDir, httpmsDir)
+	if _, err = os.Stat(deprecatedPath); err == nil {
+		return deprecatedPath, nil
 	}
 
-	err = os.MkdirAll(path, os.ModeDir|0750)
+	path := filepath.Join(user.HomeDir, euterpeDir)
 
-	if err != nil {
+	if err = os.MkdirAll(path, os.ModeDir|0750); err != nil {
 		return "", err
 	}
 

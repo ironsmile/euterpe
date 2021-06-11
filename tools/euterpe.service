@@ -1,0 +1,19 @@
+[Unit]
+Description=Euterpe Streaming Media Server
+ConditionFileIsExecutable=/usr/bin/euterpe
+Documentation=https://listen-to-euterpe.eu/docs/
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/euterpe
+Restart=on-failure
+User=$USER
+Group=$GROUP
+WorkingDirectory=/home/$USER/.euterpe
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+Alias=httpms

@@ -2,8 +2,8 @@
 // configuration  with the default. Configuration locations should be different
 // depending on the host OS.
 //
-// Linux/BSD configurations should be in $HOME/.httpms/config.json
-// Windows configurations should be in %APPDATA%/httpms/config.json
+// Linux/BSD configurations should be in $HOME/.euterpe/config.json
+// Windows configurations should be in %APPDATA%/euterpe/config.json
 package config
 
 import (
@@ -30,12 +30,12 @@ const (
 	defaultSecretBytes = 64
 )
 
-// defaultConfig contains all the default values for the HTTPMS configuration. Users
+// defaultConfig contains all the default values for the Euterpe configuration. Users
 // can overwrite values here with their user's configuraiton.
 var defaultConfig = Config{
 	Listen:         defaultlistAddress,
-	LogFile:        "httpms.log",
-	SqliteDatabase: "httpms.db",
+	LogFile:        "euterpe.log",
+	SqliteDatabase: "euterpe.db",
 	Gzip:           true,
 	ReadTimeout:    15,
 	WriteTimeout:   1200,

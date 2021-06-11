@@ -1,7 +1,7 @@
 Euterpe
 ======
 
-<img src="images/heavy-metal-128.png" alt="HTTPMS Icon" align="left" style="margin-right: 20px" title="HTTPMS Icon" />
+<img src="images/heavy-metal-128.png" alt="Euterpe Icon" align="left" style="margin-right: 20px" title="Euterpe Icon" />
 
 Euterpe is self-hosted streaming service for music. Formerly known as "HTTPMS (HTTP Media Server)".
 
@@ -29,7 +29,7 @@ Web UI
 
 Have a taste of how its web interface looks like
 
-![HTTPMS Screenshot](images/euterpe-preview.webp)
+![Euterpe Screenshot](images/euterpe-preview.webp)
 
 It comes with a custom [jPlayer](https://github.com/happyworm/jPlayer) which can handle playlists with thousands of songs. Which is [an imrovement](https://github.com/jplayer/jPlayer/pull/192) over the original which never included this performance patch.
 
@@ -67,16 +67,16 @@ If you want to install it from source you will need:
 Install
 ======
 
-The safest route is installing [one of the releases](https://github.com/ironsmile/httpms/releases).
+The safest route is installing [one of the releases](https://github.com/ironsmile/euterpe/releases).
 
-If you have an already built version (for example `https_1.1.0_linux.tar.gz`) it includes an `install` script which would install Euterpe in `/usr/bin/httpms`. You will have to uninstall any previously installed versions first. An `uninstall` script is provided as well.
+If you have an already built version (for example `https_1.1.0_linux.tar.gz`) it includes an `install` script which would install Euterpe in `/usr/bin/euterpe`. You will have to uninstall any previously installed versions first. An `uninstall` script is provided as well.
 
-If installing from source running `go install` in the project root directory will compile `httpms` and move its binary in your `$GOPATH`. Releases from `v1.0.1` onward have their go dependencies vendored in.
+If installing from source running `go install` in the project root directory will compile `euterpe` and move its binary in your `$GOPATH`. Releases from `v1.0.1` onward have their go dependencies vendored in.
 
 If you want to install the latest development version from the `master` branch, you can just run
 
 ```
-go install github.com/ironsmile/httpms
+go install github.com/ironsmile/euterpe
 ```
 
 In the root of the project run
@@ -85,10 +85,10 @@ In the root of the project run
 make release
 ```
 
-This will produce a binary `httpms` which is ready for distribution. Check its version with
+This will produce a binary `euterpe` which is ready for distribution. Check its version with
 
 ```
-./httpms -v
+./euterpe -v
 ```
 
 First Run
@@ -96,9 +96,9 @@ First Run
 
 Once installed, you are ready to use your media server. After its initial run it will create a configuration file which you will have to edit to suit your needs.
 
-1. Start it with ```httpms```
+1. Start it with ```euterpe```
 
-2. [Edit the config.json](#configuration) and add your library paths to the "library" field. This is an *important* step. Without it, `httpms` will not know where your media files are.
+2. [Edit the config.json](#configuration) and add your library paths to the "library" field. This is an *important* step. Without it, `euterpe` will not know where your media files are.
 
 
 Docker
@@ -106,14 +106,14 @@ Docker
 
 Alternatively to installing everything in your environment you can use the [Docker image](Dockerfile) in this repository.
 
-```docker build -t ironsmile/httpms github.com/ironsmile/httpms```
+```docker build -t ironsmile/euterpe github.com/ironsmile/euterpe```
 
-The `httpms` binary there is placed in `/usr/local/bin/httpms`.
+The `euterpe` binary there is placed in `/usr/local/bin/euterpe`.
 
 Once image is built you can start the server by:
 
 ```sh
-docker run -v "${HOME}/Music/:/root/Music" -p 8080:9996 -d ironsmile/httpms httpms
+docker run -v "${HOME}/Music/:/root/Music" -p 8080:9996 -d ironsmile/euterpe euterpe
 ```
 
 Then point your browser to [https://localhost:8080](https://localhost:8080) and you will see the Euterpe web UI. The `-v` flag in the Docker command will mount your `$HOME/Music` directory to be discoverable by Euterpe.
@@ -125,8 +125,8 @@ Configuration
 HTTPS configuration is saved in a JSON file, different for every user in the system. Its
 location is as follows:
 
-* Linux or BSD: ```$HOME/.httpms/config.json```
-* Windows: ```%APPDATA%\httpms\config.json```
+* Linux or BSD: ```$HOME/.euterpe/config.json```
+* Windows: ```%APPDATA%\euterpe\config.json```
 
 When started for the first time Euterpe will create one for you. Here is an example:
 
@@ -200,7 +200,7 @@ When started for the first time Euterpe will create one for you. Here is an exam
 }
 ```
 
-List with all directives can be found in the [configration wiki](https://github.com/ironsmile/httpms/wiki/configuration#wiki-json-directives).
+List with all directives can be found in the [configration wiki](https://github.com/ironsmile/euterpe/wiki/configuration#wiki-json-directives).
 
 As an API
 ======

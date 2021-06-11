@@ -1,6 +1,8 @@
 /*
-    HTTPMS javascript
+    Euterpe javascript
 */
+
+const serviceName = 'Euterpe';
 
 $(document).ready(function(){
     switch (window.location.pathname) {
@@ -240,7 +242,7 @@ function playerPageInit() {
             return;
         }
 
-        document.title = media.title + ' by ' + media.artist + ' | HTTPMS';
+        document.title = media.title + ' by ' + media.artist + ' | ' + serviceName;
 
         var artwork_el = $('#artwork');
         var artwork_url = '/v1/album/' + escape(media.album_id) + '/artwork';
@@ -266,7 +268,7 @@ function playerPageInit() {
 
     // Restores the normal title when nothing is played
     var restore_title = function(event) {
-        document.title = 'HTTPMS';
+        document.title = serviceName;
     };
 
     $(cssSelector.jPlayer).bind($.jPlayer.event.ended, restore_title);

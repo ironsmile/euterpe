@@ -22,39 +22,39 @@ if [[ $# -gt 0 ]]; then
     os="$GOOS"
 fi
 
-if [ -d dist/httpms ]
+if [ -d dist/euterpe ]
 then
-    echo "Removing old dist/httpms directory..."
-    rm -rf dist/httpms
+    echo "Removing old dist/euterpe directory..."
+    rm -rf dist/euterpe
 fi
 
 echo "Making dist directory..."
-mkdir -p dist/httpms
+mkdir -p dist/euterpe
 
 echo "Building binaries..."
 make release
-mv httpms dist/httpms/httpms
+mv euterpe dist/euterpe/euterpe
 
 for file in README.md
 do
     echo "Copying $file..."
-    cp "$file" dist/httpms
+    cp "$file" dist/euterpe
 done
 
 echo "Copying install/uninstall scripts..."
-cp tools/install dist/httpms
-cp tools/uninstall dist/httpms
+cp tools/install dist/euterpe
+cp tools/uninstall dist/euterpe
 
-archive="httpms_${version}_${os}_${arch}.tar.gz"
+archive="euterpe_${version}_${os}_${arch}.tar.gz"
 
 echo "Creating archive..."
 cd dist
-tar cfzv "$archive" httpms
+tar cfzv "$archive" euterpe
 
 echo "dist/$archive created"
 
 echo "Cleaning up..."
 cd -
-rm -rf dist/httpms || exit
+rm -rf dist/euterpe || exit
 
 echo "Done"

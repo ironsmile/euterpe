@@ -42,7 +42,7 @@ var (
 	rescanLibrary bool
 )
 
-const userAgentFormat = "HTTP Media Server/%s (github.com/ironsmile/euterpe)"
+const userAgentFormat = "Euterpe Media Server/%s (github.com/ironsmile/euterpe)"
 
 func init() {
 	flag.StringVar(&pidFile, "p", "pidfile.pid",

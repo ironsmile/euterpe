@@ -6,4 +6,8 @@
 
 package helpers
 
-const HttpmsDir = "httpms"
+const (
+	httpmsDir = "httpms"
+
+	euterpeDir = "euterpe"
+)
