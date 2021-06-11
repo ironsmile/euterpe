@@ -9,7 +9,7 @@ A way to listen to your music library from everywhere. Once set up you won't nee
 
 No more!
 
-[![Build Status](https://travis-ci.org/ironsmile/httpms.png?branch=master)](https://travis-ci.org/ironsmile/httpms) [![GoDoc](https://godoc.org/github.com/ironsmile/httpms?status.svg)](https://godoc.org/github.com/ironsmile/httpms) [![Go Report Card](https://goreportcard.com/badge/github.com/ironsmile/httpms)](https://goreportcard.com/report/github.com/ironsmile/httpms) [![Coverage Status](https://coveralls.io/repos/github/ironsmile/httpms/badge.svg?branch=master)](https://coveralls.io/github/ironsmile/httpms?branch=master)
+[![Build Status](https://github.com/ironsmile/euterpe/actions/workflows/build-test-lint.yml/badge.svg?branch=master)](https://github.com/ironsmile/euterpe/actions/workflows/build-test-lint.yml?query=branch%3Amaster) [![GoDoc](https://pkg.go.dev/badge/github.com/ironsmile/euterpe)](https://godoc.org/github.com/ironsmile/euterpe) [![Go Report Card](https://goreportcard.com/badge/github.com/ironsmile/euterpe)](https://goreportcard.com/report/github.com/ironsmile/euterpe) [![Coverage Status](https://coveralls.io/repos/github/ironsmile/euterpe/badge.svg?branch=master)](https://coveralls.io/github/ironsmile/euterpe?branch=master)
 
 * [Web UI](#web-ui)
 * [Features](#features)
