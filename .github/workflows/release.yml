@@ -1,0 +1,124 @@
+name: Continuous Integration
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Set up Go
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.16
+      id: go
+
+    - name: Install OS dependencies
+      run: sudo apt-get install libtagc0-dev upx-ucl
+
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Build Release Bundle
+      id: linux_bundle
+      run: |
+        ./tools/build
+        echo ::set-output "name=file_name::dist/euterpe_${GITHUB_REF#refs/*/}_linux_amd64.tar.gz"
+        echo ::set-output "name=version::${GITHUB_REF#refs/*/}"
+
+  build-macos:
+    name: Build MacOS
+    runs-on: macos-latest
+    steps:
+
+    - name: Set up Go
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.16
+      id: go
+
+    - name: Install OS dependencies
+      run: |
+        brew update
+        brew install libtagc0-dev upx-ucl
+
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Build Release Bundle
+      id: macos_bundle
+      run: |
+        ./tools/build
+        echo ::set-output "name=file_name::dist/euterpe_${GITHUB_REF#refs/*/}_darwin_amd64.tar.gz"
+
+  # # https://github.com/taglib/taglib/blob/master/INSTALL.md
+  # build-windows:
+  #   runs-on: windows-latest
+  #   steps:
+
+  #     - name: Install Dev Tools
+  #     - run: |
+  #       choco install golang
+  #       choco install cmake
+  #       choco install make
+  #       choco install mingw
+  #       choco install gzip
+  #       choco install tartool
+  #       choco install upx
+
+  #     - name: Install Taglib
+  #     - run: |
+  #       cd ~\Downloads
+  #       curl -o taglib.tar.gz https://taglib.org/releases/taglib-1.12.tar.gz
+  #       tar xf taglib.tar.gz
+  #       cd taglib-1.12
+  #       cmake -G "MinGW Makefiles" -DCMAKE_CXX_COMPILER=C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin\g++.exe -DCMAKE_C_COMPILER=C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin\gcc.exe -DCMAKE_MAKE_PROGRAM=make.exe  -DCMAKE_INSTALL_PREFIX=C:\Libraries\taglib .
+
+  - name: Create Release
+    id: create_release
+    uses: actions/create-release@v1
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    with:
+      tag_name: ${{ github.ref }}
+      release_name: Release ${{ steps.linux_bundle.outputs.version }}
+      body: |
+        Changes in this Release
+        - TODO: add changes
+      draft: true
+      prerelease: false
+
+  - name: Upload Linux Bundle
+    id: upload-release-asset 
+    uses: actions/upload-release-asset@v1
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    with:
+      # This pulls from the CREATE RELEASE step above, referencing it's
+      # ID to get its outputs object, which include a `upload_url`.
+      # See this blog post for more info:
+      # https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      asset_path: ./${{ steps.linux_bundle.outputs.file_name }}
+      asset_name: ${{ steps.linux_bundle.outputs.file_name }}
+      asset_content_type: application/x-compressed-tar
+
+  - name: Upload MacOS Bundle
+    id: upload-release-asset 
+    uses: actions/upload-release-asset@v1
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    with:
+      # This pulls from the CREATE RELEASE step above, referencing it's
+      # ID to get its outputs object, which include a `upload_url`.
+      # See this blog post for more info:
+      # https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      asset_path: ./${{ steps.macos_bundle.outputs.file_name }}
+      asset_name: ${{ steps.macos_bundle.outputs.file_name }}
+      asset_content_type: application/x-compressed-tar
