@@ -79,46 +79,46 @@ jobs:
   #       cd taglib-1.12
   #       cmake -G "MinGW Makefiles" -DCMAKE_CXX_COMPILER=C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin\g++.exe -DCMAKE_C_COMPILER=C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin\gcc.exe -DCMAKE_MAKE_PROGRAM=make.exe  -DCMAKE_INSTALL_PREFIX=C:\Libraries\taglib .
 
-  - name: Create Release
-    id: create_release
-    uses: actions/create-release@v1
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    with:
-      tag_name: ${{ github.ref }}
-      release_name: Release ${{ steps.linux_bundle.outputs.version }}
-      body: |
-        Changes in this Release
-        - TODO: add changes
-      draft: true
-      prerelease: false
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ steps.linux_bundle.outputs.version }}
+          body: |
+            Changes in this Release
+            - TODO: add changes
+          draft: true
+          prerelease: false
 
-  - name: Upload Linux Bundle
-    id: upload-release-asset 
-    uses: actions/upload-release-asset@v1
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    with:
-      # This pulls from the CREATE RELEASE step above, referencing it's
-      # ID to get its outputs object, which include a `upload_url`.
-      # See this blog post for more info:
-      # https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-      asset_path: ./${{ steps.linux_bundle.outputs.file_name }}
-      asset_name: ${{ steps.linux_bundle.outputs.file_name }}
-      asset_content_type: application/x-compressed-tar
+      - name: Upload Linux Bundle
+        id: upload-linux-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This pulls from the CREATE RELEASE step above, referencing it's
+          # ID to get its outputs object, which include a `upload_url`.
+          # See this blog post for more info:
+          # https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{ steps.linux_bundle.outputs.file_name }}
+          asset_name: ${{ steps.linux_bundle.outputs.file_name }}
+          asset_content_type: application/x-compressed-tar
 
-  - name: Upload MacOS Bundle
-    id: upload-release-asset 
-    uses: actions/upload-release-asset@v1
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    with:
-      # This pulls from the CREATE RELEASE step above, referencing it's
-      # ID to get its outputs object, which include a `upload_url`.
-      # See this blog post for more info:
-      # https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-      asset_path: ./${{ steps.macos_bundle.outputs.file_name }}
-      asset_name: ${{ steps.macos_bundle.outputs.file_name }}
-      asset_content_type: application/x-compressed-tar
+      - name: Upload MacOS Bundle
+        id: upload-macos-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{ steps.macos_bundle.outputs.file_name }}
+          asset_name: ${{ steps.macos_bundle.outputs.file_name }}
+          asset_content_type: application/x-compressed-tar
