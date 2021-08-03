@@ -122,9 +122,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: Release ${{ steps.linux_bundle.outputs.version }}
+          release_name: Release ${{ steps.files_to_upload.outputs.version }}
           body: |
-            Changes in this Release
+            Changes in this release
             - TODO: add changes
           draft: true
           prerelease: false
