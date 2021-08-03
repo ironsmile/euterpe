@@ -28,8 +28,12 @@ jobs:
       id: linux_bundle
       run: |
         ./tools/build
-        echo ::set-output "name=file_name::dist/euterpe_${GITHUB_REF#refs/*/}_linux_amd64.tar.gz"
-        echo ::set-output "name=version::${GITHUB_REF#refs/*/}"
+
+    - name: Upload Linux (amd64) Artefact
+      uses: actions/upload-artifact@v2
+      with:
+        name: linux-amd64
+        path: dist/euterpe_*.tar.gz
 
   build-macos:
     name: Build MacOS
@@ -45,7 +49,7 @@ jobs:
     - name: Install OS dependencies
       run: |
         brew update
-        brew install libtagc0-dev upx-ucl
+        brew install libtag upx
 
     - name: Check out code
       uses: actions/checkout@v2
@@ -54,7 +58,12 @@ jobs:
       id: macos_bundle
       run: |
         ./tools/build
-        echo ::set-output "name=file_name::dist/euterpe_${GITHUB_REF#refs/*/}_darwin_amd64.tar.gz"
+
+    - name: Upload macOS (amd64) Artefact
+      uses: actions/upload-artifact@v2
+      with:
+        name: macos-amd64
+        path: dist/euterpe_*.tar.gz
 
   # # https://github.com/taglib/taglib/blob/master/INSTALL.md
   # build-windows:
@@ -82,7 +91,28 @@ jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
+    needs: [build-macos, build-linux]
     steps:
+      # Use download-artefact: https://github.com/actions/download-artifact
+
+      - name: Download Linux (amd64) Build
+        uses: actions/download-artifact@v2
+        with:
+          name: linux-amd64
+
+      - name: Download macOS (amd64) Build
+        uses: actions/download-artifact@v2
+        with:
+          name: macos-amd64
+
+      - name: Set Outputs For Uploads
+        id: files_to_upload
+        run: |
+          ls -R
+          echo ::set-output "name=version::${GITHUB_REF#refs/*/}"
+          echo ::set-output "name=linux_file::dist/euterpe_${GITHUB_REF#refs/*/}_linux_amd64.tar.gz"
+          echo ::set-output "name=macos_file::dist/euterpe_${GITHUB_REF#refs/*/}_darwin_amd64.tar.gz"
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -97,7 +127,7 @@ jobs:
           draft: true
           prerelease: false
 
-      - name: Upload Linux Bundle
+      - name: Upload Linux (amd64)
         id: upload-linux-asset
         uses: actions/upload-release-asset@v1
         env:
@@ -108,17 +138,17 @@ jobs:
           # See this blog post for more info:
           # https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./${{ steps.linux_bundle.outputs.file_name }}
-          asset_name: ${{ steps.linux_bundle.outputs.file_name }}
+          asset_path: ./${{ steps.files_to_upload.outputs.linux_file }}
+          asset_name: ${{ steps.files_to_upload.outputs.linux_file }}
           asset_content_type: application/x-compressed-tar
 
-      - name: Upload MacOS Bundle
+      - name: Upload MacOS (amd64)
         id: upload-macos-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./${{ steps.macos_bundle.outputs.file_name }}
-          asset_name: ${{ steps.macos_bundle.outputs.file_name }}
+          asset_path: ./${{ steps.files_to_upload.outputs.macos_file }}
+          asset_name: ${{ steps.files_to_upload.outputs.macos_file }}
           asset_content_type: application/x-compressed-tar
