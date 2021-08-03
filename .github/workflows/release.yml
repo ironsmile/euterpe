@@ -124,8 +124,14 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ steps.files_to_upload.outputs.version }}
           body: |
-            Changes in this release
+            ## Changes in this release
+
             - TODO: add changes
+
+            ## Installation
+
+            Download the archive for your OS below, extract it and
+            follow the instructions in the README.
           draft: true
           prerelease: false
 

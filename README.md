@@ -58,28 +58,34 @@ If you want to install it from source you will need:
 
 * [Go](http://golang.org/) 1.16 or later [installed and properly configured](http://golang.org/doc/install).
 
-* [go-taglib](https://github.com/wtolson/go-taglib) - Read the [install notes](https://github.com/wtolson/go-taglib#install)
+* [taglib](https://taglib.org/) - Read the [install instructions](https://github.com/taglib/taglib/blob/master/INSTALL.md) or better yet the one inside your downloaded version. Most operating systems will have it in their package manager, though. Better use this one.
 
-* [go-sqlite3](https://github.com/mattn/go-sqlite3) - `go install github.com/mattn/go-sqlite3` would probably be enough.
-
-* [International Components for Unicode](http://site.icu-project.org/) - The Euterpe binary dynamically links to libicu. Your friendly Linux distribution probably already has a package. For other OSs one should [go here](http://site.icu-project.org/download).
+* [International Components for Unicode](http://site.icu-project.org/) - The Euterpe binary dynamically links to `libicu`. Your friendly Linux distribution probably already has a package. For other OSs one should [go here](http://site.icu-project.org/download).
 
 Install
 ======
 
 The safest route is installing [one of the releases](https://github.com/ironsmile/euterpe/releases).
 
-If you have an already built version (for example `https_1.1.0_linux.tar.gz`) it includes an `install` script which would install Euterpe in `/usr/bin/euterpe`. You will have to uninstall any previously installed versions first. An `uninstall` script is provided as well.
+#### Linux & macOS
+
+If you have [one of the releases](https://github.com/ironsmile/euterpe/releases) (for example `https_1.1.0_linux.tar.gz`) it includes an `install` script which would install Euterpe in `/usr/bin/euterpe`. You will have to uninstall any previously installed versions first. An `uninstall` script is provided as well.
+
+#### Windows
+
+Automatically creating a release version for Windows is in progress at the moment. For the time being check out the next section, "From Source". Pay attention to the [requirements](#requirements) section above. As of writing this the author hasn't been yet initiated in the secret art of building and installing libraries on Windows so you are on your own.
+
+#### From Source (any OS)
 
 If installing from source running `go install` in the project root directory will compile `euterpe` and move its binary in your `$GOPATH`. Releases from `v1.0.1` onward have their go dependencies vendored in.
 
-If you want to install the latest development version from the `master` branch, you can just run
+So, to install the `master` branch, you can just run
 
 ```
 go install github.com/ironsmile/euterpe
 ```
 
-In the root of the project run
+Or alternatively, if you want to produce a release version you will have to get the repository. Then in the root of the project run
 
 ```
 make release
