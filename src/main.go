@@ -41,6 +41,9 @@ var (
 	// scan to move through all the items in the database and update their
 	// meta data with whatever is present in the source.
 	rescanLibrary bool
+
+	// localFiles is populated by the -local-fs flag.
+	localFiles bool
 )
 
 const userAgentFormat = "Euterpe Media Server/%s (github.com/ironsmile/euterpe)"
@@ -51,6 +54,9 @@ func init() {
 			"instance of the server is currently runnig. The default\n"+
 			"location is is [user_path]/pidfile.pid.")
 	flag.BoolVar(&debug, "D", false, "Debug mode. Will log everything to the stdout.")
+	flag.BoolVar(&localFiles, "local-fs", false,
+		"Will use local files for SQL templates, HTML templates and static files.\n"+
+			"As opposed to the bundled into the binary versions. Useful for development.")
 	flag.BoolVar(&showVersion, "v", false, "Show version and build information.")
 	flag.BoolVar(&rescanLibrary, "rescan", false,
 		"Will metadata synchronization with the source. All media in\n"+
@@ -75,7 +81,7 @@ func Main(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) {
 		os.Exit(0)
 	}
 
-	if debug {
+	if localFiles {
 		httpRootFS = os.DirFS("http_root")
 		htmlTemplatesFS = os.DirFS("templates")
 		sqlFilesFS = os.DirFS("sqls")
