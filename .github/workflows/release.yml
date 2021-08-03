@@ -109,9 +109,11 @@ jobs:
         id: files_to_upload
         run: |
           ls -R
+          linux_file_amd64=$(ls euterpe_*linux*.tar.gz)
+          macos_file_amd64=$(ls euterpe_*darwin*.tar.gz)
           echo ::set-output "name=version::${GITHUB_REF#refs/*/}"
-          echo ::set-output "name=linux_file::dist/euterpe_${GITHUB_REF#refs/*/}_linux_amd64.tar.gz"
-          echo ::set-output "name=macos_file::dist/euterpe_${GITHUB_REF#refs/*/}_darwin_amd64.tar.gz"
+          echo ::set-output "name=linux_file_amd64::${linux_file_amd64}"
+          echo ::set-output "name=macos_file_amd64::${macos_file_amd64}"
 
       - name: Create Release
         id: create_release
@@ -138,8 +140,8 @@ jobs:
           # See this blog post for more info:
           # https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./${{ steps.files_to_upload.outputs.linux_file }}
-          asset_name: ${{ steps.files_to_upload.outputs.linux_file }}
+          asset_path: ./${{ steps.files_to_upload.outputs.linux_file_amd64 }}
+          asset_name: ${{ steps.files_to_upload.outputs.linux_file_amd64 }}
           asset_content_type: application/x-compressed-tar
 
       - name: Upload MacOS (amd64)
@@ -149,6 +151,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./${{ steps.files_to_upload.outputs.macos_file }}
-          asset_name: ${{ steps.files_to_upload.outputs.macos_file }}
+          asset_path: ./${{ steps.files_to_upload.outputs.macos_file_amd64 }}
+          asset_name: ${{ steps.files_to_upload.outputs.macos_file_amd64 }}
           asset_content_type: application/x-compressed-tar
