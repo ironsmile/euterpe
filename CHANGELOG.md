@@ -1,5 +1,19 @@
 # Change Log
 
+## v1.5.0 - 2021-08-03
+
+**What is New**
+
+* The project is finally renamed to "Euterpe"! If you have the old version, uninstall it manually as the new installer will not recognize it.
+
+* The web UI playlist has been improved. Everything is neatly ordered now.
+
+* The `-local-fs` flag was added which allows using assets from the file system instead of the bundled into the binary static files.
+
+**Bug fixes**
+
+* The artwork view in the web UI is finally a square so most common album artworks are now fully visible.
+
 ## v1.4.1 - 2021-05-25
 
 **What is New**
