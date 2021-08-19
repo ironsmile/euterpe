@@ -13,6 +13,7 @@ No more!
 
 * [Web UI](#web-ui)
 * [Features](#features)
+* [Demo](#demo)
 * [Requirements](#requirements)
 * [Install](#install)
 * [Docker Image](#docker)
@@ -51,6 +52,10 @@ Features
 * Extensible via [stable API](#as-an-api)
 * Multiple [clients and player plugins](#clients)
 
+Demo
+======
+
+Just show, don't talk, will ya? I will! You may take the server a spin with the [live demo](https://listen-to-euterpe.eu/demo) if you would like to. Feel free to thank all the artists who made their music available for this!
 
 Requirements
 ======
