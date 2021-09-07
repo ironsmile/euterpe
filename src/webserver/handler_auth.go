@@ -25,7 +25,7 @@ const (
 //  * JWT token as a query string
 //
 // Basic auth is preserved for backward compatibility. Needless to say, it so not
-// a prefered method for authentication.
+// a preferred method for authentication.
 type AuthHandler struct {
 	wrapped    http.Handler // The actual handler that does the APP Logic job
 	username   string       // Username to be used for basic authenticate

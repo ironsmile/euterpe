@@ -17,21 +17,21 @@ import (
 var (
 	// sqlFilesFS the migrations directory which contains SQL
 	// migrations for sql-migrate and the initial schema. If the
-	// embeded directory name changes, remember to change it in
+	// embedded directory name changes, remember to change it in
 	// main() too.
 	//
 	//go:embed sqls
 	sqlFilesFS embed.FS
 
 	// httpRootFS is the directory which contains the
-	// static files served by HTTPMS. If the embeded directory
+	// static files served by HTTPMS. If the embedded directory
 	// name changes remember to change it in main() too.
 	//
 	//go:embed http_root
 	httpRootFS embed.FS
 
 	// htmlTemplatesFS is the directory with HTML templates. If
-	// the embeded directory name changes, remember to change it
+	// the embedded directory name changes, remember to change it
 	// in main() too.
 	//
 	//go:embed templates

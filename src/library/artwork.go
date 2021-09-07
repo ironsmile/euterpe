@@ -24,7 +24,7 @@ import (
 //
 // When an artwork is found it will be saved in the database and once there it will be
 // served from the db. Wait, wait! Serving binary files from the database?! Isn't that
-// slow? Apparantly no with sqlite3. See the following:
+// slow? Apparently no with sqlite3. See the following:
 //
 // * https://www.sqlite.org/intern-v-extern-blob.html
 // * https://www.sqlite.org/fasterthanfs.html

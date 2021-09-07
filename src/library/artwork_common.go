@@ -40,7 +40,7 @@ type ArtistImageManager interface {
 	RemoveArtistImage(ctx context.Context, artistID int64) error
 }
 
-// ImageSize is an enum type which defines the different sizes fomr images from the
+// ImageSize is an enum type which defines the different sizes form images from the
 // ArtistImageManager and ArtworkManager .
 type ImageSize int64
 

@@ -141,7 +141,7 @@ func (aah AlbumArtworkHandler) upload(
 }
 
 // NewAlbumArtworkHandler returns a new Album artwork handler.
-// It needs an implementaion of the ArtworkManager.
+// It needs an implementation of the ArtworkManager.
 func NewAlbumArtworkHandler(
 	am library.ArtworkManager,
 	httpRootFS fs.FS,

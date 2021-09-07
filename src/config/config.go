@@ -31,7 +31,7 @@ const (
 )
 
 // defaultConfig contains all the default values for the Euterpe configuration. Users
-// can overwrite values here with their user's configuraiton.
+// can overwrite values here with their user's configuration.
 var defaultConfig = Config{
 	Listen:         defaultlistAddress,
 	LogFile:        "euterpe.log",
