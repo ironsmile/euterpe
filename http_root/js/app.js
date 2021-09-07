@@ -19,8 +19,8 @@ $(document).ready(function(){
 });
 
 function playerPageInit() {
-    // The default setPlaylist method was calling _init which did 
-    // jPlayerPlaylist.select for the first track. That resulted in jplayer stopping 
+    // The default setPlaylist method was calling _init which did
+    // jPlayerPlaylist.select for the first track. That resulted in jplayer stopping
     // the played song. Now we make it never select. We also set current = undef so
     // that it will not be equal to the song currently plaing since this is a new
     // playlist after all.
@@ -55,7 +55,7 @@ function playerPageInit() {
 
         if(instant && !$.isFunction(instant)) {
             $(playlist_el).empty();
-            
+
             $.each(this.playlist, function(i) {
                 playlist_el.append(self._createListItem(self.playlist[i]));
             });
@@ -66,7 +66,7 @@ function playerPageInit() {
             playlist_el.slideUp(displayTime, function() {
                 var $this = $(this);
                 $(this).empty();
-                
+
                 $.each(self.playlist, function(i) {
                     $this.append(self._createListItem(self.playlist[i]));
                 });
@@ -127,13 +127,13 @@ function playerPageInit() {
                     "<a href='/v1/album/"+media.album_id+"' title='download album' "+
                     "target='_blank'>" +  media.album + "</a></span>";
         }
-        
+
 
         // The title is given next in the HTML otherwise the float:right on the
         // free media corrupts in IE6/7
         listItem += "<a href='javascript:;' class='" + options.itemClass;
         listItem += "'>" + (media.number ? media.number + '. ' : "") + media.title;
-        listItem += (media.artist ? 
+        listItem += (media.artist ?
                         " <span class='jp-artist'>by "+media.artist+"</span>" : "");
         listItem += "</a>";
         listItem += "</div></li>";
@@ -363,7 +363,7 @@ function search_database (query, opts) {
 
     opts = opts || {};
     if (opts.async === undefined) {
-        opts.async = true;    
+        opts.async = true;
     }
 
     save_search_query(query);
