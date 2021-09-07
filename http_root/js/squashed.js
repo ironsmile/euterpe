@@ -713,7 +713,10 @@ function load_filters(songs, opts) {
     for (var i = 0; i < songs.length; i++) {
         if (all_artists[songs[i].artist] === undefined) {
             all_artists[songs[i].artist] = true;
-            all_artists_list.push(songs[i].artist);
+            all_artists_list.push({
+                name: songs[i].artist,
+                id: songs[i].artist_id
+            });
         }
 
         // There might be more than one album with the same name. So we are forced
@@ -723,7 +726,8 @@ function load_filters(songs, opts) {
             all_albums[songs[i].album_id] = true;
             all_albums_list.push({
                 name: songs[i].album,
-                id: songs[i].album_id
+                id: songs[i].album_id,
+                artist_id: songs[i].artist_id
             });
         }
     }
@@ -750,31 +754,38 @@ function load_filters(songs, opts) {
 
     var really_selected_artist = false;
     for (var i = 0; i < all_artists_list.length; i++) {
-        var artist = all_artists_list[i];
-        option = $('<option></option>');
+        var artist = all_artists_list[i].name;
+        var option = $('<option></option>');
         option.html(artist).val(artist);
         if (opts.selected_artist && opts.selected_artist == artist) {
-            really_selected_artist = artist;
+            really_selected_artist = all_artists_list[i];
             option.attr("selected", 1);
         }
         artist_elem.append(option);
     }
-    
+
     var really_selected_album = false;
     for (var i = 0; i < all_albums_list.length; i++) {
         var album = all_albums_list[i].name;
         var album_id = all_albums_list[i].id;
-        option = $('<option></option>');
+        var artist_id = all_albums_list[i].artist_id;
+        var option = $('<option></option>');
         option.html(album).val(album_id);
-        if (opts.selected_album && opts.selected_album == album_id) {
+
+        if (opts.selected_album && opts.selected_album === album_id) {
             really_selected_album = album_id;
             option.attr("selected", 1);
         }
+
+        if (really_selected_artist && really_selected_artist.id !== artist_id) {
+            continue;
+        }
+
         album_elem.append(option);
     }
 
-    if (localStorage.last_artist && localStorage.last_artist.length >= 1 && 
-        really_selected_artist != localStorage.last_artist)
+    if (localStorage.last_artist && localStorage.last_artist.length >= 1 &&
+        really_selected_artist.name != localStorage.last_artist)
     {
         artist_elem.val('');
         delete localStorage.last_artist;
