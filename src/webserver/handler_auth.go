@@ -15,7 +15,7 @@ const (
 	authRequiredJSON = `{"error": "authentication required"}`
 )
 
-// AuthHandler is a handler wrapper used for authenticaation. Its only job is
+// AuthHandler is a handler wrapper used for authentication. Its only job is
 // to do the authentication and then pass the work to the Handler it wraps around.
 // Possible methods for authentication:
 //
