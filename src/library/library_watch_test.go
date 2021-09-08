@@ -2,7 +2,7 @@ package library
 
 import (
 	"context"
-	_ "net/http/pprof"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,6 +10,26 @@ import (
 
 	"github.com/ironsmile/euterpe/src/helpers"
 )
+
+// copyFile copies a file from src to dst
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	_, err = io.Copy(out, in)
+	cerr := out.Close()
+	if err != nil {
+		return err
+	}
+	return cerr
+}
 
 func TestMovingFileIntoLibrary(t *testing.T) {
 	if testing.Short() {
@@ -27,7 +47,7 @@ func TestMovingFileIntoLibrary(t *testing.T) {
 	toBeMoved := filepath.Join(testFiles, "more_mp3s", "test_file_moved.mp3")
 	newFile := filepath.Join(testFiles, "library", "test_file_added.mp3")
 
-	if err := helpers.Copy(testMp3, toBeMoved); err != nil {
+	if err := copyFile(testMp3, toBeMoved); err != nil {
 		t.Fatalf("Copying file to library faild: %s", err)
 	}
 
@@ -54,7 +74,7 @@ func TestRemovingFile(t *testing.T) {
 	testMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
 	newFile := filepath.Join(testFiles, "library", "test_file_added.mp3")
 
-	if err := helpers.Copy(testMp3, newFile); err != nil {
+	if err := copyFile(testMp3, newFile); err != nil {
 		t.Fatalf("Copying file to library faild: %s", err)
 	}
 
@@ -113,7 +133,7 @@ func TestAddingAndRemovingDirectory(t *testing.T) {
 
 	defer os.RemoveAll(testDir)
 
-	if err := helpers.Copy(srcTestMp3, dstTestMp3); err != nil {
+	if err := copyFile(srcTestMp3, dstTestMp3); err != nil {
 		t.Fatal(err)
 	}
 
@@ -163,7 +183,7 @@ func TestMovingDirectory(t *testing.T) {
 
 	defer os.RemoveAll(testDir)
 
-	if err := helpers.Copy(srcTestMp3, dstTestMp3); err != nil {
+	if err := copyFile(srcTestMp3, dstTestMp3); err != nil {
 		t.Fatal(err)
 	}
 
@@ -231,7 +251,7 @@ func TestAddingNewFile(t *testing.T) {
 	testMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
 	newFile := filepath.Join(testFiles, "library", "folder_one", "test_file_added.mp3")
 
-	if err := helpers.Copy(testMp3, newFile); err != nil {
+	if err := copyFile(testMp3, newFile); err != nil {
 		t.Fatalf("Copying file to library failed: %s", err)
 	}
 

@@ -3,7 +3,6 @@ package helpers
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/user"
@@ -51,26 +50,6 @@ func SetLogsFile(logFilePath string) error {
 	}
 	log.SetOutput(logFile)
 	return nil
-}
-
-// Copy copies a file from src to dst
-func Copy(src, dst string) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-	out, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-	_, err = io.Copy(out, in)
-	cerr := out.Close()
-	if err != nil {
-		return err
-	}
-	return cerr
 }
 
 // AbsolutePath returns absolute path. If path is already absolute leave it be. If not
