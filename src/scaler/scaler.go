@@ -24,6 +24,10 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// ErrCancelled is returned when one is trying to interact with an stopped
+// scaler.
+var ErrCancelled = fmt.Errorf("scale operation on cancelled Scaler")
+
 // description is a scaling instruction.
 type description struct {
 
@@ -63,7 +67,7 @@ func (s *Scaler) Scale(
 	toWidth int,
 ) ([]byte, error) {
 	if s.stopped {
-		return nil, fmt.Errorf("scale operation on cancelled Scaler")
+		return nil, ErrCancelled
 	}
 
 	desc := description{
@@ -137,6 +141,7 @@ func (s *Scaler) watchCtx(ctx context.Context) func() error {
 	// worker go routines to stop.
 	return func() error {
 		<-ctx.Done()
+		s.stopped = true
 		close(s.work)
 		return nil
 	}
