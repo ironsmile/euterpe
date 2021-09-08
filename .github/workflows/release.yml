@@ -36,7 +36,7 @@ jobs:
         path: dist/euterpe_*.tar.gz
 
   build-macos:
-    name: Build MacOS
+    name: Build macOS
     runs-on: macos-latest
     steps:
 
@@ -67,6 +67,7 @@ jobs:
 
   # # https://github.com/taglib/taglib/blob/master/INSTALL.md
   # build-windows:
+  #   name: Build Windows
   #   runs-on: windows-latest
   #   steps:
 
@@ -150,7 +151,7 @@ jobs:
           asset_name: ${{ steps.files_to_upload.outputs.linux_file_amd64 }}
           asset_content_type: application/x-compressed-tar
 
-      - name: Upload MacOS (amd64)
+      - name: Upload macOS (amd64)
         id: upload-macos-asset
         uses: actions/upload-release-asset@v1
         env:
