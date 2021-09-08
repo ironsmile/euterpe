@@ -8,6 +8,7 @@ import (
 	"image/jpeg"
 	"io"
 	"runtime"
+	"sync"
 
 	// The following are all image formats supported for converting
 	// to other image sizes.
@@ -55,6 +56,7 @@ type Result struct {
 type Scaler struct {
 	cancelContext context.CancelFunc
 	stopped       bool
+	mx            sync.RWMutex
 
 	work chan description
 }
@@ -66,7 +68,11 @@ func (s *Scaler) Scale(
 	img io.Reader,
 	toWidth int,
 ) ([]byte, error) {
-	if s.stopped {
+	s.mx.RLock()
+	stopped := s.stopped
+	s.mx.RUnlock()
+
+	if stopped {
 		return nil, ErrCancelled
 	}
 
@@ -141,7 +147,9 @@ func (s *Scaler) watchCtx(ctx context.Context) func() error {
 	// worker go routines to stop.
 	return func() error {
 		<-ctx.Done()
+		s.mx.Lock()
 		s.stopped = true
+		s.mx.Unlock()
 		close(s.work)
 		return nil
 	}
@@ -150,7 +158,9 @@ func (s *Scaler) watchCtx(ctx context.Context) func() error {
 // Cancel stops the scaler and of its operations. Users may not use
 // any further methods on cancelled scalers.
 func (s *Scaler) Cancel() {
+	s.mx.Lock()
 	s.stopped = true
+	s.mx.Unlock()
 	s.cancelContext()
 }
 
