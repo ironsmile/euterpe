@@ -26,11 +26,12 @@ type Finder interface {
 	GetArtistImage(ctx context.Context, artist string) ([]byte, error)
 }
 
-// Client is a client for the Cover Arts Archive. It supports getting images from
+// Client is a client for recovering artwork. It supports getting images from
 // the Cover Arts Archive and automatically throttles itself so that it does not make too
-// many requests at once. It is safe for concurrent use.
+// many requests at once. It also supports getting artist images from the Discogs
+// database. It is safe for concurrent use.
 //
-// It works in two steps:
+// Getting images from Cover Arts Archive works in two steps:
 //
 // * Gets a list of mbids (aka release IDs) from the Music Brainz API which are above
 // MinScore.
@@ -42,6 +43,10 @@ type Finder interface {
 // which correspond to different releases for this album. Perhaps for multiple years
 // or countries. Generally all releases have the same cover art. So we accept any of
 // them.
+//
+// Getting images for artists from Discogs works in similar way. The only difference
+// is that there is an additional request for getting the discogsID of an artist
+// using the mbid.
 //
 // It implements Finder.
 type Client struct {
@@ -78,6 +83,10 @@ type Client struct {
 // required so that they can use it for throttling and filtering out bad applications.
 // The delay is used to throttle requests to the API. No more than one request per
 // `delay` will be made.
+//
+// The Discogs API has taken a different path to achieve the same. It requires
+// you to make requests with a Discogs Token which you generate with your personal
+// account.
 func NewClient(useragent string, delay time.Duration, discogsToken string) *Client {
 	return &Client{
 		MinScore:           95,
