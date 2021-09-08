@@ -4,7 +4,11 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"image"
+	"image/color"
+	"image/png"
 	"io"
+	"strings"
 	"testing"
 	"time"
 
@@ -15,6 +19,70 @@ import (
 // in size. Then checks whether it is the desired size.
 func TestScalerSimpleImage(t *testing.T) {
 
+	// First, creating a test image.
+	testImg := image.NewRGBA(image.Rect(
+		0, 0, 150, 200,
+	))
+
+	for x := 0; x < 150; x++ {
+		for y := 0; y < 200; y++ {
+			testImg.Set(x, y, color.RGBA{
+				R: 100,
+				G: 100,
+				B: 100,
+				A: 255,
+			})
+		}
+	}
+
+	imgBuf := new(bytes.Buffer)
+	if err := png.Encode(imgBuf, testImg); err != nil {
+		t.Fatalf("could not encode test image: %s", err)
+	}
+
+	// The use the created image in order to scale it down.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	sclr := scaler.New(ctx)
+	defer sclr.Cancel()
+
+	imgBytes, err := sclr.Scale(ctx, imgBuf, 50)
+	if err != nil {
+		t.Fatalf("scaling the test image failed: %s", err)
+	}
+
+	scaledImage := bytes.NewBuffer(imgBytes)
+	img, _, err := image.Decode(scaledImage)
+	if err != nil {
+		t.Fatalf("the scaled image cannot be decoded: %s", err)
+	}
+
+	imgBounds := img.Bounds()
+	if imgBounds.Max.X != 50 {
+		t.Errorf("expected image width 50 but got %d", imgBounds.Max.X)
+	}
+}
+
+// TestScalingNonImageCausesAnError makes sure that trying to scale a non-image will
+// cause an error.
+func TestScalingNonImageCausesAnError(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	sclr := scaler.New(ctx)
+	defer sclr.Cancel()
+
+	notImage := bytes.NewBufferString("definitely not an image")
+
+	_, err := sclr.Scale(ctx, notImage, 100)
+	if err == nil {
+		t.Fatalf("scaling an non-image did not cause an error")
+	}
+
+	if !strings.Contains(err.Error(), "decoding image") {
+		t.Errorf("scaling error did not mention that the problem was decoding")
+	}
 }
 
 // TestScalerCancel makes sure that the Scaler is not usable after cancel and that
@@ -27,10 +95,7 @@ func TestScalerCancel(t *testing.T) {
 		{
 			desc: "cancelled after using its own cancel func",
 			cancelledScaler: func() *scaler.Scaler {
-				ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-				defer cancel()
-
-				sclr := scaler.New(ctx)
+				sclr := scaler.New(context.Background())
 				sclr.Cancel()
 				return sclr
 			},
