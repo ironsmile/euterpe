@@ -44,6 +44,11 @@ var (
 
 	// localFiles is populated by the -local-fs flag.
 	localFiles bool
+
+	// generateConfig is controlled by the -config-gen flag and will cause
+	// the program to just create a configuration if non present and then
+	// exit.
+	generateConfig bool
 )
 
 const userAgentFormat = "Euterpe Media Server/%s (github.com/ironsmile/euterpe)"
@@ -61,6 +66,9 @@ func init() {
 	flag.BoolVar(&rescanLibrary, "rescan", false,
 		"Will metadata synchronization with the source. All media in\n"+
 			"the database will be updated. Without starting the server proper.")
+	flag.BoolVar(&generateConfig, "config-gen", false,
+		"Generates configuration file and then exits. In case there is a\n"+
+			"configuration file already then do nothing.")
 }
 
 // Main is the only thing run in the project's root main.go file.
@@ -85,6 +93,14 @@ func Main(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) {
 		httpRootFS = os.DirFS("http_root")
 		htmlTemplatesFS = os.DirFS("templates")
 		sqlFilesFS = os.DirFS("sqls")
+	}
+
+	if generateConfig {
+		if _, err := config.FindAndParse(); err != nil {
+			fmt.Fprintf(os.Stderr, "could not create config file: %s", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
 	}
 
 	if err := runServer(
