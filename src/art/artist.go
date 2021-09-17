@@ -27,6 +27,10 @@ const (
 // doomed from the get-go.
 var ErrNoDiscogsAuth = fmt.Errorf("authentication with Discogs is not configured")
 
+// errNoDiscogsRel is returned when the Artist did not have a "discogs" type relation
+// in its Music Brainz information or when this relation was not parsed as expected.
+var errNoDiscogsRel = fmt.Errorf("no Discogs relation found in Music Brainz info")
+
 // GetArtistImage finds and returns an image of particular artist. If none is found
 // it returns ErrImageNotFound.
 func (c *Client) GetArtistImage(
@@ -60,7 +64,7 @@ func (c *Client) GetArtistImage(
 		}
 		tries++
 
-		if errors.Is(err, ErrImageNotFound) {
+		if errors.Is(err, errNoDiscogsRel) {
 			continue
 		}
 
@@ -210,7 +214,7 @@ func (c *Client) getDiscogsArtistID(
 		return discogsID, nil
 	}
 
-	return "", ErrImageNotFound
+	return "", errNoDiscogsRel
 }
 
 func (c *Client) getDiscogsArtistImage(
