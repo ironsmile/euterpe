@@ -115,20 +115,24 @@ Once installed, you are ready to use your media server. After its initial run it
 Docker
 ======
 
-Alternatively to installing everything in your environment you can use the [Docker image](Dockerfile) in this repository.
+Alternatively to installing everything in your environment you can use the [Docker image](https://hub.docker.com/r/ironsmile/euterpe).
 
-```docker build -t ironsmile/euterpe github.com/ironsmile/euterpe```
-
-The `euterpe` binary there is placed in `/usr/local/bin/euterpe`.
-
-Once image is built you can start the server by:
+Start the server by running:
 
 ```sh
-docker run -v "${HOME}/Music/:/root/Music" -p 8080:9996 -d ironsmile/euterpe euterpe
+docker run -v "${HOME}/Music/:/root/Music" -p 8080:9996 -d ironsmile/euterpe:latest euterpe
 ```
 
 Then point your browser to [https://localhost:8080](https://localhost:8080) and you will see the Euterpe web UI. The `-v` flag in the Docker command will mount your `$HOME/Music` directory to be discoverable by Euterpe.
 
+
+### Building the Image Yourself
+
+You can use the [Dockerfile](Dockerfile) in this repository to build the image yourself.
+
+```docker build -t ironsmile/euterpe github.com/ironsmile/euterpe```
+
+The `euterpe` binary there is placed in `/usr/local/bin/euterpe`.
 
 Configuration
 ======
