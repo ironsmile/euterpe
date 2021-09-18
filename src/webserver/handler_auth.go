@@ -92,7 +92,7 @@ func (hl *AuthHandler) basicAuthChallenge(w http.ResponseWriter, r *http.Request
 		return err
 	}
 
-	w.Header().Set("WWW-Authenticate", `Basic realm="HTTPMS"`)
+	w.Header().Set("WWW-Authenticate", `Basic realm="Euterpe Music Server"`)
 	w.WriteHeader(http.StatusUnauthorized)
 
 	return tmpl.Execute(w, nil)
