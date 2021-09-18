@@ -35,6 +35,25 @@ type AuthHandler struct {
 	exceptions []string     // Paths which will be exempt from authentication
 }
 
+// NewAuthHandler returns a new AuthHandler.
+func NewAuthHandler(
+	wrapped http.Handler,
+	username string,
+	password string,
+	templatesResolver Templates,
+	secret string,
+	exceptions []string,
+) *AuthHandler {
+	return &AuthHandler{
+		wrapped:    wrapped,
+		username:   username,
+		password:   password,
+		templates:  templatesResolver,
+		secret:     secret,
+		exceptions: exceptions,
+	}
+}
+
 // ServeHTTP implements the http.Handler interface and does the actual basic authenticate
 // check for every request
 func (hl *AuthHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) {

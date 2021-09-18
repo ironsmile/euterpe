@@ -161,13 +161,13 @@ func (srv *Server) serveGoroutine() {
 	}
 
 	if srv.cfg.Auth {
-		handler = &AuthHandler{
-			wrapped:   handler,
-			username:  srv.cfg.Authenticate.User,
-			password:  srv.cfg.Authenticate.Password,
-			templates: templatesResolver,
-			secret:    srv.cfg.Authenticate.Secret,
-			exceptions: []string{
+		handler = NewAuthHandler(
+			handler,
+			srv.cfg.Authenticate.User,
+			srv.cfg.Authenticate.Password,
+			templatesResolver,
+			srv.cfg.Authenticate.Secret,
+			[]string{
 				"/v1/login/token/",
 				"/login/",
 				"/css/",
@@ -175,7 +175,7 @@ func (srv *Server) serveGoroutine() {
 				"/favicon/",
 				"/fonts/",
 			},
-		}
+		)
 	}
 
 	handler = func(h http.Handler) http.Handler {
