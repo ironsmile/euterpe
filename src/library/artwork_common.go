@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
+//counterfeiter:generate . ArtworkManager
+
 // ArtworkManager is an interface for all the methods needed for managing album artwork
 // in the local library.
 type ArtworkManager interface {
@@ -23,6 +27,8 @@ type ArtworkManager interface {
 	// RemoveAlbumArtwork removes the stored artwork for particular album.
 	RemoveAlbumArtwork(ctx context.Context, albumID int64) error
 }
+
+//counterfeiter:generate . ArtistImageManager
 
 // ArtistImageManager is an interface for all methods for managing artist imagery.
 type ArtistImageManager interface {
