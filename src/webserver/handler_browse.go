@@ -15,7 +15,7 @@ import (
 // BrowseHandler is a http.Handler which will allow you to browse through artists or
 // albums with the help of pagination.
 type BrowseHandler struct {
-	library library.Library
+	browser library.Browser
 }
 
 // ServeHTTP is required by the http.Handler's interface
@@ -93,7 +93,7 @@ func (bh BrowseHandler) browseAlbums(
 ) error {
 
 	browseArgs := getBrowseArgs(page, perPage, orderBy, order)
-	albums, count := bh.library.BrowseAlbums(browseArgs)
+	albums, count := bh.browser.BrowseAlbums(browseArgs)
 	prevPage, nextPage := getPrevNextPageURI(
 		"album",
 		page,
@@ -126,7 +126,7 @@ func (bh BrowseHandler) browseArtists(
 ) error {
 
 	browseArgs := getBrowseArgs(page, perPage, orderBy, order)
-	artists, count := bh.library.BrowseArtists(browseArgs)
+	artists, count := bh.browser.BrowseArtists(browseArgs)
 	prevPage, nextPage := getPrevNextPageURI(
 		"artist",
 		page,
@@ -235,9 +235,10 @@ func getPrevNextPageURI(
 	return prevPage, nextPage
 }
 
-// NewBrowseHandler returns a new Browse handler. It needs a library to browse through.
-func NewBrowseHandler(lib library.Library) *BrowseHandler {
-	bh := new(BrowseHandler)
-	bh.library = lib
-	return bh
+// NewBrowseHandler returns a new Browse handler. It needs a library.Browser to browse
+// through.
+func NewBrowseHandler(browser library.Browser) *BrowseHandler {
+	return &BrowseHandler{
+		browser: browser,
+	}
 }
