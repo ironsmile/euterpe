@@ -5,6 +5,10 @@ import (
 	cca "gopkg.in/mineo/gocaa.v1"
 )
 
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
+//counterfeiter:generate . CAAClient
+
 // CAAClient represents a Cover Art Archive client for getting a release front
 // image.
 type CAAClient interface {
