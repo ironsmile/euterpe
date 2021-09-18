@@ -31,6 +31,12 @@ func (c *Client) GetFrontImage(
 		mbid := cca.StringToUUID(mbidStr)
 		img, err := c.caaClient.GetReleaseFront(mbid, cca.ImageSize500)
 		if err == nil {
+			log.Printf(
+				"Downloaded image for artist(%s) album(%s) with mbID %s",
+				artist,
+				album,
+				mbidStr,
+			)
 			return img.Data, nil
 		}
 
@@ -38,13 +44,6 @@ func (c *Client) GetFrontImage(
 		if ok && httpErr.StatusCode == http.StatusNotFound {
 			continue
 		}
-
-		log.Printf(
-			"Downloaded image for artist(%s) album(%s) with mbID %s",
-			artist,
-			album,
-			mbidStr,
-		)
 		return img.Data, err
 	}
 
