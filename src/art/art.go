@@ -5,6 +5,8 @@ import (
 	"errors"
 	"sync"
 	"time"
+
+	cca "gopkg.in/mineo/gocaa.v1"
 )
 
 // ErrImageNotFound is returned by the Get* functions when no suitable cover image
@@ -64,6 +66,7 @@ type Client struct {
 	delayer          *time.Timer
 	useragent        string
 	discogsAuthToken string
+	caaClient        CAAClient
 
 	musicBrainzAPIHost string
 	discogsAPIHost     string
@@ -93,6 +96,7 @@ func NewClient(useragent string, delay time.Duration, discogsToken string) *Clie
 		useragent:          useragent,
 		delay:              delay,
 		delayer:            time.NewTimer(delay),
+		caaClient:          cca.NewCAAClient(useragent),
 		musicBrainzAPIHost: "https://musicbrainz.org",
 		discogsAPIHost:     "https://api.discogs.com",
 		discogsAuthToken:   discogsToken,

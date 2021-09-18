@@ -29,9 +29,7 @@ func (c *Client) GetFrontImage(
 
 	for _, mbidStr := range mbIDs {
 		mbid := cca.StringToUUID(mbidStr)
-		ccaClient := cca.NewCAAClient(c.useragent)
-
-		img, err := ccaClient.GetReleaseFront(mbid, cca.ImageSize500)
+		img, err := c.caaClient.GetReleaseFront(mbid, cca.ImageSize500)
 		if err == nil {
 			return img.Data, nil
 		}
