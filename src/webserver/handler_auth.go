@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gbrlsnchs/jwt"
+	"github.com/ironsmile/euterpe/src/config"
 )
 
 const (
@@ -155,7 +156,12 @@ func (hl *AuthHandler) withBasicAuth(encoded string) bool {
 		return false
 	}
 
-	return pair[0] == hl.username && pair[1] == hl.password
+	cfg := config.Auth{
+		User:     hl.username,
+		Password: hl.password,
+	}
+
+	return checkLoginCreds(pair[0], pair[1], cfg)
 }
 
 func (hl *AuthHandler) withJWT(token string) bool {
