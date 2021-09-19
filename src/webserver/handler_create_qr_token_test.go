@@ -3,7 +3,6 @@ package webserver_test
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"image"
 	"net/http"
 	"net/http/httptest"
@@ -133,8 +132,6 @@ func TestCreateQRTokenHandlerGeneratedCodes(t *testing.T) {
 			if !test.needsAuth {
 				return
 			}
-
-			fmt.Printf("%s: %d\n", test.desc, test.expectedCode)
 
 			jot, err := jwt.FromString(qrParsed.Token)
 			if err != nil {
