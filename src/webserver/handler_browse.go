@@ -175,15 +175,15 @@ func getBrowseArgs(page, perPage int, orderBy, order string) library.BrowseArgs 
 	switch orderBy {
 	case "id":
 		browseArgs.OrderBy = library.OrderByID
-	case "name":
+	default:
 		browseArgs.OrderBy = library.OrderByName
 	}
 
 	switch order {
-	case "asc":
-		browseArgs.Order = library.OrderAsc
 	case "desc":
 		browseArgs.Order = library.OrderDesc
+	default:
+		browseArgs.Order = library.OrderAsc
 	}
 
 	return browseArgs

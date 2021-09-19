@@ -6,8 +6,6 @@ import (
 	"time"
 )
 
-//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
-
 //counterfeiter:generate . ArtworkManager
 
 // ArtworkManager is an interface for all the methods needed for managing album artwork
@@ -47,7 +45,7 @@ type ArtistImageManager interface {
 }
 
 // ImageSize is an enum type which defines the different sizes form images from the
-// ArtistImageManager and ArtworkManager .
+// ArtistImageManager and ArtworkManager.
 type ImageSize int64
 
 const (

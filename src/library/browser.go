@@ -40,6 +40,8 @@ type BrowseArgs struct {
 	OrderBy BrowseOrderBy
 }
 
+//counterfeiter:generate . Browser
+
 // Browser defines the methods for browsing a library.
 type Browser interface {
 	// BrowseArtists makes it possible to browse through the library artists page by page.
