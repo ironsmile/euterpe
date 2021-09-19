@@ -9,6 +9,7 @@ require (
 	github.com/howeyc/fsnotify v0.9.0
 	github.com/ironsmile/sql-migrate v0.0.0-20180302150855-e167f4809da4
 	github.com/joefitzgerald/rainbow-reporter v0.1.0 // indirect
+	github.com/liyue201/goqr v0.0.0-20200803022322-df443203d4ea
 	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.4.1
 	github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c

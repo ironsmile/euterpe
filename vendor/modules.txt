@@ -16,6 +16,9 @@ github.com/ironsmile/sql-migrate
 github.com/ironsmile/sql-migrate/sqlparse
 # github.com/joefitzgerald/rainbow-reporter v0.1.0
 ## explicit
+# github.com/liyue201/goqr v0.0.0-20200803022322-df443203d4ea
+## explicit
+github.com/liyue201/goqr
 # github.com/mattn/go-sqlite3 v1.14.6
 ## explicit
 github.com/mattn/go-sqlite3
