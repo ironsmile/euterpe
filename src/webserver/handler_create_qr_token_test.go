@@ -133,21 +133,7 @@ func TestCreateQRTokenHandlerGeneratedCodes(t *testing.T) {
 				return
 			}
 
-			jot, err := jwt.FromString(qrParsed.Token)
-			if err != nil {
-				t.Fatalf("error parsing JWT token from string: %s", err)
-			}
-
-			if err := jot.Verify(jwt.HS256(test.auth.Secret)); err != nil {
-				t.Fatalf("error verifying JWT token: %s", err)
-			}
-
-			alg := jwt.AlgorithmValidator(jwt.MethodHS256)
-			exp := jwt.ExpirationTimeValidator(time.Now())
-
-			if err := jot.Validate(alg, exp); err != nil {
-				t.Fatalf("error validating JWT token: %s", err)
-			}
+			assertToken(t, qrParsed.Token, test.auth.Secret)
 		})
 	}
 }
@@ -156,4 +142,22 @@ type qrResponse struct {
 	Software string `json:"software"`
 	Token    string `json:"token,omitempty"`
 	Address  string `json:"address"`
+}
+
+func assertToken(t *testing.T, token, secret string) {
+	jot, err := jwt.FromString(token)
+	if err != nil {
+		t.Fatalf("error parsing JWT token from string: %s", err)
+	}
+
+	if err := jot.Verify(jwt.HS256(secret)); err != nil {
+		t.Fatalf("error verifying JWT token: %s", err)
+	}
+
+	alg := jwt.AlgorithmValidator(jwt.MethodHS256)
+	exp := jwt.ExpirationTimeValidator(time.Now())
+
+	if err := jot.Validate(alg, exp); err != nil {
+		t.Fatalf("error validating JWT token: %s", err)
+	}
 }
