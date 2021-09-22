@@ -119,6 +119,17 @@ func TestLoginHandlerSuccessful(t *testing.T) {
 			} else if !sessionCookie.Expires.IsZero() {
 				t.Errorf("session cookies without remember me should not have expiration")
 			}
+
+			if !sessionCookie.HttpOnly {
+				t.Error("expected session cookie to be HTTP Only")
+			}
+
+			if sessionCookie.Path != "/" {
+				t.Errorf(
+					"expected session cookie path to be for Path / but it was `%s`",
+					sessionCookie.Path,
+				)
+			}
 		})
 	}
 }
