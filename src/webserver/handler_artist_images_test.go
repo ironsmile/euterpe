@@ -127,7 +127,6 @@ func TestArtstImageHandlerGET(t *testing.T) {
 			respString,
 		)
 	}
-
 }
 
 // TestArtstImageHandlerDELETE tests what happens when artwork is removed.
