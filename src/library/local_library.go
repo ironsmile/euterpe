@@ -131,7 +131,7 @@ type LocalLibrary struct {
 	fs         fs.FS
 	sqlFilesFS fs.FS
 
-	imageScaler *scaler.Scaler
+	imageScaler scaler.Scaler
 
 	// cleanupLock is used to secure a thread safe access to the runningCleanup property.
 	cleanupLock *sync.RWMutex
@@ -1008,7 +1008,7 @@ func (lib *LocalLibrary) SetArtFinder(caf art.Finder) {
 }
 
 // SetScaler bind a particular image scaler to this loca library.
-func (lib *LocalLibrary) SetScaler(scl *scaler.Scaler) {
+func (lib *LocalLibrary) SetScaler(scl scaler.Scaler) {
 	lib.imageScaler = scl
 }
 

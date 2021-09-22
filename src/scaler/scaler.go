@@ -51,9 +51,22 @@ type Result struct {
 	Err     error
 }
 
+//counterfeiter:generate . Scaler
+
 // Scaler is a utility type which could be used for scaling
 // images.
-type Scaler struct {
+type Scaler interface {
+	// Scale converts the image (img) to have width toWidth in pixels while
+	// preserving its aspect ratio.
+	Scale(ctx context.Context, img io.Reader, toWidth int) ([]byte, error)
+
+	// Cancel stops the scaler and of its operations. Users may not use
+	// any further methods on cancelled scalers.
+	Cancel()
+}
+
+// scaler is a Scaler implementation which uses the x/image to accomplish its task.
+type scaler struct {
 	cancelContext context.CancelFunc
 	stopped       bool
 	mx            sync.RWMutex
@@ -63,7 +76,7 @@ type Scaler struct {
 
 // Scale converts the image (img) to have width toWidth in pixels while
 // preserving its aspect ratio.
-func (s *Scaler) Scale(
+func (s *scaler) Scale(
 	ctx context.Context,
 	img io.Reader,
 	toWidth int,
@@ -96,7 +109,7 @@ func (s *Scaler) Scale(
 	return res.ImgData, nil
 }
 
-func (s *Scaler) worker() error {
+func (s *scaler) worker() error {
 	for desc := range s.work {
 		imgData, err := s.scaleImage(desc.ImgR, desc.ToWidth)
 		desc.Result <- Result{
@@ -108,7 +121,7 @@ func (s *Scaler) worker() error {
 	return nil
 }
 
-func (s *Scaler) scaleImage(imgReader io.Reader, toWidth int) ([]byte, error) {
+func (s *scaler) scaleImage(imgReader io.Reader, toWidth int) ([]byte, error) {
 	img, _, err := image.Decode(imgReader)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding image: %w", err)
@@ -141,7 +154,7 @@ func (s *Scaler) scaleImage(imgReader io.Reader, toWidth int) ([]byte, error) {
 	return dstJPEG.Bytes(), nil
 }
 
-func (s *Scaler) watchCtx(ctx context.Context) func() error {
+func (s *scaler) watchCtx(ctx context.Context) func() error {
 	// This function is meant to continuously watch the incoming context
 	// and when it is done to close the work channel. This will cause all
 	// worker go routines to stop.
@@ -157,7 +170,7 @@ func (s *Scaler) watchCtx(ctx context.Context) func() error {
 
 // Cancel stops the scaler and of its operations. Users may not use
 // any further methods on cancelled scalers.
-func (s *Scaler) Cancel() {
+func (s *scaler) Cancel() {
 	s.mx.Lock()
 	s.stopped = true
 	s.mx.Unlock()
@@ -165,10 +178,10 @@ func (s *Scaler) Cancel() {
 }
 
 // New returns a new scaler, ready for use.
-func New(ctx context.Context) *Scaler {
+func New(ctx context.Context) Scaler {
 	ctx, cancel := context.WithCancel(ctx)
 
-	s := &Scaler{
+	s := &scaler{
 		cancelContext: cancel,
 		work:          make(chan description),
 	}

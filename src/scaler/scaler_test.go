@@ -90,11 +90,11 @@ func TestScalingNonImageCausesAnError(t *testing.T) {
 func TestScalerCancel(t *testing.T) {
 	tests := []struct {
 		desc            string
-		cancelledScaler func() *scaler.Scaler
+		cancelledScaler func() scaler.Scaler
 	}{
 		{
 			desc: "cancelled after using its own cancel func",
-			cancelledScaler: func() *scaler.Scaler {
+			cancelledScaler: func() scaler.Scaler {
 				sclr := scaler.New(context.Background())
 				sclr.Cancel()
 				return sclr
@@ -102,7 +102,7 @@ func TestScalerCancel(t *testing.T) {
 		},
 		{
 			desc: "cancelled after its context is cancelled",
-			cancelledScaler: func() *scaler.Scaler {
+			cancelledScaler: func() scaler.Scaler {
 				ctx, cancel := context.WithCancel(context.Background())
 
 				sclr := scaler.New(ctx)
