@@ -17,6 +17,8 @@ var ErrImageNotFound = errors.New("image not found")
 // for the server to handle.
 var ErrImageTooBig = errors.New("image is too big")
 
+//counterfeiter:generate . Finder
+
 // Finder defines a type which is capable of finding art for artists or albums.
 type Finder interface {
 	// GetFrontImage returns the front album artwork for particular album
