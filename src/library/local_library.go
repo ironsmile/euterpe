@@ -34,7 +34,7 @@ const (
 	UnknownLabel = "Unknown"
 
 	// SQLiteMemoryFile can be used as a database path for the sqlite's Open method.
-	// When using it, one owuld create a memory database which does not write
+	// When using it, one would create a memory database which does not write
 	// anything on disk. See https://www.sqlite.org/inmemorydb.html for more info
 	// on the subject of in-memory databases. We are using a shared cache because
 	// this causes all the different connections in the database/sql pool to be
@@ -57,10 +57,10 @@ var (
 	// IO load for the duration of the scan.
 	LibraryFastScan bool
 
-	// ErrAlbumNotFound is returned when no album could be found for partilcuar operation.
+	// ErrAlbumNotFound is returned when no album could be found for particular operation.
 	ErrAlbumNotFound = errors.New("Album Not Found")
 
-	// ErrArtistNotFound is returned when no artist could be found for partilcuar operation.
+	// ErrArtistNotFound is returned when no artist could be found for particular operation.
 	ErrArtistNotFound = errors.New("Artist Not Found")
 
 	// ErrArtworkNotFound is returned when no artwork can be found for particular album.
@@ -135,7 +135,7 @@ type LocalLibrary struct {
 	// cleanupLock is used to secure a thread safe access to the runningCleanup property.
 	cleanupLock *sync.RWMutex
 
-	// runningCleanup shows whether there is an already running cleanup.
+	// runningCleanup shows whether there is an already running clean-up.
 	runningCleanup bool
 
 	// runningRescan shows that at the moment a complete rescan is running.
@@ -220,7 +220,7 @@ func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 	return output
 }
 
-// GetFilePath returns the filsystem path for a file specified by its ID.
+// GetFilePath returns the filesystem path for a file specified by its ID.
 func (lib *LocalLibrary) GetFilePath(ID int64) string {
 	var filePath string
 	work := func(db *sql.DB) error {
