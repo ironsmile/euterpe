@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gorilla/mux"
 	"github.com/ironsmile/euterpe/src/config"
 	"github.com/ironsmile/euterpe/src/webserver"
 )
@@ -78,10 +79,10 @@ func TestLoginTokenHandler(t *testing.T) {
 	for _, test := range tests {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
-			h := webserver.NewLoginTokenHandler(cfg)
+			h := routeLoginTokenHandler(webserver.NewLoginTokenHandler(cfg))
 			req := httptest.NewRequest(
 				http.MethodPost,
-				"/v1/login/token",
+				"/v1/login/token/",
 				test.reqBody(t),
 			)
 			resp := httptest.NewRecorder()
@@ -114,5 +115,18 @@ func TestLoginTokenHandler(t *testing.T) {
 			assertToken(t, tokenResponse.Token, cfg.Secret)
 		})
 	}
+}
 
+// routeLoginTokenHandler wraps a handler the same way the web server will do when
+// constructing the main application router. This is needed for tests so that the
+// Gorilla mux variables will be parsed.
+func routeLoginTokenHandler(h http.Handler) http.Handler {
+	router := mux.NewRouter()
+	router.StrictSlash(true)
+	router.UseEncodedPath()
+	router.Handle(webserver.APIv1EndpointLoginToken, h).Methods(
+		webserver.APIv1Methods[webserver.APIv1EndpointLoginToken]...,
+	)
+
+	return router
 }

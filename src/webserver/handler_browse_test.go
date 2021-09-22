@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gorilla/mux"
 	"github.com/ironsmile/euterpe/src/library"
 	"github.com/ironsmile/euterpe/src/library/libraryfakes"
 	"github.com/ironsmile/euterpe/src/webserver"
@@ -25,7 +26,7 @@ func TestBrowseHandlerArgumentParsing(t *testing.T) {
 	}{
 		{
 			desc:         "default arguments",
-			url:          "/",
+			url:          "/v1/browse",
 			expectedCode: http.StatusOK,
 			expectedAlbumArgs: &library.BrowseArgs{
 				PerPage: 10,
@@ -36,7 +37,7 @@ func TestBrowseHandlerArgumentParsing(t *testing.T) {
 		},
 		{
 			desc:         "for particular album",
-			url:          "/?by=album&per-page=5&page=2&order-by=id&order=desc",
+			url:          "/v1/browse?by=album&per-page=5&page=2&order-by=id&order=desc",
 			expectedCode: http.StatusOK,
 			expectedAlbumArgs: &library.BrowseArgs{
 				PerPage: 5,
@@ -47,7 +48,7 @@ func TestBrowseHandlerArgumentParsing(t *testing.T) {
 		},
 		{
 			desc:         "for particular artist",
-			url:          "/?by=artist&per-page=5&page=2&order-by=id&order=desc",
+			url:          "/v1/browse?by=artist&per-page=5&page=2&order-by=id&order=desc",
 			expectedCode: http.StatusOK,
 			expectedArtistArgs: &library.BrowseArgs{
 				PerPage: 5,
@@ -58,7 +59,7 @@ func TestBrowseHandlerArgumentParsing(t *testing.T) {
 		},
 		{
 			desc:         "default args for artist",
-			url:          "/?by=artist",
+			url:          "/v1/browse?by=artist",
 			expectedCode: http.StatusOK,
 			expectedArtistArgs: &library.BrowseArgs{
 				PerPage: 10,
@@ -69,52 +70,52 @@ func TestBrowseHandlerArgumentParsing(t *testing.T) {
 		},
 		{
 			desc:         "unsupported by argument",
-			url:          "/?by=song",
+			url:          "/v1/browse?by=song",
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			desc:         "negative per-page",
-			url:          "/?per-page=-2",
+			url:          "/v1/browse?per-page=-2",
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			desc:         "per-page which is not a number",
-			url:          "/?per-page=two",
+			url:          "/v1/browse?per-page=two",
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			desc:         "zero per-page",
-			url:          "/?per-page=0",
+			url:          "/v1/browse?per-page=0",
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			desc:         "negative page",
-			url:          "/?page=-2",
+			url:          "/v1/browse?page=-2",
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			desc:         "zero page",
-			url:          "/?page=0",
+			url:          "/v1/browse?page=0",
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			desc:         "page which is not a number",
-			url:          "/?page=five",
+			url:          "/v1/browse?page=five",
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			desc:         "unsupported order-by",
-			url:          "/?order-by=genre",
+			url:          "/v1/browse?order-by=genre",
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			desc:         "unsupported order",
-			url:          "/?order=best",
+			url:          "/v1/browse?order=best",
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			desc:         "malformed query",
-			url:          "/?k;ey=5&baba=2%",
+			url:          "/v1/browse?k;ey=5&baba=2%",
 			expectedCode: http.StatusBadRequest,
 		},
 	}
@@ -136,7 +137,7 @@ func TestBrowseHandlerArgumentParsing(t *testing.T) {
 				},
 			}
 
-			handler := webserver.NewBrowseHandler(&fakeBrowser)
+			handler := routeBrowseHandler(webserver.NewBrowseHandler(&fakeBrowser))
 			req := httptest.NewRequest(http.MethodGet, test.url, nil)
 			resp := httptest.NewRecorder()
 			handler.ServeHTTP(resp, req)
@@ -221,7 +222,11 @@ func TestBrowseHandlerResponseEncoding(t *testing.T) {
 	handler := webserver.NewBrowseHandler(&fakeBrowser)
 
 	// Try album response.
-	req := httptest.NewRequest(http.MethodGet, "/?by=album&page=2&per-page=2", nil)
+	req := httptest.NewRequest(
+		http.MethodGet,
+		"/v1/browse?by=album&page=2&per-page=2",
+		nil,
+	)
 	resp := httptest.NewRecorder()
 	handler.ServeHTTP(resp, req)
 
@@ -241,12 +246,12 @@ func TestBrowseHandlerResponseEncoding(t *testing.T) {
 		t.Errorf("expected page_count to be 5 but it was %d", decAlbums.PageCount)
 	}
 
-	const nextAlbumPage = "/v1/browse/?by=album&page=3&per-page=2"
+	const nextAlbumPage = "/v1/browse?by=album&page=3&per-page=2"
 	if decAlbums.Next != nextAlbumPage {
 		t.Errorf("expected next to be `%s` but it was `%s`", nextAlbumPage, decAlbums.Next)
 	}
 
-	const prevAlbumPage = "/v1/browse/?by=album&page=1&per-page=2"
+	const prevAlbumPage = "/v1/browse?by=album&page=1&per-page=2"
 	if decAlbums.Previvous != prevAlbumPage {
 		t.Errorf(
 			"expected prev to be `%s` but it was `%s`",
@@ -289,7 +294,7 @@ func TestBrowseHandlerResponseEncoding(t *testing.T) {
 	// Try artists response.
 	req = httptest.NewRequest(
 		http.MethodGet,
-		"/?by=artist&page=2&per-page=2&order=asc&order-by=id",
+		"/v1/browse?by=artist&page=2&per-page=2&order=asc&order-by=id",
 		nil,
 	)
 	resp = httptest.NewRecorder()
@@ -315,7 +320,7 @@ func TestBrowseHandlerResponseEncoding(t *testing.T) {
 		t.Errorf("expected next to be empty but it was `%s`", decArtists.Next)
 	}
 
-	const prevArtistPage = "/v1/browse/?by=artist&page=1&per-page=2&order=asc&order-by=id"
+	const prevArtistPage = "/v1/browse?by=artist&page=1&per-page=2&order=asc&order-by=id"
 	if decArtists.Previvous != prevArtistPage {
 		t.Errorf(
 			"expected prev to be `%s` but it was `%s`",
@@ -403,4 +408,18 @@ func assertResponseIsValidJSON(t *testing.T, r io.Reader) {
 	if err := dec.Decode(&decoded); err != nil {
 		t.Errorf("invalid JSON: %s", err)
 	}
+}
+
+// routeBrowseHandler wraps a handler the same way the web server will do when
+// constructing the main application router. This is needed for tests so that the
+// Gorilla mux variables will be parsed.
+func routeBrowseHandler(h http.Handler) http.Handler {
+	router := mux.NewRouter()
+	router.StrictSlash(true)
+	router.UseEncodedPath()
+	router.Handle(webserver.APIv1EndpointBrowse, h).Methods(
+		webserver.APIv1Methods[webserver.APIv1EndpointBrowse]...,
+	)
+
+	return router
 }

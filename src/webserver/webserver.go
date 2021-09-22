@@ -107,19 +107,33 @@ func (srv *Server) serveGoroutine() {
 	router.UseEncodedPath()
 
 	// API v1 methods.
-	router.Handle("/v1/file/{fileID}", mediaFileHandler).Methods("GET")
-	router.Handle("/v1/album/{albumID}/artwork", artoworkHandler).Methods(
-		"GET", "PUT", "DELETE",
+	router.Handle(APIv1EndpointFile, mediaFileHandler).Methods(
+		APIv1Methods[APIv1EndpointFile]...,
 	)
-	router.Handle("/v1/album/{albumID}", albumHandler).Methods("GET")
-	router.Handle("/v1/artist/{artistID}/image", artistImageHandler).Methods(
-		"GET", "PUT", "DELETE",
+	router.Handle(APIv1EndpointAlbumArtwork, artoworkHandler).Methods(
+		APIv1Methods[APIv1EndpointAlbumArtwork]...,
 	)
-	router.Handle("/v1/browse", browseHandler).Methods("GET")
-	router.Handle("/v1/search/{searchQuery}", searchHandler).Methods("GET")
-	router.Handle("/v1/search", searchHandler).Methods("GET")
-	router.Handle("/v1/login/token/", loginTokenHandler).Methods("POST")
-	router.Handle("/v1/register/token/", registerTokenHandler).Methods("POST")
+	router.Handle(APIv1EndpointDownloadAlbum, albumHandler).Methods(
+		APIv1Methods[APIv1EndpointDownloadAlbum]...,
+	)
+	router.Handle(APIv1EndpointArtistImage, artistImageHandler).Methods(
+		APIv1Methods[APIv1EndpointArtistImage]...,
+	)
+	router.Handle(APIv1EndpointBrowse, browseHandler).Methods(
+		APIv1Methods[APIv1EndpointBrowse]...,
+	)
+	router.Handle(APIv1EndpointSearchWithPath, searchHandler).Methods(
+		APIv1Methods[APIv1EndpointSearchWithPath]...,
+	)
+	router.Handle(APIv1EndpointSearch, searchHandler).Methods(
+		APIv1Methods[APIv1EndpointSearch]...,
+	)
+	router.Handle(APIv1EndpointLoginToken, loginTokenHandler).Methods(
+		APIv1Methods[APIv1EndpointLoginToken]...,
+	)
+	router.Handle(APIv1EndpointRegisterToken, registerTokenHandler).Methods(
+		APIv1Methods[APIv1EndpointRegisterToken]...,
+	)
 
 	// Kept for backward compatibility with older clients created before the
 	// API v1 compatibility promise. Although no promise has been made for

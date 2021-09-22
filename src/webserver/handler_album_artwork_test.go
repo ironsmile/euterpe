@@ -334,8 +334,8 @@ func routeAlbumArtworkHandler(h http.Handler) http.Handler {
 	router := mux.NewRouter()
 	router.StrictSlash(true)
 	router.UseEncodedPath()
-	router.Handle("/v1/album/{albumID}/artwork", h).Methods(
-		"GET", "PUT", "DELETE",
+	router.Handle(webserver.APIv1EndpointAlbumArtwork, h).Methods(
+		webserver.APIv1Methods[webserver.APIv1EndpointAlbumArtwork]...,
 	)
 
 	return router
