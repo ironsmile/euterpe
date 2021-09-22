@@ -353,7 +353,7 @@ func (lib *LocalLibrary) checkAndRemoveTracks(tracks []track) error {
 			continue
 		}
 
-		_, err := os.Stat(track.fsPath)
+		_, err := lib.statFile(track.fsPath)
 		if err == nil || !os.IsNotExist(err) {
 			continue
 		}

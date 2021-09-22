@@ -483,7 +483,7 @@ func (lib *LocalLibrary) albumArtworkFromFS(
 	}
 
 	log.Printf("Selected album [%d] artwork: %s", albumID, selectedArtwork)
-	return os.Open(selectedArtwork)
+	return lib.fs.Open(selectedArtwork)
 }
 
 // SaveAlbumArtwork implements the ArtworkManager interface for the local library.
