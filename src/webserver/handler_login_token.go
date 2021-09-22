@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	wrongLoginJSON = `{"error": "wrong username or password"}`
+	wrongLoginText = "wrong username or password"
 )
 
 type loginTokenHandler struct {
@@ -29,7 +29,7 @@ func NewLoginTokenHandler(auth config.Auth) http.Handler {
 }
 
 func (h *loginTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=utf8")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	reqBody := struct {
 		User string `json:"username"`
@@ -38,14 +38,17 @@ func (h *loginTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	dec := json.NewDecoder(r.Body)
 	if err := dec.Decode(&reqBody); err != nil {
-		errMessage := fmt.Sprintf("Error parsing JSON request: %s.", err)
-		http.Error(w, errMessage, http.StatusBadRequest)
+		respondWithJSONError(
+			w,
+			http.StatusBadRequest,
+			"Error parsing JSON request: %s.",
+			err,
+		)
 		return
 	}
 
 	if !checkLoginCreds(reqBody.User, reqBody.Pass, h.auth) {
-		w.WriteHeader(http.StatusUnauthorized)
-		_, _ = w.Write([]byte(wrongLoginJSON))
+		respondWithJSONError(w, http.StatusUnauthorized, wrongLoginText)
 		return
 	}
 
@@ -55,8 +58,12 @@ func (h *loginTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	token, err := jwt.Sign(jwt.HS256(h.auth.Secret), tokenOpts)
 	if err != nil {
-		errMessage := fmt.Sprintf("Error generating JWT: %s.", err)
-		http.Error(w, errMessage, http.StatusInternalServerError)
+		respondWithJSONError(
+			w,
+			http.StatusInternalServerError,
+			"Error generating JWT: %s.",
+			err,
+		)
 		return
 	}
 
@@ -68,9 +75,30 @@ func (h *loginTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		w.Header().Set("Content-Type", "text/plain; charset=utf8")
-		errMessage := fmt.Sprintf("Error writing token response: %s.", err)
-		http.Error(w, errMessage, http.StatusInternalServerError)
+		respondWithJSONError(
+			w,
+			http.StatusInternalServerError,
+			"Error writing token response: %s.",
+			err,
+		)
 		return
 	}
+}
+
+func respondWithJSONError(
+	w http.ResponseWriter,
+	code int,
+	msgf string,
+	args ...interface{},
+) {
+	resp := struct {
+		Error string `json:"error"`
+	}{
+		Error: fmt.Sprintf(msgf, args...),
+	}
+
+	enc := json.NewEncoder(w)
+
+	w.WriteHeader(code)
+	_ = enc.Encode(resp)
 }
