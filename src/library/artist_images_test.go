@@ -95,35 +95,11 @@ func TestLocalLibraryFindAndSaveArtistImage(t *testing.T) {
 
 	// Set-up finished. Actual tests start here. First try to find an image for
 	// an artist who does not have one in the database.
-	foundImg, err := lib.FindAndSaveArtistImage(ctx, 1, SmallImage)
-	if err != nil {
-		t.Fatalf("error finding artist image: %s", err)
-	}
-
-	foundImgBytes, err := ioutil.ReadAll(foundImg)
-	if err != nil {
-		t.Fatalf("error reading image reader: %s", err)
-	}
-
-	if !bytes.Equal(foundImgBytes, smallImage) {
-		t.Errorf("expected image `%s` but got `%s`", smallImage, foundImgBytes)
-	}
+	assertArtistImage(t, lib, 1, SmallImage, smallImage)
 
 	// Now search for the original image. It should have been stored in the database
 	// as part of creating the small one.
-	foundImg, err = lib.FindAndSaveArtistImage(ctx, 1, OriginalImage)
-	if err != nil {
-		t.Fatalf("error finding artist image: %s", err)
-	}
-
-	foundImgBytes, err = ioutil.ReadAll(foundImg)
-	if err != nil {
-		t.Fatalf("error reading image reader: %s", err)
-	}
-
-	if !bytes.Equal(foundImgBytes, bigImage) {
-		t.Errorf("expected image `%s` but got `%s`", bigImage, foundImgBytes)
-	}
+	assertArtistImage(t, lib, 1, OriginalImage, bigImage)
 
 	// Search for an image for artist who is not in the database at all.
 	_, err = lib.FindAndSaveArtistImage(ctx, 42, OriginalImage)
@@ -149,37 +125,12 @@ func TestLocalLibraryFindAndSaveArtistImage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error saving an artist image: %s", err)
 	}
-
-	foundImg, err = lib.FindAndSaveArtistImage(ctx, 2, OriginalImage)
-	if err != nil {
-		t.Fatalf("error finding artist image: %s", err)
-	}
-
-	foundImgBytes, err = ioutil.ReadAll(foundImg)
-	if err != nil {
-		t.Fatalf("error reading image reader: %s", err)
-	}
-
-	if !bytes.Equal(foundImgBytes, secondBigImage) {
-		t.Errorf("expected image `%s` but got `%s`", secondBigImage, foundImgBytes)
-	}
+	assertArtistImage(t, lib, 2, OriginalImage, secondBigImage)
 
 	// Now get the small version of this original image. This tests converting
 	// a big original in the database into the desired size when this size was
 	// not found.
-	foundImg, err = lib.FindAndSaveArtistImage(ctx, 2, SmallImage)
-	if err != nil {
-		t.Fatalf("error finding artist image: %s", err)
-	}
-
-	foundImgBytes, err = ioutil.ReadAll(foundImg)
-	if err != nil {
-		t.Fatalf("error reading image reader: %s", err)
-	}
-
-	if !bytes.Equal(foundImgBytes, smallImage) {
-		t.Errorf("expected image `%s` but got `%s`", smallImage, foundImgBytes)
-	}
+	assertArtistImage(t, lib, 2, SmallImage, smallImage)
 
 	// And finally, remove this artist's image from the database and make sure it is
 	// deleted.
@@ -190,5 +141,29 @@ func TestLocalLibraryFindAndSaveArtistImage(t *testing.T) {
 	_, err = lib.FindAndSaveArtistImage(ctx, 2, OriginalImage)
 	if !errors.Is(err, ErrArtworkNotFound) {
 		t.Fatalf("expected artwork not found error but got `%+v`", err)
+	}
+}
+
+func assertArtistImage(
+	t *testing.T,
+	lib *LocalLibrary,
+	artistID int64,
+	size ImageSize,
+	expectedImage []byte,
+) {
+	ctx := context.Background()
+
+	foundImg, err := lib.FindAndSaveArtistImage(ctx, artistID, size)
+	if err != nil {
+		t.Fatalf("error finding artist image: %s", err)
+	}
+
+	foundImgBytes, err := ioutil.ReadAll(foundImg)
+	if err != nil {
+		t.Fatalf("error reading image reader: %s", err)
+	}
+
+	if !bytes.Equal(expectedImage, foundImgBytes) {
+		t.Errorf("expected image `%s` but got `%s`", expectedImage, foundImgBytes)
 	}
 }
