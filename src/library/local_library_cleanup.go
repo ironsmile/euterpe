@@ -3,6 +3,7 @@ package library
 import (
 	"database/sql"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -353,8 +354,7 @@ func (lib *LocalLibrary) checkAndRemoveTracks(tracks []track) error {
 			continue
 		}
 
-		_, err := lib.statFile(track.fsPath)
-		if err == nil || !os.IsNotExist(err) {
+		if _, err := fs.Stat(lib.fs, track.fsPath); err == nil || !os.IsNotExist(err) {
 			continue
 		}
 

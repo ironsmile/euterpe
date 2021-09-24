@@ -2,6 +2,7 @@ package library
 
 import (
 	"fmt"
+	"io/fs"
 	"log"
 
 	"github.com/howeyc/fsnotify"
@@ -80,7 +81,7 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 		return
 	}
 
-	st, stErr := lib.statFile(event.Name)
+	st, stErr := fs.Stat(lib.fs, event.Name)
 	if stErr != nil && !event.IsRename() && !event.IsDelete() {
 		log.Printf("Watch event stat received error: %s\n", stErr.Error())
 		return

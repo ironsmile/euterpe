@@ -152,8 +152,7 @@ func (lib *LocalLibrary) Close() {
 // AddLibraryPath adds a library directory to the list of libraries which will be
 // scanned and consequently watched.
 func (lib *LocalLibrary) AddLibraryPath(path string) {
-	_, err := lib.statFile(path)
-	if err != nil {
+	if _, err := fs.Stat(lib.fs, path); err != nil {
 		log.Printf("error adding path: %s", err)
 		return
 	}
@@ -403,7 +402,7 @@ func (lib *LocalLibrary) AddMedia(filename string) error {
 		return nil
 	}
 
-	if _, err := lib.statFile(filename); err != nil {
+	if _, err := fs.Stat(lib.fs, filename); err != nil {
 		return err
 	}
 
@@ -927,7 +926,7 @@ func (lib *LocalLibrary) Initialize() error {
 
 	// This database is already created and populated. We could just apply the
 	// migrations without executing the initial schema.
-	if st, err := lib.statFile(lib.database); err == nil && st.Size() > 0 {
+	if st, err := fs.Stat(lib.fs, lib.database); err == nil && st.Size() > 0 {
 		return lib.applyMigrations()
 	}
 
@@ -1030,23 +1029,6 @@ func (lib *LocalLibrary) scaleImage(
 	}
 
 	return newBytesReadCloser(res), nil
-}
-
-func (lib *LocalLibrary) statFile(name string) (fs.FileInfo, error) {
-	if _, ok := lib.fs.(*osFS); ok {
-		// The library is using the os package directly for working with
-		// the file system so one syscall could be saved by directly sending
-		// stat instead of going through the fs.FS interface which requires
-		// open and stat to get to the fs.FileInfo.
-		return os.Stat(name)
-	}
-
-	fh, err := lib.fs.Open(name)
-	if err != nil {
-		return nil, err
-	}
-	defer fh.Close()
-	return fh.Stat()
 }
 
 // NewLocalLibrary returns a new LocalLibrary which will use for database the file

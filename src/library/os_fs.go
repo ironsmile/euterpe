@@ -9,6 +9,10 @@ import (
 // opener.
 type osFS struct{}
 
-func (fs *osFS) Open(name string) (fs.File, error) {
+func (osfs *osFS) Open(name string) (fs.File, error) {
 	return os.Open(name)
+}
+
+func (osfs *osFS) Stat(name string) (fs.FileInfo, error) {
+	return os.Stat(name)
 }
