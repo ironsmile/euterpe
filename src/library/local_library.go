@@ -325,7 +325,7 @@ func (lib *LocalLibrary) removeFile(filePath string) {
 	}
 
 	work := func(db *sql.DB) error {
-		_, err = db.Exec(`
+		_, err := db.Exec(`
 			DELETE FROM tracks
 			WHERE fs_path = ?
 		`, fullPath)
