@@ -340,7 +340,7 @@ func (lib *LocalLibrary) checkAndRemoveArtists(artistIDs []int64) error {
 
 // checkAndRemoveTracks removes all stale tracks from the database. This might be
 //
-// 	* Tracks which no longer exist on disk.
+//	* Tracks which no longer exist on disk.
 //	* Tracks with unclean file system path. They will be inserted again
 //	  with their clean path by the normal scan.
 //
