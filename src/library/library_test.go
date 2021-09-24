@@ -508,6 +508,52 @@ func TestScaning(t *testing.T) {
 	}
 }
 
+// TestRescanning alters a file in the database and then does a rescan, expecting
+// its data to be synchronized back to what is on the filesystem.
+func TestRescanning(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	lib := getPathedLibrary(ctx, t)
+	defer func() { _ = lib.Truncate() }()
+
+	ch := make(chan int)
+	go func() {
+		lib.Scan()
+		ch <- 42
+	}()
+	testErrorAfter(t, 10*time.Second, ch, "Scanning library took too long")
+
+	const alterTrackQuery = `
+		UPDATE tracks
+		SET
+			name = 'Broken File'
+		WHERE
+			name = 'Another One'
+	`
+	if _, err := lib.db.Exec(alterTrackQuery); err != nil {
+		t.Fatalf("altering track in the database failed")
+	}
+
+	var rescanErr error
+	go func() {
+		rescanErr = lib.Rescan(ctx)
+		ch <- 42
+	}()
+	testErrorAfter(t, 10*time.Second, ch, "Rescanning library took too long")
+
+	if rescanErr != nil {
+		t.Fatalf("rescan returned an error: %s", rescanErr)
+	}
+
+	for _, track := range []string{"Another One", "Payback", "Tittled Track"} {
+		found := lib.Search(track)
+
+		if len(found) != 1 {
+			t.Errorf("%s was not found after the scan", track)
+		}
+	}
+}
+
 func TestSQLInjections(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
