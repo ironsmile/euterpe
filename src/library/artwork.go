@@ -109,6 +109,8 @@ func (lib *LocalLibrary) findAndSaveAlbumArtworkOrOriginal(
 	reader, err = lib.albumArtworkFromInternet(ctx, albumID)
 	if err == nil {
 		return lib.storeAlbumArtwork(albumID, reader, OriginalImage)
+	} else if err == ErrAlbumNotFound {
+		return nil, size, ErrAlbumNotFound
 	}
 
 	if !errors.Is(err, art.ErrImageNotFound) && !errors.Is(err, ErrArtworkNotFound) {

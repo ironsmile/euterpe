@@ -103,7 +103,7 @@ func TestLocalLibraryFindAndSaveArtistImage(t *testing.T) {
 
 	// Search for an image for artist who is not in the database at all.
 	_, err = lib.FindAndSaveArtistImage(ctx, 42, OriginalImage)
-	if errors.Is(err, ErrArtistNotFound) {
+	if !errors.Is(err, ErrArtistNotFound) {
 		t.Errorf("expected error `%+v` but got `%+v`", ErrArtistNotFound, err)
 	}
 

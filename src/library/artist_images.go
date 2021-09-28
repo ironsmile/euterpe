@@ -88,6 +88,8 @@ func (lib *LocalLibrary) findAndSaveArtistImageOrOriginal(
 	reader, err = lib.artistImageFromInternet(ctx, artistID)
 	if err == nil {
 		return lib.storeArtistImage(artistID, reader, OriginalImage)
+	} else if err == ErrArtistNotFound {
+		return nil, size, ErrArtistNotFound
 	}
 
 	if errors.Is(err, art.ErrNoDiscogsAuth) {
