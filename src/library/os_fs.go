@@ -9,6 +9,8 @@ import (
 // opener.
 type osFS struct{}
 
+var _ fs.StatFS = (*osFS)(nil)
+
 func (osfs *osFS) Open(name string) (fs.File, error) {
 	return os.Open(name)
 }
