@@ -397,7 +397,9 @@ func TestSearchUrl(t *testing.T) {
 	}
 }
 
-func TestGetFileUrl(t *testing.T) {
+// TestGetFileURL runs a real web server and then makes sure that the URL for getting
+// a file returns the expected file.
+func TestGetFileURL(t *testing.T) {
 	srv, lib := getLibraryServer(t)
 	defer func() { _ = lib.Truncate() }()
 	defer tearDownServer(srv)
@@ -410,7 +412,7 @@ func TestGetFileUrl(t *testing.T) {
 
 	trackID := found[0].ID
 
-	url := fmt.Sprintf("http://127.0.0.1:%d/file/%d", testPort, trackID)
+	url := fmt.Sprintf("http://127.0.0.1:%d/v1/file/%d", testPort, trackID)
 
 	resp, err := http.Get(url)
 
@@ -420,7 +422,7 @@ func TestGetFileUrl(t *testing.T) {
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
 	}
 
@@ -432,6 +434,18 @@ func TestGetFileUrl(t *testing.T) {
 
 	if len(responseBody) != 17314 {
 		t.Errorf("Track size was not as expected. It was %d", len(responseBody))
+	}
+
+	// Try with a file which is not in the library.
+	url = fmt.Sprintf("http://127.0.0.1:%d/v1/file/7742", testPort)
+	resp, err = http.Get(url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
 	}
 }
 
