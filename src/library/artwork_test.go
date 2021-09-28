@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"path"
 	"testing"
 	"testing/fstest"
 	"time"
@@ -101,6 +102,7 @@ func TestFindAndSaveAlbumArtwork(t *testing.T) {
 		mediaFilePath   = "path/to/albums/1/first.mp3"
 		secondFilePath  = "path/to/albums/2/second.mp3"
 		thirdFilePath   = "path/to/albums/3/third.mp3"
+		fourthFilePath  = "path/to/albums/4/fourth.mp3"
 		thirdAlbumCover = "expected-cover-file-contents"
 	)
 	mapfs := fstest.MapFS{
@@ -110,6 +112,10 @@ func TestFindAndSaveAlbumArtwork(t *testing.T) {
 		},
 		thirdFilePath: &fstest.MapFile{
 			Data:    []byte("third-file"),
+			ModTime: time.Now(),
+		},
+		fourthFilePath: &fstest.MapFile{
+			Data:    []byte("fourth-file"),
 			ModTime: time.Now(),
 		},
 		"path/to/albums/3/inner/cover.png": &fstest.MapFile{
@@ -140,13 +146,18 @@ func TestFindAndSaveAlbumArtwork(t *testing.T) {
 		t.Fatalf("inserting media file failed: %s", err)
 	}
 
+	firstAlbumID, err := lib.GetAlbumID(mediaFile.album, path.Dir(mediaFilePath))
+	if err != nil {
+		t.Errorf("error getting first albumID: %s", err)
+	}
+
 	// Set-up finished. Actual tests start here. First try to find an image for
 	// an album which does not have one in the database.
-	assertAlbumImage(t, lib, 1, SmallImage, smallImage)
+	assertAlbumImage(t, lib, firstAlbumID, SmallImage, smallImage)
 
 	// Now search for the original image. It should have been stored in the database
 	// as part of creating the small one.
-	assertAlbumImage(t, lib, 1, OriginalImage, bigImage)
+	assertAlbumImage(t, lib, firstAlbumID, OriginalImage, bigImage)
 
 	// Search for an image for album which is not in the database at all.
 	_, err = lib.FindAndSaveAlbumArtwork(ctx, 42, OriginalImage)
@@ -167,16 +178,21 @@ func TestFindAndSaveAlbumArtwork(t *testing.T) {
 		t.Fatalf("inserting second media file failed: %s", err)
 	}
 
-	err = lib.SaveAlbumArtwork(ctx, 2, bytes.NewReader(secondBigImage))
+	secondAlbumID, err := lib.GetAlbumID(secondFile.album, path.Dir(secondFilePath))
+	if err != nil {
+		t.Errorf("error getting second albumID: %s", err)
+	}
+
+	err = lib.SaveAlbumArtwork(ctx, secondAlbumID, bytes.NewReader(secondBigImage))
 	if err != nil {
 		t.Fatalf("error saving an album image: %s", err)
 	}
-	assertAlbumImage(t, lib, 2, OriginalImage, secondBigImage)
+	assertAlbumImage(t, lib, secondAlbumID, OriginalImage, secondBigImage)
 
 	// Now get the small version of this original image. This tests converting
 	// a big original in the database into the desired size when this size was
 	// not found.
-	assertAlbumImage(t, lib, 2, SmallImage, smallImage)
+	assertAlbumImage(t, lib, secondAlbumID, SmallImage, smallImage)
 
 	// Try finding an image on the file system. Making sure to create a new album
 	// before that.
@@ -190,17 +206,66 @@ func TestFindAndSaveAlbumArtwork(t *testing.T) {
 	if err := lib.insertMediaIntoDatabase(&thirdFile, thirdFilePath); err != nil {
 		t.Fatalf("inserting third media file failed: %s", err)
 	}
-	assertAlbumImage(t, lib, 3, OriginalImage, []byte(thirdAlbumCover))
+
+	thirdAlbumID, err := lib.GetAlbumID(thirdFile.album, path.Dir(thirdFilePath))
+	if err != nil {
+		t.Errorf("error getting third albumID: %s", err)
+	}
+
+	assertAlbumImage(t, lib, thirdAlbumID, OriginalImage, []byte(thirdAlbumCover))
 
 	// And now, remove an album's image from the database and make sure it is
 	// deleted.
-	if err = lib.RemoveAlbumArtwork(ctx, 2); err != nil {
+	if err = lib.RemoveAlbumArtwork(ctx, secondAlbumID); err != nil {
 		t.Fatalf("error removing artist image: %s", err)
 	}
 
-	_, err = lib.FindAndSaveAlbumArtwork(ctx, 2, OriginalImage)
+	_, err = lib.FindAndSaveAlbumArtwork(ctx, secondAlbumID, OriginalImage)
 	if !errors.Is(err, ErrArtworkNotFound) {
 		t.Fatalf("expected artwork not found error but got `%+v`", err)
+	}
+
+	// Make sure not found errors are cached and only one request is made to
+	// the art finder in case it returns "not found".
+	notFoundAF := &artfakes.FakeFinder{
+		GetFrontImageStub: func(
+			_ context.Context,
+			artist string,
+			album string,
+		) ([]byte, error) {
+			return nil, art.ErrImageNotFound
+		},
+	}
+	lib.SetArtFinder(notFoundAF)
+
+	fourthFile := MockMedia{
+		artist: "I Have No Funny Ideas At This Point",
+		album:  "Fourth Album",
+		title:  "Maybe Next Time",
+		track:  4,
+		length: 113,
+	}
+	if err := lib.insertMediaIntoDatabase(&fourthFile, fourthFilePath); err != nil {
+		t.Fatalf("inserting fourth media file failed: %s", err)
+	}
+
+	fourthAlbumID, err := lib.GetAlbumID(fourthFile.album, path.Dir(fourthFilePath))
+	if err != nil {
+		t.Errorf("error getting fourth albumID: %s", err)
+	}
+
+	for i := 0; i < 10; i++ {
+		_, err := lib.FindAndSaveAlbumArtwork(ctx, fourthAlbumID, OriginalImage)
+		if !errors.Is(err, ErrArtworkNotFound) {
+			t.Fatalf(
+				"expected artwork not found error but got `%+v`",
+				err,
+			)
+		}
+	}
+
+	if notFoundAF.GetFrontImageCallCount() != 1 {
+		t.Error("expected artFinder.GetFrontImageCallCount to have been called only once")
 	}
 }
 
