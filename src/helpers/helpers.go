@@ -62,7 +62,7 @@ func AbsolutePath(path, relativeRoot string) string {
 }
 
 // ProjectUserPath returns the directory in which user files should be stored. Creates
-// it is missing. User files are thing such as sqlite files, logfiles and user configs.
+// it if missing. User files are things such as sqlite files, logfiles and user configs.
 func ProjectUserPath() (string, error) {
 	user, err := user.Current()
 
