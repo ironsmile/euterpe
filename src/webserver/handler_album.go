@@ -41,7 +41,8 @@ func (fh AlbumHandler) find(writer http.ResponseWriter, req *http.Request) error
 	id, err := strconv.Atoi(idString)
 
 	if err != nil {
-		http.NotFoundHandler().ServeHTTP(writer, req)
+		writer.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(writer, "Parsing albumID in request path failed: %s", err)
 		return nil
 	}
 

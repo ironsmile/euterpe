@@ -543,7 +543,9 @@ func TestFileNameHeaders(t *testing.T) {
 	}
 }
 
-func TestAlbumHandlerOverHttp(t *testing.T) {
+// TestAlbumHandlerOverHTTP starts a web server and then checks that GETing the album
+// returns status OK for good requests. Then tests with strange requests.
+func TestAlbumHandlerOverHTTP(t *testing.T) {
 	srv, lib := getLibraryServer(t)
 	defer func() { _ = lib.Truncate() }()
 	defer tearDownServer(srv)
@@ -566,7 +568,7 @@ func TestAlbumHandlerOverHttp(t *testing.T) {
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
 	}
 
@@ -593,8 +595,20 @@ func TestAlbumHandlerOverHttp(t *testing.T) {
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 404 {
+	if resp.StatusCode != http.StatusNotFound {
 		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
+	}
+
+	// Test with malformed URL.
+	albumURL = fmt.Sprintf("http://127.0.0.1:%d/album/foo", testPort)
+	resp, err = http.Get(albumURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("Unexpected status code for bogus request: %d", resp.StatusCode)
 	}
 }
 
