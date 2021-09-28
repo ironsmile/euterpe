@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"log"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -416,7 +416,7 @@ func (lib *LocalLibrary) albumArtworkFromFS(
 	imagesRegexp := regexp.MustCompile(`(?i).*\.(png|gif|jpeg|jpg)$`)
 	var possibleArtworks []string
 
-	err = filepath.Walk(albumPath, func(path string, info os.FileInfo, err error) error {
+	walkFn := func(path string, info fs.DirEntry, err error) error {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
@@ -432,9 +432,9 @@ func (lib *LocalLibrary) albumArtworkFromFS(
 			possibleArtworks = append(possibleArtworks, path)
 		}
 		return nil
-	})
+	}
 
-	if err != nil {
+	if err := fs.WalkDir(lib.fs, albumPath, walkFn); err != nil {
 		return nil, err
 	}
 
