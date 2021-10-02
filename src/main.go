@@ -122,7 +122,10 @@ func setupPidFileAndSignals(
 	pidFileName string,
 	stopFunc context.CancelFunc,
 ) {
-	helpers.SetUpPidFile(appfs, pidFileName)
+	if err := helpers.SetUpPidFile(appfs, pidFileName); err != nil {
+		log.Printf("setting up PID file failed: %s", err)
+		os.Exit(1)
+	}
 
 	signalChannel := make(chan os.Signal, 2)
 	for _, sig := range daemon.StopSignals {

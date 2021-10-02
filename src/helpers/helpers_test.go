@@ -1,10 +1,16 @@
 package helpers
 
 import (
+	"fmt"
+	"io/fs"
+	"log"
+	"strings"
 	"testing"
 
 	"os"
 	"path/filepath"
+
+	"github.com/spf13/afero"
 )
 
 // TestProjectRoot makes sure the that ProjectRoot returns a path to the project's
@@ -35,6 +41,8 @@ func TestAbsolutePathFunctin(t *testing.T) {
 	}
 }
 
+// TestTrackNumberGuessing tests whether the track number could be correctly guessed
+// from the file name.
 func TestTrackNumberGuessing(t *testing.T) {
 	var tracks = []struct {
 		path     string
@@ -93,5 +101,66 @@ func TestTrackNumberGuessing(t *testing.T) {
 			t.Errorf("Error guessing `%s`. Expected %d but got %d.", test.path,
 				test.expected, found)
 		}
+	}
+}
+
+// TestSetLogsFile makes sure that logs will be stored in the expected file after
+// logging has been set to it.
+func TestSetLogsFile(t *testing.T) {
+	testfs := afero.NewMemMapFs()
+	logFile := "some/place/euterpe.log"
+
+	if err := SetLogsFile(testfs, logFile); err != nil {
+		t.Fatalf("setting log file failed: %s", err)
+	}
+	defer log.SetOutput(os.Stdout)
+
+	const testLogMessage = "test message"
+	log.Println(testLogMessage)
+
+	logData, err := fs.ReadFile(afero.NewIOFS(testfs), logFile)
+	if err != nil {
+		t.Fatalf("error reading the log file: %s", err)
+	}
+
+	if !strings.Contains(string(logData), testLogMessage) {
+		t.Errorf(
+			"log file did not contain `%s`. It was:\n%s",
+			testLogMessage,
+			string(logData),
+		)
+	}
+}
+
+// TestPidFileFunctions makes sure that a PID file is created and then removed as
+// expected.
+func TestPidFileFunctions(t *testing.T) {
+	testfs := afero.NewMemMapFs()
+	pidFile := "euterpe.pid"
+	expectedPID := os.Getpid()
+
+	if err := SetUpPidFile(testfs, pidFile); err != nil {
+		t.Fatalf("error setting up PID file: %s", err)
+	}
+
+	pidFileContents, err := fs.ReadFile(afero.NewIOFS(testfs), pidFile)
+	if err != nil {
+		t.Fatalf("error reading PID file: %s", err)
+	}
+
+	var foundPID int
+	if _, err := fmt.Sscanf(string(pidFileContents), "%d", &foundPID); err != nil {
+		t.Fatalf("error reading int from PID file: %s", err)
+	}
+
+	if foundPID != expectedPID {
+		t.Errorf("expected PID %d but got %d", expectedPID, foundPID)
+	}
+
+	// Now make sure that when creating a PID file is not possible then the function
+	// returns an error.
+	readOnly := afero.NewReadOnlyFs(testfs)
+	if err := SetUpPidFile(readOnly, pidFile); err == nil {
+		t.Errorf("expected an error for read only FS but got nil")
 	}
 }

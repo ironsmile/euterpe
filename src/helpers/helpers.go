@@ -88,24 +88,20 @@ func ProjectUserPath(appfs afero.Fs) (string, error) {
 
 // SetUpPidFile will create the pidfile and it will contain the processid of the
 // current process
-func SetUpPidFile(appfs afero.Fs, PidFile string) {
+func SetUpPidFile(appfs afero.Fs, PidFile string) error {
 	fh, err := appfs.Create(PidFile)
-
 	if err != nil {
-		log.Println(err)
-		os.Exit(1)
+		return err
 	}
 
-	_, err = fh.WriteString(fmt.Sprintf("%d", os.Getpid()))
-
-	if err != nil {
-		log.Println(err)
+	if _, err = fh.WriteString(fmt.Sprintf("%d", os.Getpid())); err != nil {
 		fh.Close()
 		_ = appfs.Remove(PidFile)
-		os.Exit(1)
+		return err
 	}
 
 	fh.Close()
+	return nil
 }
 
 // RemovePidFile just removes the pidFile. The argument should be file path.
