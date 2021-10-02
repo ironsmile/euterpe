@@ -10,6 +10,8 @@ import (
 	"regexp"
 	"runtime"
 	"strconv"
+
+	"github.com/spf13/afero"
 )
 
 // projectRoot is used to cache project root directory and save repeated
@@ -40,10 +42,10 @@ func ProjectRoot() (rootPath string, err error) {
 }
 
 // SetLogsFile sets the logfile of the server
-func SetLogsFile(logFilePath string) error {
-	logFile, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_APPEND, 0666)
+func SetLogsFile(appfs afero.Fs, logFilePath string) error {
+	logFile, err := appfs.OpenFile(logFilePath, os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil && os.IsNotExist(err) {
-		logFile, err = os.Create(logFilePath)
+		logFile, err = appfs.Create(logFilePath)
 	}
 	if err != nil {
 		return err
@@ -63,7 +65,7 @@ func AbsolutePath(path, relativeRoot string) string {
 
 // ProjectUserPath returns the directory in which user files should be stored. Creates
 // it if missing. User files are things such as sqlite files, logfiles and user configs.
-func ProjectUserPath() (string, error) {
+func ProjectUserPath(appfs afero.Fs) (string, error) {
 	user, err := user.Current()
 
 	if err != nil {
@@ -71,13 +73,13 @@ func ProjectUserPath() (string, error) {
 	}
 
 	deprecatedPath := filepath.Join(user.HomeDir, httpmsDir)
-	if _, err = os.Stat(deprecatedPath); err == nil {
+	if _, err = appfs.Stat(deprecatedPath); err == nil {
 		return deprecatedPath, nil
 	}
 
 	path := filepath.Join(user.HomeDir, euterpeDir)
 
-	if err = os.MkdirAll(path, os.ModeDir|0750); err != nil {
+	if err = appfs.MkdirAll(path, os.ModeDir|0750); err != nil {
 		return "", err
 	}
 
@@ -86,8 +88,8 @@ func ProjectUserPath() (string, error) {
 
 // SetUpPidFile will create the pidfile and it will contain the processid of the
 // current process
-func SetUpPidFile(PidFile string) {
-	fh, err := os.Create(PidFile)
+func SetUpPidFile(appfs afero.Fs, PidFile string) {
+	fh, err := appfs.Create(PidFile)
 
 	if err != nil {
 		log.Println(err)
@@ -99,7 +101,7 @@ func SetUpPidFile(PidFile string) {
 	if err != nil {
 		log.Println(err)
 		fh.Close()
-		_ = os.Remove(PidFile)
+		_ = appfs.Remove(PidFile)
 		os.Exit(1)
 	}
 
@@ -107,8 +109,8 @@ func SetUpPidFile(PidFile string) {
 }
 
 // RemovePidFile just removes the pidFile. The argument should be file path.
-func RemovePidFile(PidFile string) {
-	_ = os.Remove(PidFile)
+func RemovePidFile(appfs afero.Fs, PidFile string) {
+	_ = appfs.Remove(PidFile)
 }
 
 // GuessTrackNumber will use the file name of a particular media file to decide

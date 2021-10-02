@@ -13,12 +13,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"os/user"
 	"path/filepath"
 	"time"
 
 	"github.com/ironsmile/euterpe/src/helpers"
+	"github.com/spf13/afero"
 )
 
 const (
@@ -124,18 +124,18 @@ type Auth struct {
 
 // FindAndParse actually finds the configuration file, parsing it and merging it on
 // top the default configuration.
-func FindAndParse() (Config, error) {
-	if !UserConfigExists() {
-		err := CopyDefaultOverUser()
+func FindAndParse(appfs afero.Fs) (Config, error) {
+	if !UserConfigExists(appfs) {
+		err := CopyDefaultOverUser(appfs)
 		if err != nil {
 			return Config{}, err
 		}
 	}
 
 	cfg := defaultConfig
-	userCfgPath := UserConfigPath()
+	userCfgPath := UserConfigPath(appfs)
 
-	fh, err := os.Open(userCfgPath)
+	fh, err := appfs.Open(userCfgPath)
 	if err != nil {
 		return Config{}, fmt.Errorf("opening config: %s", err)
 	}
@@ -152,8 +152,8 @@ func FindAndParse() (Config, error) {
 
 // UserConfigPath returns the full path to the place where the user's configuration
 // file should be
-func UserConfigPath() string {
-	path, err := helpers.ProjectUserPath()
+func UserConfigPath(appfs afero.Fs) string {
+	path, err := helpers.ProjectUserPath(appfs)
 	if err != nil {
 		log.Println(err)
 		return ""
@@ -163,9 +163,9 @@ func UserConfigPath() string {
 
 // UserConfigExists returns true if the user configuration is present and in order.
 // Otherwise false.
-func UserConfigExists() bool {
-	path := UserConfigPath()
-	st, err := os.Stat(path)
+func UserConfigExists(appfs afero.Fs) bool {
+	path := UserConfigPath(appfs)
+	st, err := appfs.Stat(path)
 	if err != nil {
 		return false
 	}
@@ -174,7 +174,7 @@ func UserConfigExists() bool {
 
 // CopyDefaultOverUser will create (or replace if neccessery) the user configuration
 // using the default config new config.
-func CopyDefaultOverUser() error {
+func CopyDefaultOverUser(appfs afero.Fs) error {
 	var homeDir = "~"
 	user, err := user.Current()
 	if err == nil {
@@ -196,8 +196,8 @@ func CopyDefaultOverUser() error {
 		},
 	}
 
-	userCfgPath := UserConfigPath()
-	fh, err := os.Create(userCfgPath)
+	userCfgPath := UserConfigPath(appfs)
+	fh, err := appfs.Create(userCfgPath)
 	if err != nil {
 		return fmt.Errorf("create config `%s`: %s", userCfgPath, err)
 	}

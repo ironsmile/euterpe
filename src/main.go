@@ -24,6 +24,7 @@ import (
 	"github.com/ironsmile/euterpe/src/scaler"
 	"github.com/ironsmile/euterpe/src/version"
 	"github.com/ironsmile/euterpe/src/webserver"
+	"github.com/spf13/afero"
 )
 
 var (
@@ -81,8 +82,9 @@ func Main(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) {
 		os.Exit(0)
 	}
 
+	appfs := afero.NewOsFs()
 	if rescanLibrary {
-		if err := runLibraryRescan(sqlFilesFS); err != nil {
+		if err := runLibraryRescan(appfs, sqlFilesFS); err != nil {
 			log.Println(err)
 			os.Exit(1)
 		}
@@ -96,7 +98,7 @@ func Main(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) {
 	}
 
 	if generateConfig {
-		if _, err := config.FindAndParse(); err != nil {
+		if _, err := config.FindAndParse(appfs); err != nil {
 			fmt.Fprintf(os.Stderr, "could not create config file: %s", err)
 			os.Exit(1)
 		}
@@ -104,6 +106,7 @@ func Main(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) {
 	}
 
 	if err := runServer(
+		appfs,
 		httpRootFS,
 		htmlTemplatesFS,
 		sqlFilesFS,
@@ -114,8 +117,12 @@ func Main(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) {
 }
 
 // setupPidFileAndSignals creates a pidfile and starts a signal receiver goroutine.
-func setupPidFileAndSignals(pidFileName string, stopFunc context.CancelFunc) {
-	helpers.SetUpPidFile(pidFileName)
+func setupPidFileAndSignals(
+	appfs afero.Fs,
+	pidFileName string,
+	stopFunc context.CancelFunc,
+) {
+	helpers.SetUpPidFile(appfs, pidFileName)
 
 	signalChannel := make(chan os.Signal, 2)
 	for _, sig := range daemon.StopSignals {
@@ -125,7 +132,7 @@ func setupPidFileAndSignals(pidFileName string, stopFunc context.CancelFunc) {
 		for range signalChannel {
 			log.Println("Stop signal received. Removing pidfile and stopping.")
 			stopFunc()
-			helpers.RemovePidFile(pidFileName)
+			helpers.RemovePidFile(appfs, pidFileName)
 		}
 	}()
 }
@@ -170,16 +177,19 @@ func getLibrary(
 
 // runServer parses the config, sets the logfile, setups the
 // pidfile, and makes an signal handler goroutine
-func runServer(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) error {
-	cfg, err := config.FindAndParse()
+func runServer(appfs afero.Fs, httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) error {
+	cfg, err := config.FindAndParse(appfs)
 	if err != nil {
 		return fmt.Errorf("parsing configuration: %s", err)
 	}
 
-	userPath := filepath.Dir(config.UserConfigPath())
+	userPath := filepath.Dir(config.UserConfigPath(appfs))
 
 	if !debug {
-		err = helpers.SetLogsFile(helpers.AbsolutePath(cfg.LogFile, userPath))
+		err = helpers.SetLogsFile(
+			appfs,
+			helpers.AbsolutePath(cfg.LogFile, userPath),
+		)
 		if err != nil {
 			return fmt.Errorf("setting debug file: %s", err)
 		}
@@ -189,8 +199,8 @@ func runServer(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) error {
 	defer cancelCtx()
 
 	pidFileName := helpers.AbsolutePath(pidFile, userPath)
-	setupPidFileAndSignals(pidFileName, cancelCtx)
-	defer helpers.RemovePidFile(pidFileName)
+	setupPidFileAndSignals(appfs, pidFileName, cancelCtx)
+	defer helpers.RemovePidFile(appfs, pidFileName)
 
 	lib, err := getLibrary(ctx, userPath, cfg, sqlFilesFS)
 	if err != nil {
@@ -213,7 +223,7 @@ func runServer(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) error {
 	return nil
 }
 
-func runLibraryRescan(sqlFilesFS fs.FS) error {
+func runLibraryRescan(appfs afero.Fs, sqlFilesFS fs.FS) error {
 	ctx, cancelContext := context.WithCancel(context.Background())
 
 	signalChannel := make(chan os.Signal, 2)
@@ -228,12 +238,12 @@ func runLibraryRescan(sqlFilesFS fs.FS) error {
 		}
 	}()
 
-	cfg, err := config.FindAndParse()
+	cfg, err := config.FindAndParse(appfs)
 	if err != nil {
 		return fmt.Errorf("parsing configuration: %s", err)
 	}
 
-	userPath := filepath.Dir(config.UserConfigPath())
+	userPath := filepath.Dir(config.UserConfigPath(appfs))
 	lib, err := getLibrary(ctx, userPath, cfg, sqlFilesFS)
 	if err != nil {
 		return fmt.Errorf("creating library object: %w", err)
