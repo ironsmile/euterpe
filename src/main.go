@@ -99,7 +99,7 @@ func Main(httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) {
 
 	if generateConfig {
 		if _, err := config.FindAndParse(appfs); err != nil {
-			fmt.Fprintf(os.Stderr, "could not create config file: %s", err)
+			fmt.Fprintf(os.Stderr, "Could not create config file: %s", err)
 			os.Exit(1)
 		}
 		os.Exit(0)
@@ -123,7 +123,7 @@ func setupPidFileAndSignals(
 	stopFunc context.CancelFunc,
 ) {
 	if err := helpers.SetUpPidFile(appfs, pidFileName); err != nil {
-		log.Printf("setting up PID file failed: %s", err)
+		log.Printf("Setting up PID file failed: %s", err)
 		os.Exit(1)
 	}
 
