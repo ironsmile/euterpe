@@ -117,7 +117,7 @@ func RemovePidFile(appfs afero.Fs, PidFile string) {
 func GuessTrackNumber(trackFilePath string) int64 {
 	basePath := filepath.Base(filepath.FromSlash(trackFilePath))
 
-	if basePath == "" {
+	if basePath == "." {
 		// fast path, no need to match any rules
 		return 0
 	}
