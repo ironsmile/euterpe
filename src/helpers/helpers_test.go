@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"os/user"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -162,5 +164,55 @@ func TestPidFileFunctions(t *testing.T) {
 	readOnly := afero.NewReadOnlyFs(testfs)
 	if err := SetUpPidFile(readOnly, pidFile); err == nil {
 		t.Errorf("expected an error for read only FS but got nil")
+	}
+}
+
+// TestProjectUserPath makes sure that the correct directory for the Euterpe files
+// is selected in different situations.
+func TestProjectUserPath(t *testing.T) {
+	testfs := afero.NewMemMapFs()
+
+	projectPath, err := ProjectUserPath(testfs)
+	if err != nil {
+		t.Fatalf("could not find user's path: %s", err)
+	}
+
+	st, err := testfs.Stat(projectPath)
+	if err != nil {
+		t.Fatalf("error after stat of `%s`: %s", projectPath, err)
+	}
+
+	if !st.IsDir() {
+		t.Error("expected project path to be directory but it was not")
+	}
+}
+
+// TestDeprecatedProjectUserPath makes sure that when the old, deprecated path is
+// still present then it will be used in the name of backward compatibility.
+func TestDeprecatedProjectUserPath(t *testing.T) {
+	testfs := afero.NewMemMapFs()
+
+	user, err := user.Current()
+	if err != nil {
+		t.Fatalf("error getting info for current user: %s", err)
+	}
+
+	dirName := ".httpms"
+	if runtime.GOOS == "windows" {
+		dirName = "httpms"
+	}
+	deprecatedPath := filepath.Join(user.HomeDir, dirName)
+
+	if err := testfs.MkdirAll(deprecatedPath, os.ModeDir|0750); err != nil {
+		t.Fatalf("error setting up test directory: %s", err)
+	}
+
+	foundPath, err := ProjectUserPath(testfs)
+	if err != nil {
+		t.Fatalf("error getting user path: %s", err)
+	}
+
+	if foundPath != deprecatedPath {
+		t.Errorf("expected to find path `%s` but it was `%s`", deprecatedPath, foundPath)
 	}
 }
