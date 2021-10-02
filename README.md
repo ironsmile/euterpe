@@ -40,9 +40,9 @@ I feel obliged to say that the music on the screenshot is written and performed 
 Features
 ======
 
-* Uses [jplayer](https://github.com/happyworm/jPlayer) to play your music so it will probably work in every browser
-* jplayer supports mp3, oga, wav, flac and m4a audio formats
-* Interface and media via http(s)
+* Supports the most common audio formats such as mp3, oga, ogg, wav, flac, opus, web and m4a audio formats
+* Built-in fast and simple Web UI so that you can play your music on every device
+* Media and UI could be served over HTTP(S) natively without the need for other software
 * User authentication (HTTP Basic, query token, Bearer token)
 * Media artwork from local files or automatically downloaded from the [Cover Art Archive](https://musicbrainz.org/doc/Cover_Art_Archive)
 * Artist images could be downloaded automatically from [Discogs](https://www.discogs.com/)
@@ -51,6 +51,7 @@ Features
 * Controllable via media keys in OSX with the help of [BeardedSpice](https://beardedspice.github.io/)
 * Extensible via [stable API](#as-an-api)
 * Multiple [clients and player plugins](#clients)
+* Uses [jplayer](https://github.com/happyworm/jPlayer) to play your music on really old browsers
 
 Demo
 ======

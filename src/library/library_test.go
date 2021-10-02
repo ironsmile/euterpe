@@ -885,55 +885,67 @@ func TestLocalLibrarySupportedFormats(t *testing.T) {
 		expected bool
 	}{
 		{
-			path:     "some/path.mp3",
+			path:     filepath.FromSlash("some/path.mp3"),
 			expected: true,
 		},
 		{
-			path:     "path.mp3",
+			path:     filepath.FromSlash("path.mp3"),
 			expected: true,
 		},
 		{
-			path:     "some/path.ogg",
+			path:     filepath.FromSlash("some/path.ogg"),
 			expected: true,
 		},
 		{
-			path:     "some/path.wav",
+			path:     filepath.FromSlash("some/path.wav"),
 			expected: true,
 		},
 		{
-			path:     "some/path.fla",
+			path:     filepath.FromSlash("some/path.fla"),
 			expected: true,
 		},
 		{
-			path:     "some/path.flac",
+			path:     filepath.FromSlash("some/path.flac"),
 			expected: true,
 		},
 		{
-			path:     "path.flac",
+			path:     filepath.FromSlash("path.flac"),
 			expected: true,
 		},
 		{
-			path:     "some/.mp3",
+			path:     filepath.FromSlash("some/.mp3"),
 			expected: false,
 		},
 		{
-			path:     "file.MP3",
+			path:     filepath.FromSlash("file.MP3"),
 			expected: true,
 		},
 		{
-			path:     "some/file.pdf",
+			path:     filepath.FromSlash("some/file.pdf"),
 			expected: false,
 		},
 		{
-			path:     "some/mp3",
+			path:     filepath.FromSlash("some/mp3"),
 			expected: false,
 		},
 		{
-			path:     "mp3",
+			path:     filepath.FromSlash("mp3"),
 			expected: false,
 		},
 		{
-			path:     "/proc/cpuinfo",
+			path:     filepath.FromSlash("somewhere/file.opus"),
+			expected: true,
+		},
+		{
+			path:     filepath.FromSlash("somewhere/FILE.webm"),
+			expected: true,
+		},
+		{
+			path:     filepath.FromSlash("somewhere/other.WEbm"),
+			expected: true,
+		},
+		{
+			path:     filepath.FromSlash("/proc/cpuinfo"),
 			expected: false,
 		},
 	}
