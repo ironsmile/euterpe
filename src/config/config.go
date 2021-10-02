@@ -125,8 +125,8 @@ type Auth struct {
 // FindAndParse actually finds the configuration file, parsing it and merging it on
 // top the default configuration.
 func FindAndParse(appfs afero.Fs) (Config, error) {
-	if !UserConfigExists(appfs) {
-		err := CopyDefaultOverUser(appfs)
+	if !userConfigExists(appfs) {
+		err := copyDefaultOverUser(appfs)
 		if err != nil {
 			return Config{}, err
 		}
@@ -161,9 +161,9 @@ func UserConfigPath(appfs afero.Fs) string {
 	return filepath.Join(path, configName)
 }
 
-// UserConfigExists returns true if the user configuration is present and in order.
+// userConfigExists returns true if the user configuration is present and in order.
 // Otherwise false.
-func UserConfigExists(appfs afero.Fs) bool {
+func userConfigExists(appfs afero.Fs) bool {
 	path := UserConfigPath(appfs)
 	st, err := appfs.Stat(path)
 	if err != nil {
@@ -172,9 +172,9 @@ func UserConfigExists(appfs afero.Fs) bool {
 	return !st.IsDir()
 }
 
-// CopyDefaultOverUser will create (or replace if neccessery) the user configuration
+// copyDefaultOverUser will create (or replace if neccessery) the user configuration
 // using the default config new config.
-func CopyDefaultOverUser(appfs afero.Fs) error {
+func copyDefaultOverUser(appfs afero.Fs) error {
 	var homeDir = "~"
 	user, err := user.Current()
 	if err == nil {
