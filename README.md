@@ -75,7 +75,7 @@ The safest route is installing [one of the releases](https://github.com/ironsmil
 
 #### Linux & macOS
 
-If you have [one of the releases](https://github.com/ironsmile/euterpe/releases) (for example `https_1.1.0_linux.tar.gz`) it includes an `install` script which would install Euterpe in `/usr/bin/euterpe`. You will have to uninstall any previously installed versions first. An `uninstall` script is provided as well.
+If you have [one of the releases](https://github.com/ironsmile/euterpe/releases) (for example `euterpe_1.1.0_linux.tar.gz`) it includes an `install` script which would install Euterpe in `/usr/bin/euterpe`. You will have to uninstall any previously installed versions first. An `uninstall` script is provided as well.
 
 #### Windows
 
