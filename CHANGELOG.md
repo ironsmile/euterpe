@@ -1,5 +1,27 @@
 # Change Log
 
+## v1.5.1 - 2021-10-03
+
+This release is focused on stability and bugfixes. Most notably, it is the most tested release so far by a wide margain. The code test coverage between 1.5.0 has increased from ~40% to ~80%. Even with such a sharp increase in tests no interesting bugs were found in the code base.
+
+**What is New**
+
+* Support for Opus and WebM was added. Actually there was nothing from preventing previous versions from supporting them but a file extension check. For this version this check has been extended to include `.opus` and `.webm` files as well.
+
+**Bug Fixes**
+
+* Fixed a bug in the web UI filter when selecting an artist was not making the album filter include only albums for this artist.
+
+* The HTTP Basic Authenticate challenge now properly names the software as "Euterpe" instead of "HTTPMS".
+
+* The HTTP Basic Auth credentials checking is now not vulnerable to timing attacks.
+
+* Fixed a bug where on some errors the login API endpoint was not returning JSON but plain text.
+
+* No database entries will be created for album artwork for album IDs which are not already in the database.
+
+* Downloading albums as ZIP will now return HTTP status code 400 instead of 404 when the request was malformed.
+
 ## v1.5.0 - 2021-08-03
 
 **What is New**
