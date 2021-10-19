@@ -40,6 +40,8 @@ I feel obliged to say that the music on the screenshot is written and performed 
 Features
 ======
 
+* Simple. It is just one binary, that's it! You don't need to faff about with interpreters or web servers
+* Fast. A typical response time on my more than a decade old mediocre computer is 26ms for a fairly large collection
 * Supports the most common audio formats such as mp3, oga, ogg, wav, flac, opus, web and m4a audio formats
 * Built-in fast and simple Web UI so that you can play your music on every device
 * Media and UI could be served over HTTP(S) natively without the need for other software
