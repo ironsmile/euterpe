@@ -515,6 +515,7 @@ You are not restricted to using the web UI. The server has a RESTful API which c
 * ~~[httpms-android](https://github.com/ironsmile/httpms-android) is a Android client for HTTPMS.~~ Long abandoned in favour of a React Native mobile client.
 * [euterpe-mobile](https://github.com/ironsmile/euterpe-mobile) is an iOS/Android mobile client written with React Native.
 * [euterpe-rhythmbox](https://github.com/ironsmile/euterpe-rhythmbox) is Euterpe client plugin for Gnome's Rhythmbox.
+* [euterpe-gtk](https://github.com/ironsmile/euterpe-gtk) is GTK client for mobile or desktop.
 
 
 Name Change
