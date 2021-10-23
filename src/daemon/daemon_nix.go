@@ -1,4 +1,4 @@
-// +build linux darwin freebsd
+// +build linux darwin freebsd openbsd
 
 // Package daemon is resposible for making sure HTTPMS will run smoothly even
 // after the calling terminal has been closed. For *nix systems this mean
