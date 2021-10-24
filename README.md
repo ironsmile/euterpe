@@ -399,7 +399,7 @@ By default the full size image will be served. One could request a thumbnail by 
 PUT /v1/album/{albumID}/artwork
 ```
 
-Can be used to upload artwork directly on the Euterpe server. This artwork will be stored in the server database and will not create any files in the library paths. The image should  be send in the body of the request in binary format without any transformations. Only images up to 5MB are accepted. Example:
+Can be used to upload artwork directly on the Euterpe server. This artwork will be stored in the server database and will not create any files in the library paths. The image should be sent in the body of the request in binary format without any transformations. Only images up to 5MB are accepted. Example:
 
 ```sh
 curl -i -X PUT \
@@ -425,7 +425,7 @@ Euterpe could build a database with artists' images. Which it could then be used
 GET /v1/artist/{artistID}/image
 ```
 
-Returns a bitmap image representing an artist if one is available. Searching for artwork works like this: if artist image is found in the database then it will be used. In case there is not and Euterpe is configured to download images from interned and has a Discogs access token then it will use the MusicBrainz and Discogs APIs in order to retrieve an image. By default no internet requests are made.
+Returns a bitmap image representing an artist if one is available. Searching for artwork works like this: if artist image is found in the database then it will be used. In case there is not and Euterpe is configured to download images from internet and has a Discogs access token then it will use the MusicBrainz and Discogs APIs in order to retrieve an image. By default no internet requests are made.
 
 By default the full size image will be served. One could request a thumbnail by appending the `?size=small` query.
 
@@ -435,7 +435,7 @@ By default the full size image will be served. One could request a thumbnail by 
 PUT /v1/artist/{artistID}/image
 ```
 
-Can be used to upload artist image directly on the Euterpe server. It will be stored in the server database and will not create any files in the library paths. The image should  be send in the body of the request in binary format without any transformations. Only images up to 5MB are accepted. Example:
+Can be used to upload artist image directly on the Euterpe server. It will be stored in the server database and will not create any files in the library paths. The image should be sent in the body of the request in binary format without any transformations. Only images up to 5MB are accepted. Example:
 
 ```sh
 curl -i -X PUT \
@@ -514,8 +514,8 @@ You are not restricted to using the web UI. The server has a RESTful API which c
 
 * ~~[httpms-android](https://github.com/ironsmile/httpms-android) is a Android client for HTTPMS.~~ Long abandoned in favour of a React Native mobile client.
 * [euterpe-mobile](https://github.com/ironsmile/euterpe-mobile) is an iOS/Android mobile client written with React Native.
-* [euterpe-rhythmbox](https://github.com/ironsmile/euterpe-rhythmbox) is Euterpe client plugin for Gnome's Rhythmbox.
-* [euterpe-gtk](https://github.com/ironsmile/euterpe-gtk) is GTK client for mobile or desktop.
+* [euterpe-rhythmbox](https://github.com/ironsmile/euterpe-rhythmbox) is an Euterpe client plugin for Gnome's Rhythmbox.
+* [euterpe-gtk](https://github.com/ironsmile/euterpe-gtk) is a GTK client for mobile or desktop.
 
 
 Name Change
