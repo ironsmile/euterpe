@@ -172,11 +172,7 @@ func (hl *AuthHandler) withJWT(token string) bool {
 	validatePayload := jwt.ValidatePayload(&jot, exp)
 
 	_, err := jwt.Verify([]byte(token), alg, &jot, validatePayload)
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }
 
 func contains(haystack []string, needle string) bool {
