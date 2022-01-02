@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gbrlsnchs/jwt"
+	"github.com/gbrlsnchs/jwt/v3"
 	"github.com/ironsmile/euterpe/src/webserver"
 )
 
@@ -22,15 +22,17 @@ func TestAuthHandlerDifferentAuthMethods(t *testing.T) {
 	)
 
 	getToken := func() string {
-		tokenOpts := &jwt.Options{
-			Timestamp:      true,
-			ExpirationTime: time.Now().Add(10 * time.Minute),
+		now := time.Now()
+		pl := jwt.Payload{
+			IssuedAt:       jwt.NumericDate(now),
+			ExpirationTime: jwt.NumericDate(now.Add(10 * time.Minute)),
 		}
-		token, err := jwt.Sign(jwt.HS256(secret), tokenOpts)
+
+		token, err := jwt.Sign(pl, jwt.NewHS256([]byte(secret)))
 		if err != nil {
 			panic(err)
 		}
-		return token
+		return string(token)
 	}
 
 	tests := []struct {
@@ -128,11 +130,13 @@ func TestAuthHandlerDifferentAuthMethods(t *testing.T) {
 		{
 			desc: "token created with different secret",
 			newRequest: func() *http.Request {
-				tokenOpts := &jwt.Options{
-					Timestamp:      true,
-					ExpirationTime: time.Now().Add(10 * time.Minute),
+				now := time.Now()
+				pl := jwt.Payload{
+					IssuedAt:       jwt.NumericDate(now),
+					ExpirationTime: jwt.NumericDate(now.Add(10 * time.Minute)),
 				}
-				token, err := jwt.Sign(jwt.HS256("not the correct secret"), tokenOpts)
+
+				token, err := jwt.Sign(pl, jwt.NewHS256([]byte("not the correct secret")))
 				if err != nil {
 					panic(err)
 				}
@@ -147,11 +151,13 @@ func TestAuthHandlerDifferentAuthMethods(t *testing.T) {
 		{
 			desc: "expired token",
 			newRequest: func() *http.Request {
-				tokenOpts := &jwt.Options{
-					Timestamp:      true,
-					ExpirationTime: time.Now().Add(-10 * time.Minute),
+				now := time.Now()
+				pl := jwt.Payload{
+					IssuedAt:       jwt.NumericDate(now),
+					ExpirationTime: jwt.NumericDate(now.Add(-10 * time.Minute)),
 				}
-				token, err := jwt.Sign(jwt.HS256(secret), tokenOpts)
+
+				token, err := jwt.Sign(pl, jwt.NewHS256([]byte("not the correct secret")))
 				if err != nil {
 					panic(err)
 				}
@@ -166,11 +172,13 @@ func TestAuthHandlerDifferentAuthMethods(t *testing.T) {
 		{
 			desc: "different encoding algo used",
 			newRequest: func() *http.Request {
-				tokenOpts := &jwt.Options{
-					Timestamp:      true,
-					ExpirationTime: time.Now().Add(-10 * time.Minute),
+				now := time.Now()
+				pl := jwt.Payload{
+					IssuedAt:       jwt.NumericDate(now),
+					ExpirationTime: jwt.NumericDate(now.Add(-10 * time.Minute)),
 				}
-				token, err := jwt.Sign(jwt.HS384(secret), tokenOpts)
+
+				token, err := jwt.Sign(pl, jwt.NewHS384([]byte(secret)))
 				if err != nil {
 					panic(err)
 				}

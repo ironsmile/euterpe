@@ -1,6 +1,11 @@
-# github.com/gbrlsnchs/jwt v1.0.2
+# github.com/gbrlsnchs/jwt/v3 v3.0.1
 ## explicit
-github.com/gbrlsnchs/jwt
+github.com/gbrlsnchs/jwt/v3
+github.com/gbrlsnchs/jwt/v3/internal
+# github.com/go-sql-driver/mysql v1.6.0
+## explicit
+# github.com/gobuffalo/packr v1.30.1
+## explicit
 # github.com/gorilla/context v1.1.1
 ## explicit
 github.com/gorilla/context
@@ -14,11 +19,15 @@ github.com/howeyc/fsnotify
 ## explicit
 github.com/ironsmile/sql-migrate
 github.com/ironsmile/sql-migrate/sqlparse
-# github.com/joefitzgerald/rainbow-reporter v0.1.0
+# github.com/lib/pq v1.10.4
 ## explicit
 # github.com/liyue201/goqr v0.0.0-20200803022322-df443203d4ea
 ## explicit
 github.com/liyue201/goqr
+# github.com/magefile/mage v1.12.1
+## explicit
+github.com/magefile/mage/mg
+github.com/magefile/mage/sh
 # github.com/mattn/go-sqlite3 v1.14.10
 ## explicit
 github.com/mattn/go-sqlite3
@@ -43,6 +52,12 @@ github.com/spf13/afero/mem
 # github.com/wtolson/go-taglib v0.0.0-20180718000046-586eb63c2628
 ## explicit
 github.com/wtolson/go-taglib
+# github.com/ziutek/mymysql v1.5.4
+## explicit
+# golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
+## explicit
+golang.org/x/crypto/ed25519
+golang.org/x/crypto/ed25519/internal/edwards25519
 # golang.org/x/image v0.0.0-20210220032944-ac19c3e999fb
 ## explicit
 golang.org/x/image/bmp
@@ -61,9 +76,9 @@ golang.org/x/mod/semver
 # golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 ## explicit
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.0.0-20210330210617-4fbd30eecc44
+# golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1
 golang.org/x/sys/execabs
-# golang.org/x/text v0.3.5
+# golang.org/x/text v0.3.6
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
 # golang.org/x/tools v0.1.0

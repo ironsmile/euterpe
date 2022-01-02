@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gbrlsnchs/jwt"
+	"github.com/gbrlsnchs/jwt/v3"
 	"github.com/skip2/go-qrcode"
 
 	"github.com/ironsmile/euterpe/src/config"
@@ -27,18 +27,26 @@ func NewCreateQRTokenHandler(needsAuth bool, auth config.Auth) http.Handler {
 		}
 
 		if needsAuth {
-			tokenOpts := &jwt.Options{
-				Timestamp:      true,
-				ExpirationTime: time.Now().Add(6 * 31 * 24 * time.Hour),
+			now := time.Now()
+			pl := jwt.Payload{
+				IssuedAt:       jwt.NumericDate(now),
+				ExpirationTime: jwt.NumericDate(now.Add(6 * 31 * 24 * time.Hour)),
 			}
-			token, err := jwt.Sign(jwt.HS256(auth.Secret), tokenOpts)
+
+			if len(auth.Secret) == 0 {
+				errMsg := "Error generating token: secret is empty."
+				http.Error(w, errMsg, http.StatusInternalServerError)
+				return
+			}
+
+			token, err := jwt.Sign(pl, jwt.NewHS256([]byte(auth.Secret)))
 			if err != nil {
 				errMsg := fmt.Sprintf("Error generating token: %s.", err)
 				http.Error(w, errMsg, http.StatusInternalServerError)
 				return
 			}
 
-			qrConts.Token = token
+			qrConts.Token = string(token)
 		}
 
 		qrBytes, err := json.Marshal(&qrConts)
