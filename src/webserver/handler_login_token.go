@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gbrlsnchs/jwt"
+	"github.com/gbrlsnchs/jwt/v3"
 
 	"github.com/ironsmile/euterpe/src/config"
 )
@@ -52,11 +52,22 @@ func (h *loginTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenOpts := &jwt.Options{
-		Timestamp:      true,
-		ExpirationTime: time.Now().Add(rememberMeDuration),
+	now := time.Now()
+	pl := jwt.Payload{
+		IssuedAt:       jwt.NumericDate(now),
+		ExpirationTime: jwt.NumericDate(time.Now().Add(rememberMeDuration)),
 	}
-	token, err := jwt.Sign(jwt.HS256(h.auth.Secret), tokenOpts)
+
+	if len(h.auth.Secret) == 0 {
+		respondWithJSONError(
+			w,
+			http.StatusInternalServerError,
+			"Error generating JWT: secret is empty.",
+		)
+		return
+	}
+
+	token, err := jwt.Sign(pl, jwt.NewHS256([]byte(h.auth.Secret)))
 	if err != nil {
 		respondWithJSONError(
 			w,
@@ -71,7 +82,7 @@ func (h *loginTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = enc.Encode(&struct {
 		Token string `json:"token"`
 	}{
-		Token: token,
+		Token: string(token),
 	})
 
 	if err != nil {

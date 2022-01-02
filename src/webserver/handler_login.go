@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gbrlsnchs/jwt"
+	"github.com/gbrlsnchs/jwt/v3"
 
 	"github.com/ironsmile/euterpe/src/config"
 )
@@ -77,18 +77,26 @@ func (h *loginHandler) respondCorrect(
 	}
 
 	var expiresAt time.Time
+	now := time.Now()
 
 	if sessionCookie {
-		expiresAt = time.Now().Add(sessionTokenDuration)
+		expiresAt = now.Add(sessionTokenDuration)
 	} else {
-		expiresAt = time.Now().Add(rememberMeDuration)
+		expiresAt = now.Add(rememberMeDuration)
 	}
 
-	tokenOpts := &jwt.Options{
-		Timestamp:      true,
-		ExpirationTime: expiresAt,
+	pl := jwt.Payload{
+		IssuedAt:       jwt.NumericDate(now),
+		ExpirationTime: jwt.NumericDate(expiresAt),
 	}
-	token, err := jwt.Sign(jwt.HS256(h.auth.Secret), tokenOpts)
+
+	if len(h.auth.Secret) == 0 {
+		errMessage := "Error generating JWT: secret is empty"
+		http.Error(w, errMessage, http.StatusInternalServerError)
+		return
+	}
+
+	token, err := jwt.Sign(pl, jwt.NewHS256([]byte(h.auth.Secret)))
 	if err != nil {
 		errMessage := fmt.Sprintf("Error generating JWT: %s.", err)
 		http.Error(w, errMessage, http.StatusInternalServerError)
@@ -97,7 +105,7 @@ func (h *loginHandler) respondCorrect(
 
 	cookie := &http.Cookie{
 		Name:     sessionCookieName,
-		Value:    token,
+		Value:    string(token),
 		Path:     "/",
 		HttpOnly: true,
 	}

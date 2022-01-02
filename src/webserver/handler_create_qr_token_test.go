@@ -13,7 +13,7 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 
-	"github.com/gbrlsnchs/jwt"
+	"github.com/gbrlsnchs/jwt/v3"
 	"github.com/ironsmile/euterpe/src/config"
 	"github.com/ironsmile/euterpe/src/webserver"
 	"github.com/liyue201/goqr"
@@ -145,19 +145,14 @@ type qrResponse struct {
 }
 
 func assertToken(t *testing.T, token, secret string) {
-	jot, err := jwt.FromString(token)
-	if err != nil {
-		t.Fatalf("error parsing JWT token from string: %s", err)
-	}
+	var jot jwt.Payload
 
-	if err := jot.Verify(jwt.HS256(secret)); err != nil {
-		t.Fatalf("error verifying JWT token: %s", err)
-	}
-
-	alg := jwt.AlgorithmValidator(jwt.MethodHS256)
+	alg := jwt.NewHS256([]byte(secret))
 	exp := jwt.ExpirationTimeValidator(time.Now())
+	validatePayload := jwt.ValidatePayload(&jot, exp)
 
-	if err := jot.Validate(alg, exp); err != nil {
-		t.Fatalf("error validating JWT token: %s", err)
+	_, err := jwt.Verify([]byte(token), alg, &jot, validatePayload)
+	if err != nil {
+		t.Fatalf("error verifying JWT token: %s", err)
 	}
 }

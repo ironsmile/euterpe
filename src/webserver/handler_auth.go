@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gbrlsnchs/jwt"
+	"github.com/gbrlsnchs/jwt/v3"
 	"github.com/ironsmile/euterpe/src/config"
 )
 
@@ -165,19 +165,14 @@ func (hl *AuthHandler) withBasicAuth(encoded string) bool {
 }
 
 func (hl *AuthHandler) withJWT(token string) bool {
-	jot, err := jwt.FromString(token)
-	if err != nil {
-		return false
-	}
+	var jot jwt.Payload
 
-	if err := jot.Verify(jwt.HS256(hl.secret)); err != nil {
-		return false
-	}
-
-	alg := jwt.AlgorithmValidator(jwt.MethodHS256)
+	alg := jwt.NewHS256([]byte(hl.secret))
 	exp := jwt.ExpirationTimeValidator(time.Now())
+	validatePayload := jwt.ValidatePayload(&jot, exp)
 
-	if err := jot.Validate(alg, exp); err != nil {
+	_, err := jwt.Verify([]byte(token), alg, &jot, validatePayload)
+	if err != nil {
 		return false
 	}
 
