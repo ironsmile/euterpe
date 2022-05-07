@@ -376,6 +376,7 @@ func (lib *LocalLibrary) isSupportedFormat(path string) bool {
 		".m4a",
 		".opus",
 		".webm",
+		".mp4",
 	}
 
 	base := filepath.Base(path)
