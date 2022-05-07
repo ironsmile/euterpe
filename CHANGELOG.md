@@ -1,5 +1,23 @@
 # Change Log
 
+## v1.5.2 - 2022-05-07
+
+Another release focused on bug fixes and optimizations.
+
+**What is New**
+
+* The Euterpe Docker images are now based on Alpine which makes them quite smaller.
+
+* The shuffle button in the web UI will no longer play around with the DOM playlist. Instead it will be a toggle which causes the next played track to be selected at random in the playlist. This _greatly_ improves the functionality with big playlists.
+
+**Bug Fixes**
+
+* Removed an artificial restriction which caused Euterpe to not be buildable on many operating systems (c6b143b).
+
+* Start recognizing `mp4` files as supported.
+
+* Added the `-dont-watch` option. Without watching the library paths for changes Euterpe will take up a lot less resources such as file descriptors and memory.
+
 ## v1.5.1 - 2021-10-03
 
 This release is focused on stability and bugfixes. Most notably, it is the most tested release so far by a wide margain. The code test coverage between 1.5.0 has increased from ~40% to ~80%. Even with such a sharp increase in tests no interesting bugs were found in the code base.
