@@ -70,7 +70,7 @@ func (lib *LocalLibrary) scanPath(scannedPath string) {
 			return nil
 		}
 
-		if lib.isSupportedFormat(path) {
+		if !info.IsDir() && lib.isSupportedFormat(path) {
 			err := lib.AddMedia(path)
 			if err != nil {
 				log.Printf("Error adding `%s`: %s\n", path, err)
