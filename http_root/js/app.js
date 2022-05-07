@@ -175,6 +175,60 @@ function playerPageInit() {
         });
     };
 
+    // The default jPlayerPlaylist shuffle implementation is quite stupid and does
+    // a LOAD of work for no good reason. It rearranges the DOM elements! Which
+    // obviously takes a lot of time when there are many entries in the playlist.
+    // Yet again, this plug-in is not meant to work with a particularly large
+    // collections.
+    //
+    // The changed function does not touch the DOM. It just stores a flag that
+    // playing must be shuffled. The actual shuffling is done by the "next"
+    // function.
+    jPlayerPlaylist.prototype.shuffle = function(shuffled, playNow) {
+        this.shuffled = !this.shuffled;
+        var shuffleOff = $('.jp-shuffle-off');
+        var shuffle = $('.jp-shuffle');
+
+        if (this.shuffled) {
+            shuffleOff.show();
+            shuffle.hide();
+        } else {
+            shuffleOff.hide();
+            shuffle.show();
+        }
+    }
+
+    // next is overwritten in order to support more efficient shuffling. See the commen
+    // above shuffled.
+    jPlayerPlaylist.prototype.next = function() {
+        if (this.shuffled) {
+            var index = Math.round(Math.random() * this.playlist.length - 1)
+            if (index >= 0) {
+                this.play(index);
+            }
+            return;
+        }
+
+        var index = (this.current + 1 < this.playlist.length) ? this.current + 1 : 0;
+
+        if(this.loop) {
+            this.play(index);
+        } else if(index > 0) {
+            // The index will be zero if it just looped round
+            this.play(index);
+        }
+    }
+
+    // next is overwritten in order to support more efficient shuffling. See the commen
+    // above shuffled.
+    jPlayerPlaylist.prototype.previous = function() {
+        var index = (this.current - 1 >= 0) ? this.current - 1 : this.playlist.length - 1;
+
+        if(this.loop && this.options.playlistOptions.loopOnPrevious || index < this.playlist.length - 1) {
+            this.play(index);
+        }
+    }
+
     var cssSelector = {
         jPlayer: "#jquery_jplayer_bootstrap",
         cssSelectorAncestor: "#jp_container_bootstrap"
