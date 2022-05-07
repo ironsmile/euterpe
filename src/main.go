@@ -50,6 +50,10 @@ var (
 	// the program to just create a configuration if non present and then
 	// exit.
 	generateConfig bool
+
+	// doNotWatchDirs is controlled by the -dont-watch flag and will cause
+	// the program to cease watching music library directories for changes.
+	doNotWatchDirs bool
 )
 
 const userAgentFormat = "Euterpe Media Server/%s (github.com/ironsmile/euterpe)"
@@ -70,6 +74,12 @@ func init() {
 	flag.BoolVar(&generateConfig, "config-gen", false,
 		"Generates configuration file and then exits. In case there is a\n"+
 			"configuration file already then do nothing.")
+	flag.BoolVar(&doNotWatchDirs, "dont-watch", false,
+		"Do not watch the library directories for changes. Any changes to\n"+
+			"files within the directories will take effect only after restart.\n"+
+			"Alternatively one could use the -rescan flag.\n\n"+
+			"This option is useful for systems with low open files limit such\n"+
+			"MacOS by default.")
 }
 
 // Main is the only thing run in the project's root main.go file.
@@ -214,6 +224,10 @@ func runServer(appfs afero.Fs, httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) er
 	defer scl.Cancel()
 
 	lib.SetScaler(scl)
+
+	if doNotWatchDirs {
+		lib.DisableWatching()
+	}
 
 	if !cfg.LibraryScan.Disable {
 		go lib.Scan()

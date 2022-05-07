@@ -18,6 +18,11 @@ func (lib *LocalLibrary) initializeWatcher() {
 	if lib.watch != nil {
 		return
 	}
+
+	if lib.noWatch {
+		return
+	}
+
 	newWatcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Printf("Directory watcher was not initialized properly. ")
@@ -136,4 +141,13 @@ func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 		}
 		return
 	}
+}
+
+// DisableWatching makes it so that the library will no longer add file system
+// watching for new directories.
+func (lib *LocalLibrary) DisableWatching() {
+	lib.watchLock.Lock()
+	defer lib.watchLock.Unlock()
+
+	lib.noWatch = true
 }

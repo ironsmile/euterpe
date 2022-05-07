@@ -141,6 +141,10 @@ type LocalLibrary struct {
 
 	// runningRescan shows that at the moment a complete rescan is running.
 	runningRescan bool
+
+	// When noWatch is set then no file system watchers will be created
+	// for the scanned directories.
+	noWatch bool
 }
 
 // Close closes the database connection. It is safe to call it as many times as you want.
