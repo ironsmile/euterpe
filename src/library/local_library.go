@@ -19,7 +19,7 @@ import (
 
 	// Blind import is the way a SQL driver is imported. This is the proposed way
 	// from the golang documentation.
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 
 	"github.com/ironsmile/euterpe/src/art"
 	"github.com/ironsmile/euterpe/src/config"
@@ -1059,7 +1059,7 @@ func NewLocalLibrary(
 
 	var err error
 
-	lib.db, err = sql.Open("sqlite3", lib.database)
+	lib.db, err = sql.Open("sqlite", lib.database)
 
 	if err != nil {
 		return nil, err

@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	// Needed for tests as the go-sqlite3 must be imported during tests too.
-	_ "github.com/mattn/go-sqlite3"
+	// Needed for tests as the sqlite must be imported during tests too.
+	_ "modernc.org/sqlite"
 
 	"github.com/ironsmile/euterpe/src/helpers"
 )
@@ -172,7 +172,7 @@ func TestInitialize(t *testing.T) {
 		t.Errorf("Library database was 0 bytes in size")
 	}
 
-	db, err := sql.Open("sqlite3", libDB.Name())
+	db, err := sql.Open("sqlite", libDB.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
