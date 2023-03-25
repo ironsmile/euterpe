@@ -31,7 +31,6 @@ jobs:
       uses: golangci/golangci-lint-action@v3
       with:
         version: v1.48.0
-        skip-go-installation: true
 
     - name: Build Docker image
       uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
