@@ -7,6 +7,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+    - name: Check out code
+      uses: actions/checkout@v3
+
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
@@ -15,9 +18,6 @@ jobs:
 
     - name: Install OS dependencies
       run: sudo apt-get install libtagc0-dev upx-ucl
-
-    - name: Check out code
-      uses: actions/checkout@v3
 
     - name: Build
       run: |
@@ -44,6 +44,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+    - name: Check out code
+      uses: actions/checkout@v3
+
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
@@ -51,9 +54,6 @@ jobs:
 
     - name: Install OS dependencies
       run: sudo apt-get install libtagc0-dev upx-ucl
-
-    - name: Check out code
-      uses: actions/checkout@v3
 
     - name: Generate cover profile
       run: |
