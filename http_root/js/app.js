@@ -31,15 +31,23 @@ function playerPageInit() {
 
     // The default implementation of _updateControls was making a show/hide
     // on a class which is present in every entry in the playlist. This takes
-    // too much time if the palylist has many items.
+    // too much time if the playlist has many items.
     jPlayerPlaylist.prototype._updateControls = function() {
-        if(this.shuffled) {
+        var shuffled = this.shuffled;
+
+        if (this.realShuffled !== undefined) {
+            shuffled = this.realShuffled;
+        }
+
+        if(shuffled) {
             $(this.cssSelector.shuffleOff).show();
             $(this.cssSelector.shuffle).hide();
         } else {
             $(this.cssSelector.shuffleOff).hide();
             $(this.cssSelector.shuffle).show();
         }
+
+        this.shuffled = shuffled;
     };
 
     // This function was was making repetitive DOM searches.
@@ -185,24 +193,43 @@ function playerPageInit() {
     // playing must be shuffled. The actual shuffling is done by the "next"
     // function.
     jPlayerPlaylist.prototype.shuffle = function(shuffled, playNow) {
-        this.shuffled = !this.shuffled;
-        var shuffleOff = $('.jp-shuffle-off');
-        var shuffle = $('.jp-shuffle');
+        if(shuffled === undefined) {
+            shuffled = !this.shuffled;
+        }
 
-        if (this.shuffled) {
+        this.shuffled = shuffled;
+
+        // realShuffled is used for the actual value. The jPlayerPlaylist is
+        // monkeying with this.shuffled in expected places, toggling it to false.
+        // So we ignore it totally while trying to keep it in sync with this.realShuffled
+        // when possible.
+        this.realShuffled = shuffled;
+
+        var shuffleOff = $(this.cssSelector.shuffleOff);
+        var shuffle = $(this.cssSelector.shuffle);
+
+        if (shuffled) {
             shuffleOff.show();
             shuffle.hide();
         } else {
             shuffleOff.hide();
             shuffle.show();
         }
+
+        if (localStorage) {
+            localStorage.shuffleOn = shuffled ? "true" : "false";
+        }
     }
 
-    // next is overwritten in order to support more efficient shuffling. See the commen
+    // next is overwritten in order to support more efficient shuffling. See the comment
     // above shuffled.
     jPlayerPlaylist.prototype.next = function() {
-        if (this.shuffled) {
-            var index = Math.round(Math.random() * this.playlist.length - 1)
+        if (this.shuffled && this.playlist.length > 1) {
+            var index = this.current;
+            while (index == this.current) {
+                index = Math.round(Math.random() * this.playlist.length - 1);
+            }
+
             if (index >= 0) {
                 this.play(index);
             }
@@ -219,8 +246,8 @@ function playerPageInit() {
         }
     }
 
-    // next is overwritten in order to support more efficient shuffling. See the commen
-    // above shuffled.
+    // previous is overwritten in order to support more efficient shuffling. See the
+    // comment above shuffled.
     jPlayerPlaylist.prototype.previous = function() {
         var index = (this.current - 1 >= 0) ? this.current - 1 : this.playlist.length - 1;
 
@@ -389,6 +416,7 @@ function playerPageInit() {
     });
 
     restore_last_saved_search();
+    restore_shuffle_state(pagePlaylist);
 }
 
 function loginPageInit() {
@@ -492,6 +520,24 @@ function restore_last_saved_search () {
 
     $('#search').val(last_search);
     search_database(last_search);
+}
+
+// restore_shuffle_state restores the state of the shuffle button to what it was last
+// set in the local storage.
+function restore_shuffle_state(playlistObj) {
+    if (!localStorage) {
+        return;
+    }
+
+    if (localStorage.shuffleOn === undefined) {
+        return;
+    }
+
+    if (localStorage.shuffleOn === "true") {
+        playlistObj.shuffle(true, false);
+    } else {
+        playlistObj.shuffle(false, false);
+    }
 }
 
 function load_playlist (songs) {
