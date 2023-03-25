@@ -27,4 +27,4 @@ dist-archive:
 
 # Start euterpe after building it from source.
 run:
-	go run --tags "sqlite_icu" main.go -D
+	go run --tags "sqlite_icu" main.go -D -local-fs
