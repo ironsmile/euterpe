@@ -8,16 +8,16 @@ jobs:
     steps:
 
     - name: Set up Go
-      uses: actions/setup-go@v1
+      uses: actions/setup-go@v4
       with:
-        go-version: 1.20
+        go-version-file: 'go.mod'
       id: go
 
     - name: Install OS dependencies
       run: sudo apt-get install libtagc0-dev upx-ucl
 
     - name: Check out code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Build
       run: |
@@ -28,9 +28,9 @@ jobs:
         go test ./...
 
     - name: Lint
-      uses: golangci/golangci-lint-action@v2
+      uses: golangci/golangci-lint-action@v3
       with:
-        version: v1.38.0
+        version: v1.48.0
         skip-go-installation: true
 
     - name: Build Docker image
@@ -45,15 +45,15 @@ jobs:
     steps:
 
     - name: Set up Go
-      uses: actions/setup-go@v1
+      uses: actions/setup-go@v4
       with:
-        go-version: 1.20
+        go-version-file: 'go.mod'
 
     - name: Install OS dependencies
       run: sudo apt-get install libtagc0-dev upx-ucl
 
     - name: Check out code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Generate cover profile
       run: |
