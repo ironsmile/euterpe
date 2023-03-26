@@ -413,6 +413,11 @@ function playerPageInit() {
         }
     }
 
+    var loopState = false;
+    if (localStorage) {
+        loopState = (localStorage.repeatOn === "true") ? true : false;
+    }
+
     var cssSelector = {
         jPlayer: "#jquery_jplayer_bootstrap",
         cssSelectorAncestor: "#jp_container_bootstrap"
@@ -430,7 +435,8 @@ function playerPageInit() {
             addTime: 0,
             removeTime: 0,
             shuffleTime: 0
-        }
+        },
+        loop: loopState
     };
 
     pagePlaylist = new jPlayerPlaylist(cssSelector, playlist, options);
@@ -552,6 +558,15 @@ function playerPageInit() {
             img.attr('src', bgImage.replace(/url\("(.+)"\)/, '$1'));
             return img;
         }
+    });
+
+    // This event handler stores the state of the "repeat" button.
+    $(cssSelector.jPlayer).bind($.jPlayer.event.repeat, function(event) {
+        if (!localStorage) {
+            return;
+        }
+
+        localStorage.repeatOn = event.jPlayer.options.loop ? "true" : "false";
     });
 
     $(document).ajaxStop(function(){
