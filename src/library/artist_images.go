@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"time"
 
@@ -261,7 +260,7 @@ func (lib *LocalLibrary) storeArtistImage(
 ) (io.ReadCloser, ImageSize, error) {
 	defer image.Close()
 
-	buff, err := ioutil.ReadAll(image)
+	buff, err := io.ReadAll(image)
 	if err != nil {
 		return nil, size, err
 	}
@@ -357,7 +356,7 @@ func (lib *LocalLibrary) SaveArtistImage(
 		N: readLimit,
 	}
 
-	buff, err := ioutil.ReadAll(lr)
+	buff, err := io.ReadAll(lr)
 	if err != nil && err != io.EOF {
 		return fmt.Errorf(
 			"reading the request body for storing artist image %d: %s",

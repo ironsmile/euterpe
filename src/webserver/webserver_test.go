@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -154,7 +153,7 @@ func TestStaticFilesServing(t *testing.T) {
 		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
 	}
 
-	if _, err := ioutil.ReadAll(resp.Body); err != nil {
+	if _, err := io.ReadAll(resp.Body); err != nil {
 		t.Error(err)
 	}
 }
@@ -341,7 +340,7 @@ func TestSearchUrl(t *testing.T) {
 			t.Errorf("Wrong content-type: %s", contentType)
 		}
 
-		responseBody, err := ioutil.ReadAll(resp.Body)
+		responseBody, err := io.ReadAll(resp.Body)
 
 		if err != nil {
 			t.Error(err)
@@ -379,7 +378,7 @@ func TestSearchUrl(t *testing.T) {
 		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
 	}
 
-	responseBody, err := ioutil.ReadAll(resp.Body)
+	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Error(err)
 	}
@@ -426,7 +425,7 @@ func TestGetFileURL(t *testing.T) {
 		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
 	}
 
-	responseBody, err := ioutil.ReadAll(resp.Body)
+	responseBody, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		t.Fatal(err)
@@ -483,7 +482,7 @@ func TestGzipEncoding(t *testing.T) {
 				bodyReader = resp.Body
 			}
 
-			_, err = ioutil.ReadAll(bodyReader)
+			_, err = io.ReadAll(bodyReader)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -670,9 +669,9 @@ func TestAlbumHandlerZipFunction(t *testing.T) {
 			continue
 		}
 
-		if zippedFile.FileHeader.UncompressedSize != uint32(st.Size()) {
+		if zippedFile.FileHeader.UncompressedSize64 != uint64(st.Size()) {
 			t.Errorf("Zipped file %s was incorrect size: %d. Expected %d",
-				zippedFile.Name, zippedFile.FileHeader.UncompressedSize, st.Size())
+				zippedFile.Name, zippedFile.FileHeader.UncompressedSize64, st.Size())
 		}
 	}
 }

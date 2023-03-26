@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"path/filepath"
 	"testing"
 
@@ -64,7 +63,7 @@ func TestLocalLibraryFindAndSaveArtistImage(t *testing.T) {
 				return nil, fmt.Errorf("expected to scale to size 60")
 			}
 
-			inputBytes, err := ioutil.ReadAll(r)
+			inputBytes, err := io.ReadAll(r)
 			if err != nil {
 				return nil, fmt.Errorf("reading input image: %s", err)
 			}
@@ -205,7 +204,7 @@ func assertArtistImage(
 		t.Fatalf("error finding artist image: %s", err)
 	}
 
-	foundImgBytes, err := ioutil.ReadAll(foundImg)
+	foundImgBytes, err := io.ReadAll(foundImg)
 	if err != nil {
 		t.Fatalf("error reading image reader: %s", err)
 	}

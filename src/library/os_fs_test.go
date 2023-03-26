@@ -3,7 +3,7 @@ package library
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -36,7 +36,7 @@ func TestOsFSOpen(t *testing.T) {
 	}
 	defer fh.Close()
 
-	foundContents, err := ioutil.ReadAll(fh)
+	foundContents, err := io.ReadAll(fh)
 	if err != nil {
 		t.Fatalf("error reading temporary file: %s", err)
 	}

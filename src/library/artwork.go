@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"path/filepath"
 	"regexp"
@@ -146,7 +145,7 @@ func (lib *LocalLibrary) storeAlbumArtwork(
 ) (io.ReadCloser, ImageSize, error) {
 	defer artwork.Close()
 
-	buff, err := ioutil.ReadAll(artwork)
+	buff, err := io.ReadAll(artwork)
 	if err != nil {
 		return nil, size, err
 	}
@@ -505,7 +504,7 @@ func (lib *LocalLibrary) SaveAlbumArtwork(
 		N: readLimit,
 	}
 
-	buff, err := ioutil.ReadAll(lr)
+	buff, err := io.ReadAll(lr)
 	if err != nil && err != io.EOF {
 		return fmt.Errorf(
 			"reading the request body for storing album %d: %s",

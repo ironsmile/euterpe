@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -137,7 +136,7 @@ func testErrorAfter(t *testing.T, dur time.Duration, done chan int, message stri
 }
 
 func TestInitialize(t *testing.T) {
-	libDB, err := ioutil.TempFile("", "httpms_library_test_")
+	libDB, err := os.CreateTemp("", "httpms_library_test_")
 
 	if err != nil {
 		t.Fatalf("Error creating temporary library: %s", err)
@@ -194,7 +193,7 @@ func TestInitialize(t *testing.T) {
 }
 
 func TestTruncate(t *testing.T) {
-	libDB, err := ioutil.TempFile("", "httpms_library_test_")
+	libDB, err := os.CreateTemp("", "httpms_library_test_")
 
 	if err != nil {
 		t.Fatalf("Error creating temporary library: %s", err)
