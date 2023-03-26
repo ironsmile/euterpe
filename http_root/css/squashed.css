@@ -256,7 +256,7 @@ select[multiple], select[size] {
     div.jp-title,
     div.jp-playlist {
         background-color: #46474a;
-        border-top: #181818;
+        border-color: #181818;
     }
 
     div.jp-type-playlist div.jp-playlist a,
