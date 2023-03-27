@@ -297,4 +297,16 @@ select[multiple], select[size] {
     .popover.left > .arrow::after {
         border-left-color: #46474a;
     }
+
+    .popover.bottom > .arrow::after {
+        border-bottom-color: #46474a;
+    }
+
+    .popover.top > .arrow::after {
+        border-top-color: #46474a;
+    }
+
+    .popover.right > .arrow::after {
+        border-right-color: #46474a;
+    }
 }

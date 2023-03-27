@@ -399,6 +399,7 @@ function playerPageInit() {
 
             var img = $('<img>');
             img.attr('src', bgImage.replace(/url\("(.+)"\)/, '$1'));
+            img.attr('style', 'max-width: 50vw; max-height: 50vw;');
             return img;
         }
     });
