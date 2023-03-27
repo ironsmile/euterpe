@@ -176,6 +176,22 @@ $(document).ready(function(){
 });
 
 function playerPageInit() {
+    // jPlayer defines the flac "codec" (mime) as "audio/x-flac". But for some
+    // browsers, notably Brave, this is nonsense. They only know of "audio/flac".
+    // So before initializing the jPlayer we check which type of browser is in use
+    // and define the flac "codec" to "audio/flac" if the browser does not understand
+    // "auido/x-flac". The latter is already out-of-use anyway.
+    try {
+        var auidoEl = document.createElement('audio');
+        const canPlay = auidoEl.canPlayType("audio/x-flac");
+        if (canPlay == '') {
+            $.jPlayer.prototype.format.flac.codec = 'audio/flac';
+        }
+    } catch(err) {
+        // Do nothing. This browser probably does not support the HTML <audio> tag.
+        // Hope it does support Flash somehow then.
+    }
+
     // The default setPlaylist method was calling _init which did
     // jPlayerPlaylist.select for the first track. That resulted in jplayer stopping
     // the played song. Now we make it never select. We also set current = undef so
@@ -427,7 +443,7 @@ function playerPageInit() {
 
     var options = {
         swfPath: "/js",
-        supplied: "mp3, oga, m4a, wav, flac",
+        supplied: "mp3, oga, m4a, wav, flac, webma, fla",
         preload: "none",
         playlistOptions: {
             autoPlay: false,
