@@ -1,5 +1,21 @@
 # Change Log
 
+## v1.5.3 - 2023-03-27
+
+This version focuses on improvements and fixes to the web UI.
+
+**What is New**
+
+* The state of the "repeat" and "shuffle" buttons is now stored. So refreshing the page or coming back after you've closed it will not lose their state.
+
+**Bug Fixes**
+
+* FLAC files were not played on some modern browsers. Notably Brave. The problem was the fact that it no longer understands the admittedly deprecated `audio/x-flac` mime type.
+
+* The playlist border is no longer an out-of-place white when the dark theme is used on a devices with small screens.
+
+* The album image pop-up would no longer be able to become bigger than the viewing window. This was previously possible with particularly large artwork.
+
 ## v1.5.2 - 2022-05-07
 
 Another release focused on bug fixes and optimizations.
