@@ -1,10 +1,9 @@
 #!/bin/bash
 
-if [ ! -d /etc/httpms ]; then
-    echo "HTTPMS is not installed. Aborting."
+if [ ! -d /etc/euterpe ]; then
+    echo "Euterpe is not installed. Aborting."
     exit 0
 fi
 
-rm -rf /etc/httpms
-rm /usr/bin/httpms
-
+rm -rf /etc/euterpe
+rm /usr/bin/euterpe
