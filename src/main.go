@@ -196,7 +196,10 @@ func runServer(appfs afero.Fs, httpRootFS, htmlTemplatesFS, sqlFilesFS fs.FS) er
 		return fmt.Errorf("parsing configuration: %s", err)
 	}
 
-	userPath := filepath.Dir(config.UserConfigPath(appfs))
+	userPath, err := helpers.ProjectUserPath(appfs)
+	if err != nil {
+		return fmt.Errorf("cannot find [user_path]: %w", err)
+	}
 
 	if !debug {
 		err = helpers.SetLogsFile(

@@ -11,6 +11,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"os/user"
@@ -22,13 +23,22 @@ import (
 )
 
 const (
-	// configName contains the name of the actual configuration file. This is the one
-	// the user is supposed to change.
+	// configName contains the name of the default configuration file name. This is the
+	// one the user is supposed to change.
 	configName = "config.json"
 
 	defaultlistAddress = "localhost:9996"
 	defaultSecretBytes = 64
 )
+
+var configFileName string
+
+func init() {
+	flag.StringVar(&configFileName, "config", configName,
+		"Name of the configuration file. If the value is a base file name and this\n"+
+			"file does not exist then it would be created in the user's Euterpe\n"+
+			"if present or absolute then it would be used as is.")
+}
 
 // defaultConfig contains all the default values for the Euterpe configuration. Users
 // can overwrite values here with their user's configuration.
@@ -153,12 +163,18 @@ func FindAndParse(appfs afero.Fs) (Config, error) {
 // UserConfigPath returns the full path to the place where the user's configuration
 // file should be
 func UserConfigPath(appfs afero.Fs) string {
+	if st, err := appfs.Stat(configFileName); err == nil && !st.IsDir() {
+		if absPath, err := filepath.Abs(configFileName); err == nil {
+			return absPath
+		}
+	}
+
 	path, err := helpers.ProjectUserPath(appfs)
 	if err != nil {
 		log.Println(err)
 		return ""
 	}
-	return filepath.Join(path, configName)
+	return filepath.Join(path, configFileName)
 }
 
 // userConfigExists returns true if the user configuration is present and in order.
