@@ -772,6 +772,9 @@ function load_playlist (songs) {
         if (format === 'ogg' || format === 'opus') {
             format = 'oga';
         }
+        if (format === 'mp4') {
+            format = 'm4a';
+        }
         song[format] = song_url;
 
         new_playlist.push(song);
