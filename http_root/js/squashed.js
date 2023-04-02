@@ -769,7 +769,7 @@ function load_playlist (songs) {
         // For certain formats the jPlayer does not use their file extension name so
         // we check for them explicitly here.
         var format = songs[i].format;
-        if (format === 'ogg') {
+        if (format === 'ogg' || format === 'opus') {
             format = 'oga';
         }
         song[format] = song_url;
