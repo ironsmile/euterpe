@@ -1,5 +1,15 @@
 # Change Log
 
+## v1.5.4 - 2023-04-02
+
+Another release mainly focused on bug fixes.
+
+**Bug Fixes**
+
+* The `uninstall` script in the release archive is now working. Previously it was still trying to uninstall "httpms".
+
+* Fixed playing `.opus` and `.mp4` files in the web UI. They are properly tagged as having `oga` and `m4a` audio for the purposes of jPlayer.
+
 ## v1.5.3 - 2023-03-27
 
 This version focuses on improvements and fixes to the web UI.
