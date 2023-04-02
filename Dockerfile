@@ -1,15 +1,15 @@
-FROM golang:1.16-alpine3.13 as builder
+FROM golang:1.20-alpine3.17 as builder
 
-RUN apk add --update taglib-dev libc-dev icu-dev upx make gcc git zlib-dev
+RUN apk add --update taglib-dev libc-dev icu-dev upx bmake gcc git zlib-dev
 
 COPY . /src/euterpe
 WORKDIR /src/euterpe
 
-RUN make release
+RUN bmake release
 RUN mv euterpe /tmp/euterpe
 RUN /tmp/euterpe -config-gen && sed -i 's/localhost:9996/0.0.0.0:9996/' /root/.euterpe/config.json
 
-FROM alpine:3.13
+FROM alpine:3.17
 
 RUN apk add --update taglib icu
 
