@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 
 	"github.com/ironsmile/euterpe/src/config"
 	"github.com/ironsmile/euterpe/src/library"
+	"github.com/ironsmile/euterpe/src/webserver/subsonic"
 )
 
 const (
@@ -102,6 +104,12 @@ func (srv *Server) serveGoroutine() {
 	addDeviceHandler := NewTemplateHandler(allTpls.addDevice, "Add Device")
 	registerTokenHandler := NewRigisterTokenHandler()
 
+	subsonicHandler := subsonic.NewHandler(
+		subsonic.Prefix,
+		srv.library,
+		srv.cfg,
+	)
+
 	router := mux.NewRouter()
 	router.StrictSlash(true)
 	router.UseEncodedPath()
@@ -158,6 +166,7 @@ func (srv *Server) serveGoroutine() {
 	router.Handle("/", indexHandler).Methods("GET")
 	router.Handle("/add_device/", addDeviceHandler).Methods("GET")
 	router.Handle("/new_qr_token/", createQRTokenHandler).Methods("GET")
+	router.PathPrefix(subsonic.Prefix).Handler(subsonicHandler).Methods("GET", "POST")
 	router.PathPrefix("/").Handler(staticFilesHandler).Methods("GET")
 
 	handler := NewTerryHandler(router)
@@ -188,6 +197,7 @@ func (srv *Server) serveGoroutine() {
 				"/js/",
 				"/favicon/",
 				"/fonts/",
+				strings.TrimSuffix(subsonic.Prefix, "/") + "/",
 			},
 		)
 	}
