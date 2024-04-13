@@ -20,7 +20,6 @@ func (s *subsonic) getMusicDirectory(w http.ResponseWriter, req *http.Request) {
 	dirID, err := strconv.ParseInt(dirIDString, 10, 64)
 	if err != nil {
 		resp := responseError(70, fmt.Sprintf("malformed `id`: %s", err))
-		w.WriteHeader(http.StatusBadRequest)
 		encodeResponse(w, req, resp)
 		return
 	}

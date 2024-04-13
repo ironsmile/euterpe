@@ -122,6 +122,15 @@ func (s *subsonic) initRouter() {
 	).Methods("GET")
 
 	router.Handle(
+		Prefix+"/getAlbumList2",
+		http.HandlerFunc(s.getAlbumList2),
+	).Methods("GET")
+	router.Handle(
+		Prefix+"/getAlbumList2.view",
+		http.HandlerFunc(s.getAlbumList2),
+	).Methods("GET")
+
+	router.Handle(
 		Prefix+"/getArtist",
 		http.HandlerFunc(s.getArtist),
 	).Methods("GET")
