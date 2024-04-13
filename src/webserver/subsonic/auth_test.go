@@ -13,6 +13,7 @@ import (
 	"github.com/ironsmile/euterpe/src/config"
 	"github.com/ironsmile/euterpe/src/library/libraryfakes"
 	"github.com/ironsmile/euterpe/src/webserver/subsonic"
+	"github.com/ironsmile/euterpe/src/webserver/subsonic/subsonicfakes"
 )
 
 // TestAuthHandler checks that authentication works as explained
@@ -205,6 +206,8 @@ func TestAuthHandler(t *testing.T) {
 				&libraryfakes.FakeLibrary{},
 				&libraryfakes.FakeBrowser{},
 				cfg,
+				&subsonicfakes.FakeCoverArtHandler{},
+				&subsonicfakes.FakeCoverArtHandler{},
 			)
 
 			srv := httptest.NewServer(sh)

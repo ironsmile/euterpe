@@ -109,6 +109,8 @@ func (srv *Server) serveGoroutine() {
 		srv.library,
 		srv.library,
 		srv.cfg,
+		artoworkHandler,
+		artistImageHandler,
 	)
 
 	router := mux.NewRouter()

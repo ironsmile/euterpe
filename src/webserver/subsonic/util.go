@@ -157,10 +157,19 @@ func isArtistID(id int64) bool {
 	return id > combinedMusicFolderID && id <= 2*combinedMusicFolderID
 }
 
+// artistCoverArtID converts the artistID to an ID for cover image in the
+// exposed subsonic API.
 func artistCoverArtID(artistID int64) string {
-	return fmt.Sprintf("ar-%d", artistID)
+	return fmt.Sprintf("%s%d", coverArtistPrefix, artistID)
 }
 
+// albumConverArtID converts the albumID to an ID for a cover image in the
+// exposed subsonic API.
 func albumConverArtID(albumID int64) string {
-	return fmt.Sprintf("al-%d", albumID)
+	return fmt.Sprintf("%s%d", coverAlbumPrefix, albumID)
 }
+
+const (
+	coverAlbumPrefix  = "al-"
+	coverArtistPrefix = "ar-"
+)

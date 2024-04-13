@@ -43,7 +43,7 @@ func (aih ArtstImageHandler) ServeHTTP(writer http.ResponseWriter, req *http.Req
 	} else if req.Method == http.MethodPut {
 		err = aih.upload(writer, req, id)
 	} else {
-		err = aih.find(writer, req, id)
+		err = aih.Find(writer, req, id)
 	}
 
 	if err != nil {
@@ -54,9 +54,9 @@ func (aih ArtstImageHandler) ServeHTTP(writer http.ResponseWriter, req *http.Req
 	}
 }
 
-// Actually searches through the library for the image of an artist and serves
+// Find searches through the library for the image of an artist and serves
 // it as a raw image
-func (aih ArtstImageHandler) find(
+func (aih ArtstImageHandler) Find(
 	writer http.ResponseWriter,
 	req *http.Request,
 	id int64,

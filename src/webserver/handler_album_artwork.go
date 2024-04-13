@@ -46,7 +46,7 @@ func (aah AlbumArtworkHandler) ServeHTTP(writer http.ResponseWriter, req *http.R
 	} else if req.Method == http.MethodPut {
 		err = aah.upload(writer, req, id)
 	} else {
-		err = aah.find(writer, req, id)
+		err = aah.Find(writer, req, id)
 	}
 
 	if err != nil {
@@ -57,9 +57,9 @@ func (aah AlbumArtworkHandler) ServeHTTP(writer http.ResponseWriter, req *http.R
 	}
 }
 
-// Actually searches through the library for the artwork of an album and serves
+// Find searches through the library for the artwork of an album and serves
 // it as a raw image
-func (aah AlbumArtworkHandler) find(
+func (aah AlbumArtworkHandler) Find(
 	writer http.ResponseWriter,
 	req *http.Request,
 	id int64,

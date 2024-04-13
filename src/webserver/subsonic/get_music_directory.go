@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"path/filepath"
 	"strconv"
+
+	"github.com/ironsmile/euterpe/src/library"
 )
 
 func (s *subsonic) getMusicDirectory(w http.ResponseWriter, req *http.Request) {
@@ -27,7 +29,9 @@ func (s *subsonic) getMusicDirectory(w http.ResponseWriter, req *http.Request) {
 		entry directoryEntry
 	)
 
-	if isArtistID(dirID) {
+	if dirID == combinedMusicFolderID {
+		entry, err = s.getRootDirectory(req.Context())
+	} else if isArtistID(dirID) {
 		entry, err = s.getArtistDirectory(req.Context(), toArtistDBID(dirID))
 	} else if isAlbumID(dirID) {
 		entry, err = s.getAlbumDirectory(req.Context(), toAlbumDBID(dirID))
@@ -61,12 +65,12 @@ func (s *subsonic) getArtistDirectory(
 	resp := directoryEntry{
 		ID:         artistSubsonicID,
 		AlbumCount: int64(len(albums)),
+		CoverArtID: artistCoverArtID(artistID),
 	}
 
 	for _, album := range albums {
 		if resp.Name == "" {
 			resp.Name = album.Artist
-			resp.ParentID = combinedMusicFolderID
 		}
 
 		resp.Children = append(resp.Children, directoryChildEntry{
@@ -76,10 +80,12 @@ func (s *subsonic) getArtistDirectory(
 			Title:      album.Name,
 			Name:       album.Name,
 			Album:      album.Name,
+			AlbumID:    albumFSID(album.ID),
 			Artist:     album.Artist,
 			ArtistID:   artistSubsonicID,
 			IsDir:      true,
-			CoverArtID: artistCoverArtID(artistID),
+			CoverArtID: albumConverArtID(album.ID),
+			SongCount:  album.SongCount,
 		})
 	}
 
@@ -103,6 +109,11 @@ func (s *subsonic) getAlbumDirectory(
 		if resp.Name == "" {
 			resp.Name = track.Album
 			resp.ParentID = artistFSID(track.ArtistID)
+			resp.Artist = track.Artist
+		}
+
+		if resp.Artist != track.Artist {
+			resp.Artist = "Various Artists"
 		}
 
 		resp.Children = append(resp.Children, directoryChildEntry{
@@ -131,6 +142,54 @@ func (s *subsonic) getAlbumDirectory(
 	return resp, nil
 }
 
+func (s *subsonic) getRootDirectory(
+	_ context.Context,
+) (directoryEntry, error) {
+	var (
+		page uint = 0
+		resp      = directoryEntry{
+			ID:       combinedMusicFolderID,
+			ParentID: 0,
+			Name:     "Combined Music Library",
+		}
+	)
+	for {
+		artists, _ := s.libBrowser.BrowseArtists(library.BrowseArgs{
+			Page:    page,
+			PerPage: 500,
+			Order:   library.OrderAsc,
+			OrderBy: library.OrderByName,
+		})
+
+		if len(artists) == 0 {
+			break
+		}
+
+		for _, artist := range artists {
+			if artist.Name == "" {
+				continue
+			}
+
+			resp.Children = append(
+				resp.Children,
+				directoryChildEntry{
+					Name:      artist.Name,
+					Artist:    artist.Name,
+					Title:     artist.Name,
+					ID:        artistFSID(artist.ID),
+					MediaType: "artist",
+					ParentID:  combinedMusicFolderID,
+					IsDir:     true,
+				},
+			)
+		}
+
+		page++
+	}
+
+	return resp, nil
+}
+
 type directoryResponse struct {
 	baseResponse
 
@@ -140,6 +199,7 @@ type directoryResponse struct {
 type directoryEntry struct {
 	ID         int64  `xml:"id,attr" json:"id,string"`
 	ParentID   int64  `xml:"parent,attr" json:"parent,string"`
+	Artist     string `xml:"-" json:"-"`
 	Name       string `xml:"name,attr" json:"name"`
 	AlbumCount int64  `xml:"albumCount,attr,omitempty" json:"albumCount,omitempty"`
 	SongCount  int64  `xml:"songCount,attr,omitempty" json:"songCount,omitempty"`
@@ -150,7 +210,7 @@ type directoryEntry struct {
 
 type directoryChildEntry struct {
 	ID          int64  `xml:"id,attr" json:"id,string"`
-	ParentID    int64  `xml:"parent,attr" json:"parent,omitempty,string"`
+	ParentID    int64  `xml:"parent,attr,omitempty" json:"parent,omitempty,string"`
 	MediaType   string `xml:"mediaType,attr,omitempty" json:"mediaType"`
 	Title       string `xml:"title,attr,omitempty" json:"title"`
 	Name        string `xml:"name,attr,omitempty" json:"-"`

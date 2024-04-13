@@ -39,15 +39,17 @@ type SearchResult struct {
 
 // Artist represents an artist from the database
 type Artist struct {
-	ID   int64  `json:"artist_id"`
-	Name string `json:"artist"`
+	ID         int64  `json:"artist_id"`
+	Name       string `json:"artist"`
+	AlbumCount int64  `json:"album_count"`
 }
 
 // Album represents an album from the database
 type Album struct {
-	ID     int64  `json:"album_id"`
-	Name   string `json:"album"`
-	Artist string `json:"artist"`
+	ID        int64  `json:"album_id"`
+	Name      string `json:"album"`
+	Artist    string `json:"artist"`
+	SongCount int64  `json:"track_count"`
 }
 
 //counterfeiter:generate . Library

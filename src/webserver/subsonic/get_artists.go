@@ -46,10 +46,10 @@ func (s *subsonic) getArtists(w http.ResponseWriter, req *http.Request) {
             currentIndex.Children = append(
                 currentIndex.Children,
                 artistIndexElement{
-                    ID:         artist.ID,
+                    ID:         artistFSID(artist.ID),
                     Name:       artist.Name,
                     CoverArt:   artistCoverArtID(artist.ID),
-                    AlbumCount: 1,
+                    AlbumCount: artist.AlbumCount,
                 },
             )
         }
@@ -85,7 +85,7 @@ type artistsList struct {
 }
 
 type artistElement struct {
-    Name     string               `xml:"name,attr"`
+    Name     string               `xml:"name,attr" json:"name"`
     Children []artistIndexElement `xml:"artist" json:"artist"`
 }
 
@@ -93,5 +93,5 @@ type artistIndexElement struct {
     ID         int64  `xml:"id,attr" json:"id,string"`
     Name       string `xml:"name,attr" json:"name"`
     CoverArt   string `xml:"coverArt,attr" json:"coverArt"`
-    AlbumCount int64  `xml:"albumCount,attr" json:"albumCount"`
+    AlbumCount int64  `xml:"albumCount,attr,omitempty" json:"albumCount,omitempty"`
 }

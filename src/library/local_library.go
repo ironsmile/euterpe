@@ -270,6 +270,7 @@ func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []SearchResult {
 				at.id as artist_id,
 				t.number as track_number,
 				t.album_id as album_id,
+				t.duration as duration,
 				t.fs_path as fs_path
 			FROM
 				tracks as t
@@ -287,7 +288,10 @@ func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []SearchResult {
 
 		defer rows.Close()
 		for rows.Next() {
-			var res SearchResult
+			var (
+				res SearchResult
+				dur sql.NullInt64
+			)
 			err := rows.Scan(
 				&res.ID,
 				&res.Title,
@@ -296,6 +300,7 @@ func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []SearchResult {
 				&res.ArtistID,
 				&res.TrackNumber,
 				&res.AlbumID,
+				&dur,
 				&res.Format,
 			)
 			if err != nil {
@@ -303,6 +308,10 @@ func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []SearchResult {
 			}
 
 			res.Format = mediaFormatFromFileName(res.Format)
+
+			if dur.Valid {
+				res.Duration = dur.Int64
+			}
 
 			output = append(output, res)
 		}
@@ -317,7 +326,7 @@ func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []SearchResult {
 }
 
 // GetArtistAlbums returns all the albums which this artist has an at least
-// on track in.
+// one track in.
 func (lib *LocalLibrary) GetArtistAlbums(artistID int64) []Album {
 	var albums []Album
 
@@ -338,13 +347,16 @@ func (lib *LocalLibrary) GetArtistAlbums(artistID int64) []Album {
 
 		rows, err := db.Query(`
 			SELECT
-				DISTINCT(a.id),
-				a.name
+				t.album_id,
+				a.name,
+				COUNT(t.id) as songsCount
 			FROM
 				tracks t
 					LEFT JOIN albums a ON a.id = t.album_id 
 			WHERE
-				artist_id = ?;
+				artist_id = ?
+			GROUP BY
+				t.album_id
 		`, artistID)
 		if err != nil {
 			log.Printf("Query not successful: %s\n", err.Error())
@@ -359,6 +371,7 @@ func (lib *LocalLibrary) GetArtistAlbums(artistID int64) []Album {
 			err := rows.Scan(
 				&res.ID,
 				&res.Name,
+				&res.SongCount,
 			)
 			if err != nil {
 				return fmt.Errorf("scanning error: %w", err)

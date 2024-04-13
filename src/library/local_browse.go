@@ -29,16 +29,19 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 
 	work := func(db *sql.DB) error {
 		rows, err := db.Query(fmt.Sprintf(`
-            SELECT
-                ar.id,
-                ar.name
-            FROM
-                artists ar
-            ORDER BY
-                %s %s
-            LIMIT
-                ?, ?
-        `, orderBy, order), page*perPage, perPage)
+			SELECT
+				ar.id,
+				ar.name,
+				(SELECT COUNT(DISTINCT(tr.album_id))
+					FROM tracks tr
+					WHERE tr.artist_id = ar.id) as albumsCount
+			FROM
+				artists ar
+			ORDER BY
+				%s %s
+			LIMIT
+				?, ?
+		`, orderBy, order), page*perPage, perPage)
 
 		if err != nil {
 			return err
@@ -47,7 +50,7 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 		defer rows.Close()
 		for rows.Next() {
 			var res Artist
-			if err := rows.Scan(&res.ID, &res.Name); err != nil {
+			if err := rows.Scan(&res.ID, &res.Name, &res.AlbumCount); err != nil {
 				return fmt.Errorf("scanning db failed: %w", err)
 			}
 			output = append(output, res)
@@ -77,11 +80,11 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 
 	work := func(db *sql.DB) error {
 		smt, err := db.Prepare(`
-            SELECT
-                COUNT(DISTINCT tr.album_id) as cnt
-            FROM
-                tracks tr
-        `)
+			SELECT
+				COUNT(DISTINCT tr.album_id) as cnt
+			FROM
+				tracks tr
+		`)
 
 		if err != nil {
 			log.Printf("Query for getting albums count not prepared: %s\n", err)
@@ -105,26 +108,27 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 		}
 
 		rows, err := db.Query(fmt.Sprintf(`
-            SELECT
-                al.id,
-                al.name as album_name,
-                CASE WHEN COUNT(DISTINCT tr.artist_id) = 1
-                THEN ar.name
-                ELSE "Various Artists"
-                END AS arist_name
-            FROM
-                tracks tr
-                LEFT JOIN
-                    albums al ON al.id = tr.album_id
-                LEFT JOIN
-                    artists ar ON ar.id = tr.artist_id
-            GROUP BY
-                tr.album_id
-            ORDER BY
-                %s %s
-            LIMIT
-                ?, ?
-        `, orderBy, order), page*perPage, perPage)
+			SELECT
+				al.id,
+				al.name as album_name,
+				CASE WHEN COUNT(DISTINCT tr.artist_id) = 1
+				THEN ar.name
+				ELSE "Various Artists"
+				END AS arist_name,
+				COUNT(tr.id) as songCount
+			FROM
+				tracks tr
+				LEFT JOIN
+					albums al ON al.id = tr.album_id
+				LEFT JOIN
+					artists ar ON ar.id = tr.artist_id
+			GROUP BY
+				tr.album_id
+			ORDER BY
+				%s %s
+			LIMIT
+				?, ?
+		`, orderBy, order), page*perPage, perPage)
 
 		if err != nil {
 			return err
@@ -133,7 +137,10 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 		defer rows.Close()
 		for rows.Next() {
 			var res Album
-			if err := rows.Scan(&res.ID, &res.Name, &res.Artist); err != nil {
+			if err := rows.Scan(
+				&res.ID, &res.Name,
+				&res.Artist, &res.SongCount,
+			); err != nil {
 				return fmt.Errorf("scanning db failed: %w", err)
 			}
 			output = append(output, res)
@@ -155,11 +162,11 @@ func (lib *LocalLibrary) getTableSize(table string) int {
 
 	work := func(db *sql.DB) error {
 		smt, err := db.Prepare(fmt.Sprintf(`
-            SELECT
-                COUNT(*) as cnt
-            FROM
-                %s
-        `, table))
+			SELECT
+				COUNT(*) as cnt
+			FROM
+				%s
+		`, table))
 
 		if err != nil {
 			log.Printf("Query for getting %s count not prepared: %s\n", table, err)

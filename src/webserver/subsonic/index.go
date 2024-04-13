@@ -16,6 +16,9 @@ type subsonic struct {
 	needsAuth  bool
 	auth       config.Auth
 
+	albumArtHandler  CoverArtHandler
+	artistArtHandler CoverArtHandler
+
 	//!TODO: track real lastModified centrally. On every insert or
 	// delete in the database.
 	lastModified time.Time
@@ -34,14 +37,18 @@ func NewHandler(
 	lib library.Library,
 	libBrowser library.Browser,
 	cfg config.Config,
+	albumArt CoverArtHandler,
+	artistArt CoverArtHandler,
 ) http.Handler {
 	handler := &subsonic{
-		prefix:       prefix,
-		lib:          lib,
-		libBrowser:   libBrowser,
-		needsAuth:    cfg.Auth,
-		auth:         cfg.Authenticate,
-		lastModified: time.Now(),
+		prefix:           prefix,
+		lib:              lib,
+		libBrowser:       libBrowser,
+		needsAuth:        cfg.Auth,
+		auth:             cfg.Authenticate,
+		albumArtHandler:  albumArt,
+		artistArtHandler: artistArt,
+		lastModified:     time.Now(),
 	}
 
 	handler.initRouter()
@@ -73,9 +80,17 @@ func (s *subsonic) initRouter() {
 		Prefix+"/getMusicFolders",
 		http.HandlerFunc(s.getMusicFolders),
 	).Methods("GET")
+	router.Handle(
+		Prefix+"/getMusicFolders.view",
+		http.HandlerFunc(s.getMusicFolders),
+	).Methods("GET")
 
 	router.Handle(
 		Prefix+"/getIndexes",
+		http.HandlerFunc(s.getIndexes),
+	).Methods("GET")
+	router.Handle(
+		Prefix+"/getIndexes.view",
 		http.HandlerFunc(s.getIndexes),
 	).Methods("GET")
 
@@ -83,10 +98,63 @@ func (s *subsonic) initRouter() {
 		Prefix+"/getMusicDirectory",
 		http.HandlerFunc(s.getMusicDirectory),
 	).Methods("GET")
+	router.Handle(
+		Prefix+"/getMusicDirectory.view",
+		http.HandlerFunc(s.getMusicDirectory),
+	).Methods("GET")
 
 	router.Handle(
 		Prefix+"/getArtists",
 		http.HandlerFunc(s.getArtists),
+	).Methods("GET")
+	router.Handle(
+		Prefix+"/getArtists.view",
+		http.HandlerFunc(s.getArtists),
+	).Methods("GET")
+
+	router.Handle(
+		Prefix+"/getAlbum",
+		http.HandlerFunc(s.getAlbum),
+	).Methods("GET")
+	router.Handle(
+		Prefix+"/getAlbum.view",
+		http.HandlerFunc(s.getAlbum),
+	).Methods("GET")
+
+	router.Handle(
+		Prefix+"/getArtist",
+		http.HandlerFunc(s.getArtist),
+	).Methods("GET")
+	router.Handle(
+		Prefix+"/getArtist.view",
+		http.HandlerFunc(s.getArtist),
+	).Methods("GET")
+
+	router.Handle(
+		Prefix+"/getArtistInfo2",
+		http.HandlerFunc(s.getArtistInfo2),
+	).Methods("GET")
+	router.Handle(
+		Prefix+"/getArtistInfo2.view",
+		http.HandlerFunc(s.getArtistInfo2),
+	).Methods("GET")
+
+	router.Handle(
+		Prefix+"/getCoverArt",
+		http.HandlerFunc(s.getCoverArt),
+	).Methods("GET")
+	router.Handle(
+		Prefix+"/getCoverArt.view",
+		http.HandlerFunc(s.getCoverArt),
+	).Methods("GET")
+
+	router.Handle(
+		Prefix+"/stream",
+		http.HandlerFunc(s.stream),
+	).Methods("GET")
+	router.Handle(
+		Prefix+"/stream.view",
+		http.HandlerFunc(s.stream),
 	).Methods("GET")
 
 	s.mux = s.authHandler(router)
