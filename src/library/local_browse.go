@@ -16,12 +16,19 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 	order := "ASC"
 	orderBy := "ar.name"
 
-	if args.OrderBy == OrderByID {
-		orderBy = "ar.id"
-	}
-
 	if args.Order == OrderDesc {
 		order = "DESC"
+	}
+
+	if args.OrderBy == OrderByID {
+		orderBy = "ar.id"
+	} else if args.OrderBy == OrderByRandom {
+		orderBy = "RANDOM()"
+		order = ""
+
+		// When ordering by random the page does not matter. Only the limit
+		// does.
+		page = 0
 	}
 
 	artistsCount := lib.getTableSize("artists")
@@ -99,12 +106,19 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 		order := "ASC"
 		orderBy := "al.name"
 
-		if args.OrderBy == OrderByID {
-			orderBy = "al.id"
-		}
-
 		if args.Order == OrderDesc {
 			order = "DESC"
+		}
+
+		if args.OrderBy == OrderByID {
+			orderBy = "al.id"
+		} else if args.OrderBy == OrderByRandom {
+			orderBy = "RANDOM()"
+			order = ""
+
+			// When ordering by random the page does not matter. Only the limit
+			// does.
+			page = 0
 		}
 
 		rows, err := db.Query(fmt.Sprintf(`

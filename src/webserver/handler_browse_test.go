@@ -69,6 +69,28 @@ func TestBrowseHandlerArgumentParsing(t *testing.T) {
 			},
 		},
 		{
+			desc:         "random browsing for artist",
+			url:          "/v1/browse?by=artist&order-by=random",
+			expectedCode: http.StatusOK,
+			expectedArtistArgs: &library.BrowseArgs{
+				PerPage: 10,
+				Page:    0,
+				OrderBy: library.OrderByRandom,
+				Order:   library.OrderAsc,
+			},
+		},
+		{
+			desc:         "random browsing for artist",
+			url:          "/v1/browse?by=album&order-by=random",
+			expectedCode: http.StatusOK,
+			expectedAlbumArgs: &library.BrowseArgs{
+				PerPage: 10,
+				Page:    0,
+				OrderBy: library.OrderByRandom,
+				Order:   library.OrderAsc,
+			},
+		},
+		{
 			desc:         "unsupported by argument",
 			url:          "/v1/browse?by=song",
 			expectedCode: http.StatusBadRequest,

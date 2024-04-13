@@ -312,7 +312,7 @@ Note that the track duration is in milliseconds.
 A way to browse through the whole collection is via the browse API call. It allows you to get its albums or artists in an ordered and paginated manner.
 
 ```sh
-GET /v1/browse/[?by=artist|album][&per-page={number}][&page={number}][&order-by=id|name][&order=desc|asc]
+GET /v1/browse/[?by=artist|album][&per-page={number}][&page={number}][&order-by=id|name|random][&order=desc|asc]
 ```
 
 The returned JSON contains the data for the current page, the number of all pages for the current browse method and URLs of the next or previous pages.
@@ -357,7 +357,7 @@ _per-page_: controls how many items would be present in the `data` field for eve
 
 _page_: the generated data would be for this page. The **default is 1**.
 
-_order-by_: controls how the results would be ordered. The value `id` means the ordering would be done by the album or artist ID, depending on the `by` argument. The same goes for the `name` value. **Defaults to `name`**.
+_order-by_: controls how the results would be ordered. The value `id` means the ordering would be done by the album or artist ID, depending on the `by` argument. The same goes for the `name` value. `random` means that the list will be randmly ordered. **Defaults to `name`**.
 
 _order_: controls if the order would ascending (with value `asc`) or descending (with value `desc`). **Defaults to `asc`**.
 

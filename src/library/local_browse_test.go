@@ -145,6 +145,25 @@ func TestBrowsingArtists(t *testing.T) {
 			}
 		}
 	}
+
+	// Try random browsing. Here only the number of returned elements is tested since
+	// the actual order is not deterministic.
+	browseArgs := BrowseArgs{
+		Page:    5,
+		PerPage: 3,
+		OrderBy: OrderByRandom,
+	}
+	foundArtists, count := lib.BrowseArtists(browseArgs)
+
+	if count != allArtistsCount {
+		t.Errorf("Expected all artists to be %d but found %d with search %+v",
+			allArtistsCount, count, browseArgs)
+	}
+
+	if len(foundArtists) != int(browseArgs.PerPage) {
+		t.Errorf("Expected %d artists to be returned but got %d",
+			browseArgs.PerPage, len(foundArtists))
+	}
 }
 
 // TestBrowsingAlbums adds a bunch of tracks into the database and tries
@@ -319,5 +338,24 @@ func TestBrowsingAlbums(t *testing.T) {
 					ind, expectedName, browseArgs, foundAlbums[ind].Name)
 			}
 		}
+	}
+
+	// Try random browsing. Here only the number of returned elements is tested since
+	// the actual order is not deterministic.
+	browseArgs := BrowseArgs{
+		Page:    5,
+		PerPage: 3,
+		OrderBy: OrderByRandom,
+	}
+	foundAlbums, count := lib.BrowseAlbums(browseArgs)
+
+	if count != allAlbumsCount {
+		t.Errorf("Expected all albums to be %d but found %d with search %+v",
+			allAlbumsCount, count, browseArgs)
+	}
+
+	if len(foundAlbums) != int(browseArgs.PerPage) {
+		t.Errorf("Expected %d albums to be returned but got %d",
+			browseArgs.PerPage, len(foundAlbums))
 	}
 }

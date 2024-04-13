@@ -44,8 +44,9 @@ func (bh BrowseHandler) browse(writer http.ResponseWriter, req *http.Request) er
 		return nil
 	}
 
-	if orderBy != "" && orderBy != "id" && orderBy != "name" {
-		bh.badRequest(writer, "Wrong 'order-by' parameter. Must be 'id' or 'name'")
+	if orderBy != "" && orderBy != "id" && orderBy != "name" && orderBy != "random" {
+		bh.badRequest(writer, "Wrong 'order-by' parameter. "+
+			"Must be 'id', 'name' or 'random'")
 		return nil
 	}
 
@@ -175,6 +176,8 @@ func getBrowseArgs(page, perPage int, orderBy, order string) library.BrowseArgs 
 	switch orderBy {
 	case "id":
 		browseArgs.OrderBy = library.OrderByID
+	case "random":
+		browseArgs.OrderBy = library.OrderByRandom
 	default:
 		browseArgs.OrderBy = library.OrderByName
 	}

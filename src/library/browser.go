@@ -12,24 +12,27 @@ const (
 	// comparison function.
 	OrderAsc
 
-	// OrderDesc will order values in a descending mannger defined by their
+	// OrderDesc will order values in a descending manager defined by their
 	// comparison function.
 	OrderDesc
 )
 
-// BrowseOrderBy represents the different properties by which values could be oredered. For every
-// browse method the semantics for "name" and "id" could be different.
+// BrowseOrderBy represents the different properties by which values could be ordered.
+// For every browse method the semantics for "name" and "id" could be different.
 type BrowseOrderBy int
 
 const (
-	// OrderByUndefined means "order by any preoperty you wish"
+	// OrderByUndefined means "order by any property you wish".
 	OrderByUndefined BrowseOrderBy = iota
 
-	// OrderByID will order values by their respective ID field
+	// OrderByID will order values by their respective ID field.
 	OrderByID
 
-	// OrderByName will order vlues by their name
+	// OrderByName will order values by their name.
 	OrderByName
+
+	// OrderByRandom will cause the returned list to be in random order.
+	OrderByRandom
 )
 
 // BrowseArgs defines all arguments one can pass to the browse methods to later its behaviour.
