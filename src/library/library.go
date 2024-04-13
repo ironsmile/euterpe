@@ -5,7 +5,7 @@
 // way the real location of the file is never revealed to the interface.
 package library
 
-// SearchResult contains a result for a search term. Contains all the neccessery
+// SearchResult contains a result for a search term. Contains all the necessary
 // information to uniquely identify a media in the library.
 type SearchResult struct {
 
@@ -50,8 +50,10 @@ type Album struct {
 	Artist string `json:"artist"`
 }
 
+//counterfeiter:generate . Library
+
 // Library represents the media library which is played using the HTTPMS.
-// It is responsible for scaning the library directories, watching for new files,
+// It is responsible for scanning the library directories, watching for new files,
 // actually searching for a media by a search term and finding the exact file path
 // in the file system for a media.
 type Library interface {
@@ -62,24 +64,28 @@ type Library interface {
 
 	// Search the library using a search string. It will match against Artist, Album
 	// and Title. Will OR the results. So it is "return anything which Artist matches or
-	// Album matches or Title matches"
+	// Album matches or Title matches".
 	Search(string) []SearchResult
 
 	// Returns the real filesystem path. Requires the media ID.
 	GetFilePath(int64) string
 
-	// Returns search result will all the files of this album
+	// Returns search result will all the files of this album.
 	GetAlbumFiles(int64) []SearchResult
+
+	// GetArtistAlbums returns all the albums which this artist has an at least
+	// on track in.
+	GetArtistAlbums(int64) []Album
 
 	// Starts a full library scan. Will scan all paths if
 	// they are not scanned already.
 	Scan()
 
-	// Adds this media (file) to the library
+	// Adds this media (file) to the library.
 	AddMedia(string) error
 
-	// Makes sure the library is initialied. This method will be called once on
-	// every start of the httpms
+	// Makes sure the library is initialized. This method will be called once on
+	// every start of Euterpe.
 	Initialize() error
 
 	// Makes the library forget everything. Also Closes the library.

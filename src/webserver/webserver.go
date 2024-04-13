@@ -107,6 +107,7 @@ func (srv *Server) serveGoroutine() {
 	subsonicHandler := subsonic.NewHandler(
 		subsonic.Prefix,
 		srv.library,
+		srv.library,
 		srv.cfg,
 	)
 

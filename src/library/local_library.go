@@ -316,6 +316,67 @@ func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []SearchResult {
 	return output
 }
 
+// GetArtistAlbums returns all the albums which this artist has an at least
+// on track in.
+func (lib *LocalLibrary) GetArtistAlbums(artistID int64) []Album {
+	var albums []Album
+
+	work := func(db *sql.DB) error {
+		var artistName string
+
+		row := db.QueryRow(`
+			SELECT
+				name
+			FROM
+				artists
+			WHERE
+				id = ?
+		`, artistID)
+		if err := row.Scan(&artistName); err != nil {
+			return fmt.Errorf("scanning for artist name error: %w", err)
+		}
+
+		rows, err := db.Query(`
+			SELECT
+				DISTINCT(a.id),
+				a.name
+			FROM
+				tracks t
+					LEFT JOIN albums a ON a.id = t.album_id 
+			WHERE
+				artist_id = ?;
+		`, artistID)
+		if err != nil {
+			log.Printf("Query not successful: %s\n", err.Error())
+			return nil
+		}
+
+		defer rows.Close()
+		for rows.Next() {
+			res := Album{
+				Artist: artistName,
+			}
+			err := rows.Scan(
+				&res.ID,
+				&res.Name,
+			)
+			if err != nil {
+				return fmt.Errorf("scanning error: %w", err)
+			}
+
+			albums = append(albums, res)
+		}
+
+		return nil
+	}
+	if err := lib.executeDBJobAndWait(work); err != nil {
+		log.Printf("Error executing get album files db work: %s", err)
+		return albums
+	}
+
+	return albums
+}
+
 // Removes the file from the library. That means finding it in the database and
 // removing it from there.
 func (lib *LocalLibrary) removeFile(filePath string) {

@@ -202,6 +202,7 @@ func TestAuthHandler(t *testing.T) {
 
 			sh := subsonic.NewHandler(
 				subsonic.Prefix,
+				&libraryfakes.FakeLibrary{},
 				&libraryfakes.FakeBrowser{},
 				cfg,
 			)
