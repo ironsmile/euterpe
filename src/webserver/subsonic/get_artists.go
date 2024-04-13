@@ -1,7 +1,6 @@
 package subsonic
 
 import (
-    "encoding/xml"
     "net/http"
 
     "github.com/ironsmile/euterpe/src/library"
@@ -71,31 +70,28 @@ func (s *subsonic) getArtists(w http.ResponseWriter, req *http.Request) {
         AristsList:   indexes,
     }
 
-    encodeResponse(w, resp)
+    encodeResponse(w, req, resp)
 }
 
 type artistsResponse struct {
     baseResponse
 
-    AristsList artistsList
+    AristsList artistsList `xml:"artists" json:"artists"`
 }
 
 type artistsList struct {
-    XMLName         xml.Name `xml:"artists"`
-    IgnoredArticles string   `xml:"ignoredArticles,attr,omitempty"`
-    Children        []artistElement
+    IgnoredArticles string          `xml:"ignoredArticles,attr,omitempty" json:"ignoredArticles"`
+    Children        []artistElement `xml:"index" json:"index"`
 }
 
 type artistElement struct {
-    XMLName  xml.Name `xml:"index"`
-    Name     string   `xml:"name,attr"`
-    Children []artistIndexElement
+    Name     string               `xml:"name,attr"`
+    Children []artistIndexElement `xml:"artist" json:"artist"`
 }
 
 type artistIndexElement struct {
-    XMLName    xml.Name `xml:"artst"`
-    ID         int64    `xml:"id,attr"`
-    Name       string   `xml:"name,attr"`
-    CoverArt   string   `xml:"coverArt,attr"`
-    AlbumCount int64    `xml:"albumCount,attr"`
+    ID         int64  `xml:"id,attr" json:"id,string"`
+    Name       string `xml:"name,attr" json:"name"`
+    CoverArt   string `xml:"coverArt,attr" json:"coverArt"`
+    AlbumCount int64  `xml:"albumCount,attr" json:"albumCount"`
 }

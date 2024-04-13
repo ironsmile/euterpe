@@ -31,7 +31,7 @@ func (s *subsonic) authHandler(handler http.Handler) http.Handler {
 			)
 
 			w.WriteHeader(http.StatusUnauthorized)
-			encodeResponse(w, resp)
+			encodeResponse(w, r, resp)
 			return
 		}
 
@@ -51,7 +51,7 @@ func (s *subsonic) authHandler(handler http.Handler) http.Handler {
 					)
 
 					w.WriteHeader(http.StatusUnauthorized)
-					encodeResponse(w, resp)
+					encodeResponse(w, r, resp)
 					return
 				}
 
@@ -85,7 +85,7 @@ func (s *subsonic) authHandler(handler http.Handler) http.Handler {
 			)
 
 			w.WriteHeader(http.StatusUnauthorized)
-			encodeResponse(w, resp)
+			encodeResponse(w, r, resp)
 			return
 		}
 

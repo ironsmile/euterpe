@@ -2,7 +2,6 @@ package subsonic
 
 import (
 	"context"
-	"encoding/xml"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -12,15 +11,15 @@ import (
 func (s *subsonic) getMusicDirectory(w http.ResponseWriter, req *http.Request) {
 	dirIDString := req.URL.Query().Get("id")
 	if dirIDString == "" {
-		resp := responseError(10, "`id` was not present")
-		encodeResponse(w, resp)
+		resp := responseError(70, "directory not found")
+		encodeResponse(w, req, resp)
 		return
 	}
 	dirID, err := strconv.ParseInt(dirIDString, 10, 64)
 	if err != nil {
 		resp := responseError(70, fmt.Sprintf("malformed `id`: %s", err))
 		w.WriteHeader(http.StatusBadRequest)
-		encodeResponse(w, resp)
+		encodeResponse(w, req, resp)
 		return
 	}
 
@@ -34,13 +33,13 @@ func (s *subsonic) getMusicDirectory(w http.ResponseWriter, req *http.Request) {
 		entry, err = s.getAlbumDirectory(req.Context(), toAlbumDBID(dirID))
 	} else {
 		resp := responseError(70, "no directory with this ID exists")
-		encodeResponse(w, resp)
+		encodeResponse(w, req, resp)
 		return
 	}
 
 	if err != nil {
 		resp := responseError(0, err.Error())
-		encodeResponse(w, resp)
+		encodeResponse(w, req, resp)
 		return
 	}
 
@@ -49,7 +48,7 @@ func (s *subsonic) getMusicDirectory(w http.ResponseWriter, req *http.Request) {
 		Directory:    entry,
 	}
 
-	encodeResponse(w, resp)
+	encodeResponse(w, req, resp)
 }
 
 func (s *subsonic) getArtistDirectory(
@@ -60,7 +59,8 @@ func (s *subsonic) getArtistDirectory(
 	albums := s.lib.GetArtistAlbums(artistID)
 
 	resp := directoryEntry{
-		ID: artistSubsonicID,
+		ID:         artistSubsonicID,
+		AlbumCount: int64(len(albums)),
 	}
 
 	for _, album := range albums {
@@ -72,8 +72,12 @@ func (s *subsonic) getArtistDirectory(
 		resp.Children = append(resp.Children, directoryChildEntry{
 			ID:         albumFSID(album.ID),
 			ParentID:   artistSubsonicID,
+			MediaType:  "album",
 			Title:      album.Name,
+			Name:       album.Name,
+			Album:      album.Name,
 			Artist:     album.Artist,
+			ArtistID:   artistSubsonicID,
 			IsDir:      true,
 			CoverArtID: artistCoverArtID(artistID),
 		})
@@ -90,21 +94,27 @@ func (s *subsonic) getAlbumDirectory(
 	tracks := s.lib.GetAlbumFiles(albumID)
 
 	resp := directoryEntry{
-		ID: albumSubsonicID,
+		ID:         albumSubsonicID,
+		SongCount:  int64(len(tracks)),
+		CoverArtID: albumConverArtID(albumID),
 	}
 
 	for _, track := range tracks {
 		if resp.Name == "" {
 			resp.Name = track.Album
-			resp.ParentID = track.ArtistID
+			resp.ParentID = artistFSID(track.ArtistID)
 		}
 
 		resp.Children = append(resp.Children, directoryChildEntry{
 			ID:         trackFSID(track.ID),
 			ParentID:   albumSubsonicID,
+			MediaType:  "song",
 			Title:      track.Title,
+			Name:       track.Title,
 			Artist:     track.Artist,
+			ArtistID:   artistFSID(track.ArtistID),
 			Album:      track.Album,
+			AlbumID:    albumSubsonicID,
 			IsDir:      false,
 			CoverArtID: strconv.FormatInt(albumID, 10),
 			Track:      track.TrackNumber,
@@ -124,34 +134,41 @@ func (s *subsonic) getAlbumDirectory(
 type directoryResponse struct {
 	baseResponse
 
-	Directory directoryEntry
+	Directory directoryEntry `xml:"directory" json:"directory"`
 }
 
 type directoryEntry struct {
-	XMLName  xml.Name `xml:"directory"`
-	ID       int64    `xml:"id,attr"`
-	ParentID int64    `xml:"parent,attr"`
-	Name     string   `xml:"name,attr"`
+	ID         int64  `xml:"id,attr" json:"id,string"`
+	ParentID   int64  `xml:"parent,attr" json:"parent,string"`
+	Name       string `xml:"name,attr" json:"name"`
+	AlbumCount int64  `xml:"albumCount,attr,omitempty" json:"albumCount,omitempty"`
+	SongCount  int64  `xml:"songCount,attr,omitempty" json:"songCount,omitempty"`
+	CoverArtID string `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
 
-	Children []directoryChildEntry
+	Children []directoryChildEntry `xml:"child" json:"child"`
 }
 
 type directoryChildEntry struct {
-	XMLName     xml.Name `xml:"child"`
-	ID          int64    `xml:"id,attr"`
-	ParentID    int64    `xml:"parent,attr"`
-	Title       string   `xml:"title,attr,omitempty"`
-	Artist      string   `xml:"artist,attr,omitempty"`
-	Album       string   `xml:"album,attr,omitempty"`
-	IsDir       bool     `xml:"isDir,attr"`
-	CoverArtID  string   `xml:"coverArt,attr,omitempty"`
-	Track       int64    `xml:"track,attr,omitempty"`    // position in album, I suppose
-	Duration    int64    `xml:"duration,attr,omitempty"` // in seconds
-	Year        int16    `xml:"year,attr,omitempty"`
-	Genre       string   `xml:"genre,attr,omitempty"`
-	Size        int64    `xml:"size,attr,omitempty"` // in bytes
-	ContentType string   `xml:"contentType,attr,omitempty"`
-	Suffix      string   `xml:"suffix,attr,omitempty"`
-	BitRate     string   `xml:"bitRate,attr,omitempty"`
-	Path        string   `xml:"path,attr,omitempty"` // on the file system I suppose
+	ID          int64  `xml:"id,attr" json:"id,string"`
+	ParentID    int64  `xml:"parent,attr" json:"parent,omitempty,string"`
+	MediaType   string `xml:"mediaType,attr,omitempty" json:"mediaType"`
+	Title       string `xml:"title,attr,omitempty" json:"title"`
+	Name        string `xml:"name,attr,omitempty" json:"-"`
+	Artist      string `xml:"artist,attr,omitempty" json:"artist,omitempty"`
+	ArtistID    int64  `xml:"artstId,attr,omitempty" json:"artistId,omitempty,string"`
+	Album       string `xml:"album,attr,omitempty" json:"album"`
+	AlbumID     int64  `xml:"-" json:"albumId,omitempty,string"`
+	IsDir       bool   `xml:"isDir,attr" json:"isDir"`
+	IsVideo     bool   `xml:"isVideo,attr,omitempty" json:"isVideo"`
+	CoverArtID  string `xml:"coverArt,attr,omitempty" json:"coverArt"`
+	Track       int64  `xml:"track,attr,omitempty" json:"track,omitempty"`       // position in album, I suppose
+	Duration    int64  `xml:"duration,attr,omitempty" json:"duration,omitempty"` // in seconds
+	Year        int16  `xml:"year,attr,omitempty" json:"year,omitempty"`
+	Genre       string `xml:"genre,attr,omitempty" json:"gener,omitempty"`
+	Size        int64  `xml:"size,attr,omitempty" json:"size,omitempty"` // in bytes
+	ContentType string `xml:"contentType,attr,omitempty" json:"contentType,omitempty"`
+	SongCount   int64  `xml:"songCount,attr,omitempty" json:"songCount,omitempty"`
+	Suffix      string `xml:"suffix,attr,omitempty" json:"suffix,omitempty"`
+	BitRate     string `xml:"bitRate,attr,omitempty" json:"bitRate,omitempty"`
+	Path        string `xml:"path,attr,omitempty" json:"path,omitempty"` // on the file system I suppose
 }

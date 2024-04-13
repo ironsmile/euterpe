@@ -1,7 +1,6 @@
 package subsonic
 
 import (
-	"encoding/xml"
 	"net/http"
 )
 
@@ -18,22 +17,20 @@ func (s *subsonic) getMusicFolders(w http.ResponseWriter, req *http.Request) {
 		},
 	}
 
-	encodeResponse(w, resp)
+	encodeResponse(w, req, resp)
 }
 
 type musicFoldersResponse struct {
 	baseResponse
 
-	MusicFolders musicFolders `xml:"musicFolders"`
+	MusicFolders musicFolders `xml:"musicFolders" json:"musicFolders"`
 }
 
 type musicFolders struct {
-	XMLName  xml.Name `xml:"musicFolders"`
-	Children []musicFolder
+	Children []musicFolder `xml:"musicFolder" json:"musicFolder"`
 }
 
 type musicFolder struct {
-	XMLName xml.Name `xml:"musicFolder"`
-	ID      int64    `xml:"id,attr"`
-	Name    string   `xml:"name,attr"`
+	ID   int64  `xml:"id,attr" json:"id,string"`
+	Name string `xml:"name,attr" json:"name"`
 }

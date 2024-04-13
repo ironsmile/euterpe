@@ -55,32 +55,37 @@ func (s *subsonic) initRouter() {
 	router.UseEncodedPath()
 
 	router.Handle(
-		Prefix+"/ping/",
+		Prefix+"/ping",
 		http.HandlerFunc(s.apiPing),
 	).Methods("GET")
 
 	router.Handle(
-		Prefix+"/getLicense/",
+		Prefix+"/ping.view",
+		http.HandlerFunc(s.apiPing),
+	).Methods("GET")
+
+	router.Handle(
+		Prefix+"/getLicense",
 		http.HandlerFunc(s.getLicense),
 	).Methods("GET")
 
 	router.Handle(
-		Prefix+"/getMusicFolders/",
+		Prefix+"/getMusicFolders",
 		http.HandlerFunc(s.getMusicFolders),
 	).Methods("GET")
 
 	router.Handle(
-		Prefix+"/getIndexes/",
+		Prefix+"/getIndexes",
 		http.HandlerFunc(s.getIndexes),
 	).Methods("GET")
 
 	router.Handle(
-		Prefix+"/getMusicDirectory/",
+		Prefix+"/getMusicDirectory",
 		http.HandlerFunc(s.getMusicDirectory),
 	).Methods("GET")
 
 	router.Handle(
-		Prefix+"/getArtists/",
+		Prefix+"/getArtists",
 		http.HandlerFunc(s.getArtists),
 	).Methods("GET")
 

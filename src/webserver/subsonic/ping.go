@@ -4,6 +4,12 @@ import (
 	"net/http"
 )
 
-func (s *subsonic) apiPing(w http.ResponseWriter, _ *http.Request) {
-	encodeResponse(w, responseOk())
+func (s *subsonic) apiPing(w http.ResponseWriter, req *http.Request) {
+	encodeResponse(w, req, pingResponse{
+		baseResponse: responseOk(),
+	})
+}
+
+type pingResponse struct {
+	baseResponse
 }

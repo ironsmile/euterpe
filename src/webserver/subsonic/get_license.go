@@ -1,12 +1,11 @@
 package subsonic
 
 import (
-	"encoding/xml"
 	"net/http"
 	"time"
 )
 
-func (s *subsonic) getLicense(w http.ResponseWriter, _ *http.Request) {
+func (s *subsonic) getLicense(w http.ResponseWriter, req *http.Request) {
 	resp := licenseResponse{
 		baseResponse: responseOk(),
 	}
@@ -18,16 +17,15 @@ func (s *subsonic) getLicense(w http.ResponseWriter, _ *http.Request) {
 	resp.License.Email = "always-valid@listen-to-euterpe.eu"
 	resp.License.LicenseExpires = t.Format(time.RFC3339)
 
-	encodeResponse(w, resp)
+	encodeResponse(w, req, resp)
 }
 
 type licenseResponse struct {
 	baseResponse
 
 	License struct {
-		XMLName        xml.Name `xml:"license"`
-		Valid          string   `xml:"valid,attr"`
-		Email          string   `xml:"email,attr"`
-		LicenseExpires string   `xml:"licenseExpires,attr"`
-	}
+		Valid          string `xml:"valid,attr" json:"valid"`
+		Email          string `xml:"email,attr" json:"email"`
+		LicenseExpires string `xml:"licenseExpires,attr" json:"licenseExpires"`
+	} `xml:"license" json:"license"`
 }

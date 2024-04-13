@@ -1,7 +1,6 @@
 package subsonic
 
 import (
-	"encoding/xml"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -17,7 +16,7 @@ func (s *subsonic) getIndexes(w http.ResponseWriter, req *http.Request) {
 
 	if musicFolderID != "" && musicFolderID != combindIDstr {
 		resp := responseError(70, "Unknown music folder ID")
-		encodeResponse(w, resp)
+		encodeResponse(w, req, resp)
 		return
 	}
 
@@ -28,7 +27,7 @@ func (s *subsonic) getIndexes(w http.ResponseWriter, req *http.Request) {
 				0,
 				fmt.Sprintf("ifModifiedSince must be an int: %s", err),
 			)
-			encodeResponse(w, resp)
+			encodeResponse(w, req, resp)
 			return
 		}
 		ifModfiedSinceTime := time.Unix(t/1000, (t%1000)*1e6)
@@ -102,30 +101,27 @@ func (s *subsonic) getIndexes(w http.ResponseWriter, req *http.Request) {
 		IndexesList:  indexes,
 	}
 
-	encodeResponse(w, resp)
+	encodeResponse(w, req, resp)
 }
 
 type indexesResponse struct {
 	baseResponse
 
-	IndexesList indexesList
+	IndexesList indexesList `xml:"indexes" json:"indexes"`
 }
 
 type indexesList struct {
-	XMLName         xml.Name `xml:"indexes"`
-	LastModified    int64    `xml:"lastModified,attr"`
-	IgnoredArticles string   `xml:"ignoredArticles,attr"`
-	Children        []indexElement
+	LastModified    int64          `xml:"lastModified,attr" json:"lastModified"`
+	IgnoredArticles string         `xml:"ignoredArticles,attr" json:"ignoredArticles"`
+	Children        []indexElement `xml:"index" json:"index"`
 }
 
 type indexElement struct {
-	XMLName  xml.Name `xml:"index"`
-	Name     string   `xml:"name,attr"`
-	Children []indexArtistElement
+	Name     string               `xml:"name,attr" json:"name"`
+	Children []indexArtistElement `xml:"artist" json:"artist"`
 }
 
 type indexArtistElement struct {
-	XMLName xml.Name `xml:"artst"`
-	ID      int64    `xml:"id,attr"`
-	Name    string   `xml:"name,attr"`
+	ID   int64  `xml:"id,attr" json:"id,string"`
+	Name string `xml:"name,attr" json:"name"`
 }
