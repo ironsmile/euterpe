@@ -197,7 +197,7 @@ type directoryResponse struct {
 
 type directoryEntry struct {
 	ID         int64  `xml:"id,attr" json:"id,string"`
-	ParentID   int64  `xml:"parent,attr" json:"parent,string"`
+	ParentID   int64  `xml:"parent,attr,omitempty" json:"parent,omitempty,string"`
 	Artist     string `xml:"-" json:"-"`
 	Name       string `xml:"name,attr" json:"name"`
 	AlbumCount int64  `xml:"albumCount,attr,omitempty" json:"albumCount,omitempty"`
