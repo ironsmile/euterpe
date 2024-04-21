@@ -49,6 +49,9 @@ github.com/skip2/go-qrcode/reedsolomon
 ## explicit; go 1.13
 github.com/spf13/afero
 github.com/spf13/afero/mem
+# github.com/terminalstatic/go-xsd-validate v0.1.5
+## explicit; go 1.16
+github.com/terminalstatic/go-xsd-validate
 # github.com/wtolson/go-taglib v0.0.0-20180718000046-586eb63c2628
 ## explicit
 github.com/wtolson/go-taglib

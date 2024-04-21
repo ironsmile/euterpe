@@ -25,6 +25,7 @@ require (
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/lib/pq v1.10.4 // indirect
 	github.com/magefile/mage v1.12.1 // indirect
+	github.com/terminalstatic/go-xsd-validate v0.1.5 // indirect
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect

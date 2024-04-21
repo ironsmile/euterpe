@@ -61,110 +61,30 @@ func (s *subsonic) initRouter() {
 	router.StrictSlash(true)
 	router.UseEncodedPath()
 
-	router.Handle(
-		Prefix+"/ping",
-		http.HandlerFunc(s.apiPing),
-	).Methods("GET")
+	setUpGetHandler := func(path string, handler http.HandlerFunc) {
+		router.Handle(
+			Prefix+path,
+			http.HandlerFunc(handler),
+		).Methods("GET")
 
-	router.Handle(
-		Prefix+"/ping.view",
-		http.HandlerFunc(s.apiPing),
-	).Methods("GET")
+		router.Handle(
+			Prefix+path+".view",
+			http.HandlerFunc(handler),
+		).Methods("GET")
+	}
 
-	router.Handle(
-		Prefix+"/getLicense",
-		http.HandlerFunc(s.getLicense),
-	).Methods("GET")
-
-	router.Handle(
-		Prefix+"/getMusicFolders",
-		http.HandlerFunc(s.getMusicFolders),
-	).Methods("GET")
-	router.Handle(
-		Prefix+"/getMusicFolders.view",
-		http.HandlerFunc(s.getMusicFolders),
-	).Methods("GET")
-
-	router.Handle(
-		Prefix+"/getIndexes",
-		http.HandlerFunc(s.getIndexes),
-	).Methods("GET")
-	router.Handle(
-		Prefix+"/getIndexes.view",
-		http.HandlerFunc(s.getIndexes),
-	).Methods("GET")
-
-	router.Handle(
-		Prefix+"/getMusicDirectory",
-		http.HandlerFunc(s.getMusicDirectory),
-	).Methods("GET")
-	router.Handle(
-		Prefix+"/getMusicDirectory.view",
-		http.HandlerFunc(s.getMusicDirectory),
-	).Methods("GET")
-
-	router.Handle(
-		Prefix+"/getArtists",
-		http.HandlerFunc(s.getArtists),
-	).Methods("GET")
-	router.Handle(
-		Prefix+"/getArtists.view",
-		http.HandlerFunc(s.getArtists),
-	).Methods("GET")
-
-	router.Handle(
-		Prefix+"/getAlbum",
-		http.HandlerFunc(s.getAlbum),
-	).Methods("GET")
-	router.Handle(
-		Prefix+"/getAlbum.view",
-		http.HandlerFunc(s.getAlbum),
-	).Methods("GET")
-
-	router.Handle(
-		Prefix+"/getAlbumList2",
-		http.HandlerFunc(s.getAlbumList2),
-	).Methods("GET")
-	router.Handle(
-		Prefix+"/getAlbumList2.view",
-		http.HandlerFunc(s.getAlbumList2),
-	).Methods("GET")
-
-	router.Handle(
-		Prefix+"/getArtist",
-		http.HandlerFunc(s.getArtist),
-	).Methods("GET")
-	router.Handle(
-		Prefix+"/getArtist.view",
-		http.HandlerFunc(s.getArtist),
-	).Methods("GET")
-
-	router.Handle(
-		Prefix+"/getArtistInfo2",
-		http.HandlerFunc(s.getArtistInfo2),
-	).Methods("GET")
-	router.Handle(
-		Prefix+"/getArtistInfo2.view",
-		http.HandlerFunc(s.getArtistInfo2),
-	).Methods("GET")
-
-	router.Handle(
-		Prefix+"/getCoverArt",
-		http.HandlerFunc(s.getCoverArt),
-	).Methods("GET")
-	router.Handle(
-		Prefix+"/getCoverArt.view",
-		http.HandlerFunc(s.getCoverArt),
-	).Methods("GET")
-
-	router.Handle(
-		Prefix+"/stream",
-		http.HandlerFunc(s.stream),
-	).Methods("GET")
-	router.Handle(
-		Prefix+"/stream.view",
-		http.HandlerFunc(s.stream),
-	).Methods("GET")
+	setUpGetHandler("/ping", s.apiPing)
+	setUpGetHandler("/getLicense", s.getLicense)
+	setUpGetHandler("/getMusicFolders", s.getMusicFolders)
+	setUpGetHandler("/getIndexes", s.getIndexes)
+	setUpGetHandler("/getMusicDirectory", s.getMusicDirectory)
+	setUpGetHandler("/getArtists", s.getArtists)
+	setUpGetHandler("/getAlbum", s.getAlbum)
+	setUpGetHandler("/getAlbumList2", s.getAlbumList2)
+	setUpGetHandler("/getArtist", s.getArtist)
+	setUpGetHandler("/getArtistInfo2", s.getArtistInfo2)
+	setUpGetHandler("/getCoverArt", s.getCoverArt)
+	setUpGetHandler("/stream", s.stream)
 
 	s.mux = s.authHandler(router)
 }

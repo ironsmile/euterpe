@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../../embedTest"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../../../goPost"
+		}
+	],
+	"settings": {}
+}

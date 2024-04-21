@@ -64,18 +64,14 @@ func (s *subsonic) getAlbumList2(w http.ResponseWriter, req *http.Request) {
 
 	albums, _ := s.libBrowser.BrowseAlbums(browseArgs)
 
-	var albumList []directoryChildEntry
+	var albumList []albumID3Entry
 	for _, album := range albums {
-		entry := directoryChildEntry{
+		entry := albumID3Entry{
 			ID:         albumFSID(album.ID),
 			Name:       album.Name,
-			Title:      album.Name,
-			Album:      album.Name,
 			Artist:     album.Artist,
 			SongCount:  album.SongCount,
 			CoverArtID: albumConverArtID(album.ID),
-			IsDir:      true,
-			MediaType:  "album",
 
 			//!TODO: add ParentID and AlbumID
 		}
@@ -100,5 +96,5 @@ type albumList2Response struct {
 }
 
 type albumList2Element struct {
-	Children []directoryChildEntry `xml:"album" json:"album"`
+	Children []albumID3Entry `xml:"album" json:"album"`
 }

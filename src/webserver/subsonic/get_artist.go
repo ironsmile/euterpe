@@ -3,6 +3,7 @@ package subsonic
 import (
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func (s *subsonic) getArtist(w http.ResponseWriter, req *http.Request) {
@@ -23,14 +24,17 @@ func (s *subsonic) getArtist(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	artEtr := artistEntry{
+	artEtr := artistID3Entry{
 		ID:         entry.ID,
 		ParentID:   entry.ParentID,
 		Name:       entry.Name,
 		AlbumCount: entry.AlbumCount,
 		SongCount:  entry.SongCount,
 		CoverArtID: entry.CoverArtID,
-		Children:   entry.Children,
+	}
+
+	for _, child := range entry.Children {
+		artEtr.Children = append(artEtr.Children, toAlbumID3Entry(child))
 	}
 
 	resp := artistResponse{
@@ -44,10 +48,10 @@ func (s *subsonic) getArtist(w http.ResponseWriter, req *http.Request) {
 type artistResponse struct {
 	baseResponse
 
-	Artist artistEntry `xml:"artist" json:"artist"`
+	Artist artistID3Entry `xml:"artist" json:"artist"`
 }
 
-type artistEntry struct {
+type artistID3Entry struct {
 	ID         int64  `xml:"id,attr" json:"id,string"`
 	ParentID   int64  `xml:"parent,attr,omitempty" json:"parent,string,omitempty"`
 	Name       string `xml:"name,attr" json:"name"`
@@ -55,5 +59,33 @@ type artistEntry struct {
 	SongCount  int64  `xml:"songCount,attr,omitempty" json:"songCount,omitempty"`
 	CoverArtID string `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
 
-	Children []directoryChildEntry `xml:"album" json:"album"`
+	Children []albumID3Entry `xml:"album" json:"album"`
+}
+
+type albumID3Entry struct {
+	ID         int64     `xml:"id,attr" json:"id,string"`
+	Name       string    `xml:"name,attr" json:"name"`
+	Artist     string    `xml:"artist,attr,omitempty" json:"artist,omitempty"`
+	ArtistID   int64     `xml:"artistId,attr,omitempty" json:"artistId,omitempty,string"`
+	CoverArtID string    `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
+	Duration   int64     `xml:"duration,attr" json:"duration"` // in seconds
+	Year       int16     `xml:"year,attr,omitempty" json:"year,omitempty"`
+	Genre      string    `xml:"genre,attr,omitempty" json:"gener,omitempty"`
+	SongCount  int64     `xml:"songCount,attr" json:"songCount"`
+	Created    time.Time `xml:"created,attr" json:"created"`
+}
+
+func toAlbumID3Entry(child directoryChildEntry) albumID3Entry {
+	return albumID3Entry{
+		ID:         child.ID,
+		Name:       child.Name,
+		Artist:     child.Artist,
+		ArtistID:   child.ArtistID,
+		CoverArtID: child.CoverArtID,
+		Duration:   child.Duration,
+		Year:       child.Year,
+		Genre:      child.Genre,
+		SongCount:  child.SongCount,
+		Created:    child.Created,
+	}
 }

@@ -3,6 +3,7 @@ package subsonic
 import (
     "net/http"
     "strconv"
+    "time"
 )
 
 func (s *subsonic) getAlbum(w http.ResponseWriter, req *http.Request) {
@@ -31,6 +32,8 @@ func (s *subsonic) getAlbum(w http.ResponseWriter, req *http.Request) {
         SongCount:  entry.SongCount,
         CoverArtID: entry.CoverArtID,
         Children:   entry.Children,
+        Created:    s.lastModified,
+        Duration:   entry.Duration,
     }
 
     resp := albumResponse{
@@ -48,14 +51,16 @@ type albumResponse struct {
 }
 
 type albumEntry struct {
-    ID            int64  `xml:"id,attr" json:"id,string"`
-    ParentID      int64  `xml:"parent,attr,omitempty" json:"parent,string,omitempty"`
-    Name          string `xml:"name,attr" json:"name"`
-    Artist        string `xml:"artist,attr" json:"artist"`
-    ArtistID      int64  `xml:"artistId,attr" json:"artistId,string"`
-    SongCount     int64  `xml:"songCount,attr,omitempty" json:"songCount,omitempty"`
-    CoverArtID    string `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
-    IsCompilation bool   `xml:"isCompilation,attr" json:"isCompilation"`
+    ID            int64     `xml:"id,attr" json:"id,string"`
+    ParentID      int64     `xml:"parent,attr,omitempty" json:"parent,string,omitempty"`
+    Name          string    `xml:"name,attr" json:"name"`
+    Artist        string    `xml:"artist,attr" json:"artist"`
+    ArtistID      int64     `xml:"artistId,attr" json:"artistId,string"`
+    SongCount     int64     `xml:"songCount,attr" json:"songCount"`
+    CoverArtID    string    `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
+    IsCompilation bool      `xml:"-" json:"isCompilation"`
+    Created       time.Time `xml:"created,attr" json:"created,omitempty"`
+    Duration      int64     `xml:"duration,attr" json:"duration,omitempty"`
 
     Children []directoryChildEntry `xml:"song" json:"song"`
 }

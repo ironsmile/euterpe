@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/ironsmile/euterpe/src/library"
 )
@@ -73,18 +74,20 @@ func (s *subsonic) getArtistDirectory(
 		}
 
 		resp.Children = append(resp.Children, directoryChildEntry{
-			ID:         albumFSID(album.ID),
-			ParentID:   artistSubsonicID,
-			MediaType:  "album",
-			Title:      album.Name,
-			Name:       album.Name,
-			Album:      album.Name,
-			AlbumID:    albumFSID(album.ID),
-			Artist:     album.Artist,
-			ArtistID:   artistSubsonicID,
-			IsDir:      true,
-			CoverArtID: albumConverArtID(album.ID),
-			SongCount:  album.SongCount,
+			ID:            albumFSID(album.ID),
+			ParentID:      artistSubsonicID,
+			MediaType:     "album",
+			DirectoryType: "music",
+			Title:         album.Name,
+			Name:          album.Name,
+			Album:         album.Name,
+			AlbumID:       albumFSID(album.ID),
+			Artist:        album.Artist,
+			ArtistID:      artistSubsonicID,
+			IsDir:         true,
+			CoverArtID:    albumConverArtID(album.ID),
+			SongCount:     album.SongCount,
+			Created:       s.lastModified,
 		})
 	}
 
@@ -104,6 +107,7 @@ func (s *subsonic) getAlbumDirectory(
 		CoverArtID: albumConverArtID(albumID),
 	}
 
+	var totalDur int64
 	for _, track := range tracks {
 		if resp.Name == "" {
 			resp.Name = track.Album
@@ -115,28 +119,34 @@ func (s *subsonic) getAlbumDirectory(
 			resp.Artist = "Various Artists"
 		}
 
+		totalDur += track.Duration / 1000
+
 		resp.Children = append(resp.Children, directoryChildEntry{
-			ID:         trackFSID(track.ID),
-			ParentID:   albumSubsonicID,
-			MediaType:  "song",
-			Title:      track.Title,
-			Name:       track.Title,
-			Artist:     track.Artist,
-			ArtistID:   artistFSID(track.ArtistID),
-			Album:      track.Album,
-			AlbumID:    albumSubsonicID,
-			IsDir:      false,
-			CoverArtID: strconv.FormatInt(albumID, 10),
-			Track:      track.TrackNumber,
-			Duration:   track.Duration / 1000,
-			Suffix:     track.Format,
+			ID:            trackFSID(track.ID),
+			ParentID:      albumSubsonicID,
+			MediaType:     "song",
+			DirectoryType: "music",
+			Title:         track.Title,
+			Name:          track.Title,
+			Artist:        track.Artist,
+			ArtistID:      artistFSID(track.ArtistID),
+			Album:         track.Album,
+			AlbumID:       albumSubsonicID,
+			IsDir:         false,
+			CoverArtID:    strconv.FormatInt(albumID, 10),
+			Track:         track.TrackNumber,
+			Duration:      track.Duration / 1000,
+			Suffix:        track.Format,
 			Path: filepath.Join(
 				track.Artist,
 				track.Album,
 				fmt.Sprintf("%s.%s", track.Title, track.Format),
 			),
+			Created: s.lastModified,
 		})
 	}
+
+	resp.Duration = totalDur
 
 	return resp, nil
 }
@@ -172,13 +182,15 @@ func (s *subsonic) getRootDirectory(
 			resp.Children = append(
 				resp.Children,
 				directoryChildEntry{
-					Name:      artist.Name,
-					Artist:    artist.Name,
-					Title:     artist.Name,
-					ID:        artistFSID(artist.ID),
-					MediaType: "artist",
-					ParentID:  combinedMusicFolderID,
-					IsDir:     true,
+					Name:          artist.Name,
+					Artist:        artist.Name,
+					Title:         artist.Name,
+					ID:            artistFSID(artist.ID),
+					MediaType:     "artist",
+					DirectoryType: "music",
+					ParentID:      combinedMusicFolderID,
+					IsDir:         true,
+					Created:       s.lastModified,
 				},
 			)
 		}
@@ -200,34 +212,37 @@ type directoryEntry struct {
 	ParentID   int64  `xml:"parent,attr,omitempty" json:"parent,omitempty,string"`
 	Artist     string `xml:"-" json:"-"`
 	Name       string `xml:"name,attr" json:"name"`
-	AlbumCount int64  `xml:"albumCount,attr,omitempty" json:"albumCount,omitempty"`
-	SongCount  int64  `xml:"songCount,attr,omitempty" json:"songCount,omitempty"`
-	CoverArtID string `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
+	AlbumCount int64  `xml:"-" json:"albumCount,omitempty"`
+	SongCount  int64  `xml:"-" json:"songCount,omitempty"`
+	CoverArtID string `xml:"-" json:"coverArt,omitempty"`
+	Duration   int64  `xml:"-" json:"duration,omitempty"` // in seconds
 
 	Children []directoryChildEntry `xml:"child" json:"child"`
 }
 
 type directoryChildEntry struct {
-	ID          int64  `xml:"id,attr" json:"id,string"`
-	ParentID    int64  `xml:"parent,attr,omitempty" json:"parent,omitempty,string"`
-	MediaType   string `xml:"mediaType,attr,omitempty" json:"mediaType"`
-	Title       string `xml:"title,attr,omitempty" json:"title"`
-	Name        string `xml:"name,attr,omitempty" json:"-"`
-	Artist      string `xml:"artist,attr,omitempty" json:"artist,omitempty"`
-	ArtistID    int64  `xml:"artstId,attr,omitempty" json:"artistId,omitempty,string"`
-	Album       string `xml:"album,attr,omitempty" json:"album"`
-	AlbumID     int64  `xml:"-" json:"albumId,omitempty,string"`
-	IsDir       bool   `xml:"isDir,attr" json:"isDir"`
-	IsVideo     bool   `xml:"isVideo,attr,omitempty" json:"isVideo"`
-	CoverArtID  string `xml:"coverArt,attr,omitempty" json:"coverArt"`
-	Track       int64  `xml:"track,attr,omitempty" json:"track,omitempty"`       // position in album, I suppose
-	Duration    int64  `xml:"duration,attr,omitempty" json:"duration,omitempty"` // in seconds
-	Year        int16  `xml:"year,attr,omitempty" json:"year,omitempty"`
-	Genre       string `xml:"genre,attr,omitempty" json:"gener,omitempty"`
-	Size        int64  `xml:"size,attr,omitempty" json:"size,omitempty"` // in bytes
-	ContentType string `xml:"contentType,attr,omitempty" json:"contentType,omitempty"`
-	SongCount   int64  `xml:"songCount,attr,omitempty" json:"songCount,omitempty"`
-	Suffix      string `xml:"suffix,attr,omitempty" json:"suffix,omitempty"`
-	BitRate     string `xml:"bitRate,attr,omitempty" json:"bitRate,omitempty"`
-	Path        string `xml:"path,attr,omitempty" json:"path,omitempty"` // on the file system I suppose
+	ID            int64     `xml:"id,attr" json:"id,string"`
+	ParentID      int64     `xml:"parent,attr,omitempty" json:"parent,omitempty,string"`
+	MediaType     string    `xml:"-" json:"mediaType"`
+	DirectoryType string    `xml:"type,attr,omitempty" json:"type,omitempty"`
+	Title         string    `xml:"title,attr,omitempty" json:"title"`
+	Name          string    `xml:"-" json:"-"`
+	Artist        string    `xml:"artist,attr,omitempty" json:"artist,omitempty"`
+	ArtistID      int64     `xml:"-" json:"artistId,omitempty,string"`
+	Album         string    `xml:"album,attr,omitempty" json:"album"`
+	AlbumID       int64     `xml:"albumId,attr,omitempty" json:"albumId,omitempty,string"`
+	IsDir         bool      `xml:"isDir,attr" json:"isDir"`
+	IsVideo       bool      `xml:"isVideo,attr,omitempty" json:"isVideo"`
+	CoverArtID    string    `xml:"coverArt,attr,omitempty" json:"coverArt"`
+	Track         int64     `xml:"track,attr,omitempty" json:"track,omitempty"`       // position in album, I suppose
+	Duration      int64     `xml:"duration,attr,omitempty" json:"duration,omitempty"` // in seconds
+	Year          int16     `xml:"year,attr,omitempty" json:"year,omitempty"`
+	Genre         string    `xml:"genre,attr,omitempty" json:"gener,omitempty"`
+	Size          int64     `xml:"size,attr,omitempty" json:"size,omitempty"` // in bytes
+	ContentType   string    `xml:"contentType,attr,omitempty" json:"contentType,omitempty"`
+	SongCount     int64     `xml:"-" json:"songCount,omitempty"`
+	Suffix        string    `xml:"suffix,attr,omitempty" json:"suffix,omitempty"`
+	BitRate       string    `xml:"bitRate,attr,omitempty" json:"bitRate,omitempty"`
+	Path          string    `xml:"path,attr,omitempty" json:"path,omitempty"` // on the file system I suppose
+	Created       time.Time `xml:"created,attr,omitempty" json:"created,omitempty"`
 }
