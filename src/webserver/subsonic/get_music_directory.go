@@ -121,29 +121,7 @@ func (s *subsonic) getAlbumDirectory(
 
 		totalDur += track.Duration / 1000
 
-		resp.Children = append(resp.Children, directoryChildEntry{
-			ID:            trackFSID(track.ID),
-			ParentID:      albumSubsonicID,
-			MediaType:     "song",
-			DirectoryType: "music",
-			Title:         track.Title,
-			Name:          track.Title,
-			Artist:        track.Artist,
-			ArtistID:      artistFSID(track.ArtistID),
-			Album:         track.Album,
-			AlbumID:       albumSubsonicID,
-			IsDir:         false,
-			CoverArtID:    strconv.FormatInt(albumID, 10),
-			Track:         track.TrackNumber,
-			Duration:      track.Duration / 1000,
-			Suffix:        track.Format,
-			Path: filepath.Join(
-				track.Artist,
-				track.Album,
-				fmt.Sprintf("%s.%s", track.Title, track.Format),
-			),
-			Created: s.lastModified,
-		})
+		resp.Children = append(resp.Children, trackToDirChild(track, s.lastModified))
 	}
 
 	resp.Duration = totalDur
@@ -245,4 +223,30 @@ type directoryChildEntry struct {
 	BitRate       string    `xml:"bitRate,attr,omitempty" json:"bitRate,omitempty"`
 	Path          string    `xml:"path,attr,omitempty" json:"path,omitempty"` // on the file system I suppose
 	Created       time.Time `xml:"created,attr,omitempty" json:"created,omitempty"`
+}
+
+func trackToDirChild(track library.TrackInfo, created time.Time) directoryChildEntry {
+	return directoryChildEntry{
+		ID:            trackFSID(track.ID),
+		ParentID:      albumFSID(track.AlbumID),
+		MediaType:     "song",
+		DirectoryType: "music",
+		Title:         track.Title,
+		Name:          track.Title,
+		Artist:        track.Artist,
+		ArtistID:      artistFSID(track.ArtistID),
+		Album:         track.Album,
+		AlbumID:       albumFSID(track.AlbumID),
+		IsDir:         false,
+		CoverArtID:    albumConverArtID(track.AlbumID),
+		Track:         track.TrackNumber,
+		Duration:      track.Duration / 1000,
+		Suffix:        track.Format,
+		Path: filepath.Join(
+			track.Artist,
+			track.Album,
+			fmt.Sprintf("%s.%s", track.Title, track.Format),
+		),
+		Created: created,
+	}
 }

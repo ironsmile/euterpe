@@ -12,9 +12,13 @@ func (s *subsonic) stream(w http.ResponseWriter, req *http.Request) {
 	idString := req.URL.Query().Get("id")
 	trackID, err := strconv.ParseInt(idString, 10, 64)
 	if idString == "" || err != nil {
-		http.Error(w, "track not found", http.StatusNotFound)
+		resp := responseError(70, "track not found")
+		encodeResponse(w, req, resp)
 		return
 	}
+
+	//!TODO: support maximum bitrate and and transcoding. Once done, a separate
+	// endpoint must be created for the "/download" endpoint.
 
 	filePath := s.lib.GetFilePath(trackID)
 

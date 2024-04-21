@@ -57,37 +57,46 @@ var (
 	// IO load for the duration of the scan.
 	LibraryFastScan bool
 
+	// ErrNotFound is returned when particular resource cannot be found in the library.
+	ErrNotFound = errors.New("not found")
+
 	// ErrAlbumNotFound is returned when no album could be found for particular operation.
-	ErrAlbumNotFound = errors.New("Album Not Found")
+	ErrAlbumNotFound = fmt.Errorf("Album: %w", ErrNotFound)
 
 	// ErrArtistNotFound is returned when no artist could be found for particular operation.
-	ErrArtistNotFound = errors.New("Artist Not Found")
+	ErrArtistNotFound = fmt.Errorf("Artist: %w", ErrNotFound)
 
 	// ErrArtworkNotFound is returned when no artwork can be found for particular album.
-	ErrArtworkNotFound = NewArtworkError("Artwork Not Found")
+	ErrArtworkNotFound = NewArtworkError(fmt.Errorf("Artwork: %w", ErrNotFound))
 
 	// ErrCachedArtworkNotFound is returned when the database has been queried and
 	// its cache says the artwork was not found in the recent past. No need to continue
 	// searching further once you receive this error.
-	ErrCachedArtworkNotFound = NewArtworkError("Artwork Not Found (Cached)")
+	ErrCachedArtworkNotFound = NewArtworkError(
+		fmt.Errorf("Artwork (cached): %w", ErrNotFound),
+	)
 
 	// ErrArtworkTooBig is returned from operation when the artwork is too big for it to
 	// handle.
-	ErrArtworkTooBig = NewArtworkError("Artwork Is Too Big")
+	ErrArtworkTooBig = NewArtworkError(errors.New("Artwork Is Too Big"))
 )
 
 // ArtworkError represents some kind of artwork error.
 type ArtworkError struct {
-	Err string
+	Err error
 }
 
 // Error implements the error interface.
 func (a *ArtworkError) Error() string {
+	return a.Err.Error()
+}
+
+func (a *ArtworkError) Unwrap() error {
 	return a.Err
 }
 
 // NewArtworkError returns a new artwork error which will have `err` as message.
-func NewArtworkError(err string) *ArtworkError {
+func NewArtworkError(err error) *ArtworkError {
 	return &ArtworkError{Err: err}
 }
 
@@ -258,8 +267,8 @@ func (lib *LocalLibrary) GetFilePath(ID int64) string {
 }
 
 // GetAlbumFiles satisfies the Library interface
-func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []SearchResult {
-	var output []SearchResult
+func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []TrackInfo {
+	var output []TrackInfo
 	work := func(db *sql.DB) error {
 		rows, err := db.Query(`
 			SELECT
@@ -289,7 +298,7 @@ func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []SearchResult {
 		defer rows.Close()
 		for rows.Next() {
 			var (
-				res SearchResult
+				res TrackInfo
 				dur sql.NullInt64
 			)
 			err := rows.Scan(
@@ -323,6 +332,63 @@ func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []SearchResult {
 		return output
 	}
 	return output
+}
+
+// GetTrack returns information for particular track identified by its
+// media ID.
+func (lib *LocalLibrary) GetTrack(ctx context.Context, trackID int64) (TrackInfo, error) {
+	var res TrackInfo
+	work := func(db *sql.DB) error {
+		row := db.QueryRowContext(ctx, `
+			SELECT
+				t.id as track_id,
+				t.name as track,
+				al.name as album,
+				at.name as artist,
+				at.id as artist_id,
+				t.number as track_number,
+				t.album_id as album_id,
+				t.duration as duration,
+				t.fs_path as fs_path
+			FROM
+				tracks as t
+					LEFT JOIN albums as al ON al.id = t.album_id
+					LEFT JOIN artists as at ON at.id = t.artist_id
+			WHERE
+				t.id = ?
+		`, trackID)
+
+		var dur sql.NullInt64
+		err := row.Scan(
+			&res.ID,
+			&res.Title,
+			&res.Album,
+			&res.Artist,
+			&res.ArtistID,
+			&res.TrackNumber,
+			&res.AlbumID,
+			&dur,
+			&res.Format,
+		)
+		if err != nil && errors.Is(err, sql.ErrNoRows) {
+			return ErrNotFound
+		} else if err != nil {
+			log.Printf("Error getting track information: %s", err)
+			return fmt.Errorf("getting track info error: %w", err)
+		}
+
+		res.Format = mediaFormatFromFileName(res.Format)
+
+		if dur.Valid {
+			res.Duration = dur.Int64
+		}
+
+		return nil
+	}
+	if err := lib.executeDBJobAndWait(work); err != nil {
+		return res, err
+	}
+	return res, nil
 }
 
 // GetArtistAlbums returns all the albums which this artist has an at least

@@ -2,6 +2,7 @@
 package libraryfakes
 
 import (
+	"context"
 	"sync"
 
 	"github.com/ironsmile/euterpe/src/library"
@@ -60,6 +61,20 @@ type FakeLibrary struct {
 	}
 	getFilePathReturnsOnCall map[int]struct {
 		result1 string
+	}
+	GetTrackStub        func(context.Context, int64) (library.SearchResult, error)
+	getTrackMutex       sync.RWMutex
+	getTrackArgsForCall []struct {
+		arg1 context.Context
+		arg2 int64
+	}
+	getTrackReturns struct {
+		result1 library.SearchResult
+		result2 error
+	}
+	getTrackReturnsOnCall map[int]struct {
+		result1 library.SearchResult
+		result2 error
 	}
 	InitializeStub        func() error
 	initializeMutex       sync.RWMutex
@@ -400,6 +415,71 @@ func (fake *FakeLibrary) GetFilePathReturnsOnCall(i int, result1 string) {
 	}{result1}
 }
 
+func (fake *FakeLibrary) GetTrack(arg1 context.Context, arg2 int64) (library.SearchResult, error) {
+	fake.getTrackMutex.Lock()
+	ret, specificReturn := fake.getTrackReturnsOnCall[len(fake.getTrackArgsForCall)]
+	fake.getTrackArgsForCall = append(fake.getTrackArgsForCall, struct {
+		arg1 context.Context
+		arg2 int64
+	}{arg1, arg2})
+	stub := fake.GetTrackStub
+	fakeReturns := fake.getTrackReturns
+	fake.recordInvocation("GetTrack", []interface{}{arg1, arg2})
+	fake.getTrackMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeLibrary) GetTrackCallCount() int {
+	fake.getTrackMutex.RLock()
+	defer fake.getTrackMutex.RUnlock()
+	return len(fake.getTrackArgsForCall)
+}
+
+func (fake *FakeLibrary) GetTrackCalls(stub func(context.Context, int64) (library.SearchResult, error)) {
+	fake.getTrackMutex.Lock()
+	defer fake.getTrackMutex.Unlock()
+	fake.GetTrackStub = stub
+}
+
+func (fake *FakeLibrary) GetTrackArgsForCall(i int) (context.Context, int64) {
+	fake.getTrackMutex.RLock()
+	defer fake.getTrackMutex.RUnlock()
+	argsForCall := fake.getTrackArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeLibrary) GetTrackReturns(result1 library.SearchResult, result2 error) {
+	fake.getTrackMutex.Lock()
+	defer fake.getTrackMutex.Unlock()
+	fake.GetTrackStub = nil
+	fake.getTrackReturns = struct {
+		result1 library.SearchResult
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeLibrary) GetTrackReturnsOnCall(i int, result1 library.SearchResult, result2 error) {
+	fake.getTrackMutex.Lock()
+	defer fake.getTrackMutex.Unlock()
+	fake.GetTrackStub = nil
+	if fake.getTrackReturnsOnCall == nil {
+		fake.getTrackReturnsOnCall = make(map[int]struct {
+			result1 library.SearchResult
+			result2 error
+		})
+	}
+	fake.getTrackReturnsOnCall[i] = struct {
+		result1 library.SearchResult
+		result2 error
+	}{result1, result2}
+}
+
 func (fake *FakeLibrary) Initialize() error {
 	fake.initializeMutex.Lock()
 	ret, specificReturn := fake.initializeReturnsOnCall[len(fake.initializeArgsForCall)]
@@ -606,6 +686,8 @@ func (fake *FakeLibrary) Invocations() map[string][][]interface{} {
 	defer fake.getArtistAlbumsMutex.RUnlock()
 	fake.getFilePathMutex.RLock()
 	defer fake.getFilePathMutex.RUnlock()
+	fake.getTrackMutex.RLock()
+	defer fake.getTrackMutex.RUnlock()
 	fake.initializeMutex.RLock()
 	defer fake.initializeMutex.RUnlock()
 	fake.scanMutex.RLock()

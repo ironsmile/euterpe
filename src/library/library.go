@@ -5,6 +5,10 @@
 // way the real location of the file is never revealed to the interface.
 package library
 
+import (
+	"context"
+)
+
 // SearchResult contains a result for a search term. Contains all the necessary
 // information to uniquely identify a media in the library.
 type SearchResult struct {
@@ -36,6 +40,9 @@ type SearchResult struct {
 	// Duration is the track length in milliseconds.
 	Duration int64 `json:"duration"`
 }
+
+// TrackInfo contains information for a single media file.
+type TrackInfo = SearchResult
 
 // Artist represents an artist from the database
 type Artist struct {
@@ -73,11 +80,15 @@ type Library interface {
 	GetFilePath(int64) string
 
 	// Returns search result will all the files of this album.
-	GetAlbumFiles(int64) []SearchResult
+	GetAlbumFiles(int64) []TrackInfo
 
 	// GetArtistAlbums returns all the albums which this artist has an at least
 	// on track in.
 	GetArtistAlbums(int64) []Album
+
+	// GetTrack returns information for particular track identified by its
+	// media ID.
+	GetTrack(context.Context, int64) (TrackInfo, error)
 
 	// Starts a full library scan. Will scan all paths if
 	// they are not scanned already.

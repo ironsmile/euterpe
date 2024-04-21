@@ -2,6 +2,7 @@ package subsonic_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/xml"
 	"fmt"
 	"net/http"
@@ -66,6 +67,19 @@ func TestSubsonicXMLResponses(t *testing.T) {
 					Duration:    195000,
 				},
 			}
+		},
+		GetTrackStub: func(ctx context.Context, i int64) (library.SearchResult, error) {
+			return library.TrackInfo{
+				ID:          i,
+				ArtistID:    22,
+				Artist:      "First Artist",
+				AlbumID:     11,
+				Album:       "First Album",
+				Title:       "Track Title",
+				TrackNumber: 5,
+				Format:      "mp3",
+				Duration:    123000,
+			}, nil
 		},
 	}
 	browser := &libraryfakes.FakeBrowser{
@@ -192,6 +206,14 @@ func TestSubsonicXMLResponses(t *testing.T) {
 		{
 			desc: "getArtistInfo2",
 			url:  testURL("/getArtistInfo2?id=%d", int64(1e9+10)),
+		},
+		{
+			desc: "getArtists",
+			url:  testURL("/getArtists"),
+		},
+		{
+			desc: "getSong",
+			url:  testURL("/getSong?id=33"),
 		},
 	}
 

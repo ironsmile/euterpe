@@ -3,6 +3,7 @@ package webserver_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -191,7 +192,7 @@ func TestArtstImageHandlerPUT(t *testing.T) {
 			desc: "artwork not of a good format",
 			aim: &libraryfakes.FakeArtistImageManager{
 				SaveArtistImageStub: func(_ context.Context, _ int64, _ io.Reader) error {
-					return library.NewArtworkError("test error")
+					return library.NewArtworkError(errors.New("test error"))
 				},
 			},
 			expectedCode: http.StatusBadRequest,

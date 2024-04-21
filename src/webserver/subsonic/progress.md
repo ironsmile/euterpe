@@ -1,0 +1,78 @@
+## Implemented API Methods
+
+- [x] ping
+- [x] getLicense
+- [x] getMusicFolders
+- [x] getIndexes
+- [x] getMusicDirectory
+- [ ] getGenres
+- [x] getArtists
+- [x] getArtist
+- [x] getAlbum
+- [x] getSong
+- [ ] getVideos
+- [ ] getVideoInfo
+- [ ] getArtistInfo
+- [ ] getArtistInfo2
+- [ ] getAlbumInfo
+- [ ] getAlbumInfo2
+- [ ] getSimilarSongs
+- [ ] getSimilarSongs2
+- [ ] getTopSongs
+- [ ] getAlbumList
+- [x] getAlbumList2
+- [ ] getRandomSongs
+- [ ] getSongsByGenre
+- [ ] getNowPlaying
+- [ ] getStarred
+- [ ] getStarred2
+- [ ] search
+- [ ] search2
+- [ ] search3
+- [ ] getPlaylists
+- [ ] getPlaylist
+- [ ] createPlaylist
+- [ ] updatePlaylist
+- [ ] deletePlaylist
+- [x] stream
+- [x] download
+- [ ] hls
+- [ ] getCaptions
+- [x] getCoverArt
+- [ ] getLyrics
+- [ ] getAvatar
+- [ ] star
+- [ ] unstar
+- [ ] setRating
+- [ ] scrobble
+- [ ] getShares
+- [ ] createShare
+- [ ] updateShare
+- [ ] deleteShare
+- [ ] getPodcasts
+- [ ] getNewestPodcasts
+- [ ] refreshPodcasts
+- [ ] createPodcastChannel
+- [ ] deletePodcastChannel
+- [ ] deletePodcastEpisode
+- [ ] downloadPodcastEpisode
+- [ ] jukeboxControl
+- [ ] getInternetRadioStations
+- [ ] createInternetRadioStation
+- [ ] updateInternetRadioStation
+- [ ] deleteInternetRadioStation
+- [ ] getChatMessages
+- [ ] addChatMessage
+- [ ] getUser
+- [ ] getUsers
+- [ ] createUser
+- [ ] updateUser
+- [ ] deleteUser
+- [ ] changePassword
+- [ ] getBookmarks
+- [ ] createBookmark
+- [ ] deleteBookmark
+- [ ] getPlayQueue
+- [ ] savePlayQueue
+- [ ] getScanStatus
+- [ ] startScan

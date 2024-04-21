@@ -80,7 +80,7 @@ type artistsResponse struct {
 }
 
 type artistsList struct {
-    IgnoredArticles string          `xml:"ignoredArticles,attr,omitempty" json:"ignoredArticles"`
+    IgnoredArticles string          `xml:"ignoredArticles,attr" json:"ignoredArticles"`
     Children        []artistElement `xml:"index" json:"index"`
 }
 

@@ -370,7 +370,7 @@ func (lib *LocalLibrary) SaveArtistImage(
 	}
 
 	if len(buff) == 0 {
-		return NewArtworkError("uploaded artist image is empty")
+		return NewArtworkError(errors.New("uploaded artist image is empty"))
 	}
 
 	work := func(db *sql.DB) error {
