@@ -139,7 +139,10 @@ func TestSubsonicXMLResponses(t *testing.T) {
 		},
 	}
 
-	xsdvalidate.Init()
+	err := xsdvalidate.Init()
+	if err != nil {
+		t.Fatalf("failed to initialize xsdvalidate: %s", err)
+	}
 	defer xsdvalidate.Cleanup()
 
 	xsdhandler, err := xsdvalidate.NewXsdHandlerUrl(

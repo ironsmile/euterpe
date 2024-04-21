@@ -33,7 +33,9 @@ func (s *subsonic) getCoverArt(w http.ResponseWriter, req *http.Request) {
     }
 
     if sizePx, err := strconv.ParseInt(size, 10, 64); err == nil && sizePx < 200 {
-        req.URL.Query().Set("size", "small")
+        query := req.URL.Query()
+        query.Set("size", "small")
+        req.URL.RawQuery = query.Encode()
     }
 
     err = artworkHandler.Find(w, req, dbArtID)
