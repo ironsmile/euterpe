@@ -218,6 +218,10 @@ func TestSubsonicXMLResponses(t *testing.T) {
 			desc: "getSong",
 			url:  testURL("/getSong?id=33"),
 		},
+		{
+			desc: "getGenres",
+			url:  testURL("/getGenres"),
+		},
 	}
 
 	for _, test := range tests {

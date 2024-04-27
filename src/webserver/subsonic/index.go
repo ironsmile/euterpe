@@ -87,6 +87,7 @@ func (s *subsonic) initRouter() {
 	setUpGetHandler("/stream", s.stream)
 	setUpGetHandler("/download", s.stream)
 	setUpGetHandler("/getSong", s.getSong)
+	setUpGetHandler("/getGenres", s.getGenres)
 
 	s.mux = s.authHandler(router)
 }
