@@ -5,6 +5,6 @@ import (
 )
 
 func (s *subsonic) getVideoInfo(w http.ResponseWriter, req *http.Request) {
-    resp := responseError(70, "video not found")
+    resp := responseError(errCodeNotFound, "video not found")
     encodeResponse(w, req, resp)
 }

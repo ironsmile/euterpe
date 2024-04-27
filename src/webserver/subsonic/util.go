@@ -88,11 +88,11 @@ type errorResponse struct {
 }
 
 type errorElement struct {
-	Code    int    `xml:"code,attr" json:"code"`
-	Message string `xml:"message,attr" json:"message"`
+	Code    apiErrorCode `xml:"code,attr" json:"code"`
+	Message string       `xml:"message,attr" json:"message"`
 }
 
-func responseError(code int, msg string) errorResponse {
+func responseError(code apiErrorCode, msg string) errorResponse {
 	return errorResponse{
 		baseResponse: responseFailed(),
 		Error: errorElement{

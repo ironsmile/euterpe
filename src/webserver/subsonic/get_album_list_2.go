@@ -16,7 +16,7 @@ func (s *subsonic) getAlbumList2(w http.ResponseWriter, req *http.Request) {
 	browseArgs := library.BrowseArgs{}
 	switch browseType {
 	case "":
-		resp := responseError(10, "`type` parameter is missing")
+		resp := responseError(errCodeMissingParameter, "`type` parameter is missing")
 		encodeResponse(w, req, resp)
 		return
 	case "random":
@@ -39,13 +39,13 @@ func (s *subsonic) getAlbumList2(w http.ResponseWriter, req *http.Request) {
 		fallthrough
 	case "byGenre":
 		resp := responseError(
-			0,
+			errCodeGeneric,
 			fmt.Sprintf("ordering by `%s` is not yet supported", browseType),
 		)
 		encodeResponse(w, req, resp)
 		return
 	default:
-		resp := responseError(10, "unknown `type` parameter used")
+		resp := responseError(errCodeMissingParameter, "unknown `type` parameter used")
 		encodeResponse(w, req, resp)
 		return
 	}

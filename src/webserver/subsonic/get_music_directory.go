@@ -14,13 +14,13 @@ import (
 func (s *subsonic) getMusicDirectory(w http.ResponseWriter, req *http.Request) {
 	dirIDString := req.URL.Query().Get("id")
 	if dirIDString == "" {
-		resp := responseError(70, "directory not found")
+		resp := responseError(errCodeNotFound, "directory not found")
 		encodeResponse(w, req, resp)
 		return
 	}
 	dirID, err := strconv.ParseInt(dirIDString, 10, 64)
 	if err != nil {
-		resp := responseError(70, fmt.Sprintf("malformed `id`: %s", err))
+		resp := responseError(errCodeNotFound, fmt.Sprintf("malformed `id`: %s", err))
 		encodeResponse(w, req, resp)
 		return
 	}
@@ -36,13 +36,13 @@ func (s *subsonic) getMusicDirectory(w http.ResponseWriter, req *http.Request) {
 	} else if isAlbumID(dirID) {
 		entry, err = s.getAlbumDirectory(req.Context(), toAlbumDBID(dirID))
 	} else {
-		resp := responseError(70, "no directory with this ID exists")
+		resp := responseError(errCodeNotFound, "no directory with this ID exists")
 		encodeResponse(w, req, resp)
 		return
 	}
 
 	if err != nil {
-		resp := responseError(0, err.Error())
+		resp := responseError(errCodeGeneric, err.Error())
 		encodeResponse(w, req, resp)
 		return
 	}

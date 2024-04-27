@@ -26,7 +26,7 @@ func (s *subsonic) authHandler(handler http.Handler) http.Handler {
 
 		if user == "" || (pass == "" && (token == "" || salt == "")) {
 			resp := responseError(
-				10,
+				errCodeMissingParameter,
 				"Required parameter is missing",
 			)
 
@@ -43,7 +43,7 @@ func (s *subsonic) authHandler(handler http.Handler) http.Handler {
 				decPass, err := hex.DecodeString(pass)
 				if err != nil {
 					resp := responseError(
-						40,
+						errCodeWrongUserOrPass,
 						fmt.Sprintf(
 							"Password encoded wrong: %s",
 							err,
@@ -80,7 +80,7 @@ func (s *subsonic) authHandler(handler http.Handler) http.Handler {
 
 		if !authSuccess {
 			resp := responseError(
-				40,
+				errCodeWrongUserOrPass,
 				"Wrong username or password",
 			)
 

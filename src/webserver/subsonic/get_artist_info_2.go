@@ -10,7 +10,7 @@ func (s *subsonic) getArtistInfo2(w http.ResponseWriter, req *http.Request) {
     idString := req.URL.Query().Get("id")
     subsonicID, err := strconv.ParseInt(idString, 10, 64)
     if idString == "" || err != nil || !isArtistID(subsonicID) {
-        resp := responseError(70, "artist not found")
+        resp := responseError(errCodeNotFound, "artist not found")
         encodeResponse(w, req, resp)
         return
     }
@@ -19,7 +19,7 @@ func (s *subsonic) getArtistInfo2(w http.ResponseWriter, req *http.Request) {
 
     albums := s.lib.GetArtistAlbums(artistID)
     if len(albums) == 0 {
-        resp := responseError(70, "artist not found")
+        resp := responseError(errCodeNotFound, "artist not found")
         encodeResponse(w, req, resp)
         return
     }

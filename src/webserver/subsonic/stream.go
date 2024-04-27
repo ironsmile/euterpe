@@ -12,7 +12,7 @@ func (s *subsonic) stream(w http.ResponseWriter, req *http.Request) {
 	idString := req.URL.Query().Get("id")
 	trackID, err := strconv.ParseInt(idString, 10, 64)
 	if idString == "" || err != nil {
-		resp := responseError(70, "track not found")
+		resp := responseError(errCodeNotFound, "track not found")
 		encodeResponse(w, req, resp)
 		return
 	}

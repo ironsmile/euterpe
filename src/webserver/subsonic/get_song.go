@@ -12,7 +12,7 @@ func (s *subsonic) getSong(w http.ResponseWriter, req *http.Request) {
 	idString := req.URL.Query().Get("id")
 	subsonicID, err := strconv.ParseInt(idString, 10, 64)
 	if idString == "" || err != nil || !isTrackID(subsonicID) {
-		resp := responseError(70, "song not found")
+		resp := responseError(errCodeNotFound, "song not found")
 		encodeResponse(w, req, resp)
 		return
 	}
@@ -21,7 +21,7 @@ func (s *subsonic) getSong(w http.ResponseWriter, req *http.Request) {
 
 	track, err := s.lib.GetTrack(req.Context(), trackID)
 	if errors.Is(err, library.ErrNotFound) {
-		resp := responseError(70, "song not found")
+		resp := responseError(errCodeNotFound, "song not found")
 		encodeResponse(w, req, resp)
 		return
 	}

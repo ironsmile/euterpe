@@ -10,7 +10,7 @@ func (s *subsonic) getAlbum(w http.ResponseWriter, req *http.Request) {
     idString := req.URL.Query().Get("id")
     subsonicID, err := strconv.ParseInt(idString, 10, 64)
     if idString == "" || err != nil || !isAlbumID(subsonicID) {
-        resp := responseError(70, "album not found")
+        resp := responseError(errCodeNotFound, "album not found")
         encodeResponse(w, req, resp)
         return
     }
@@ -19,7 +19,7 @@ func (s *subsonic) getAlbum(w http.ResponseWriter, req *http.Request) {
 
     entry, err := s.getAlbumDirectory(req.Context(), albumID)
     if err != nil {
-        resp := responseError(0, err.Error())
+        resp := responseError(errCodeGeneric, err.Error())
         encodeResponse(w, req, resp)
         return
     }

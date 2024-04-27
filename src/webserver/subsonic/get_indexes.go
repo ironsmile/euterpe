@@ -15,7 +15,7 @@ func (s *subsonic) getIndexes(w http.ResponseWriter, req *http.Request) {
 	combindIDstr := strconv.FormatInt(combinedMusicFolderID, 10)
 
 	if musicFolderID != "" && musicFolderID != combindIDstr {
-		resp := responseError(70, "Unknown music folder ID")
+		resp := responseError(errCodeNotFound, "Unknown music folder ID")
 		encodeResponse(w, req, resp)
 		return
 	}
