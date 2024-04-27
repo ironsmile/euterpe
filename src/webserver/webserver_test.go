@@ -403,7 +403,7 @@ func TestGetFileURL(t *testing.T) {
 	defer func() { _ = lib.Truncate() }()
 	defer tearDownServer(srv)
 
-	found := lib.Search("Buggy Bugoff")
+	found := lib.Search(library.SearchArgs{Query: "Buggy Bugoff"})
 
 	if len(found) != 1 {
 		t.Fatalf("Problem finding Buggy Bugoff test track")
@@ -526,7 +526,7 @@ func TestFileNameHeaders(t *testing.T) {
 	defer func() { _ = lib.Truncate() }()
 	defer tearDownServer(srv)
 
-	found := lib.Search("Buggy Bugoff")
+	found := lib.Search(library.SearchArgs{Query: "Buggy Bugoff"})
 
 	if len(found) != 1 {
 		t.Fatalf("Problem finding Buggy Bugoff test track")

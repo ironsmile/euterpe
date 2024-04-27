@@ -174,11 +174,16 @@ func (lib *LocalLibrary) AddLibraryPath(path string) {
 }
 
 // Search searches in the library. Will match against the track's name, artist and album.
-func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
-	searchTerm = fmt.Sprintf("%%%s%%", searchTerm)
+func (lib *LocalLibrary) Search(args SearchArgs) []SearchResult {
+	searchTerm := fmt.Sprintf("%%%s%%", args.Query)
 
 	var output []SearchResult
 	work := func(db *sql.DB) error {
+		limitCount := int64(-1)
+		if args.Count > 0 {
+			limitCount = int64(args.Count)
+		}
+
 		rows, err := db.Query(`
 			SELECT
 				t.id as track_id,
@@ -200,7 +205,9 @@ func (lib *LocalLibrary) Search(searchTerm string) []SearchResult {
 				at.name LIKE ?
 			ORDER BY
 				al.name, t.number
-		`, searchTerm, searchTerm, searchTerm)
+			LIMIT
+				?, ?
+		`, searchTerm, searchTerm, searchTerm, args.Offset, limitCount)
 		if err != nil {
 			log.Printf("Query not successful: %s\n", err.Error())
 			return nil

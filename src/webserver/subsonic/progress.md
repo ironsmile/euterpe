@@ -1,3 +1,5 @@
+# Progress
+
 ## Implemented API Methods
 
 - [x] ping
@@ -28,7 +30,7 @@
 - [ ] getStarred2
 - [ ] search
 - [ ] search2
-- [ ] search3
+- [ ] search3 - partly, only for songs for now
 - [ ] getPlaylists
 - [ ] getPlaylist
 - [ ] createPlaylist
@@ -76,3 +78,7 @@
 - [ ] savePlayQueue
 - [ ] getScanStatus
 - [ ] startScan
+
+## Open Subsonic
+
+- [ ] getOpenSubsonicExtensions

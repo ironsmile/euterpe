@@ -90,6 +90,7 @@ func (s *subsonic) initRouter() {
 	setUpGetHandler("/getGenres", s.getGenres)
 	setUpGetHandler("/getVideos", s.getVideos)
 	setUpGetHandler("/getVideoInfo", s.getVideoInfo)
+	setUpGetHandler("/search3", s.search3)
 
 	s.mux = s.authHandler(router)
 }

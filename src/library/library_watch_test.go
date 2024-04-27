@@ -83,7 +83,7 @@ func TestRemovingFile(t *testing.T) {
 	lib := getScannedLibrary(ctx, t)
 	defer func() { _ = lib.Truncate() }()
 
-	results := lib.Search("")
+	results := lib.Search(SearchArgs{Query: ""})
 
 	if len(results) != 4 {
 		t.Errorf("Expected 4 files in the result set but found %d", len(results))
@@ -95,7 +95,7 @@ func TestRemovingFile(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	results = lib.Search("")
+	results = lib.Search(SearchArgs{Query: ""})
 	if len(results) != 3 {
 		t.Errorf("Expected 3 files in the result set but found %d", len(results))
 	}
@@ -151,7 +151,7 @@ func TestAddingAndRemovingDirectory(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	results := lib.Search("")
+	results := lib.Search(SearchArgs{Query: ""})
 
 	if len(results) != 3 {
 		t.Errorf("Expected 3 songs but found %d", len(results))
@@ -210,13 +210,13 @@ func TestMovingDirectory(t *testing.T) {
 
 	checkAddedSong(lib, t)
 
-	found := lib.Search("")
+	found := lib.Search(SearchArgs{Query: ""})
 
 	if len(found) != 4 {
 		t.Errorf("Expected to find 4 tracks but found %d", len(found))
 	}
 
-	found = lib.Search("Added Song")
+	found = lib.Search(SearchArgs{Query: "Added Song"})
 
 	if len(found) != 1 {
 		t.Fatalf("Did not find exactly one 'Added Song'. Found %d files", len(found))
@@ -276,7 +276,7 @@ func TestAddingNonRelatedFile(t *testing.T) {
 	newFile := filepath.Join(testFiles, "library", "not_related")
 
 	testLibFiles := func() {
-		results := lib.Search("")
+		results := lib.Search(SearchArgs{Query: ""})
 		if len(results) != 3 {
 			t.Errorf("Expected 3 files in the library but found %d", len(results))
 		}

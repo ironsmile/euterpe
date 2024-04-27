@@ -90,10 +90,10 @@ type FakeLibrary struct {
 	scanMutex       sync.RWMutex
 	scanArgsForCall []struct {
 	}
-	SearchStub        func(string) []library.SearchResult
+	SearchStub        func(library.SearchArgs) []library.SearchResult
 	searchMutex       sync.RWMutex
 	searchArgsForCall []struct {
-		arg1 string
+		arg1 library.SearchArgs
 	}
 	searchReturns struct {
 		result1 []library.SearchResult
@@ -557,11 +557,11 @@ func (fake *FakeLibrary) ScanCalls(stub func()) {
 	fake.ScanStub = stub
 }
 
-func (fake *FakeLibrary) Search(arg1 string) []library.SearchResult {
+func (fake *FakeLibrary) Search(arg1 library.SearchArgs) []library.SearchResult {
 	fake.searchMutex.Lock()
 	ret, specificReturn := fake.searchReturnsOnCall[len(fake.searchArgsForCall)]
 	fake.searchArgsForCall = append(fake.searchArgsForCall, struct {
-		arg1 string
+		arg1 library.SearchArgs
 	}{arg1})
 	stub := fake.SearchStub
 	fakeReturns := fake.searchReturns
@@ -582,13 +582,13 @@ func (fake *FakeLibrary) SearchCallCount() int {
 	return len(fake.searchArgsForCall)
 }
 
-func (fake *FakeLibrary) SearchCalls(stub func(string) []library.SearchResult) {
+func (fake *FakeLibrary) SearchCalls(stub func(library.SearchArgs) []library.SearchResult) {
 	fake.searchMutex.Lock()
 	defer fake.searchMutex.Unlock()
 	fake.SearchStub = stub
 }
 
-func (fake *FakeLibrary) SearchArgsForCall(i int) string {
+func (fake *FakeLibrary) SearchArgsForCall(i int) library.SearchArgs {
 	fake.searchMutex.RLock()
 	defer fake.searchMutex.RUnlock()
 	argsForCall := fake.searchArgsForCall[i]

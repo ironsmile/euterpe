@@ -41,6 +41,21 @@ type SearchResult struct {
 	Duration int64 `json:"duration"`
 }
 
+// SearchArgs is the input parameters for searching in the library.
+type SearchArgs struct {
+	// Query is the search query string. Search results will match this query.
+	// An empty query will return all elements.
+	Query string
+
+	// Offset is an offset in the returned search results. Clients can use it
+	// to skip results they already know about.
+	Offset uint32
+
+	// Count limits the number of items returned by a search. A Count of zero
+	// means "no limit".
+	Count uint32
+}
+
 // TrackInfo contains information for a single media file.
 type TrackInfo = SearchResult
 
@@ -69,33 +84,33 @@ type Library interface {
 
 	// Adds a new path to the library paths. If it hasn't been scanned yet a new scan
 	// will be started.
-	AddLibraryPath(string)
+	AddLibraryPath(directory string)
 
 	// Search the library using a search string. It will match against Artist, Album
 	// and Title. Will OR the results. So it is "return anything which Artist matches or
 	// Album matches or Title matches".
-	Search(string) []SearchResult
+	Search(args SearchArgs) []SearchResult
 
 	// Returns the real filesystem path. Requires the media ID.
-	GetFilePath(int64) string
+	GetFilePath(mediaID int64) string
 
 	// Returns search result will all the files of this album.
-	GetAlbumFiles(int64) []TrackInfo
+	GetAlbumFiles(albumID int64) []TrackInfo
 
 	// GetArtistAlbums returns all the albums which this artist has an at least
 	// on track in.
-	GetArtistAlbums(int64) []Album
+	GetArtistAlbums(artistID int64) []Album
 
 	// GetTrack returns information for particular track identified by its
 	// media ID.
-	GetTrack(context.Context, int64) (TrackInfo, error)
+	GetTrack(ctx context.Context, mediaID int64) (TrackInfo, error)
 
 	// Starts a full library scan. Will scan all paths if
 	// they are not scanned already.
 	Scan()
 
 	// Adds this media (file) to the library.
-	AddMedia(string) error
+	AddMedia(fileName string) error
 
 	// Makes sure the library is initialized. This method will be called once on
 	// every start of Euterpe.

@@ -46,7 +46,7 @@ func (sh SearchHandler) search(writer http.ResponseWriter, req *http.Request) er
 		}
 	}
 
-	results := sh.library.Search(query)
+	results := sh.library.Search(library.SearchArgs{Query: query})
 
 	if len(results) == 0 {
 		_, err := writer.Write([]byte("[]"))

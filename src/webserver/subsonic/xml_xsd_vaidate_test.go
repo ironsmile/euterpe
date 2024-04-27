@@ -81,6 +81,43 @@ func TestSubsonicXMLResponses(t *testing.T) {
 				Duration:    123000,
 			}, nil
 		},
+		SearchStub: func(sa library.SearchArgs) []library.SearchResult {
+			return []library.SearchResult{
+				{
+					ID:          11,
+					ArtistID:    10,
+					Artist:      "First Artist",
+					AlbumID:     10,
+					Album:       "First Album",
+					Title:       "First Song",
+					TrackNumber: 1,
+					Format:      "mp3",
+					Duration:    162000,
+				},
+				{
+					ID:          12,
+					ArtistID:    11,
+					Artist:      "Second Artist",
+					AlbumID:     13,
+					Album:       "Second Album",
+					Title:       "Third Song",
+					TrackNumber: 5,
+					Format:      "mp3",
+					Duration:    195000,
+				},
+				{
+					ID:          13,
+					ArtistID:    11,
+					Artist:      "Second Artist",
+					AlbumID:     13,
+					Album:       "Second Album",
+					Title:       "Fourth Song",
+					TrackNumber: 6,
+					Format:      "mp3",
+					Duration:    95000,
+				},
+			}
+		},
 	}
 	browser := &libraryfakes.FakeBrowser{
 		BrowseArtistsStub: func(ba library.BrowseArgs) ([]library.Artist, int) {
@@ -225,6 +262,10 @@ func TestSubsonicXMLResponses(t *testing.T) {
 		{
 			desc: "getVideos",
 			url:  testURL("/getVideos"),
+		},
+		{
+			desc: "search3",
+			url:  testURL("/search3?query=baba"),
 		},
 	}
 
