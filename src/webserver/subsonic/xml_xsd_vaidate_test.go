@@ -146,7 +146,7 @@ func TestSubsonicXMLResponses(t *testing.T) {
 	defer xsdvalidate.Cleanup()
 
 	xsdhandler, err := xsdvalidate.NewXsdHandlerUrl(
-		"subsonic-rest-api-1.16.1.xsd",
+		xsdFileName,
 		xsdvalidate.ParsErrDefault,
 	)
 	if err != nil {
@@ -222,6 +222,10 @@ func TestSubsonicXMLResponses(t *testing.T) {
 			desc: "getGenres",
 			url:  testURL("/getGenres"),
 		},
+		{
+			desc: "getVideos",
+			url:  testURL("/getVideos"),
+		},
 	}
 
 	for _, test := range tests {
@@ -290,3 +294,128 @@ func TestSubsonicXMLResponses(t *testing.T) {
 		})
 	}
 }
+
+// TestSubsonicXMLErrors checks that errors returned from the Subsonic API have the
+// correct error code and also have a valid XML.
+func TestSubsonicXMLErrors(t *testing.T) {
+	lib := &libraryfakes.FakeLibrary{}
+	browser := &libraryfakes.FakeBrowser{}
+
+	err := xsdvalidate.Init()
+	if err != nil {
+		t.Fatalf("failed to initialize xsdvalidate: %s", err)
+	}
+	defer xsdvalidate.Cleanup()
+
+	xsdhandler, err := xsdvalidate.NewXsdHandlerUrl(
+		xsdFileName,
+		xsdvalidate.ParsErrDefault,
+	)
+	if err != nil {
+		t.Fatalf("failed to create XSD handler: %s", err)
+	}
+	defer xsdhandler.Free()
+
+	ssHandler := subsonic.NewHandler(
+		subsonic.Prefix,
+		lib,
+		browser,
+		config.Config{},
+		nil, nil,
+	)
+
+	testURL := func(format string, args ...any) string {
+		return subsonic.Prefix + fmt.Sprintf(format, args...)
+	}
+
+	tests := []struct {
+		desc      string
+		url       string
+		errorCode int
+	}{
+		{
+			desc:      "getVideoInfo",
+			url:       testURL("/getVideoInfo?id=20"),
+			errorCode: 70,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			req := httptest.NewRequest(
+				http.MethodGet,
+				test.url,
+				nil,
+			)
+
+			rec := httptest.NewRecorder()
+
+			ssHandler.ServeHTTP(rec, req)
+
+			resp := rec.Result()
+			if resp.StatusCode != http.StatusOK {
+				t.Errorf("HTTP response had code %d", resp.StatusCode)
+			}
+
+			respBody := rec.Body.String()
+
+			xmlResp := errorResponse{}
+			dec := xml.NewDecoder(bytes.NewBufferString(respBody))
+			if err := dec.Decode(&xmlResp); err != nil {
+				t.Fatalf("cannot decode XML: %s", err)
+			}
+
+			if xmlResp.Status != "failed" {
+				t.Logf("XML response: %s\n", respBody)
+				t.Fatalf("expected FAILED response but got `%s`", xmlResp.Status)
+			}
+
+			if test.errorCode != xmlResp.Error.Code {
+				t.Errorf("expected error code %d but got %d",
+					test.errorCode,
+					xmlResp.Error.Code,
+				)
+			}
+
+			if xmlResp.Error.Message == "" {
+				t.Errorf("error message was empty. It should always have text")
+			}
+
+			err := xsdhandler.ValidateMem(
+				[]byte(respBody),
+				xsdvalidate.ValidErrDefault,
+			)
+			if err != nil {
+				switch verr := err.(type) {
+				case xsdvalidate.ValidationError:
+					var errors int
+					for _, xmlErr := range verr.Errors {
+						if xmlErr.NodeName == "subsonic-response" &&
+							xmlErr.Code == 1866 {
+							// Few attributes are added for more
+							// information even though they are
+							// not part of the specification.
+							continue
+						}
+
+						t.Logf("Error in line: %d\n", xmlErr.Line)
+						t.Log(xmlErr.Message)
+
+						t.Logf("error: %#v\n", xmlErr)
+
+						errors++
+					}
+
+					if errors > 0 {
+						t.Errorf("XSD validation failed with %d errors", errors)
+					}
+				default:
+					t.Errorf("general XSD validation error: %s", err)
+				}
+			}
+
+		})
+	}
+}
+
+const xsdFileName = "subsonic-rest-api-1.16.1.xsd"

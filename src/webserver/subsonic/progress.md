@@ -10,8 +10,8 @@
 - [x] getArtist
 - [x] getAlbum
 - [x] getSong
-- [ ] getVideos
-- [ ] getVideoInfo
+- [x] getVideos - Euterpe does not do videos
+- [x] getVideoInfo - always returns "not found"
 - [ ] getArtistInfo
 - [ ] getArtistInfo2
 - [ ] getAlbumInfo
