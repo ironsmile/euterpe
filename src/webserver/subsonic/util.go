@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/ironsmile/euterpe/src/version"
 )
@@ -167,6 +168,61 @@ func artistCoverArtID(artistID int64) string {
 // exposed subsonic API.
 func albumConverArtID(albumID int64) string {
 	return fmt.Sprintf("%s%d", coverAlbumPrefix, albumID)
+}
+
+// getProtoFromRequest returns the original request scheme used for accessing
+// the server. It takes into account the X-Forwarded-Proto and the Forwarded
+// HTTP headers.
+func getProtoFromRequest(req *http.Request) string {
+	proto := "http"
+	if forwadedProto := req.Header.Get("X-Forwarded-Proto"); forwadedProto == "https" {
+		proto = "https"
+	}
+
+	if forwarded := req.Header.Get("Forwarded"); forwarded != "" {
+		vals := splitForwarded(forwarded)
+		if forwardedProto, ok := vals["proto"]; ok && forwardedProto == "https" {
+			proto = "https"
+		}
+	}
+
+	return proto
+}
+
+// getHostFromRequest returns the original request Host used for accessing the
+// server. It takes into account the X-Forwarded-Host and Forwarded HTTP headers.
+func getHostFromRequest(req *http.Request) string {
+	host := req.Host
+	if forwadedHost := req.Header.Get("X-Forwarded-Host"); forwadedHost != "" {
+		host = forwadedHost
+	}
+
+	if forwarded := req.Header.Get("Forwarded"); forwarded != "" {
+		vals := splitForwarded(forwarded)
+		if forwardedHost, ok := vals["host"]; ok {
+			host = forwardedHost
+		}
+	}
+
+	return host
+}
+
+func splitForwarded(val string) map[string]string {
+	vals := make(map[string]string)
+
+	// Example:
+	// Forwarded: by=<identifier>;for=<identifier>;host=<host>;proto=<http|https>
+	pairs := strings.Split(val, ";")
+	for _, pair := range pairs {
+		k, v, ok := strings.Cut(pair, "=")
+		if !ok || v == "" {
+			continue
+		}
+
+		vals[k] = strings.Trim(v, `"`)
+	}
+
+	return vals
 }
 
 const (
