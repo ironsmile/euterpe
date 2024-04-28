@@ -3,6 +3,7 @@ package subsonic
 import (
 	"context"
 	"fmt"
+	"mime"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -73,22 +74,11 @@ func (s *subsonic) getArtistDirectory(
 			resp.Name = album.Artist
 		}
 
-		resp.Children = append(resp.Children, directoryChildEntry{
-			ID:            albumFSID(album.ID),
-			ParentID:      artistSubsonicID,
-			MediaType:     "album",
-			DirectoryType: "music",
-			Title:         album.Name,
-			Name:          album.Name,
-			Album:         album.Name,
-			AlbumID:       albumFSID(album.ID),
-			Artist:        album.Artist,
-			ArtistID:      artistSubsonicID,
-			IsDir:         true,
-			CoverArtID:    albumConverArtID(album.ID),
-			SongCount:     album.SongCount,
-			Created:       s.lastModified,
-		})
+		resp.Children = append(resp.Children, albumToDirChild(
+			album,
+			artistID,
+			s.lastModified,
+		))
 	}
 
 	return resp, nil
@@ -182,7 +172,7 @@ func (s *subsonic) getRootDirectory(
 type directoryResponse struct {
 	baseResponse
 
-	Directory directoryEntry `xml:"directory" json:"directory"`
+	Directory directoryEntry `xml:"directory,omitempty" json:"directory,omitempty"`
 }
 
 type directoryEntry struct {
@@ -248,5 +238,61 @@ func trackToDirChild(track library.TrackInfo, created time.Time) directoryChildE
 			fmt.Sprintf("%s.%s", track.Title, track.Format),
 		),
 		Created: created,
+
+		// Here we take advantage of the knowledge that the track.Format is just
+		// the file name extension.
+		ContentType: mime.TypeByExtension(filepath.Ext("." + track.Format)),
+	}
+}
+
+// albumToDirChild converts a library Album to a directory child entry.
+// artistID is a in-db library ID.
+//
+// If artistID is empty then ParentID and ArtistID properties of the child
+// will not be set.
+func albumToDirChild(
+	album library.Album,
+	artistID int64,
+	created time.Time,
+) directoryChildEntry {
+	entry := directoryChildEntry{
+		ID:            albumFSID(album.ID),
+		MediaType:     "album",
+		DirectoryType: "music",
+		Title:         album.Name,
+		Name:          album.Name,
+		Album:         album.Name,
+		AlbumID:       albumFSID(album.ID),
+		Artist:        album.Artist,
+		IsDir:         true,
+		CoverArtID:    albumConverArtID(album.ID),
+		SongCount:     album.SongCount,
+		Created:       created,
+		Duration:      album.Duration / 1000,
+	}
+
+	if artistID != 0 {
+		artistSubsonicID := artistFSID(artistID)
+		entry.ParentID = artistSubsonicID
+		entry.ArtistID = artistSubsonicID
+	}
+
+	return entry
+}
+
+func artistToDirChild(
+	artist library.Artist,
+	created time.Time,
+) directoryChildEntry {
+	return directoryChildEntry{
+		ID:            albumFSID(artist.ID),
+		MediaType:     "artist",
+		DirectoryType: "music",
+		Name:          artist.Name,
+		AlbumID:       albumFSID(artist.ID),
+		Artist:        artist.Name,
+		IsDir:         true,
+		CoverArtID:    artistCoverArtID(artist.ID),
+		Created:       created,
 	}
 }

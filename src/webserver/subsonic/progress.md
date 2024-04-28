@@ -28,8 +28,8 @@
 - [ ] getNowPlaying
 - [ ] getStarred
 - [ ] getStarred2
-- [ ] search
-- [ ] search2
+- [x] search - `newerThan` is ignored
+- [x] search2
 - [x] search3
 - [ ] getPlaylists
 - [ ] getPlaylist

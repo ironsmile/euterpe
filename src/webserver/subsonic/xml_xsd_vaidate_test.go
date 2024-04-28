@@ -287,6 +287,26 @@ func TestSubsonicXMLResponses(t *testing.T) {
 			desc: "search3",
 			url:  testURL("/search3?query=baba"),
 		},
+		{
+			desc: "search2",
+			url:  testURL("/search2?query=baba"),
+		},
+		{
+			desc: "search any",
+			url:  testURL("/search2?any=baba"),
+		},
+		{
+			desc: "search artits",
+			url:  testURL("/search?arist=baba"),
+		},
+		{
+			desc: "search albums",
+			url:  testURL("/search?album=baba"),
+		},
+		{
+			desc: "search tracks",
+			url:  testURL("/search?title=baba"),
+		},
 	}
 
 	for _, test := range tests {
