@@ -272,7 +272,7 @@ func (lib *LocalLibrary) SearchAlbums(args SearchArgs) []Album {
 			GROUP BY
 				t.album_id
 			ORDER BY
-				al.name, t.number
+				al.name, t.album_id
 			LIMIT
 				?, ?
 		`, searchTerm, searchTerm, searchTerm, args.Offset, limitCount)
@@ -300,7 +300,63 @@ func (lib *LocalLibrary) SearchAlbums(args SearchArgs) []Album {
 		return nil
 	}
 	if err := lib.executeDBJobAndWait(work); err != nil {
-		log.Printf("Error executing search db work: %s", err)
+		log.Printf("Error executing search album db work: %s", err)
+		return output
+	}
+	return output
+}
+
+// SearchArtists searches for and returns artists which match the search arguments.
+func (lib *LocalLibrary) SearchArtists(args SearchArgs) []Artist {
+	searchTerm := fmt.Sprintf("%%%s%%", args.Query)
+
+	var output []Artist
+	work := func(db *sql.DB) error {
+		limitCount := int64(-1)
+		if args.Count > 0 {
+			limitCount = int64(args.Count)
+		}
+
+		rows, err := db.Query(`
+			SELECT
+				ar.id,
+				ar.name,
+				(SELECT COUNT(DISTINCT(tr.album_id))
+					FROM tracks tr
+					WHERE tr.artist_id = ar.id) as albumsCount
+			FROM
+				artists ar
+			WHERE
+				ar.name LIKE ?
+			ORDER BY
+				ar.name, ar.id
+			LIMIT
+				?, ?
+		`, searchTerm, args.Offset, limitCount)
+		if err != nil {
+			log.Printf("Search artist query not successful: %s\n", err.Error())
+			return nil
+		}
+
+		defer rows.Close()
+		for rows.Next() {
+			var res Artist
+
+			err := rows.Scan(
+				&res.ID, &res.Name, &res.AlbumCount,
+			)
+			if err != nil {
+				log.Printf("Error scanning search artist result: %s\n", err)
+				continue
+			}
+
+			output = append(output, res)
+		}
+
+		return nil
+	}
+	if err := lib.executeDBJobAndWait(work); err != nil {
+		log.Printf("Error executing search artist db work: %s", err)
 		return output
 	}
 	return output

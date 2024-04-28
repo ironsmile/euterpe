@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/ironsmile/euterpe/src/library"
 )
 
 func (s *subsonic) getArtist(w http.ResponseWriter, req *http.Request) {
@@ -59,7 +61,7 @@ type artistID3Entry struct {
 	SongCount  int64  `xml:"songCount,attr,omitempty" json:"songCount,omitempty"`
 	CoverArtID string `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
 
-	Children []albumID3Entry `xml:"album" json:"album"`
+	Children []albumID3Entry `xml:"album,omitempty" json:"album,omitempty"`
 }
 
 type albumID3Entry struct {
@@ -87,5 +89,14 @@ func toAlbumID3Entry(child directoryChildEntry) albumID3Entry {
 		Genre:      child.Genre,
 		SongCount:  child.SongCount,
 		Created:    child.Created,
+	}
+}
+
+func dbArtistToArtistID3Entry(artist library.Artist) artistID3Entry {
+	return artistID3Entry{
+		ID:         artistFSID(artist.ID),
+		Name:       artist.Name,
+		AlbumCount: artist.AlbumCount,
+		CoverArtID: artistCoverArtID(artist.ID),
 	}
 }

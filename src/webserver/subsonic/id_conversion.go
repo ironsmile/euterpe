@@ -65,13 +65,13 @@ func isArtistID(id int64) bool {
 }
 
 // artistCoverArtID converts the artistID to an ID for cover image in the
-// exposed subsonic API.
+// exposed subsonic API. artistID is an ID from the database.
 func artistCoverArtID(artistID int64) string {
 	return fmt.Sprintf("%s%d", coverArtistPrefix, artistID)
 }
 
 // albumConverArtID converts the albumID to an ID for a cover image in the
-// exposed subsonic API.
+// exposed subsonic API. albumID is an ID from the database.
 func albumConverArtID(albumID int64) string {
 	return fmt.Sprintf("%s%d", coverAlbumPrefix, albumID)
 }

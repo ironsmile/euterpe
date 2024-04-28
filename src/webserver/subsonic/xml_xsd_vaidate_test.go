@@ -118,6 +118,26 @@ func TestSubsonicXMLResponses(t *testing.T) {
 				},
 			}
 		},
+		SearchAlbumsStub: func(sa library.SearchArgs) []library.Album {
+			return []library.Album{
+				{
+					ID:        10,
+					Name:      "First Album",
+					Artist:    "Various Artists",
+					SongCount: 5,
+					Duration:  42318473,
+				},
+			}
+		},
+		SearchArtistsStub: func(sa library.SearchArgs) []library.Artist {
+			return []library.Artist{
+				{
+					ID:         11,
+					Name:       "First Artist",
+					AlbumCount: 3,
+				},
+			}
+		},
 	}
 	browser := &libraryfakes.FakeBrowser{
 		BrowseArtistsStub: func(ba library.BrowseArgs) ([]library.Artist, int) {

@@ -46,7 +46,20 @@ func (s *subsonic) search3(w http.ResponseWriter, req *http.Request) {
 		resp.Result.Albums = append(resp.Result.Albums, dbAlbumToAlbumID3Entry(album))
 	}
 
-	//!TODO: explictly search for artists.
+	artistCount := parseIntOrDefault(reqQuery.Get("artistCount"), 20)
+	artistOffset := parseIntOrDefault(reqQuery.Get("artistOffset"), 0)
+
+	artists := s.lib.SearchArtists(library.SearchArgs{
+		Query:  searchQuery,
+		Offset: artistOffset,
+		Count:  artistCount,
+	})
+	for _, artist := range artists {
+		resp.Result.Artists = append(
+			resp.Result.Artists,
+			dbArtistToArtistID3Entry(artist),
+		)
+	}
 
 	encodeResponse(w, req, resp)
 }
@@ -58,6 +71,7 @@ type search3Response struct {
 }
 
 type search3Result struct {
-	Songs  []directoryChildEntry `xml:"song" json:"song"`
-	Albums []albumID3Entry       `xml:"album" json:"album"`
+	Artists []artistID3Entry      `xml:"artist" json:"artist"`
+	Albums  []albumID3Entry       `xml:"album" json:"album"`
+	Songs   []directoryChildEntry `xml:"song" json:"song"`
 }

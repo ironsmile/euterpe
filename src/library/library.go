@@ -96,6 +96,10 @@ type Library interface {
 	// albums. It may look into artist names, song names and actual album names.
 	SearchAlbums(args SearchArgs) []Album
 
+	// SearchArtists searches the library for the given terms and returns matching
+	// artists. It looks into the artist name only.
+	SearchArtists(args SearchArgs) []Artist
+
 	// Returns the real filesystem path. Requires the media ID.
 	GetFilePath(mediaID int64) string
 

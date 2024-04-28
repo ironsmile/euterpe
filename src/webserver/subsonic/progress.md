@@ -30,7 +30,7 @@
 - [ ] getStarred2
 - [ ] search
 - [ ] search2
-- [ ] search3 - partly, only for songs for now
+- [x] search3
 - [ ] getPlaylists
 - [ ] getPlaylist
 - [ ] createPlaylist
