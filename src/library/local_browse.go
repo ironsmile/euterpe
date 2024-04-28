@@ -129,7 +129,8 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 				THEN ar.name
 				ELSE "Various Artists"
 				END AS arist_name,
-				COUNT(tr.id) as songCount
+				COUNT(tr.id) as songCount,
+				SUM(tr.duration) as duration
 			FROM
 				tracks tr
 				LEFT JOIN
@@ -153,7 +154,7 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 			var res Album
 			if err := rows.Scan(
 				&res.ID, &res.Name,
-				&res.Artist, &res.SongCount,
+				&res.Artist, &res.SongCount, &res.Duration,
 			); err != nil {
 				return fmt.Errorf("scanning db failed: %w", err)
 			}

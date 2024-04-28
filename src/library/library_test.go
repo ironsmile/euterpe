@@ -966,6 +966,146 @@ func TestLocalLibrarySupportedFormats(t *testing.T) {
 	}
 }
 
+// TestLocalLibraryGetArtistAlbums makes sure that the LocalLibrary's GetArtistAlbums
+// returns the expected results.
+func TestLocalLibraryGetArtistAlbums(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	lib := getPathedLibrary(ctx, t)
+	defer func() { _ = lib.Truncate() }()
+
+	const (
+		albumName       = "Return Of The Bugs"
+		secondAlbumName = "Return Of The Bugs II Deluxe 3000"
+		artistName      = "Buggy Bugoff"
+	)
+
+	tracks := []struct {
+		track MockMedia
+		path  string
+	}{
+		{
+			track: MockMedia{
+				artist: artistName,
+				album:  albumName,
+				title:  "Payback",
+				track:  1,
+				length: 340 * time.Second,
+			},
+			path: "/media/return-of-the-bugs/track-1.mp3",
+		},
+		{
+			track: MockMedia{
+				artist: artistName,
+				album:  albumName,
+				title:  "Realization",
+				track:  2,
+				length: 345 * time.Second,
+			},
+			path: "/media/return-of-the-bugs/track-2.mp3",
+		},
+		{
+			track: MockMedia{
+				artist: artistName,
+				album:  secondAlbumName,
+				title:  "Index By Index",
+				track:  1,
+				length: 244 * time.Second,
+			},
+			path: "/media/second-return-of-the-bugs/track-1.mp3",
+		},
+		{
+			track: MockMedia{
+				artist: "Nothing To Do With The Rest",
+				album:  "Maybe Some Less Bugs Please",
+				title:  "Test By Test",
+				track:  1,
+				length: 523 * time.Second,
+			},
+			path: "/media/maybe-some-less-bugs/track-1.mp3",
+		},
+	}
+
+	expected := map[string]Album{
+		albumName: {
+			Name:   albumName,
+			Artist: artistName,
+		},
+		secondAlbumName: {
+			Name:   secondAlbumName,
+			Artist: artistName,
+		},
+	}
+
+	for _, trackData := range tracks {
+		err := lib.insertMediaIntoDatabase(&trackData.track, trackData.path)
+
+		if err != nil {
+			t.Fatalf("Adding a media file %s failed: %s", trackData.track.Title(), err)
+		}
+
+		al, ok := expected[trackData.track.album]
+		if !ok {
+			continue
+		}
+
+		al.Duration += trackData.track.length.Milliseconds()
+		al.SongCount++
+
+		expected[al.Name] = al
+	}
+
+	var artistID int64
+	results := lib.Search(SearchArgs{Query: artistName})
+	for _, track := range results {
+		if track.Artist == artistName {
+			artistID = track.ArtistID
+			break
+		}
+	}
+
+	if artistID == 0 {
+		t.Fatalf("could not find artist `%s`", artistName)
+	}
+
+	artistAlbums := lib.GetArtistAlbums(artistID)
+	if len(expected) != len(artistAlbums) {
+		t.Errorf("expected %d albums but got %d", len(expected), len(artistAlbums))
+	}
+
+	for _, expectedAlbum := range expected {
+		var found bool
+		for _, album := range artistAlbums {
+			if album.Name != expectedAlbum.Name || album.Artist != expectedAlbum.Artist {
+				continue
+			}
+			found = true
+
+			if expectedAlbum.SongCount != album.SongCount {
+				t.Errorf("album `%s`: expected %d songs but got %d",
+					album.Name,
+					expectedAlbum.SongCount,
+					album.SongCount,
+				)
+			}
+
+			if expectedAlbum.Duration != album.Duration {
+				t.Errorf("album `%s`: expected %dms duration but got %dms",
+					album.Name,
+					expectedAlbum.Duration,
+					album.Duration,
+				)
+			}
+		}
+
+		if !found {
+			t.Errorf("Album `%s` was not found among the artist albums",
+				expectedAlbum.Name,
+			)
+		}
+	}
+}
+
 // getTestMigrationFiles returns the SQLs directory used by the application itself
 // normally. This way tests will be done with the exact same files which will be
 // bundled into the binary on build.

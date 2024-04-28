@@ -174,6 +174,8 @@ func TestBrowsingAlbums(t *testing.T) {
 	lib := getPathedLibrary(ctx, t)
 	defer func() { _ = lib.Truncate() }()
 
+	const neverToBe = "Never To Be"
+
 	tracks := []struct {
 		track MockMedia
 		path  string
@@ -231,7 +233,7 @@ func TestBrowsingAlbums(t *testing.T) {
 		{
 			MockMedia{
 				artist: "Eriney",
-				album:  "Never To Be",
+				album:  neverToBe,
 				title:  "Totally Going To Release It",
 				track:  1,
 				length: 912 * time.Second,
@@ -241,7 +243,7 @@ func TestBrowsingAlbums(t *testing.T) {
 		{
 			MockMedia{
 				artist: "Eriney",
-				album:  "Never To Be",
+				album:  neverToBe,
 				title:  "Pinky Promise",
 				track:  2,
 				length: 211 * time.Second,
@@ -285,7 +287,7 @@ func TestBrowsingAlbums(t *testing.T) {
 				Order:   OrderAsc,
 				OrderBy: OrderByName,
 			},
-			expected: []string{"Definitely Never Happening", "Hands In Blue", "Never To Be"},
+			expected: []string{"Definitely Never Happening", "Hands In Blue", neverToBe},
 		},
 		{
 			search: BrowseArgs{
@@ -357,5 +359,49 @@ func TestBrowsingAlbums(t *testing.T) {
 	if len(foundAlbums) != int(browseArgs.PerPage) {
 		t.Errorf("Expected %d albums to be returned but got %d",
 			browseArgs.PerPage, len(foundAlbums))
+	}
+
+	// Make sure song count and album duration are properly set.
+	browseArgs = BrowseArgs{
+		Page:    0,
+		PerPage: uint(allAlbumsCount),
+	}
+	allAlbums, _ := lib.BrowseAlbums(browseArgs)
+	var notGonnaHappen Album
+	for _, found := range allAlbums {
+		if found.Name == neverToBe {
+			notGonnaHappen = found
+			break
+		}
+	}
+
+	if notGonnaHappen.ID == 0 {
+		t.Fatalf("The album `%s` was not found", neverToBe)
+	}
+
+	var (
+		neverToBeDuration time.Duration
+		neverToBeTracks   int
+	)
+	for _, mockTrack := range tracks {
+		if mockTrack.track.album != neverToBe {
+			continue
+		}
+		neverToBeDuration += mockTrack.track.length
+		neverToBeTracks++
+	}
+
+	if notGonnaHappen.SongCount != int64(neverToBeTracks) {
+		t.Errorf("wrong number of tracks. Expected %d but got %d",
+			neverToBeTracks,
+			notGonnaHappen.SongCount,
+		)
+	}
+
+	if notGonnaHappen.Duration != neverToBeDuration.Milliseconds() {
+		t.Errorf("wrong duration. Expected  %dms but got %dms",
+			neverToBeDuration.Milliseconds(),
+			notGonnaHappen.Duration,
+		)
 	}
 }

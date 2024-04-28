@@ -72,6 +72,7 @@ type Album struct {
 	Name      string `json:"album"`
 	Artist    string `json:"artist"`
 	SongCount int64  `json:"track_count"`
+	Duration  int64  `json:"duration"` // in milliseconds
 }
 
 //counterfeiter:generate . Library
@@ -90,6 +91,10 @@ type Library interface {
 	// and Title. Will OR the results. So it is "return anything which Artist matches or
 	// Album matches or Title matches".
 	Search(args SearchArgs) []SearchResult
+
+	// SearchAlbums searches the library for the given terms and returns matching
+	// albums. It may look into artist names, song names and actual album names.
+	SearchAlbums(args SearchArgs) []Album
 
 	// Returns the real filesystem path. Requires the media ID.
 	GetFilePath(mediaID int64) string

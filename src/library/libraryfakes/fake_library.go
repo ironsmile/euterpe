@@ -101,6 +101,17 @@ type FakeLibrary struct {
 	searchReturnsOnCall map[int]struct {
 		result1 []library.SearchResult
 	}
+	SearchAlbumsStub        func(library.SearchArgs) []library.Album
+	searchAlbumsMutex       sync.RWMutex
+	searchAlbumsArgsForCall []struct {
+		arg1 library.SearchArgs
+	}
+	searchAlbumsReturns struct {
+		result1 []library.Album
+	}
+	searchAlbumsReturnsOnCall map[int]struct {
+		result1 []library.Album
+	}
 	TruncateStub        func() error
 	truncateMutex       sync.RWMutex
 	truncateArgsForCall []struct {
@@ -618,6 +629,67 @@ func (fake *FakeLibrary) SearchReturnsOnCall(i int, result1 []library.SearchResu
 	}{result1}
 }
 
+func (fake *FakeLibrary) SearchAlbums(arg1 library.SearchArgs) []library.Album {
+	fake.searchAlbumsMutex.Lock()
+	ret, specificReturn := fake.searchAlbumsReturnsOnCall[len(fake.searchAlbumsArgsForCall)]
+	fake.searchAlbumsArgsForCall = append(fake.searchAlbumsArgsForCall, struct {
+		arg1 library.SearchArgs
+	}{arg1})
+	stub := fake.SearchAlbumsStub
+	fakeReturns := fake.searchAlbumsReturns
+	fake.recordInvocation("SearchAlbums", []interface{}{arg1})
+	fake.searchAlbumsMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeLibrary) SearchAlbumsCallCount() int {
+	fake.searchAlbumsMutex.RLock()
+	defer fake.searchAlbumsMutex.RUnlock()
+	return len(fake.searchAlbumsArgsForCall)
+}
+
+func (fake *FakeLibrary) SearchAlbumsCalls(stub func(library.SearchArgs) []library.Album) {
+	fake.searchAlbumsMutex.Lock()
+	defer fake.searchAlbumsMutex.Unlock()
+	fake.SearchAlbumsStub = stub
+}
+
+func (fake *FakeLibrary) SearchAlbumsArgsForCall(i int) library.SearchArgs {
+	fake.searchAlbumsMutex.RLock()
+	defer fake.searchAlbumsMutex.RUnlock()
+	argsForCall := fake.searchAlbumsArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeLibrary) SearchAlbumsReturns(result1 []library.Album) {
+	fake.searchAlbumsMutex.Lock()
+	defer fake.searchAlbumsMutex.Unlock()
+	fake.SearchAlbumsStub = nil
+	fake.searchAlbumsReturns = struct {
+		result1 []library.Album
+	}{result1}
+}
+
+func (fake *FakeLibrary) SearchAlbumsReturnsOnCall(i int, result1 []library.Album) {
+	fake.searchAlbumsMutex.Lock()
+	defer fake.searchAlbumsMutex.Unlock()
+	fake.SearchAlbumsStub = nil
+	if fake.searchAlbumsReturnsOnCall == nil {
+		fake.searchAlbumsReturnsOnCall = make(map[int]struct {
+			result1 []library.Album
+		})
+	}
+	fake.searchAlbumsReturnsOnCall[i] = struct {
+		result1 []library.Album
+	}{result1}
+}
+
 func (fake *FakeLibrary) Truncate() error {
 	fake.truncateMutex.Lock()
 	ret, specificReturn := fake.truncateReturnsOnCall[len(fake.truncateArgsForCall)]
@@ -694,6 +766,8 @@ func (fake *FakeLibrary) Invocations() map[string][][]interface{} {
 	defer fake.scanMutex.RUnlock()
 	fake.searchMutex.RLock()
 	defer fake.searchMutex.RUnlock()
+	fake.searchAlbumsMutex.RLock()
+	defer fake.searchAlbumsMutex.RUnlock()
 	fake.truncateMutex.RLock()
 	defer fake.truncateMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}

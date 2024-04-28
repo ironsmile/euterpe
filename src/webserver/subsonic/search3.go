@@ -34,7 +34,19 @@ func (s *subsonic) search3(w http.ResponseWriter, req *http.Request) {
 		)
 	}
 
-	//!TODO: explictly search for albums and artists.
+	albumCount := parseIntOrDefault(reqQuery.Get("albumCount"), 20)
+	albumOffset := parseIntOrDefault(reqQuery.Get("albumOffset"), 0)
+
+	albums := s.lib.SearchAlbums(library.SearchArgs{
+		Query:  searchQuery,
+		Offset: albumOffset,
+		Count:  albumCount,
+	})
+	for _, album := range albums {
+		resp.Result.Albums = append(resp.Result.Albums, dbAlbumToAlbumID3Entry(album))
+	}
+
+	//!TODO: explictly search for artists.
 
 	encodeResponse(w, req, resp)
 }

@@ -239,6 +239,73 @@ func (lib *LocalLibrary) Search(args SearchArgs) []SearchResult {
 	return output
 }
 
+// SearchAlbums searches the local library for albums. See Library.SearchAlbums
+// for more.
+func (lib *LocalLibrary) SearchAlbums(args SearchArgs) []Album {
+	searchTerm := fmt.Sprintf("%%%s%%", args.Query)
+
+	var output []Album
+	work := func(db *sql.DB) error {
+		limitCount := int64(-1)
+		if args.Count > 0 {
+			limitCount = int64(args.Count)
+		}
+
+		rows, err := db.Query(`
+			SELECT
+				t.album_id as album_id,
+				al.name as album,
+				CASE WHEN COUNT(DISTINCT t.artist_id) = 1
+					THEN at.name
+					ELSE "Various Artists"
+					END AS artist,
+				COUNT(t.id) as songCount,
+				SUM(t.duration) as duration
+			FROM
+				tracks as t
+					LEFT JOIN albums as al ON al.id = t.album_id
+					LEFT JOIN artists as at ON at.id = t.artist_id
+			WHERE
+				t.name LIKE ? OR
+				al.name LIKE ? OR
+				at.name LIKE ?
+			GROUP BY
+				t.album_id
+			ORDER BY
+				al.name, t.number
+			LIMIT
+				?, ?
+		`, searchTerm, searchTerm, searchTerm, args.Offset, limitCount)
+		if err != nil {
+			log.Printf("Search album query not successful: %s\n", err.Error())
+			return nil
+		}
+
+		defer rows.Close()
+		for rows.Next() {
+			var res Album
+
+			err := rows.Scan(
+				&res.ID, &res.Name, &res.Artist,
+				&res.SongCount, &res.Duration,
+			)
+			if err != nil {
+				log.Printf("Error scanning search album result: %s\n", err)
+				continue
+			}
+
+			output = append(output, res)
+		}
+
+		return nil
+	}
+	if err := lib.executeDBJobAndWait(work); err != nil {
+		log.Printf("Error executing search db work: %s", err)
+		return output
+	}
+	return output
+}
+
 // GetFilePath returns the filesystem path for a file specified by its ID.
 func (lib *LocalLibrary) GetFilePath(ID int64) string {
 	var filePath string
@@ -422,17 +489,18 @@ func (lib *LocalLibrary) GetArtistAlbums(artistID int64) []Album {
 			SELECT
 				t.album_id,
 				a.name,
-				COUNT(t.id) as songsCount
+				COUNT(t.id) as songsCount,
+				SUM(t.duration) as duration
 			FROM
 				tracks t
 					LEFT JOIN albums a ON a.id = t.album_id 
 			WHERE
-				artist_id = ?
+				t.artist_id = ?
 			GROUP BY
 				t.album_id
 		`, artistID)
 		if err != nil {
-			log.Printf("Query not successful: %s\n", err.Error())
+			log.Printf("GetArtistAlbums query not successful: %s\n", err.Error())
 			return nil
 		}
 
@@ -445,9 +513,10 @@ func (lib *LocalLibrary) GetArtistAlbums(artistID int64) []Album {
 				&res.ID,
 				&res.Name,
 				&res.SongCount,
+				&res.Duration,
 			)
 			if err != nil {
-				return fmt.Errorf("scanning error: %w", err)
+				return fmt.Errorf("scanning for GetArtistAlbums error: %w", err)
 			}
 
 			albums = append(albums, res)
@@ -456,7 +525,7 @@ func (lib *LocalLibrary) GetArtistAlbums(artistID int64) []Album {
 		return nil
 	}
 	if err := lib.executeDBJobAndWait(work); err != nil {
-		log.Printf("Error executing get album files db work: %s", err)
+		log.Printf("Error executing get artist albums db work: %s", err)
 		return albums
 	}
 

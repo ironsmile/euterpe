@@ -66,17 +66,7 @@ func (s *subsonic) getAlbumList2(w http.ResponseWriter, req *http.Request) {
 
 	var albumList []albumID3Entry
 	for _, album := range albums {
-		entry := albumID3Entry{
-			ID:         albumFSID(album.ID),
-			Name:       album.Name,
-			Artist:     album.Artist,
-			SongCount:  album.SongCount,
-			CoverArtID: albumConverArtID(album.ID),
-
-			//!TODO: add ParentID and AlbumID
-		}
-
-		albumList = append(albumList, entry)
+		albumList = append(albumList, dbAlbumToAlbumID3Entry(album))
 	}
 
 	resp := albumList2Response{
@@ -97,4 +87,17 @@ type albumList2Response struct {
 
 type albumList2Element struct {
 	Children []albumID3Entry `xml:"album" json:"album"`
+}
+
+func dbAlbumToAlbumID3Entry(album library.Album) albumID3Entry {
+	return albumID3Entry{
+		ID:         albumFSID(album.ID),
+		Name:       album.Name,
+		Artist:     album.Artist,
+		SongCount:  album.SongCount,
+		CoverArtID: albumConverArtID(album.ID),
+		Duration:   album.Duration / 1000,
+
+		//!TODO: add ParentID and ArtistID
+	}
 }
