@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 )
 
 func (s *subsonic) stream(w http.ResponseWriter, req *http.Request) {
@@ -22,10 +23,17 @@ func (s *subsonic) stream(w http.ResponseWriter, req *http.Request) {
 
 	filePath := s.lib.GetFilePath(trackID)
 
-	_, err = os.Stat(filePath)
+	fh, err := os.Open(filePath)
 	if err != nil {
 		http.NotFoundHandler().ServeHTTP(w, req)
 		return
+	}
+	defer fh.Close()
+
+	modTime := time.Time{}
+	st, err := fh.Stat()
+	if err == nil {
+		modTime = st.ModTime()
 	}
 
 	baseName := filepath.Base(filePath)
@@ -33,6 +41,5 @@ func (s *subsonic) stream(w http.ResponseWriter, req *http.Request) {
 	w.Header().Add("Content-Disposition",
 		fmt.Sprintf("filename=\"%s\"", baseName))
 
-	req.URL.Path = "/" + baseName
-	http.FileServer(http.Dir(filepath.Dir(filePath))).ServeHTTP(w, req)
+	http.ServeContent(w, req, baseName, modTime, fh)
 }

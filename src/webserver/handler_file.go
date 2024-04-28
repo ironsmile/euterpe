@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/ironsmile/euterpe/src/library"
@@ -41,11 +42,17 @@ func (fh FileHandler) find(writer http.ResponseWriter, req *http.Request) error 
 
 	filePath := fh.library.GetFilePath(int64(id))
 
-	_, err = os.Stat(filePath)
-
+	fileReader, err := os.Open(filePath)
 	if err != nil {
 		http.NotFoundHandler().ServeHTTP(writer, req)
 		return nil
+	}
+	defer fileReader.Close()
+
+	modTime := time.Time{}
+	st, err := fileReader.Stat()
+	if err == nil {
+		modTime = st.ModTime()
 	}
 
 	baseName := filepath.Base(filePath)
@@ -53,9 +60,7 @@ func (fh FileHandler) find(writer http.ResponseWriter, req *http.Request) error 
 	writer.Header().Add("Content-Disposition",
 		fmt.Sprintf("filename=\"%s\"", baseName))
 
-	req.URL.Path = "/" + baseName
-	http.FileServer(http.Dir(filepath.Dir(filePath))).ServeHTTP(writer, req)
-
+	http.ServeContent(writer, req, baseName, modTime, fileReader)
 	return nil
 }
 

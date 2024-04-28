@@ -61,16 +61,19 @@ func (s *subsonic) initRouter() {
 	router.StrictSlash(true)
 	router.UseEncodedPath()
 
-	setUpGetHandler := func(path string, handler http.HandlerFunc) {
+	setUpGetHandler := func(path string, handler http.HandlerFunc, methods ...string) {
+		if len(methods) == 0 {
+			methods = []string{http.MethodGet}
+		}
 		router.Handle(
 			Prefix+path,
 			http.HandlerFunc(handler),
-		).Methods("GET")
+		).Methods(methods...)
 
 		router.Handle(
 			Prefix+path+".view",
 			http.HandlerFunc(handler),
-		).Methods("GET")
+		).Methods(methods...)
 	}
 
 	setUpGetHandler("/ping", s.apiPing)
@@ -84,8 +87,8 @@ func (s *subsonic) initRouter() {
 	setUpGetHandler("/getArtist", s.getArtist)
 	setUpGetHandler("/getArtistInfo2", s.getArtistInfo2)
 	setUpGetHandler("/getCoverArt", s.getCoverArt)
-	setUpGetHandler("/stream", s.stream)
-	setUpGetHandler("/download", s.stream)
+	setUpGetHandler("/stream", s.stream, "GET", "HEAD")
+	setUpGetHandler("/download", s.stream, "GET", "HEAD")
 	setUpGetHandler("/getSong", s.getSong)
 	setUpGetHandler("/getGenres", s.getGenres)
 	setUpGetHandler("/getVideos", s.getVideos)

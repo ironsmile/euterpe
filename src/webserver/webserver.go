@@ -169,7 +169,7 @@ func (srv *Server) serveGoroutine() {
 	router.Handle("/", indexHandler).Methods("GET")
 	router.Handle("/add_device/", addDeviceHandler).Methods("GET")
 	router.Handle("/new_qr_token/", createQRTokenHandler).Methods("GET")
-	router.PathPrefix(subsonic.Prefix).Handler(subsonicHandler).Methods("GET", "POST")
+	router.PathPrefix(subsonic.Prefix).Handler(subsonicHandler).Methods("GET", "POST", "HEAD")
 	router.PathPrefix("/").Handler(staticFilesHandler).Methods("GET")
 
 	handler := NewTerryHandler(router)
