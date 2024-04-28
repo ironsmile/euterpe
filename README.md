@@ -214,7 +214,11 @@ When started for the first time Euterpe will create one for you. Here is an exam
     //
     // See the API docs for more information:
     // https://www.discogs.com/developers/#page:authentication,header:authentication-discogs-auth-flow
-    "discogs_auth_token": "some-personal-token"
+    "discogs_auth_token": "some-personal-token",
+
+    // If set to true, logs will include a line for every HTTP request handled by the
+    // server.
+    "access_log": false
 }
 ```
 

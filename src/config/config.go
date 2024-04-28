@@ -69,6 +69,7 @@ type Config struct {
 	MaxHeadersSize   int         `json:"max_header_bytes,omitempty"`
 	DownloadArtwork  bool        `json:"download_artwork,omitempty"`
 	DiscogsAuthToken string      `json:"discogs_auth_token,omitempty"`
+	AccessLog        bool        `json:"access_log,omitempty"`
 }
 
 // ScanSection is used for merging the two configs. Its purpose is to essentially
