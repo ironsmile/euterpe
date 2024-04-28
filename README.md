@@ -339,7 +339,8 @@ would result in value such as
 ```js
 {
   "artist": "Jefferson Airplane",
-  "artist_id": 73
+  "artist_id": 73,
+  "album_count": 3
 }
 ```
 
@@ -351,7 +352,9 @@ would result in value such as
 {
   "album": "Battlefield Vietnam"
   "artist": "Jefferson Airplane",
-  "album_id": 2
+  "album_id": 2,
+  "duration": 1953000,
+  "track_count": 12
 }
 ```
 
