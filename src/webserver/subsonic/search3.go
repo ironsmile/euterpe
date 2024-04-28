@@ -7,16 +7,16 @@ import (
 )
 
 func (s *subsonic) search3(w http.ResponseWriter, req *http.Request) {
-	reqQuery := req.URL.Query()
-	searchQuery := reqQuery.Get("query")
-	musicFolderID := reqQuery.Get("musicFolderId")
+	reqValues := req.Form
+	searchQuery := reqValues.Get("query")
+	musicFolderID := reqValues.Get("musicFolderId")
 	if musicFolderID != "" && musicFolderExists(musicFolderID) {
 		resp := responseError(errCodeNotFound, "music folder not found")
 		encodeResponse(w, req, resp)
 		return
 	}
-	songCount := parseIntOrDefault(reqQuery.Get("songCount"), 20)
-	songOffset := parseIntOrDefault(reqQuery.Get("songOffset"), 0)
+	songCount := parseIntOrDefault(reqValues.Get("songCount"), 20)
+	songOffset := parseIntOrDefault(reqValues.Get("songOffset"), 0)
 
 	resp := search3Response{
 		baseResponse: responseOk(),
@@ -34,8 +34,8 @@ func (s *subsonic) search3(w http.ResponseWriter, req *http.Request) {
 		)
 	}
 
-	albumCount := parseIntOrDefault(reqQuery.Get("albumCount"), 20)
-	albumOffset := parseIntOrDefault(reqQuery.Get("albumOffset"), 0)
+	albumCount := parseIntOrDefault(reqValues.Get("albumCount"), 20)
+	albumOffset := parseIntOrDefault(reqValues.Get("albumOffset"), 0)
 
 	albums := s.lib.SearchAlbums(library.SearchArgs{
 		Query:  searchQuery,
@@ -46,8 +46,8 @@ func (s *subsonic) search3(w http.ResponseWriter, req *http.Request) {
 		resp.Result.Albums = append(resp.Result.Albums, dbAlbumToAlbumID3Entry(album))
 	}
 
-	artistCount := parseIntOrDefault(reqQuery.Get("artistCount"), 20)
-	artistOffset := parseIntOrDefault(reqQuery.Get("artistOffset"), 0)
+	artistCount := parseIntOrDefault(reqValues.Get("artistCount"), 20)
+	artistOffset := parseIntOrDefault(reqValues.Get("artistOffset"), 0)
 
 	artists := s.lib.SearchArtists(library.SearchArgs{
 		Query:  searchQuery,

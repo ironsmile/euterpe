@@ -7,7 +7,7 @@ import (
 )
 
 func (s *subsonic) getArtistInfo2(w http.ResponseWriter, req *http.Request) {
-    idString := req.URL.Query().Get("id")
+    idString := req.Form.Get("id")
     subsonicID, err := strconv.ParseInt(idString, 10, 64)
     if idString == "" || err != nil || !isArtistID(subsonicID) {
         resp := responseError(errCodeNotFound, "artist not found")
@@ -55,7 +55,7 @@ func (s *subsonic) getArtistInfo2(w http.ResponseWriter, req *http.Request) {
 }
 
 func setQueryFromReq(query url.Values, req *http.Request) {
-    reqQuery := req.URL.Query()
+    reqQuery := req.Form
 
     if v := reqQuery.Get("c"); v != "" {
         query.Set("c", v)

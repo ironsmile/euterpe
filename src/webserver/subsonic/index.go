@@ -63,7 +63,7 @@ func (s *subsonic) initRouter() {
 
 	setUpGetHandler := func(path string, handler http.HandlerFunc, methods ...string) {
 		if len(methods) == 0 {
-			methods = []string{http.MethodGet}
+			methods = []string{http.MethodGet, http.MethodPost}
 		}
 		router.Handle(
 			Prefix+path,
@@ -78,6 +78,7 @@ func (s *subsonic) initRouter() {
 
 	setUpGetHandler("/ping", s.apiPing)
 	setUpGetHandler("/getLicense", s.getLicense)
+	setUpGetHandler("/getOpenSubsonicExtensions", s.getOpenSubsonicExtensions)
 	setUpGetHandler("/getMusicFolders", s.getMusicFolders)
 	setUpGetHandler("/getIndexes", s.getIndexes)
 	setUpGetHandler("/getMusicDirectory", s.getMusicDirectory)

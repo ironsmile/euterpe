@@ -9,7 +9,7 @@ import (
 )
 
 func (s *subsonic) getSong(w http.ResponseWriter, req *http.Request) {
-	idString := req.URL.Query().Get("id")
+	idString := req.Form.Get("id")
 	subsonicID, err := strconv.ParseInt(idString, 10, 64)
 	if idString == "" || err != nil || !isTrackID(subsonicID) {
 		resp := responseError(errCodeNotFound, "song not found")

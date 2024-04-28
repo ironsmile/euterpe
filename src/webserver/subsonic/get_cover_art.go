@@ -8,8 +8,8 @@ import (
 )
 
 func (s *subsonic) getCoverArt(w http.ResponseWriter, req *http.Request) {
-    id := req.URL.Query().Get("id")
-    size := req.URL.Query().Get("size")
+    id := req.Form.Get("id")
+    size := req.Form.Get("size")
 
     var artworkHandler CoverArtHandler
     if strings.HasPrefix(id, coverAlbumPrefix) {
@@ -33,9 +33,10 @@ func (s *subsonic) getCoverArt(w http.ResponseWriter, req *http.Request) {
     }
 
     if sizePx, err := strconv.ParseInt(size, 10, 64); err == nil && sizePx < 200 {
-        query := req.URL.Query()
+        query := req.Form
         query.Set("size", "small")
         req.URL.RawQuery = query.Encode()
+        req.Method = http.MethodGet
     }
 
     err = artworkHandler.Find(w, req, dbArtID)

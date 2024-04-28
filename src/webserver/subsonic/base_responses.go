@@ -10,7 +10,7 @@ import (
 )
 
 func encodeResponse(w http.ResponseWriter, req *http.Request, resp any) {
-	if req.URL.Query().Get("f") == "json" {
+	if req.Form.Get("f") == "json" {
 		encodeResponseJSON(w, req, resp)
 		return
 	}

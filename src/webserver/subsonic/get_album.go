@@ -7,7 +7,7 @@ import (
 )
 
 func (s *subsonic) getAlbum(w http.ResponseWriter, req *http.Request) {
-    idString := req.URL.Query().Get("id")
+    idString := req.Form.Get("id")
     subsonicID, err := strconv.ParseInt(idString, 10, 64)
     if idString == "" || err != nil || !isAlbumID(subsonicID) {
         resp := responseError(errCodeNotFound, "album not found")

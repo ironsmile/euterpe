@@ -9,9 +9,9 @@ import (
 )
 
 func (s *subsonic) getAlbumList2(w http.ResponseWriter, req *http.Request) {
-	browseType := req.URL.Query().Get("type")
-	sizeString := req.URL.Query().Get("size")
-	offsetString := req.URL.Query().Get("offset")
+	browseType := req.Form.Get("type")
+	sizeString := req.Form.Get("size")
+	offsetString := req.Form.Get("offset")
 
 	browseArgs := library.BrowseArgs{}
 	switch browseType {

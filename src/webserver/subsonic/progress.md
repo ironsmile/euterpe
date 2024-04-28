@@ -81,4 +81,4 @@
 
 ## Open Subsonic
 
-- [ ] getOpenSubsonicExtensions
+- [x] getOpenSubsonicExtensions

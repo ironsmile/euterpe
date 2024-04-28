@@ -14,15 +14,24 @@ func (s *subsonic) authHandler(handler http.Handler) http.Handler {
 		w http.ResponseWriter,
 		r *http.Request,
 	) {
+		if err := r.ParseForm(); err != nil {
+			http.Error(
+				w,
+				fmt.Sprintf("cannot parse request: %s", err),
+				http.StatusBadRequest,
+			)
+			return
+		}
+
 		if !s.needsAuth {
 			handler.ServeHTTP(w, r)
 			return
 		}
 
-		user := r.URL.Query().Get("u")
-		pass := r.URL.Query().Get("p")
-		token := r.URL.Query().Get("t")
-		salt := r.URL.Query().Get("s")
+		user := r.Form.Get("u")
+		pass := r.Form.Get("p")
+		token := r.Form.Get("t")
+		salt := r.Form.Get("s")
 
 		if user == "" || (pass == "" && (token == "" || salt == "")) {
 			resp := responseError(

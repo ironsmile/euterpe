@@ -7,16 +7,16 @@ import (
 )
 
 func (s *subsonic) search(w http.ResponseWriter, req *http.Request) {
-	reqQuery := req.URL.Query()
+	reqValues := req.Form
 
-	count := parseIntOrDefault(reqQuery.Get("count"), 20)
-	offset := parseIntOrDefault(reqQuery.Get("offset"), 0)
+	count := parseIntOrDefault(reqValues.Get("count"), 20)
+	offset := parseIntOrDefault(reqValues.Get("offset"), 0)
 
-	trackQuery := reqQuery.Get("title")
-	albumQuery := reqQuery.Get("album")
-	artistQuery := reqQuery.Get("artist")
+	trackQuery := reqValues.Get("title")
+	albumQuery := reqValues.Get("album")
+	artistQuery := reqValues.Get("artist")
 
-	if anyQuery := reqQuery.Get("any"); anyQuery != "" {
+	if anyQuery := reqValues.Get("any"); anyQuery != "" {
 		trackQuery = anyQuery
 		albumQuery = anyQuery
 		artistQuery = anyQuery

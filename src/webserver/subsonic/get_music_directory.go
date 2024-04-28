@@ -13,7 +13,7 @@ import (
 )
 
 func (s *subsonic) getMusicDirectory(w http.ResponseWriter, req *http.Request) {
-	dirIDString := req.URL.Query().Get("id")
+	dirIDString := req.Form.Get("id")
 	if dirIDString == "" {
 		resp := responseError(errCodeNotFound, "directory not found")
 		encodeResponse(w, req, resp)
