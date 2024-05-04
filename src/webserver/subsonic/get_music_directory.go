@@ -73,6 +73,7 @@ func (s *subsonic) getArtistDirectory(
 		if resp.Name == "" {
 			resp.Name = album.Artist
 		}
+		resp.PlayCount += album.Plays
 
 		resp.Children = append(resp.Children, albumToDirChild(
 			album,
@@ -109,6 +110,7 @@ func (s *subsonic) getAlbumDirectory(
 			resp.Artist = "Various Artists"
 		}
 
+		resp.PlayCount += track.Plays
 		totalDur += track.Duration / 1000
 
 		resp.Children = append(resp.Children, trackToDirChild(track, s.lastModified))
@@ -184,6 +186,8 @@ type directoryEntry struct {
 	SongCount  int64  `xml:"-" json:"songCount,omitempty"`
 	CoverArtID string `xml:"-" json:"coverArt,omitempty"`
 	Duration   int64  `xml:"-" json:"duration,omitempty"` // in seconds
+	PlayCount  int64  `xml:"playCount,attr,omitempty" json:"playCount,omitempty"`
+	UserRating uint8  `xml:"userRating,attr,omitempty" json:"userRating,omitempty"`
 
 	Children []directoryChildEntry `xml:"child" json:"child"`
 }
@@ -209,6 +213,8 @@ type directoryChildEntry struct {
 	Size          int64     `xml:"size,attr,omitempty" json:"size,omitempty"` // in bytes
 	ContentType   string    `xml:"contentType,attr,omitempty" json:"contentType,omitempty"`
 	SongCount     int64     `xml:"-" json:"songCount,omitempty"`
+	PlayCount     int64     `xml:"playCount,attr,omitempty" json:"playCount,omitempty"`
+	UserRating    uint8     `xml:"userRating,attr,omitempty" json:"userRating,omitempty"`
 	Suffix        string    `xml:"suffix,attr,omitempty" json:"suffix,omitempty"`
 	BitRate       string    `xml:"bitRate,attr,omitempty" json:"bitRate,omitempty"`
 	Path          string    `xml:"path,attr,omitempty" json:"path,omitempty"` // on the file system I suppose
@@ -237,7 +243,9 @@ func trackToDirChild(track library.TrackInfo, created time.Time) directoryChildE
 			track.Album,
 			fmt.Sprintf("%s.%s", track.Title, track.Format),
 		),
-		Created: created,
+		Created:    created,
+		PlayCount:  track.Plays,
+		UserRating: track.Rating,
 
 		// Here we take advantage of the knowledge that the track.Format is just
 		// the file name extension.

@@ -307,6 +307,10 @@ func TestSubsonicXMLResponses(t *testing.T) {
 			desc: "search tracks",
 			url:  testURL("/search?title=baba"),
 		},
+		{
+			desc: "scrobble",
+			url:  testURL("/scrobble?id=5&time=1714834066"),
+		},
 	}
 
 	for _, test := range tests {
@@ -418,6 +422,21 @@ func TestSubsonicXMLErrors(t *testing.T) {
 			desc:      "getVideoInfo",
 			url:       testURL("/getVideoInfo?id=20"),
 			errorCode: 70,
+		},
+		{
+			desc:      "no scrobble ID",
+			url:       testURL("/scrobble"),
+			errorCode: 10,
+		},
+		{
+			desc:      "invalid scrobble ID",
+			url:       testURL("/scrobble?id=baba"),
+			errorCode: 70,
+		},
+		{
+			desc:      "invalid scrobble time",
+			url:       testURL("/scrobble?id=555&time=baba"),
+			errorCode: 0,
 		},
 	}
 

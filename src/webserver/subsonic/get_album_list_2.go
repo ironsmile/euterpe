@@ -27,12 +27,15 @@ func (s *subsonic) getAlbumList2(w http.ResponseWriter, req *http.Request) {
 	case "alphabeticalByName":
 		browseArgs.OrderBy = library.OrderByName
 		browseArgs.Order = library.OrderAsc
-	case "starred":
-		fallthrough
 	case "frequent":
-		fallthrough
+		browseArgs.OrderBy = library.OrderByFrequentlyPlayed
+		browseArgs.Order = library.OrderDesc
 	case "recent":
-		fallthrough
+		browseArgs.OrderBy = library.OrderByRecentlyPlayed
+		browseArgs.Order = library.OrderDesc
+	case "starred":
+		browseArgs.OrderBy = library.OrderByFavourites
+		browseArgs.Order = library.OrderDesc
 	case "alphabeticalByArtist":
 		fallthrough
 	case "byYear":

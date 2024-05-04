@@ -291,7 +291,11 @@ wich would return an JSON array with tracks. Every object in the JSON represents
       "id" : 18,
       "album_id" : 2,
       "format": "mp3",
-      "duration": 180000
+      "duration": 180000,
+      "plays": 3,
+      "last_played": 1714834066,
+      "rating": 5,
+      "favourite": 1714834066
    },
    {
       "album" : "Battlefield Vietnam",
@@ -311,12 +315,14 @@ The most important thing here is the track ID at the `id` key. It can be used fo
 
 Note that the track duration is in milliseconds.
 
+_Optional properties_: Some properties of tracks are optional and may be omitted in the response when they are not set. They may not be set because no user has performed an action which sets them. E.g. playing a song for the fist time will set its `plays` property to 1. The list of optional properties is: `plays`, `favourite`, `last_played`, `rating`.
+
 ### Browse
 
 A way to browse through the whole collection is via the browse API call. It allows you to get its albums or artists in an ordered and paginated manner.
 
 ```sh
-GET /v1/browse/[?by=artist|album][&per-page={number}][&page={number}][&order-by=id|name|random][&order=desc|asc]
+GET /v1/browse/[?by=artist|album][&per-page={number}][&page={number}][&order-by=id|name|random|playCount|lastPlayed][&order=desc|asc]
 ```
 
 The returned JSON contains the data for the current page, the number of all pages for the current browse method and URLs of the next or previous pages.
@@ -354,9 +360,14 @@ would result in value such as
   "artist": "Jefferson Airplane",
   "album_id": 2,
   "duration": 1953000,
-  "track_count": 12
+  "track_count": 12,
+  "plays": 23123429193,
+  "favourite": 1614834066,
+  "last_played": 1714834066
 }
 ```
+
+`last_played` (optional) is a Unix timestamp at which a track from this album was last played. And `favourite` (optional) is Unix timestamp too and it shows when this album was added to the list of favourite albums. `plays` (optional) is a the number of times a track from this album has been listened to.
 
 **Additional parameters**
 
@@ -364,7 +375,7 @@ _per-page_: controls how many items would be present in the `data` field for eve
 
 _page_: the generated data would be for this page. The **default is 1**.
 
-_order-by_: controls how the results would be ordered. The value `id` means the ordering would be done by the album or artist ID, depending on the `by` argument. The same goes for the `name` value. `random` means that the list will be randmly ordered. **Defaults to `name`**.
+_order-by_: controls how the results would be ordered. The value `id` means the ordering would be done by the album or artist ID, depending on the `by` argument. The same goes for the `name` value. `random` means that the list will be randmly ordered. Only when `by` is "album" then two additional `order-by` values are supported. `playCount` will order albums by the number of times tracks in the albums have been played. And `lastPlayed` will order albums by when was the last time a track from this album has been played.  **Defaults to `name`**.
 
 _order_: controls if the order would ascending (with value `asc`) or descending (with value `desc`). **Defaults to `asc`**.
 

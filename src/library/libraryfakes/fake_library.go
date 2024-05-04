@@ -4,6 +4,7 @@ package libraryfakes
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/ironsmile/euterpe/src/library"
 )
@@ -84,6 +85,19 @@ type FakeLibrary struct {
 		result1 error
 	}
 	initializeReturnsOnCall map[int]struct {
+		result1 error
+	}
+	RecordTrackPlayStub        func(context.Context, int64, time.Time) error
+	recordTrackPlayMutex       sync.RWMutex
+	recordTrackPlayArgsForCall []struct {
+		arg1 context.Context
+		arg2 int64
+		arg3 time.Time
+	}
+	recordTrackPlayReturns struct {
+		result1 error
+	}
+	recordTrackPlayReturnsOnCall map[int]struct {
 		result1 error
 	}
 	ScanStub        func()
@@ -555,6 +569,69 @@ func (fake *FakeLibrary) InitializeReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
+func (fake *FakeLibrary) RecordTrackPlay(arg1 context.Context, arg2 int64, arg3 time.Time) error {
+	fake.recordTrackPlayMutex.Lock()
+	ret, specificReturn := fake.recordTrackPlayReturnsOnCall[len(fake.recordTrackPlayArgsForCall)]
+	fake.recordTrackPlayArgsForCall = append(fake.recordTrackPlayArgsForCall, struct {
+		arg1 context.Context
+		arg2 int64
+		arg3 time.Time
+	}{arg1, arg2, arg3})
+	stub := fake.RecordTrackPlayStub
+	fakeReturns := fake.recordTrackPlayReturns
+	fake.recordInvocation("RecordTrackPlay", []interface{}{arg1, arg2, arg3})
+	fake.recordTrackPlayMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2, arg3)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeLibrary) RecordTrackPlayCallCount() int {
+	fake.recordTrackPlayMutex.RLock()
+	defer fake.recordTrackPlayMutex.RUnlock()
+	return len(fake.recordTrackPlayArgsForCall)
+}
+
+func (fake *FakeLibrary) RecordTrackPlayCalls(stub func(context.Context, int64, time.Time) error) {
+	fake.recordTrackPlayMutex.Lock()
+	defer fake.recordTrackPlayMutex.Unlock()
+	fake.RecordTrackPlayStub = stub
+}
+
+func (fake *FakeLibrary) RecordTrackPlayArgsForCall(i int) (context.Context, int64, time.Time) {
+	fake.recordTrackPlayMutex.RLock()
+	defer fake.recordTrackPlayMutex.RUnlock()
+	argsForCall := fake.recordTrackPlayArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+}
+
+func (fake *FakeLibrary) RecordTrackPlayReturns(result1 error) {
+	fake.recordTrackPlayMutex.Lock()
+	defer fake.recordTrackPlayMutex.Unlock()
+	fake.RecordTrackPlayStub = nil
+	fake.recordTrackPlayReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeLibrary) RecordTrackPlayReturnsOnCall(i int, result1 error) {
+	fake.recordTrackPlayMutex.Lock()
+	defer fake.recordTrackPlayMutex.Unlock()
+	fake.RecordTrackPlayStub = nil
+	if fake.recordTrackPlayReturnsOnCall == nil {
+		fake.recordTrackPlayReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.recordTrackPlayReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeLibrary) Scan() {
 	fake.scanMutex.Lock()
 	fake.scanArgsForCall = append(fake.scanArgsForCall, struct {
@@ -834,6 +911,8 @@ func (fake *FakeLibrary) Invocations() map[string][][]interface{} {
 	defer fake.getTrackMutex.RUnlock()
 	fake.initializeMutex.RLock()
 	defer fake.initializeMutex.RUnlock()
+	fake.recordTrackPlayMutex.RLock()
+	defer fake.recordTrackPlayMutex.RUnlock()
 	fake.scanMutex.RLock()
 	defer fake.scanMutex.RUnlock()
 	fake.searchMutex.RLock()

@@ -33,6 +33,18 @@ const (
 
 	// OrderByRandom will cause the returned list to be in random order.
 	OrderByRandom
+
+	// OrderByRecentlyPlayed will order the list by how recent the particular
+	// item has been played.
+	OrderByRecentlyPlayed
+
+	// OrderByFrequentlyPlayed will order the list by how many times the media
+	// has been played.
+	OrderByFrequentlyPlayed
+
+	// OrderByFavourites will order the list by whether they have been added to
+	// the favourites or not.
+	OrderByFavourites
 )
 
 // BrowseArgs defines all arguments one can pass to the browse methods to later its behaviour.

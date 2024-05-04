@@ -7,6 +7,7 @@ package library
 
 import (
 	"context"
+	"time"
 )
 
 // SearchResult contains a result for a search term. Contains all the necessary
@@ -39,6 +40,22 @@ type SearchResult struct {
 
 	// Duration is the track length in milliseconds.
 	Duration int64 `json:"duration"`
+
+	// Plays is the number of times this media file has been played.
+	Plays int64 `json:"plays,omitempty"`
+
+	// Favourite is non-zero when the media file has been added to the list
+	// of favourites. Its value when non-zero is the Unix timestamp at which
+	// the track has been added to the favourites.
+	Favourite int64 `json:"favourite,omitempty"`
+
+	// LastPlayed is the Unix timestamp (in seconds) at which this media file
+	// was last played.
+	LastPlayed int64 `json:"last_played,omitempty"`
+
+	// Rating is the user rating given to this media file. It will be a number
+	// in the [1-5] range or 0 if no rating was given.
+	Rating uint8 `json:"rating,omitempty"`
 }
 
 // SearchArgs is the input parameters for searching in the library.
@@ -73,6 +90,18 @@ type Album struct {
 	Artist    string `json:"artist"`
 	SongCount int64  `json:"track_count"`
 	Duration  int64  `json:"duration"` // in milliseconds
+
+	// Plays is the number of times tracks in this album has been played.
+	Plays int64 `json:"plays,omitempty"`
+
+	// Favourite is non-zero when the album has been added to the list
+	// of favourites. When non-zero its value is the Unix timestamp at
+	// witch the album was added to the list of favourites.
+	Favourite int64 `json:"favourite,omitempty"`
+
+	// LastPlayed is the Unix timestamp (in seconds) at which a track from tims
+	// album has been played.
+	LastPlayed int64 `json:"last_played,omitempty"`
 }
 
 //counterfeiter:generate . Library
@@ -113,6 +142,11 @@ type Library interface {
 	// GetTrack returns information for particular track identified by its
 	// media ID.
 	GetTrack(ctx context.Context, mediaID int64) (TrackInfo, error)
+
+	// RecordTrackPlay stores the fact that this track has been played
+	// at this particular time. This means updating its "last played" property
+	// and increasing its play count in the stats database.
+	RecordTrackPlay(ctx context.Context, mediaID int64, atTime time.Time) error
 
 	// Starts a full library scan. Will scan all paths if
 	// they are not scanned already.

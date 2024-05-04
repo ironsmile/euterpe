@@ -97,6 +97,7 @@ func (s *subsonic) initRouter() {
 	setUpGetHandler("/search3", s.search3)
 	setUpGetHandler("/search2", s.search2)
 	setUpGetHandler("/search", s.search)
+	setUpGetHandler("/scrobble", s.scrobble)
 
 	s.mux = s.authHandler(router)
 }

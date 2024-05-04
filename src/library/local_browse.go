@@ -110,15 +110,20 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 			order = "DESC"
 		}
 
-		if args.OrderBy == OrderByID {
+		switch args.OrderBy {
+		case OrderByID:
 			orderBy = "al.id"
-		} else if args.OrderBy == OrderByRandom {
+		case OrderByRandom:
 			orderBy = "RANDOM()"
 			order = ""
 
 			// When ordering by random the page does not matter. Only the limit
 			// does.
 			page = 0
+		case OrderByFrequentlyPlayed:
+			orderBy = "SUM(us.play_count)"
+		case OrderByRecentlyPlayed:
+			orderBy = "MAX(us.last_played)"
 		}
 
 		rows, err := db.Query(fmt.Sprintf(`
@@ -137,6 +142,8 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 					albums al ON al.id = tr.album_id
 				LEFT JOIN
 					artists ar ON ar.id = tr.artist_id
+				LEFT JOIN
+					user_stats us ON us.track_id = tr.id
 			GROUP BY
 				tr.album_id
 			ORDER BY

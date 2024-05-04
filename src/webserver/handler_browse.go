@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -39,14 +40,18 @@ func (bh BrowseHandler) browse(writer http.ResponseWriter, req *http.Request) er
 	orderBy := strings.TrimSpace(strings.ToLower(req.Form.Get("order-by")))
 	order := strings.TrimSpace(strings.ToLower(req.Form.Get("order")))
 
-	if browseBy != "" && browseBy != "artist" && browseBy != "album" {
-		bh.badRequest(writer, "Wrong 'by' parameter. Must be 'album' or 'artist'")
+	possibleTypes := []string{"artist", "album"}
+	if browseBy != "" && !slices.Contains(possibleTypes, browseBy) {
+		bh.badRequest(writer,
+			fmt.Sprintf("Wrong 'by' parameter. Must be one of %q", possibleTypes),
+		)
 		return nil
 	}
 
-	if orderBy != "" && orderBy != "id" && orderBy != "name" && orderBy != "random" {
+	possibleOrders := []string{"id", "name", "random", "playCount", "lastPlayed"}
+	if orderBy != "" && !slices.Contains(possibleOrders, orderBy) {
 		bh.badRequest(writer, "Wrong 'order-by' parameter. "+
-			"Must be 'id', 'name' or 'random'")
+			fmt.Sprintf("Must be one of %q", possibleOrders))
 		return nil
 	}
 
@@ -125,8 +130,16 @@ func (bh BrowseHandler) browseArtists(
 	page, perPage int,
 	orderBy, order string,
 ) error {
-
 	browseArgs := getBrowseArgs(page, perPage, orderBy, order)
+	unsupportedBrowseBy := []library.BrowseOrderBy{
+		library.OrderByRecentlyPlayed,
+		library.OrderByFrequentlyPlayed,
+		library.OrderByFavourites, //!TODO: add support for this
+	}
+	if slices.Contains(unsupportedBrowseBy, browseArgs.OrderBy) {
+		return fmt.Errorf("this type of order is not supported for artists")
+	}
+
 	artists, count := bh.browser.BrowseArtists(browseArgs)
 	prevPage, nextPage := getPrevNextPageURI(
 		"artist",
@@ -178,6 +191,10 @@ func getBrowseArgs(page, perPage int, orderBy, order string) library.BrowseArgs 
 		browseArgs.OrderBy = library.OrderByID
 	case "random":
 		browseArgs.OrderBy = library.OrderByRandom
+	case "playCount":
+		browseArgs.OrderBy = library.OrderByFrequentlyPlayed
+	case "lastPlayed":
+		browseArgs.OrderBy = library.OrderByRecentlyPlayed
 	default:
 		browseArgs.OrderBy = library.OrderByName
 	}

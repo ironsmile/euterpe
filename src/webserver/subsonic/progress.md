@@ -22,7 +22,7 @@
 - [ ] getSimilarSongs2
 - [ ] getTopSongs
 - [ ] getAlbumList
-- [x] getAlbumList2
+- [x] getAlbumList2 - `byYear` and `byGenre` not implemented yet
 - [ ] getRandomSongs
 - [ ] getSongsByGenre
 - [ ] getNowPlaying
@@ -46,7 +46,7 @@
 - [ ] star
 - [ ] unstar
 - [ ] setRating
-- [ ] scrobble
+- [x] scrobble - "submission=false" is a no-op.
 - [ ] getShares
 - [ ] createShare
 - [ ] updateShare

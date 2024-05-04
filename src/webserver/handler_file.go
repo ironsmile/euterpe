@@ -2,6 +2,7 @@ package webserver
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -26,11 +27,9 @@ func (fh FileHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 // if it is found. Returns 404 if not (duh)
 // Uses http.FileServer for serving the found files
 func (fh FileHandler) find(writer http.ResponseWriter, req *http.Request) error {
-
 	vars := mux.Vars(req)
 
 	id, err := strconv.Atoi(vars["fileID"])
-
 	if err != nil {
 		http.NotFoundHandler().ServeHTTP(writer, req)
 		return nil
@@ -41,7 +40,6 @@ func (fh FileHandler) find(writer http.ResponseWriter, req *http.Request) error 
 	}
 
 	filePath := fh.library.GetFilePath(int64(id))
-
 	fileReader, err := os.Open(filePath)
 	if err != nil {
 		http.NotFoundHandler().ServeHTTP(writer, req)
@@ -55,11 +53,14 @@ func (fh FileHandler) find(writer http.ResponseWriter, req *http.Request) error 
 		modTime = st.ModTime()
 	}
 
-	baseName := filepath.Base(filePath)
+	err = fh.library.RecordTrackPlay(req.Context(), int64(id), time.Now())
+	if err != nil {
+		log.Printf("failed to update track %d stats: %s", id, err)
+	}
 
+	baseName := filepath.Base(filePath)
 	writer.Header().Add("Content-Disposition",
 		fmt.Sprintf("filename=\"%s\"", baseName))
-
 	http.ServeContent(writer, req, baseName, modTime, fileReader)
 	return nil
 }
