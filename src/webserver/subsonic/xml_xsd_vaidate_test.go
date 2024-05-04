@@ -23,10 +23,12 @@ func TestSubsonicXMLResponses(t *testing.T) {
 		GetArtistAlbumsStub: func(i int64) []library.Album {
 			return []library.Album{
 				{
-					ID:        22,
-					Name:      "First Album",
-					Artist:    "First Artist",
-					SongCount: 8,
+					ID:         22,
+					Name:       "First Album",
+					Artist:     "First Artist",
+					SongCount:  8,
+					Plays:      222,
+					LastPlayed: 1714856348,
 				},
 				{
 					ID:        33,
@@ -54,6 +56,8 @@ func TestSubsonicXMLResponses(t *testing.T) {
 					TrackNumber: 1,
 					Format:      "mp3",
 					Duration:    162000,
+					Plays:       345,
+					LastPlayed:  1714856348,
 				},
 				{
 					ID:          12,
@@ -79,6 +83,8 @@ func TestSubsonicXMLResponses(t *testing.T) {
 				TrackNumber: 5,
 				Format:      "mp3",
 				Duration:    123000,
+				Plays:       333,
+				LastPlayed:  1714856348,
 			}, nil
 		},
 		SearchStub: func(sa library.SearchArgs) []library.SearchResult {
@@ -93,6 +99,8 @@ func TestSubsonicXMLResponses(t *testing.T) {
 					TrackNumber: 1,
 					Format:      "mp3",
 					Duration:    162000,
+					Plays:       12,
+					LastPlayed:  1714856348,
 				},
 				{
 					ID:          12,
@@ -121,11 +129,13 @@ func TestSubsonicXMLResponses(t *testing.T) {
 		SearchAlbumsStub: func(sa library.SearchArgs) []library.Album {
 			return []library.Album{
 				{
-					ID:        10,
-					Name:      "First Album",
-					Artist:    "Various Artists",
-					SongCount: 5,
-					Duration:  42318473,
+					ID:         10,
+					Name:       "First Album",
+					Artist:     "Various Artists",
+					SongCount:  5,
+					Duration:   42318473,
+					Plays:      932,
+					LastPlayed: 1714856348,
 				},
 			}
 		},
@@ -173,10 +183,12 @@ func TestSubsonicXMLResponses(t *testing.T) {
 
 			resp := []library.Album{
 				{
-					ID:        1,
-					Name:      "First Album",
-					Artist:    "First Artist",
-					SongCount: 5,
+					ID:         1,
+					Name:       "First Album",
+					Artist:     "First Artist",
+					SongCount:  5,
+					Plays:      333,
+					LastPlayed: 1714856348,
 				},
 				{
 					ID:        2,
@@ -262,6 +274,10 @@ func TestSubsonicXMLResponses(t *testing.T) {
 		{
 			desc: "getAlbumList2",
 			url:  testURL("/getAlbumList2?type=random&id=%d", int64(2e9+10)),
+		},
+		{
+			desc: "getAlbumList",
+			url:  testURL("/getAlbumList?type=random&id=%d", int64(2e9+10)),
 		},
 		{
 			desc: "getArtistInfo2",
