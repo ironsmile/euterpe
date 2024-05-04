@@ -7,14 +7,14 @@
 - [x] getMusicFolders
 - [x] getIndexes
 - [x] getMusicDirectory
-- [x] getGenres - not genres saved yet
+- [x] getGenres - no genres saved yet
 - [x] getArtists
 - [x] getArtist
 - [x] getAlbum
 - [x] getSong
 - [x] getVideos - Euterpe does not do videos
 - [x] getVideoInfo - always returns "not found"
-- [ ] getArtistInfo
+- [x] getArtistInfo
 - [x] getArtistInfo2
 - [ ] getAlbumInfo
 - [ ] getAlbumInfo2

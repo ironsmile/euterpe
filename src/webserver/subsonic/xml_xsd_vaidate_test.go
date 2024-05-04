@@ -268,6 +268,10 @@ func TestSubsonicXMLResponses(t *testing.T) {
 			url:  testURL("/getArtistInfo2?id=%d", int64(1e9+10)),
 		},
 		{
+			desc: "getArtistInfo",
+			url:  testURL("/getArtistInfo?id=%d", int64(1e9+10)),
+		},
+		{
 			desc: "getArtists",
 			url:  testURL("/getArtists"),
 		},
@@ -437,6 +441,36 @@ func TestSubsonicXMLErrors(t *testing.T) {
 			desc:      "invalid scrobble time",
 			url:       testURL("/scrobble?id=555&time=baba"),
 			errorCode: 0,
+		},
+		{
+			desc:      "getArtistInfo ID for something which is not artist",
+			url:       testURL("/getArtistInfo?id=2"),
+			errorCode: 70,
+		},
+		{
+			desc:      "invalid getArtistInfo ID",
+			url:       testURL("/getArtistInfo?id=baba"),
+			errorCode: 70,
+		},
+		{
+			desc:      "no getArtistInfo ID",
+			url:       testURL("/getArtistInfo"),
+			errorCode: 70,
+		},
+		{
+			desc:      "getArtistInfo2 ID for something which is not artist",
+			url:       testURL("/getArtistInfo2?id=2"),
+			errorCode: 70,
+		},
+		{
+			desc:      "invalid getArtistInfo2 ID",
+			url:       testURL("/getArtistInfo2?id=baba"),
+			errorCode: 70,
+		},
+		{
+			desc:      "no getArtistInfo2 ID",
+			url:       testURL("/getArtistInfo2"),
+			errorCode: 70,
 		},
 	}
 
