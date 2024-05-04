@@ -54,12 +54,13 @@ type artistResponse struct {
 }
 
 type artistID3Entry struct {
-	ID         int64  `xml:"id,attr" json:"id,string"`
-	ParentID   int64  `xml:"parent,attr,omitempty" json:"parent,string,omitempty"`
-	Name       string `xml:"name,attr" json:"name"`
-	AlbumCount int64  `xml:"albumCount,attr,omitempty" json:"albumCount,omitempty"`
-	SongCount  int64  `xml:"songCount,attr,omitempty" json:"songCount,omitempty"`
-	CoverArtID string `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
+	ID             int64  `xml:"id,attr" json:"id,string"`
+	ParentID       int64  `xml:"parent,attr,omitempty" json:"parent,string,omitempty"`
+	Name           string `xml:"name,attr" json:"name"`
+	AlbumCount     int64  `xml:"albumCount,attr,omitempty" json:"albumCount,omitempty"`
+	SongCount      int64  `xml:"songCount,attr,omitempty" json:"songCount,omitempty"`
+	CoverArtID     string `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
+	ArtistImageURL string `xml:"artistImageUrl,attr,omitempty" json:"artistImageUrl,omitempty"`
 
 	Children []albumID3Entry `xml:"album,omitempty" json:"album,omitempty"`
 }

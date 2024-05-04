@@ -178,16 +178,17 @@ type directoryResponse struct {
 }
 
 type directoryEntry struct {
-	ID         int64  `xml:"id,attr" json:"id,string"`
-	ParentID   int64  `xml:"parent,attr,omitempty" json:"parent,omitempty,string"`
-	Artist     string `xml:"-" json:"-"`
-	Name       string `xml:"name,attr" json:"name"`
-	AlbumCount int64  `xml:"-" json:"albumCount,omitempty"`
-	SongCount  int64  `xml:"-" json:"songCount,omitempty"`
-	CoverArtID string `xml:"-" json:"coverArt,omitempty"`
-	Duration   int64  `xml:"-" json:"duration,omitempty"` // in seconds
-	PlayCount  int64  `xml:"playCount,attr,omitempty" json:"playCount,omitempty"`
-	UserRating uint8  `xml:"userRating,attr,omitempty" json:"userRating,omitempty"`
+	ID             int64  `xml:"id,attr" json:"id,string"`
+	ParentID       int64  `xml:"parent,attr,omitempty" json:"parent,omitempty,string"`
+	Artist         string `xml:"-" json:"-"`
+	Name           string `xml:"name,attr" json:"name"`
+	AlbumCount     int64  `xml:"-" json:"albumCount,omitempty"`
+	SongCount      int64  `xml:"-" json:"songCount,omitempty"`
+	CoverArtID     string `xml:"-" json:"coverArt,omitempty"`
+	ArtistImageURL string `xml:"artistImageUrl,attr,omitempty" json:"artistImageUrl,omitempty"`
+	Duration       int64  `xml:"-" json:"duration,omitempty"` // in seconds
+	PlayCount      int64  `xml:"playCount,attr,omitempty" json:"playCount,omitempty"`
+	UserRating     uint8  `xml:"userRating,attr,omitempty" json:"userRating,omitempty"`
 
 	Children []directoryChildEntry `xml:"child" json:"child"`
 }

@@ -41,6 +41,8 @@ func (s *subsonic) getIndexes(w http.ResponseWriter, req *http.Request) {
 		LastModified: s.getLastModified().UnixMilli(),
 	}
 
+	artURL, artURLQuery := s.getAristImageURL(req, 0)
+
 	var (
 		page         uint = 0
 		seenArtists  int
@@ -75,11 +77,14 @@ func (s *subsonic) getIndexes(w http.ResponseWriter, req *http.Request) {
 				}
 			}
 
+			artURLQuery.Set("id", artistCoverArtID(artist.ID))
+			artURL.RawQuery = artURLQuery.Encode()
 			currentIndex.Children = append(
 				currentIndex.Children,
 				indexArtistElement{
-					ID:   artistFSID(artist.ID),
-					Name: artist.Name,
+					ID:             artistFSID(artist.ID),
+					Name:           artist.Name,
+					ArtistImageURL: artURL.String(),
 				},
 			)
 		}
@@ -121,6 +126,7 @@ type indexElement struct {
 }
 
 type indexArtistElement struct {
-	ID   int64  `xml:"id,attr" json:"id,string"`
-	Name string `xml:"name,attr" json:"name"`
+	ID             int64  `xml:"id,attr" json:"id,string"`
+	Name           string `xml:"name,attr" json:"name"`
+	ArtistImageURL string `xml:"artistImageUrl,attr,omitempty" json:"artistImageUrl,omitempty"`
 }

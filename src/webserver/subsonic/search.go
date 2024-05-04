@@ -68,10 +68,8 @@ func (s *subsonic) search(w http.ResponseWriter, req *http.Request) {
 			Count:  offset,
 		})
 		for _, artist := range artists {
-			resp.Result.Matches = append(
-				resp.Result.Matches,
-				artistToDirChild(artist, s.lastModified),
-			)
+			artistChild := artistToDirChild(artist, s.lastModified)
+			resp.Result.Matches = append(resp.Result.Matches, artistChild)
 		}
 	}
 

@@ -49,15 +49,21 @@ func (s *subsonic) search3(w http.ResponseWriter, req *http.Request) {
 	artistCount := parseIntOrDefault(reqValues.Get("artistCount"), 20)
 	artistOffset := parseIntOrDefault(reqValues.Get("artistOffset"), 0)
 
+	artURL, query := s.getAristImageURL(req, 0)
 	artists := s.lib.SearchArtists(library.SearchArgs{
 		Query:  searchQuery,
 		Offset: artistOffset,
 		Count:  artistCount,
 	})
 	for _, artist := range artists {
+		query.Set("id", artistCoverArtID(artist.ID))
+		artURL.RawQuery = query.Encode()
+		artistID3 := dbArtistToArtistID3Entry(artist)
+		artistID3.ArtistImageURL = artURL.String()
+
 		resp.Result.Artists = append(
 			resp.Result.Artists,
-			dbArtistToArtistID3Entry(artist),
+			artistID3,
 		)
 	}
 

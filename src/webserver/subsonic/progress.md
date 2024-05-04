@@ -21,7 +21,7 @@
 - [ ] getSimilarSongs
 - [ ] getSimilarSongs2
 - [ ] getTopSongs
-- [ ] getAlbumList
+- [x] getAlbumList - `byYear` and `byGenre` not implemented yet
 - [x] getAlbumList2 - `byYear` and `byGenre` not implemented yet
 - [ ] getRandomSongs
 - [ ] getSongsByGenre

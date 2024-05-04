@@ -32,15 +32,7 @@ func (s *subsonic) getArtistInfoBase(
 	req *http.Request,
 	artistID int64,
 ) artistInfo2Response {
-	query := make(url.Values)
-	query.Set("id", artistCoverArtID(artistID))
-	setQueryFromReq(query, req)
-	artURL := url.URL{
-		Scheme:   getProtoFromRequest(req),
-		Host:     getHostFromRequest(req),
-		Path:     s.prefix + "/getCoverArt",
-		RawQuery: query.Encode(),
-	}
+	artURL, query := s.getAristImageURL(req, artistID)
 
 	resp := artistInfo2Response{
 		baseResponse: responseOk(),
@@ -60,6 +52,26 @@ func (s *subsonic) getArtistInfoBase(
 	resp.ArtistInfo2.LargeImageURL = artURL.String()
 
 	return resp
+}
+
+// getAristImageURL returns a URL for artist image with query parameters
+// for access set from the request.
+// artistID is an ID from the database.
+func (s *subsonic) getAristImageURL(
+	req *http.Request,
+	artistID int64,
+) (url.URL, url.Values) {
+	query := make(url.Values)
+	query.Set("id", artistCoverArtID(artistID))
+	setQueryFromReq(query, req)
+	artURL := url.URL{
+		Scheme:   getProtoFromRequest(req),
+		Host:     getHostFromRequest(req),
+		Path:     s.prefix + "/getCoverArt",
+		RawQuery: query.Encode(),
+	}
+
+	return artURL, query
 }
 
 func setQueryFromReq(query url.Values, req *http.Request) {
