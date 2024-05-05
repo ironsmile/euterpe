@@ -37,7 +37,7 @@ func (s *subsonic) getAlbumList2(w http.ResponseWriter, req *http.Request) {
 		browseArgs.OrderBy = library.OrderByFavourites
 		browseArgs.Order = library.OrderDesc
 	case "alphabeticalByArtist":
-		fallthrough
+		browseArgs.OrderBy = library.OrderByArtistName
 	case "byYear":
 		fallthrough
 	case "byGenre":

@@ -45,6 +45,9 @@ const (
 	// OrderByFavourites will order the list by whether they have been added to
 	// the favourites or not.
 	OrderByFavourites
+
+	// OrderByArtistName orders lists by the artist name of its items.
+	OrderByArtistName
 )
 
 // BrowseArgs defines all arguments one can pass to the browse methods to later its behaviour.

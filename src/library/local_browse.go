@@ -140,6 +140,8 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 			orderBy = "SUM(us.play_count)"
 		case OrderByRecentlyPlayed:
 			orderBy = "MAX(us.last_played)"
+		case OrderByArtistName:
+			orderBy = "artist_name"
 		}
 
 		rows, err := db.Query(fmt.Sprintf(`
@@ -147,9 +149,9 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 				al.id,
 				al.name as album_name,
 				CASE WHEN COUNT(DISTINCT tr.artist_id) = 1
-				THEN ar.name
-				ELSE "Various Artists"
-				END AS arist_name,
+					THEN ar.name
+					ELSE "Various Artists"
+					END AS artist_name,
 				COUNT(tr.id) as songCount,
 				SUM(tr.duration) as duration,
 				als.favourite,
