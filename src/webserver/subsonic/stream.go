@@ -12,7 +12,7 @@ import (
 func (s *subsonic) stream(w http.ResponseWriter, req *http.Request) {
 	idString := req.Form.Get("id")
 	trackID, err := strconv.ParseInt(idString, 10, 64)
-	if idString == "" || err != nil {
+	if idString == "" || err != nil || !isTrackID(trackID) {
 		resp := responseError(errCodeNotFound, "track not found")
 		encodeResponse(w, req, resp)
 		return
@@ -21,7 +21,7 @@ func (s *subsonic) stream(w http.ResponseWriter, req *http.Request) {
 	//!TODO: support maximum bitrate and and transcoding. Once done, a separate
 	// endpoint must be created for the "/download" endpoint.
 
-	filePath := s.lib.GetFilePath(trackID)
+	filePath := s.lib.GetFilePath(toTrackDBID(trackID))
 
 	fh, err := os.Open(filePath)
 	if err != nil {

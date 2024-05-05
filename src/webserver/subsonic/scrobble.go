@@ -36,7 +36,7 @@ func (s *subsonic) scrobble(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		idInts = append(idInts, trackID)
+		idInts = append(idInts, toTrackDBID(trackID))
 	}
 
 	ctx := req.Context()
@@ -46,7 +46,7 @@ func (s *subsonic) scrobble(w http.ResponseWriter, req *http.Request) {
 		if err != nil || unixTimeMs <= 0 {
 			resp := responseError(
 				errCodeGeneric,
-				fmt.Sprintf("bad `time` in parameters. It must be a positive int."),
+				"bad `time` in parameters. It must be a positive int.",
 			)
 			encodeResponse(w, req, resp)
 			return

@@ -7,43 +7,43 @@ import (
 
 const (
 	// combinedMusicFolderID is selected so that the library will be allowed to have up
-	// to one billion (1e9) songs, one billion (1e9) artists and `max(int64) - 2e9`
-	// artists.
+	// to one billion (1e9) artists, one billion (1e9) albums and `max(int64) - 2e9`
+	// songs.
 	combinedMusicFolderID int64 = 1e9
 )
 
 // trackFSID converts a trackID to the imaginary subsonic file structure ID for the
 // track. It it supposed to be in the imaginary directory of its album.
 func trackFSID(trackID int64) int64 {
-	return trackID
+	return trackID + 2*combinedMusicFolderID
 }
 
 // toTrackDBID converts an imaginary subsonic FS ID back to the ID of the track in
 // the database.
 func toTrackDBID(trackFSID int64) int64 {
-	return trackFSID
+	return trackFSID - 2*combinedMusicFolderID
 }
 
 // isTrackID returns true if id is an subsonic FS ID of a track.
 func isTrackID(id int64) bool {
-	return id < combinedMusicFolderID
+	return id > combinedMusicFolderID*2
 }
 
 // albumFSID converts an album ID to the imaginary subsonic file structure ID for this
 // album where it is supposed to be inside the directory of its artist.
 func albumFSID(albumID int64) int64 {
-	return 2*combinedMusicFolderID + albumID
+	return albumID
 }
 
 // toAlbumID converts from the imaginary subsonic FS album ID to the one in the
 // database.
 func toAlbumDBID(albumFSID int64) int64 {
-	return albumFSID - 2*combinedMusicFolderID
+	return albumFSID
 }
 
 // isAlbumID returns true if a given subsonic FS ID is an ID of an album.
 func isAlbumID(id int64) bool {
-	return id > 2*combinedMusicFolderID
+	return id < combinedMusicFolderID
 }
 
 // artistFSID converts an artist ID to the imaginary subsonic file structure ID for
