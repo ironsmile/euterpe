@@ -111,7 +111,7 @@ func (s *subsonic) getAlbumDirectory(
 		CoverArtID: albumConverArtID(albumID),
 		Starred:    album.Favourite,
 		UserRating: album.Rating,
-		Duration:   album.Duration,
+		Duration:   album.Duration / 1000,
 		PlayCount:  album.Plays,
 	}
 
