@@ -41,9 +41,12 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 				ar.name,
 				(SELECT COUNT(DISTINCT(tr.album_id))
 					FROM tracks tr
-					WHERE tr.artist_id = ar.id) as albumsCount
+					WHERE tr.artist_id = ar.id) as albumsCount,
+				ars.favourite,
+				ars.user_rating
 			FROM
 				artists ar
+				LEFT JOIN artists_stats as ars ON ars.artist_id = ar.id
 			ORDER BY
 				%s %s
 			LIMIT
@@ -56,10 +59,23 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 
 		defer rows.Close()
 		for rows.Next() {
-			var res Artist
-			if err := rows.Scan(&res.ID, &res.Name, &res.AlbumCount); err != nil {
+			var (
+				res    Artist
+				fav    sql.NullInt64
+				rating sql.NullInt16
+			)
+			if err := rows.Scan(
+				&res.ID, &res.Name, &res.AlbumCount, &fav, &rating,
+			); err != nil {
 				return fmt.Errorf("scanning db failed: %w", err)
 			}
+			if fav.Valid {
+				res.Favourite = fav.Int64
+			}
+			if rating.Valid {
+				res.Rating = uint8(rating.Int16)
+			}
+
 			output = append(output, res)
 		}
 
@@ -135,7 +151,9 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 				ELSE "Various Artists"
 				END AS arist_name,
 				COUNT(tr.id) as songCount,
-				SUM(tr.duration) as duration
+				SUM(tr.duration) as duration,
+				als.favourite,
+				als.user_rating
 			FROM
 				tracks tr
 				LEFT JOIN
@@ -144,6 +162,8 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 					artists ar ON ar.id = tr.artist_id
 				LEFT JOIN
 					user_stats us ON us.track_id = tr.id
+				LEFT JOIN
+					albums_stats als ON als.album_id = tr.album_id
 			GROUP BY
 				tr.album_id
 			ORDER BY
@@ -158,13 +178,24 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 
 		defer rows.Close()
 		for rows.Next() {
-			var res Album
+			var (
+				res    Album
+				fav    sql.NullInt64
+				rating sql.NullInt16
+			)
 			if err := rows.Scan(
-				&res.ID, &res.Name,
-				&res.Artist, &res.SongCount, &res.Duration,
+				&res.ID, &res.Name, &res.Artist, &res.SongCount,
+				&res.Duration, &fav, &rating,
 			); err != nil {
 				return fmt.Errorf("scanning db failed: %w", err)
 			}
+			if fav.Valid {
+				res.Favourite = fav.Int64
+			}
+			if rating.Valid {
+				res.Rating = uint8(rating.Int16)
+			}
+
 			output = append(output, res)
 		}
 

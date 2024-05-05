@@ -30,6 +30,20 @@ type FakeLibrary struct {
 	closeMutex       sync.RWMutex
 	closeArgsForCall []struct {
 	}
+	GetAlbumStub        func(context.Context, int64) (library.Album, error)
+	getAlbumMutex       sync.RWMutex
+	getAlbumArgsForCall []struct {
+		arg1 context.Context
+		arg2 int64
+	}
+	getAlbumReturns struct {
+		result1 library.Album
+		result2 error
+	}
+	getAlbumReturnsOnCall map[int]struct {
+		result1 library.Album
+		result2 error
+	}
 	GetAlbumFilesStub        func(int64) []library.SearchResult
 	getAlbumFilesMutex       sync.RWMutex
 	getAlbumFilesArgsForCall []struct {
@@ -40,6 +54,20 @@ type FakeLibrary struct {
 	}
 	getAlbumFilesReturnsOnCall map[int]struct {
 		result1 []library.SearchResult
+	}
+	GetArtistStub        func(context.Context, int64) (library.Artist, error)
+	getArtistMutex       sync.RWMutex
+	getArtistArgsForCall []struct {
+		arg1 context.Context
+		arg2 int64
+	}
+	getArtistReturns struct {
+		result1 library.Artist
+		result2 error
+	}
+	getArtistReturnsOnCall map[int]struct {
+		result1 library.Artist
+		result2 error
 	}
 	GetArtistAlbumsStub        func(int64) []library.Album
 	getArtistAlbumsMutex       sync.RWMutex
@@ -136,6 +164,45 @@ type FakeLibrary struct {
 	}
 	searchArtistsReturnsOnCall map[int]struct {
 		result1 []library.Artist
+	}
+	SetAlbumRatingStub        func(context.Context, int64, uint8) error
+	setAlbumRatingMutex       sync.RWMutex
+	setAlbumRatingArgsForCall []struct {
+		arg1 context.Context
+		arg2 int64
+		arg3 uint8
+	}
+	setAlbumRatingReturns struct {
+		result1 error
+	}
+	setAlbumRatingReturnsOnCall map[int]struct {
+		result1 error
+	}
+	SetArtistRatingStub        func(context.Context, int64, uint8) error
+	setArtistRatingMutex       sync.RWMutex
+	setArtistRatingArgsForCall []struct {
+		arg1 context.Context
+		arg2 int64
+		arg3 uint8
+	}
+	setArtistRatingReturns struct {
+		result1 error
+	}
+	setArtistRatingReturnsOnCall map[int]struct {
+		result1 error
+	}
+	SetTrackRatingStub        func(context.Context, int64, uint8) error
+	setTrackRatingMutex       sync.RWMutex
+	setTrackRatingArgsForCall []struct {
+		arg1 context.Context
+		arg2 int64
+		arg3 uint8
+	}
+	setTrackRatingReturns struct {
+		result1 error
+	}
+	setTrackRatingReturnsOnCall map[int]struct {
+		result1 error
 	}
 	TruncateStub        func() error
 	truncateMutex       sync.RWMutex
@@ -268,6 +335,71 @@ func (fake *FakeLibrary) CloseCalls(stub func()) {
 	fake.CloseStub = stub
 }
 
+func (fake *FakeLibrary) GetAlbum(arg1 context.Context, arg2 int64) (library.Album, error) {
+	fake.getAlbumMutex.Lock()
+	ret, specificReturn := fake.getAlbumReturnsOnCall[len(fake.getAlbumArgsForCall)]
+	fake.getAlbumArgsForCall = append(fake.getAlbumArgsForCall, struct {
+		arg1 context.Context
+		arg2 int64
+	}{arg1, arg2})
+	stub := fake.GetAlbumStub
+	fakeReturns := fake.getAlbumReturns
+	fake.recordInvocation("GetAlbum", []interface{}{arg1, arg2})
+	fake.getAlbumMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeLibrary) GetAlbumCallCount() int {
+	fake.getAlbumMutex.RLock()
+	defer fake.getAlbumMutex.RUnlock()
+	return len(fake.getAlbumArgsForCall)
+}
+
+func (fake *FakeLibrary) GetAlbumCalls(stub func(context.Context, int64) (library.Album, error)) {
+	fake.getAlbumMutex.Lock()
+	defer fake.getAlbumMutex.Unlock()
+	fake.GetAlbumStub = stub
+}
+
+func (fake *FakeLibrary) GetAlbumArgsForCall(i int) (context.Context, int64) {
+	fake.getAlbumMutex.RLock()
+	defer fake.getAlbumMutex.RUnlock()
+	argsForCall := fake.getAlbumArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeLibrary) GetAlbumReturns(result1 library.Album, result2 error) {
+	fake.getAlbumMutex.Lock()
+	defer fake.getAlbumMutex.Unlock()
+	fake.GetAlbumStub = nil
+	fake.getAlbumReturns = struct {
+		result1 library.Album
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeLibrary) GetAlbumReturnsOnCall(i int, result1 library.Album, result2 error) {
+	fake.getAlbumMutex.Lock()
+	defer fake.getAlbumMutex.Unlock()
+	fake.GetAlbumStub = nil
+	if fake.getAlbumReturnsOnCall == nil {
+		fake.getAlbumReturnsOnCall = make(map[int]struct {
+			result1 library.Album
+			result2 error
+		})
+	}
+	fake.getAlbumReturnsOnCall[i] = struct {
+		result1 library.Album
+		result2 error
+	}{result1, result2}
+}
+
 func (fake *FakeLibrary) GetAlbumFiles(arg1 int64) []library.SearchResult {
 	fake.getAlbumFilesMutex.Lock()
 	ret, specificReturn := fake.getAlbumFilesReturnsOnCall[len(fake.getAlbumFilesArgsForCall)]
@@ -327,6 +459,71 @@ func (fake *FakeLibrary) GetAlbumFilesReturnsOnCall(i int, result1 []library.Sea
 	fake.getAlbumFilesReturnsOnCall[i] = struct {
 		result1 []library.SearchResult
 	}{result1}
+}
+
+func (fake *FakeLibrary) GetArtist(arg1 context.Context, arg2 int64) (library.Artist, error) {
+	fake.getArtistMutex.Lock()
+	ret, specificReturn := fake.getArtistReturnsOnCall[len(fake.getArtistArgsForCall)]
+	fake.getArtistArgsForCall = append(fake.getArtistArgsForCall, struct {
+		arg1 context.Context
+		arg2 int64
+	}{arg1, arg2})
+	stub := fake.GetArtistStub
+	fakeReturns := fake.getArtistReturns
+	fake.recordInvocation("GetArtist", []interface{}{arg1, arg2})
+	fake.getArtistMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeLibrary) GetArtistCallCount() int {
+	fake.getArtistMutex.RLock()
+	defer fake.getArtistMutex.RUnlock()
+	return len(fake.getArtistArgsForCall)
+}
+
+func (fake *FakeLibrary) GetArtistCalls(stub func(context.Context, int64) (library.Artist, error)) {
+	fake.getArtistMutex.Lock()
+	defer fake.getArtistMutex.Unlock()
+	fake.GetArtistStub = stub
+}
+
+func (fake *FakeLibrary) GetArtistArgsForCall(i int) (context.Context, int64) {
+	fake.getArtistMutex.RLock()
+	defer fake.getArtistMutex.RUnlock()
+	argsForCall := fake.getArtistArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeLibrary) GetArtistReturns(result1 library.Artist, result2 error) {
+	fake.getArtistMutex.Lock()
+	defer fake.getArtistMutex.Unlock()
+	fake.GetArtistStub = nil
+	fake.getArtistReturns = struct {
+		result1 library.Artist
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeLibrary) GetArtistReturnsOnCall(i int, result1 library.Artist, result2 error) {
+	fake.getArtistMutex.Lock()
+	defer fake.getArtistMutex.Unlock()
+	fake.GetArtistStub = nil
+	if fake.getArtistReturnsOnCall == nil {
+		fake.getArtistReturnsOnCall = make(map[int]struct {
+			result1 library.Artist
+			result2 error
+		})
+	}
+	fake.getArtistReturnsOnCall[i] = struct {
+		result1 library.Artist
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakeLibrary) GetArtistAlbums(arg1 int64) []library.Album {
@@ -839,6 +1036,195 @@ func (fake *FakeLibrary) SearchArtistsReturnsOnCall(i int, result1 []library.Art
 	}{result1}
 }
 
+func (fake *FakeLibrary) SetAlbumRating(arg1 context.Context, arg2 int64, arg3 uint8) error {
+	fake.setAlbumRatingMutex.Lock()
+	ret, specificReturn := fake.setAlbumRatingReturnsOnCall[len(fake.setAlbumRatingArgsForCall)]
+	fake.setAlbumRatingArgsForCall = append(fake.setAlbumRatingArgsForCall, struct {
+		arg1 context.Context
+		arg2 int64
+		arg3 uint8
+	}{arg1, arg2, arg3})
+	stub := fake.SetAlbumRatingStub
+	fakeReturns := fake.setAlbumRatingReturns
+	fake.recordInvocation("SetAlbumRating", []interface{}{arg1, arg2, arg3})
+	fake.setAlbumRatingMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2, arg3)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeLibrary) SetAlbumRatingCallCount() int {
+	fake.setAlbumRatingMutex.RLock()
+	defer fake.setAlbumRatingMutex.RUnlock()
+	return len(fake.setAlbumRatingArgsForCall)
+}
+
+func (fake *FakeLibrary) SetAlbumRatingCalls(stub func(context.Context, int64, uint8) error) {
+	fake.setAlbumRatingMutex.Lock()
+	defer fake.setAlbumRatingMutex.Unlock()
+	fake.SetAlbumRatingStub = stub
+}
+
+func (fake *FakeLibrary) SetAlbumRatingArgsForCall(i int) (context.Context, int64, uint8) {
+	fake.setAlbumRatingMutex.RLock()
+	defer fake.setAlbumRatingMutex.RUnlock()
+	argsForCall := fake.setAlbumRatingArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+}
+
+func (fake *FakeLibrary) SetAlbumRatingReturns(result1 error) {
+	fake.setAlbumRatingMutex.Lock()
+	defer fake.setAlbumRatingMutex.Unlock()
+	fake.SetAlbumRatingStub = nil
+	fake.setAlbumRatingReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeLibrary) SetAlbumRatingReturnsOnCall(i int, result1 error) {
+	fake.setAlbumRatingMutex.Lock()
+	defer fake.setAlbumRatingMutex.Unlock()
+	fake.SetAlbumRatingStub = nil
+	if fake.setAlbumRatingReturnsOnCall == nil {
+		fake.setAlbumRatingReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.setAlbumRatingReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeLibrary) SetArtistRating(arg1 context.Context, arg2 int64, arg3 uint8) error {
+	fake.setArtistRatingMutex.Lock()
+	ret, specificReturn := fake.setArtistRatingReturnsOnCall[len(fake.setArtistRatingArgsForCall)]
+	fake.setArtistRatingArgsForCall = append(fake.setArtistRatingArgsForCall, struct {
+		arg1 context.Context
+		arg2 int64
+		arg3 uint8
+	}{arg1, arg2, arg3})
+	stub := fake.SetArtistRatingStub
+	fakeReturns := fake.setArtistRatingReturns
+	fake.recordInvocation("SetArtistRating", []interface{}{arg1, arg2, arg3})
+	fake.setArtistRatingMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2, arg3)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeLibrary) SetArtistRatingCallCount() int {
+	fake.setArtistRatingMutex.RLock()
+	defer fake.setArtistRatingMutex.RUnlock()
+	return len(fake.setArtistRatingArgsForCall)
+}
+
+func (fake *FakeLibrary) SetArtistRatingCalls(stub func(context.Context, int64, uint8) error) {
+	fake.setArtistRatingMutex.Lock()
+	defer fake.setArtistRatingMutex.Unlock()
+	fake.SetArtistRatingStub = stub
+}
+
+func (fake *FakeLibrary) SetArtistRatingArgsForCall(i int) (context.Context, int64, uint8) {
+	fake.setArtistRatingMutex.RLock()
+	defer fake.setArtistRatingMutex.RUnlock()
+	argsForCall := fake.setArtistRatingArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+}
+
+func (fake *FakeLibrary) SetArtistRatingReturns(result1 error) {
+	fake.setArtistRatingMutex.Lock()
+	defer fake.setArtistRatingMutex.Unlock()
+	fake.SetArtistRatingStub = nil
+	fake.setArtistRatingReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeLibrary) SetArtistRatingReturnsOnCall(i int, result1 error) {
+	fake.setArtistRatingMutex.Lock()
+	defer fake.setArtistRatingMutex.Unlock()
+	fake.SetArtistRatingStub = nil
+	if fake.setArtistRatingReturnsOnCall == nil {
+		fake.setArtistRatingReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.setArtistRatingReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeLibrary) SetTrackRating(arg1 context.Context, arg2 int64, arg3 uint8) error {
+	fake.setTrackRatingMutex.Lock()
+	ret, specificReturn := fake.setTrackRatingReturnsOnCall[len(fake.setTrackRatingArgsForCall)]
+	fake.setTrackRatingArgsForCall = append(fake.setTrackRatingArgsForCall, struct {
+		arg1 context.Context
+		arg2 int64
+		arg3 uint8
+	}{arg1, arg2, arg3})
+	stub := fake.SetTrackRatingStub
+	fakeReturns := fake.setTrackRatingReturns
+	fake.recordInvocation("SetTrackRating", []interface{}{arg1, arg2, arg3})
+	fake.setTrackRatingMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2, arg3)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeLibrary) SetTrackRatingCallCount() int {
+	fake.setTrackRatingMutex.RLock()
+	defer fake.setTrackRatingMutex.RUnlock()
+	return len(fake.setTrackRatingArgsForCall)
+}
+
+func (fake *FakeLibrary) SetTrackRatingCalls(stub func(context.Context, int64, uint8) error) {
+	fake.setTrackRatingMutex.Lock()
+	defer fake.setTrackRatingMutex.Unlock()
+	fake.SetTrackRatingStub = stub
+}
+
+func (fake *FakeLibrary) SetTrackRatingArgsForCall(i int) (context.Context, int64, uint8) {
+	fake.setTrackRatingMutex.RLock()
+	defer fake.setTrackRatingMutex.RUnlock()
+	argsForCall := fake.setTrackRatingArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+}
+
+func (fake *FakeLibrary) SetTrackRatingReturns(result1 error) {
+	fake.setTrackRatingMutex.Lock()
+	defer fake.setTrackRatingMutex.Unlock()
+	fake.SetTrackRatingStub = nil
+	fake.setTrackRatingReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeLibrary) SetTrackRatingReturnsOnCall(i int, result1 error) {
+	fake.setTrackRatingMutex.Lock()
+	defer fake.setTrackRatingMutex.Unlock()
+	fake.SetTrackRatingStub = nil
+	if fake.setTrackRatingReturnsOnCall == nil {
+		fake.setTrackRatingReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.setTrackRatingReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeLibrary) Truncate() error {
 	fake.truncateMutex.Lock()
 	ret, specificReturn := fake.truncateReturnsOnCall[len(fake.truncateArgsForCall)]
@@ -901,8 +1287,12 @@ func (fake *FakeLibrary) Invocations() map[string][][]interface{} {
 	defer fake.addMediaMutex.RUnlock()
 	fake.closeMutex.RLock()
 	defer fake.closeMutex.RUnlock()
+	fake.getAlbumMutex.RLock()
+	defer fake.getAlbumMutex.RUnlock()
 	fake.getAlbumFilesMutex.RLock()
 	defer fake.getAlbumFilesMutex.RUnlock()
+	fake.getArtistMutex.RLock()
+	defer fake.getArtistMutex.RUnlock()
 	fake.getArtistAlbumsMutex.RLock()
 	defer fake.getArtistAlbumsMutex.RUnlock()
 	fake.getFilePathMutex.RLock()
@@ -921,6 +1311,12 @@ func (fake *FakeLibrary) Invocations() map[string][][]interface{} {
 	defer fake.searchAlbumsMutex.RUnlock()
 	fake.searchArtistsMutex.RLock()
 	defer fake.searchArtistsMutex.RUnlock()
+	fake.setAlbumRatingMutex.RLock()
+	defer fake.setAlbumRatingMutex.RUnlock()
+	fake.setArtistRatingMutex.RLock()
+	defer fake.setArtistRatingMutex.RUnlock()
+	fake.setTrackRatingMutex.RLock()
+	defer fake.setTrackRatingMutex.RUnlock()
 	fake.truncateMutex.RLock()
 	defer fake.truncateMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}

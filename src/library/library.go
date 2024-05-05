@@ -81,6 +81,15 @@ type Artist struct {
 	ID         int64  `json:"artist_id"`
 	Name       string `json:"artist"`
 	AlbumCount int64  `json:"album_count"`
+
+	// Favourite is non-zero when the artist has been added to the list
+	// of favourites. When non-zero its value is the Unix timestamp at
+	// witch the artist was added to the list of favourites.
+	Favourite int64 `json:"favourite,omitempty"`
+
+	// Rating is the user rating given to this artist. It will be a number
+	// in the [1-5] range or 0 if no rating was given.
+	Rating uint8 `json:"rating,omitempty"`
 }
 
 // Album represents an album from the database
@@ -102,6 +111,10 @@ type Album struct {
 	// LastPlayed is the Unix timestamp (in seconds) at which a track from tims
 	// album has been played.
 	LastPlayed int64 `json:"last_played,omitempty"`
+
+	// Rating is the user rating given to this album. It will be a number
+	// in the [1-5] range or 0 if no rating was given.
+	Rating uint8 `json:"rating,omitempty"`
 }
 
 //counterfeiter:generate . Library
@@ -143,10 +156,28 @@ type Library interface {
 	// media ID.
 	GetTrack(ctx context.Context, mediaID int64) (TrackInfo, error)
 
+	// GetArtist returns information for particular artist in the database.
+	GetArtist(ctx context.Context, artistID int64) (Artist, error)
+
+	// GetAlbum returns information for particular album in the database.
+	GetAlbum(ctx context.Context, albumID int64) (Album, error)
+
 	// RecordTrackPlay stores the fact that this track has been played
 	// at this particular time. This means updating its "last played" property
 	// and increasing its play count in the stats database.
 	RecordTrackPlay(ctx context.Context, mediaID int64, atTime time.Time) error
+
+	// SetTrackRating sets the rating for particular track. Only values in the
+	// [0-5] range are accepted. 0 unsets the rating.
+	SetTrackRating(ctx context.Context, mediaID int64, rating uint8) error
+
+	// SetAlbumRating sets the rating for particular album. Only values in the
+	// [0-5] range are accepted. 0 unsets the rating.
+	SetAlbumRating(ctx context.Context, albumID int64, rating uint8) error
+
+	// SetArtistRating sets the rating for particular artist. Only values in the
+	// [0-5] range are accepted. 0 unsets the rating.
+	SetArtistRating(ctx context.Context, artistID int64, rating uint8) error
 
 	// Starts a full library scan. Will scan all paths if
 	// they are not scanned already.

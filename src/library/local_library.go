@@ -289,12 +289,15 @@ func (lib *LocalLibrary) SearchAlbums(args SearchArgs) []Album {
 				COUNT(t.id) as songCount,
 				SUM(t.duration) as duration,
 				MAX(us.last_played) as last_played,
-				SUM(us.play_count) as play_count
+				SUM(us.play_count) as play_count,
+				asr.favourite,
+				asr.user_rating
 			FROM
 				tracks as t
 					LEFT JOIN albums as al ON al.id = t.album_id
 					LEFT JOIN artists as at ON at.id = t.artist_id
 					LEFT JOIN user_stats as us ON us.track_id = t.id
+					LEFT JOIN albums_stats as asr ON asr.album_id = t.album_id
 			WHERE
 				t.name LIKE ? OR
 				al.name LIKE ? OR
@@ -317,12 +320,14 @@ func (lib *LocalLibrary) SearchAlbums(args SearchArgs) []Album {
 				res        Album
 				lastPlayed sql.NullInt64
 				playCount  sql.NullInt64
+				fav        sql.NullInt64
+				rating     sql.NullInt16
 			)
 
 			err := rows.Scan(
 				&res.ID, &res.Name, &res.Artist,
 				&res.SongCount, &res.Duration, &lastPlayed,
-				&playCount,
+				&playCount, &fav, &rating,
 			)
 			if err != nil {
 				log.Printf("Error scanning search album result: %s\n", err)
@@ -333,6 +338,12 @@ func (lib *LocalLibrary) SearchAlbums(args SearchArgs) []Album {
 			}
 			if playCount.Valid {
 				res.Plays = playCount.Int64
+			}
+			if fav.Valid {
+				res.Favourite = fav.Int64
+			}
+			if rating.Valid {
+				res.Rating = uint8(rating.Int16)
 			}
 
 			output = append(output, res)
@@ -364,9 +375,12 @@ func (lib *LocalLibrary) SearchArtists(args SearchArgs) []Artist {
 				ar.name,
 				(SELECT COUNT(DISTINCT(tr.album_id))
 					FROM tracks tr
-					WHERE tr.artist_id = ar.id) as albumsCount
+					WHERE tr.artist_id = ar.id) as albumsCount,
+				ars.favourite,
+				ars.user_rating
 			FROM
 				artists ar
+				LEFT JOIN artists_stats as ars ON ars.artist_id = ar.id
 			WHERE
 				ar.name LIKE ?
 			ORDER BY
@@ -381,14 +395,24 @@ func (lib *LocalLibrary) SearchArtists(args SearchArgs) []Artist {
 
 		defer rows.Close()
 		for rows.Next() {
-			var res Artist
+			var (
+				res    Artist
+				fav    sql.NullInt64
+				rating sql.NullInt16
+			)
 
 			err := rows.Scan(
-				&res.ID, &res.Name, &res.AlbumCount,
+				&res.ID, &res.Name, &res.AlbumCount, &fav, &rating,
 			)
 			if err != nil {
 				log.Printf("Error scanning search artist result: %s\n", err)
 				continue
+			}
+			if fav.Valid {
+				res.Favourite = fav.Int64
+			}
+			if rating.Valid {
+				res.Rating = uint8(rating.Int16)
 			}
 
 			output = append(output, res)
@@ -606,6 +630,135 @@ func (lib *LocalLibrary) GetTrack(ctx context.Context, trackID int64) (TrackInfo
 	return res, nil
 }
 
+// GetArtist returns information for particular artist.
+func (lib *LocalLibrary) GetArtist(
+	ctx context.Context,
+	artistID int64,
+) (Artist, error) {
+	query := `
+		SELECT
+			ar.name,
+			COUNT(DISTINCT(tr.album_id)) as album_count,
+			ars.favourite,
+			ars.user_rating
+		FROM tracks tr
+			LEFT JOIN artists as ar ON ar.id = tr.artist_id
+			LEFT JOIN artists_stats as ars ON ars.artist_id = tr.artist_id
+		WHERE
+			tr.artist_id = ?
+		GROUP BY
+			tr.artist_id
+	`
+	var res Artist
+
+	work := func(db *sql.DB) error {
+		row := db.QueryRowContext(ctx, query, artistID)
+
+		var (
+			fav    sql.NullInt64
+			rating sql.NullInt16
+		)
+		if err := row.Scan(
+			&res.Name,
+			&res.AlbumCount,
+			&fav,
+			&rating,
+		); err != nil {
+			return fmt.Errorf("sql query for artist info failed: %w", err)
+		}
+		res.ID = artistID
+		if fav.Valid {
+			res.Favourite = fav.Int64
+		}
+		if rating.Valid {
+			res.Rating = uint8(rating.Int16)
+		}
+
+		return nil
+	}
+
+	if err := lib.executeDBJobAndWait(work); err != nil {
+		return res, err
+	}
+
+	return res, nil
+}
+
+// GetAlbum returns information for particular album.
+func (lib *LocalLibrary) GetAlbum(
+	ctx context.Context,
+	albumID int64,
+) (Album, error) {
+	query := `
+		SELECT
+			al.name as album_name,
+			CASE WHEN COUNT(DISTINCT tr.artist_id) = 1
+			THEN ar.name
+			ELSE "Various Artists"
+			END AS arist_name,
+			COUNT(tr.id) as album_songs,
+			SUM(tr.duration) as album_duration,
+			SUM(us.play_count) as album_plays,
+			MAX(us.last_played) as last_played,
+			als.favourite,
+			als.user_rating
+		FROM tracks tr
+			LEFT JOIN artists as ar ON ar.id = tr.artist_id
+			LEFT JOIN albums_stats as als ON als.album_id = tr.album_id
+			LEFT JOIN albums as al ON al.id = tr.album_id
+			LEFT JOIN user_stats us ON us.track_id = tr.id
+		WHERE
+			tr.album_id = ?
+		GROUP BY
+			tr.album_id
+	`
+	var res Album
+
+	work := func(db *sql.DB) error {
+		row := db.QueryRowContext(ctx, query, albumID)
+
+		var (
+			fav        sql.NullInt64
+			rating     sql.NullInt16
+			plays      sql.NullInt64
+			lastPlayed sql.NullInt64
+		)
+		if err := row.Scan(
+			&res.Name,
+			&res.Artist,
+			&res.SongCount,
+			&res.Duration,
+			&plays,
+			&lastPlayed,
+			&fav,
+			&rating,
+		); err != nil {
+			return fmt.Errorf("sql query for artist info failed: %w", err)
+		}
+		res.ID = albumID
+		if fav.Valid {
+			res.Favourite = fav.Int64
+		}
+		if rating.Valid {
+			res.Rating = uint8(rating.Int16)
+		}
+		if plays.Valid {
+			res.Plays = plays.Int64
+		}
+		if lastPlayed.Valid {
+			res.LastPlayed = lastPlayed.Int64
+		}
+
+		return nil
+	}
+
+	if err := lib.executeDBJobAndWait(work); err != nil {
+		return res, err
+	}
+
+	return res, nil
+}
+
 // RecordTrackPlay updates the `user_stats` table in the database.
 //
 // play_count and last_played are updated only if a sufficient time has
@@ -677,11 +830,14 @@ func (lib *LocalLibrary) GetArtistAlbums(artistID int64) []Album {
 				COUNT(t.id) as songsCount,
 				SUM(t.duration) as duration,
 				MAX(us.last_played) as last_played,
-				SUM(us.play_count) as play_count
+				SUM(us.play_count) as play_count,
+				als.favourite,
+				als.user_rating
 			FROM
 				tracks t
 					LEFT JOIN albums a ON a.id = t.album_id
 					LEFT JOIN user_stats as us ON us.track_id = t.id
+					LEFT JOIN albums_stats as als ON als.album_id = t.album_id
 			WHERE
 				t.artist_id = ?
 			GROUP BY
@@ -701,6 +857,8 @@ func (lib *LocalLibrary) GetArtistAlbums(artistID int64) []Album {
 			var (
 				lastPlayed sql.NullInt64
 				playCount  sql.NullInt64
+				fav        sql.NullInt64
+				rating     sql.NullInt16
 			)
 
 			err := rows.Scan(
@@ -710,6 +868,8 @@ func (lib *LocalLibrary) GetArtistAlbums(artistID int64) []Album {
 				&res.Duration,
 				&lastPlayed,
 				&playCount,
+				&fav,
+				&rating,
 			)
 			if err != nil {
 				return fmt.Errorf("scanning for GetArtistAlbums error: %w", err)
@@ -719,6 +879,12 @@ func (lib *LocalLibrary) GetArtistAlbums(artistID int64) []Album {
 			}
 			if playCount.Valid {
 				res.Plays = playCount.Int64
+			}
+			if fav.Valid {
+				res.Favourite = fav.Int64
+			}
+			if rating.Valid {
+				res.Rating = uint8(rating.Int16)
 			}
 
 			albums = append(albums, res)

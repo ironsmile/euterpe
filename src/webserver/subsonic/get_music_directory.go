@@ -1,13 +1,9 @@
 package subsonic
 
 import (
-	"context"
 	"fmt"
-	"mime"
 	"net/http"
-	"path/filepath"
 	"strconv"
-	"time"
 
 	"github.com/ironsmile/euterpe/src/library"
 )
@@ -27,15 +23,15 @@ func (s *subsonic) getMusicDirectory(w http.ResponseWriter, req *http.Request) {
 	}
 
 	var (
-		entry directoryEntry
+		entry xsdDirectory
 	)
 
 	if dirID == combinedMusicFolderID {
-		entry, err = s.getRootDirectory(req.Context())
+		entry, err = s.getRootDirectory(req)
 	} else if isArtistID(dirID) {
-		entry, err = s.getArtistDirectory(req.Context(), toArtistDBID(dirID))
+		entry, err = s.getArtistDirectory(req, toArtistDBID(dirID))
 	} else if isAlbumID(dirID) {
-		entry, err = s.getAlbumDirectory(req.Context(), toAlbumDBID(dirID))
+		entry, err = s.getAlbumDirectory(req, toAlbumDBID(dirID))
 	} else {
 		resp := responseError(errCodeNotFound, "no directory with this ID exists")
 		encodeResponse(w, req, resp)
@@ -57,25 +53,35 @@ func (s *subsonic) getMusicDirectory(w http.ResponseWriter, req *http.Request) {
 }
 
 func (s *subsonic) getArtistDirectory(
-	_ context.Context,
+	req *http.Request,
 	artistID int64,
-) (directoryEntry, error) {
+) (xsdDirectory, error) {
+	ctx := req.Context()
+
+	artist, err := s.lib.GetArtist(ctx, artistID)
+	if err != nil {
+		return xsdDirectory{}, fmt.Errorf("getting artist: %w", err)
+	}
 	artistSubsonicID := artistFSID(artistID)
 	albums := s.lib.GetArtistAlbums(artistID)
 
-	resp := directoryEntry{
-		ID:         artistSubsonicID,
-		AlbumCount: int64(len(albums)),
-		CoverArtID: artistCoverArtID(artistID),
+	artURL, _ := s.getAristImageURL(req, artistID)
+
+	resp := xsdDirectory{
+		ID:             artistSubsonicID,
+		Name:           artist.Name,
+		ParentID:       combinedMusicFolderID,
+		AlbumCount:     int64(len(albums)),
+		CoverArtID:     artistCoverArtID(artistID),
+		ArtistImageURL: artURL.String(),
+		Starred:        artist.Favourite,
+		UserRating:     artist.Rating,
 	}
 
 	for _, album := range albums {
-		if resp.Name == "" {
-			resp.Name = album.Artist
-		}
 		resp.PlayCount += album.Plays
 
-		resp.Children = append(resp.Children, albumToDirChild(
+		resp.Children = append(resp.Children, albumToChild(
 			album,
 			artistID,
 			s.lastModified,
@@ -86,47 +92,46 @@ func (s *subsonic) getArtistDirectory(
 }
 
 func (s *subsonic) getAlbumDirectory(
-	_ context.Context,
+	req *http.Request,
 	albumID int64,
-) (directoryEntry, error) {
+) (xsdDirectory, error) {
+	album, err := s.lib.GetAlbum(req.Context(), albumID)
+	if err != nil {
+		return xsdDirectory{}, fmt.Errorf("getting album failed: %w", err)
+	}
+
 	albumSubsonicID := albumFSID(albumID)
 	tracks := s.lib.GetAlbumFiles(albumID)
 
-	resp := directoryEntry{
+	resp := xsdDirectory{
 		ID:         albumSubsonicID,
+		Name:       album.Name,
+		Artist:     album.Artist,
 		SongCount:  int64(len(tracks)),
 		CoverArtID: albumConverArtID(albumID),
+		Starred:    album.Favourite,
+		UserRating: album.Rating,
+		Duration:   album.Duration,
+		PlayCount:  album.Plays,
 	}
 
-	var totalDur int64
 	for _, track := range tracks {
-		if resp.Name == "" {
-			resp.Name = track.Album
+		if resp.ParentID == 0 {
 			resp.ParentID = artistFSID(track.ArtistID)
-			resp.Artist = track.Artist
 		}
 
-		if resp.Artist != track.Artist {
-			resp.Artist = "Various Artists"
-		}
-
-		resp.PlayCount += track.Plays
-		totalDur += track.Duration / 1000
-
-		resp.Children = append(resp.Children, trackToDirChild(track, s.lastModified))
+		resp.Children = append(resp.Children, trackToChild(track, s.lastModified))
 	}
-
-	resp.Duration = totalDur
 
 	return resp, nil
 }
 
 func (s *subsonic) getRootDirectory(
-	_ context.Context,
-) (directoryEntry, error) {
+	_ *http.Request,
+) (xsdDirectory, error) {
 	var (
 		page uint = 0
-		resp      = directoryEntry{
+		resp      = xsdDirectory{
 			ID:       combinedMusicFolderID,
 			ParentID: 0,
 			Name:     "Combined Music Library",
@@ -151,14 +156,14 @@ func (s *subsonic) getRootDirectory(
 
 			resp.Children = append(
 				resp.Children,
-				directoryChildEntry{
+				xsdChild{
+					ID:            artistFSID(artist.ID),
+					ParentID:      combinedMusicFolderID,
 					Name:          artist.Name,
 					Artist:        artist.Name,
 					Title:         artist.Name,
-					ID:            artistFSID(artist.ID),
 					MediaType:     "artist",
 					DirectoryType: "music",
-					ParentID:      combinedMusicFolderID,
 					IsDir:         true,
 					Created:       s.lastModified,
 				},
@@ -174,134 +179,5 @@ func (s *subsonic) getRootDirectory(
 type directoryResponse struct {
 	baseResponse
 
-	Directory directoryEntry `xml:"directory,omitempty" json:"directory,omitempty"`
-}
-
-type directoryEntry struct {
-	ID             int64  `xml:"id,attr" json:"id,string"`
-	ParentID       int64  `xml:"parent,attr,omitempty" json:"parent,omitempty,string"`
-	Artist         string `xml:"-" json:"-"`
-	Name           string `xml:"name,attr" json:"name"`
-	AlbumCount     int64  `xml:"-" json:"albumCount,omitempty"`
-	SongCount      int64  `xml:"-" json:"songCount,omitempty"`
-	CoverArtID     string `xml:"-" json:"coverArt,omitempty"`
-	ArtistImageURL string `xml:"artistImageUrl,attr,omitempty" json:"artistImageUrl,omitempty"`
-	Duration       int64  `xml:"-" json:"duration,omitempty"` // in seconds
-	PlayCount      int64  `xml:"playCount,attr,omitempty" json:"playCount,omitempty"`
-	UserRating     uint8  `xml:"userRating,attr,omitempty" json:"userRating,omitempty"`
-
-	Children []directoryChildEntry `xml:"child" json:"child"`
-}
-
-type directoryChildEntry struct {
-	ID            int64     `xml:"id,attr" json:"id,string"`
-	ParentID      int64     `xml:"parent,attr,omitempty" json:"parent,omitempty,string"`
-	MediaType     string    `xml:"-" json:"mediaType"`
-	DirectoryType string    `xml:"type,attr,omitempty" json:"type,omitempty"`
-	Title         string    `xml:"title,attr,omitempty" json:"title"`
-	Name          string    `xml:"-" json:"-"`
-	Artist        string    `xml:"artist,attr,omitempty" json:"artist,omitempty"`
-	ArtistID      int64     `xml:"-" json:"artistId,omitempty,string"`
-	Album         string    `xml:"album,attr,omitempty" json:"album"`
-	AlbumID       int64     `xml:"albumId,attr,omitempty" json:"albumId,omitempty,string"`
-	IsDir         bool      `xml:"isDir,attr" json:"isDir"`
-	IsVideo       bool      `xml:"isVideo,attr,omitempty" json:"isVideo"`
-	CoverArtID    string    `xml:"coverArt,attr,omitempty" json:"coverArt"`
-	Track         int64     `xml:"track,attr,omitempty" json:"track,omitempty"`       // position in album, I suppose
-	Duration      int64     `xml:"duration,attr,omitempty" json:"duration,omitempty"` // in seconds
-	Year          int16     `xml:"year,attr,omitempty" json:"year,omitempty"`
-	Genre         string    `xml:"genre,attr,omitempty" json:"gener,omitempty"`
-	Size          int64     `xml:"size,attr,omitempty" json:"size,omitempty"` // in bytes
-	ContentType   string    `xml:"contentType,attr,omitempty" json:"contentType,omitempty"`
-	SongCount     int64     `xml:"-" json:"songCount,omitempty"`
-	PlayCount     int64     `xml:"playCount,attr,omitempty" json:"playCount,omitempty"`
-	UserRating    uint8     `xml:"userRating,attr,omitempty" json:"userRating,omitempty"`
-	Suffix        string    `xml:"suffix,attr,omitempty" json:"suffix,omitempty"`
-	BitRate       string    `xml:"bitRate,attr,omitempty" json:"bitRate,omitempty"`
-	Path          string    `xml:"path,attr,omitempty" json:"path,omitempty"` // on the file system I suppose
-	Created       time.Time `xml:"created,attr,omitempty" json:"created,omitempty"`
-}
-
-func trackToDirChild(track library.TrackInfo, created time.Time) directoryChildEntry {
-	return directoryChildEntry{
-		ID:            trackFSID(track.ID),
-		ParentID:      albumFSID(track.AlbumID),
-		MediaType:     "song",
-		DirectoryType: "music",
-		Title:         track.Title,
-		Name:          track.Title,
-		Artist:        track.Artist,
-		ArtistID:      artistFSID(track.ArtistID),
-		Album:         track.Album,
-		AlbumID:       albumFSID(track.AlbumID),
-		IsDir:         false,
-		CoverArtID:    albumConverArtID(track.AlbumID),
-		Track:         track.TrackNumber,
-		Duration:      track.Duration / 1000,
-		Suffix:        track.Format,
-		Path: filepath.Join(
-			track.Artist,
-			track.Album,
-			fmt.Sprintf("%s.%s", track.Title, track.Format),
-		),
-		Created:    created,
-		PlayCount:  track.Plays,
-		UserRating: track.Rating,
-
-		// Here we take advantage of the knowledge that the track.Format is just
-		// the file name extension.
-		ContentType: mime.TypeByExtension(filepath.Ext("." + track.Format)),
-	}
-}
-
-// albumToDirChild converts a library Album to a directory child entry.
-// artistID is a in-db library ID.
-//
-// If artistID is empty then ParentID and ArtistID properties of the child
-// will not be set.
-func albumToDirChild(
-	album library.Album,
-	artistID int64,
-	created time.Time,
-) directoryChildEntry {
-	entry := directoryChildEntry{
-		ID:            albumFSID(album.ID),
-		MediaType:     "album",
-		DirectoryType: "music",
-		Title:         album.Name,
-		Name:          album.Name,
-		Album:         album.Name,
-		AlbumID:       albumFSID(album.ID),
-		Artist:        album.Artist,
-		IsDir:         true,
-		CoverArtID:    albumConverArtID(album.ID),
-		SongCount:     album.SongCount,
-		Created:       created,
-		Duration:      album.Duration / 1000,
-	}
-
-	if artistID != 0 {
-		artistSubsonicID := artistFSID(artistID)
-		entry.ParentID = artistSubsonicID
-		entry.ArtistID = artistSubsonicID
-	}
-
-	return entry
-}
-
-func artistToDirChild(
-	artist library.Artist,
-	created time.Time,
-) directoryChildEntry {
-	return directoryChildEntry{
-		ID:            albumFSID(artist.ID),
-		MediaType:     "artist",
-		DirectoryType: "music",
-		Name:          artist.Name,
-		AlbumID:       albumFSID(artist.ID),
-		Artist:        artist.Name,
-		IsDir:         true,
-		CoverArtID:    artistCoverArtID(artist.ID),
-		Created:       created,
-	}
+	Directory xsdDirectory `xml:"directory,omitempty" json:"directory,omitempty"`
 }

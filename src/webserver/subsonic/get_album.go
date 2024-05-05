@@ -3,7 +3,6 @@ package subsonic
 import (
 	"net/http"
 	"strconv"
-	"time"
 )
 
 func (s *subsonic) getAlbum(w http.ResponseWriter, req *http.Request) {
@@ -17,24 +16,27 @@ func (s *subsonic) getAlbum(w http.ResponseWriter, req *http.Request) {
 
 	albumID := toAlbumDBID(subsonicID)
 
-	entry, err := s.getAlbumDirectory(req.Context(), albumID)
+	entry, err := s.getAlbumDirectory(req, albumID)
 	if err != nil {
 		resp := responseError(errCodeGeneric, err.Error())
 		encodeResponse(w, req, resp)
 		return
 	}
 
-	artEtr := albumEntry{
-		ID:         entry.ID,
-		Artist:     entry.Artist,
-		ArtistID:   entry.ParentID,
-		Name:       entry.Name,
-		SongCount:  entry.SongCount,
-		CoverArtID: entry.CoverArtID,
-		Children:   entry.Children,
-		Created:    s.lastModified,
-		Duration:   entry.Duration,
-		PlayCount:  entry.PlayCount,
+	artEtr := xsdAlbumWithSongsID3{
+		xsdAlbumID3: xsdAlbumID3{
+			ID:         entry.ID,
+			Artist:     entry.Artist,
+			ArtistID:   entry.ParentID,
+			Name:       entry.Name,
+			SongCount:  entry.SongCount,
+			CoverArtID: entry.CoverArtID,
+			Created:    s.lastModified,
+			Duration:   entry.Duration,
+			PlayCount:  entry.PlayCount,
+			Starred:    entry.Starred,
+		},
+		Children: entry.Children,
 	}
 
 	resp := albumResponse{
@@ -48,21 +50,5 @@ func (s *subsonic) getAlbum(w http.ResponseWriter, req *http.Request) {
 type albumResponse struct {
 	baseResponse
 
-	Album albumEntry `xml:"album" json:"album"`
-}
-
-type albumEntry struct {
-	ID            int64     `xml:"id,attr" json:"id,string"`
-	ParentID      int64     `xml:"parent,attr,omitempty" json:"parent,string,omitempty"`
-	Name          string    `xml:"name,attr" json:"name"`
-	Artist        string    `xml:"artist,attr" json:"artist"`
-	ArtistID      int64     `xml:"artistId,attr" json:"artistId,string"`
-	SongCount     int64     `xml:"songCount,attr" json:"songCount"`
-	CoverArtID    string    `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
-	IsCompilation bool      `xml:"-" json:"isCompilation"`
-	Created       time.Time `xml:"created,attr" json:"created,omitempty"`
-	Duration      int64     `xml:"duration,attr" json:"duration,omitempty"`
-	PlayCount     int64     `xml:"playCount,attr,omitempty" json:"playCount,omitempty"`
-
-	Children []directoryChildEntry `xml:"song" json:"song"`
+	Album xsdAlbumWithSongsID3 `xml:"album" json:"album"`
 }

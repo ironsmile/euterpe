@@ -24,7 +24,7 @@ func (s *subsonic) search(w http.ResponseWriter, req *http.Request) {
 
 	resp := searchResponse{
 		baseResponse: responseOk(),
-		Result: searchResult{
+		Result: xsdSearchResult{
 			Offset: int64(offset),
 		},
 	}
@@ -38,7 +38,7 @@ func (s *subsonic) search(w http.ResponseWriter, req *http.Request) {
 		for _, track := range results {
 			resp.Result.Matches = append(
 				resp.Result.Matches,
-				trackToDirChild(track, s.lastModified),
+				trackToChild(track, s.lastModified),
 			)
 		}
 	}
@@ -52,7 +52,7 @@ func (s *subsonic) search(w http.ResponseWriter, req *http.Request) {
 		for _, album := range albums {
 			resp.Result.Matches = append(
 				resp.Result.Matches,
-				albumToDirChild(
+				albumToChild(
 					album,
 					0,
 					s.lastModified,
@@ -68,7 +68,7 @@ func (s *subsonic) search(w http.ResponseWriter, req *http.Request) {
 			Count:  offset,
 		})
 		for _, artist := range artists {
-			artistChild := artistToDirChild(artist, s.lastModified)
+			artistChild := artistToChild(artist, s.lastModified)
 			resp.Result.Matches = append(resp.Result.Matches, artistChild)
 		}
 	}
@@ -81,11 +81,5 @@ func (s *subsonic) search(w http.ResponseWriter, req *http.Request) {
 type searchResponse struct {
 	baseResponse
 
-	Result searchResult `xml:"searchResult" json:"searchResult"`
-}
-
-type searchResult struct {
-	Offset    int64                 `xml:"offset,attr" json:"offset"`
-	TotalHits int64                 `xml:"totalHits,attr" json:"totalHits"`
-	Matches   []directoryChildEntry `xml:"match" json:"match"`
+	Result xsdSearchResult `xml:"searchResult" json:"searchResult"`
 }

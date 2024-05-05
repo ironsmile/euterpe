@@ -30,7 +30,7 @@ func (s *subsonic) search3(w http.ResponseWriter, req *http.Request) {
 	for _, track := range results {
 		resp.Result.Songs = append(
 			resp.Result.Songs,
-			trackToDirChild(track, s.lastModified),
+			trackToChild(track, s.lastModified),
 		)
 	}
 
@@ -58,8 +58,7 @@ func (s *subsonic) search3(w http.ResponseWriter, req *http.Request) {
 	for _, artist := range artists {
 		query.Set("id", artistCoverArtID(artist.ID))
 		artURL.RawQuery = query.Encode()
-		artistID3 := dbArtistToArtistID3Entry(artist)
-		artistID3.ArtistImageURL = artURL.String()
+		artistID3 := dbArtistToArtistID3(artist, artURL)
 
 		resp.Result.Artists = append(
 			resp.Result.Artists,
@@ -73,11 +72,5 @@ func (s *subsonic) search3(w http.ResponseWriter, req *http.Request) {
 type search3Response struct {
 	baseResponse
 
-	Result search3Result `xml:"searchResult3" json:"searchResult3"`
-}
-
-type search3Result struct {
-	Artists []artistID3Entry      `xml:"artist" json:"artist"`
-	Albums  []albumID3Entry       `xml:"album" json:"album"`
-	Songs   []directoryChildEntry `xml:"song" json:"song"`
+	Result xsdSearchResult3 `xml:"searchResult3" json:"searchResult3"`
 }

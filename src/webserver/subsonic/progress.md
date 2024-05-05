@@ -36,7 +36,7 @@
 - [ ] createPlaylist
 - [ ] updatePlaylist
 - [ ] deletePlaylist
-- [x] stream
+- [x] stream - does not do transcoding yet
 - [x] download
 - [ ] hls
 - [ ] getCaptions
@@ -45,7 +45,7 @@
 - [ ] getAvatar
 - [ ] star
 - [ ] unstar
-- [ ] setRating
+- [x] setRating
 - [x] scrobble - "submission=false" is a no-op.
 - [ ] getShares
 - [ ] createShare

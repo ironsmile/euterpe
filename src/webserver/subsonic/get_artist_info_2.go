@@ -36,7 +36,7 @@ func (s *subsonic) getArtistInfoBase(
 
 	resp := artistInfo2Response{
 		baseResponse: responseOk(),
-		ArtistInfo2:  aristInfo2Element{},
+		ArtistInfo2:  xsdArtistInfoBase{},
 	}
 
 	query.Set("size", "150")
@@ -100,11 +100,5 @@ func setQueryFromReq(query url.Values, req *http.Request) {
 type artistInfo2Response struct {
 	baseResponse
 
-	ArtistInfo2 aristInfo2Element `xml:"artistInfo2"`
-}
-
-type aristInfo2Element struct {
-	SmallImageURL  string `xml:"smallImageUrl" json:"smallImageUrl"`
-	MediumImageURL string `xml:"mediumImageUrl" json:"mediumImageUrl"`
-	LargeImageURL  string `xml:"largeImageUrl" json:"largeImageUrl"`
+	ArtistInfo2 xsdArtistInfoBase `xml:"artistInfo2"`
 }

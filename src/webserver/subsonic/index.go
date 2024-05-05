@@ -100,6 +100,7 @@ func (s *subsonic) initRouter() {
 	setUpHandler("/search2", s.search2)
 	setUpHandler("/search", s.search)
 	setUpHandler("/scrobble", s.scrobble)
+	setUpHandler("/setRating", s.setRating)
 
 	s.mux = s.authHandler(router)
 }

@@ -28,7 +28,7 @@ func (s *subsonic) getSong(w http.ResponseWriter, req *http.Request) {
 
 	resp := songResponse{
 		baseResponse: responseOk(),
-		Song:         trackToDirChild(track, s.lastModified),
+		Song:         trackToChild(track, s.lastModified),
 	}
 
 	encodeResponse(w, req, resp)
@@ -37,5 +37,5 @@ func (s *subsonic) getSong(w http.ResponseWriter, req *http.Request) {
 type songResponse struct {
 	baseResponse
 
-	Song directoryChildEntry `xml:"song" json:"song"`
+	Song xsdChild `xml:"song" json:"song"`
 }

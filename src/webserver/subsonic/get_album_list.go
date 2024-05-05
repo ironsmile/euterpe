@@ -67,17 +67,17 @@ func (s *subsonic) getAlbumList(w http.ResponseWriter, req *http.Request) {
 
 	albums, _ := s.libBrowser.BrowseAlbums(browseArgs)
 
-	var albumList []directoryChildEntry
+	var albumList []xsdChild
 	for _, album := range albums {
 		albumList = append(
 			albumList,
-			albumToDirChild(album, 0, s.getLastModified()), //!TODO: add artistID
+			albumToChild(album, 0, s.getLastModified()), //!TODO: add artistID
 		)
 	}
 
 	resp := albumListResponse{
 		baseResponse: responseOk(),
-		AlbumList: albumListElement{
+		AlbumList: xsdAlbumList{
 			Children: albumList,
 		},
 	}
@@ -88,9 +88,5 @@ func (s *subsonic) getAlbumList(w http.ResponseWriter, req *http.Request) {
 type albumListResponse struct {
 	baseResponse
 
-	AlbumList albumListElement `xml:"albumList" json:"albumList"`
-}
-
-type albumListElement struct {
-	Children []directoryChildEntry `xml:"album" json:"album"`
+	AlbumList xsdAlbumList `xml:"albumList" json:"albumList"`
 }

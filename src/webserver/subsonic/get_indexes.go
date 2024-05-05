@@ -37,7 +37,7 @@ func (s *subsonic) getIndexes(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	indexes := indexesList{
+	indexes := xsdIndexes{
 		LastModified: s.getLastModified().UnixMilli(),
 	}
 
@@ -46,7 +46,7 @@ func (s *subsonic) getIndexes(w http.ResponseWriter, req *http.Request) {
 	var (
 		page         uint = 0
 		seenArtists  int
-		currentIndex indexElement
+		currentIndex xsdIndex
 	)
 	for {
 		artists, totalCount := s.libBrowser.BrowseArtists(library.BrowseArgs{
@@ -72,7 +72,7 @@ func (s *subsonic) getIndexes(w http.ResponseWriter, req *http.Request) {
 
 			if forIndex != currentIndex.Name {
 				indexes.Children = append(indexes.Children, currentIndex)
-				currentIndex = indexElement{
+				currentIndex = xsdIndex{
 					Name: forIndex,
 				}
 			}
@@ -81,11 +81,7 @@ func (s *subsonic) getIndexes(w http.ResponseWriter, req *http.Request) {
 			artURL.RawQuery = artURLQuery.Encode()
 			currentIndex.Children = append(
 				currentIndex.Children,
-				indexArtistElement{
-					ID:             artistFSID(artist.ID),
-					Name:           artist.Name,
-					ArtistImageURL: artURL.String(),
-				},
+				toXSDArtist(artist, artURL),
 			)
 		}
 
@@ -111,22 +107,5 @@ func (s *subsonic) getIndexes(w http.ResponseWriter, req *http.Request) {
 type indexesResponse struct {
 	baseResponse
 
-	IndexesList indexesList `xml:"indexes" json:"indexes"`
-}
-
-type indexesList struct {
-	LastModified    int64          `xml:"lastModified,attr" json:"lastModified"`
-	IgnoredArticles string         `xml:"ignoredArticles,attr" json:"ignoredArticles"`
-	Children        []indexElement `xml:"index" json:"index"`
-}
-
-type indexElement struct {
-	Name     string               `xml:"name,attr" json:"name"`
-	Children []indexArtistElement `xml:"artist" json:"artist"`
-}
-
-type indexArtistElement struct {
-	ID             int64  `xml:"id,attr" json:"id,string"`
-	Name           string `xml:"name,attr" json:"name"`
-	ArtistImageURL string `xml:"artistImageUrl,attr,omitempty" json:"artistImageUrl,omitempty"`
+	IndexesList xsdIndexes `xml:"indexes" json:"indexes"`
 }

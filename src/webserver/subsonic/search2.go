@@ -30,7 +30,7 @@ func (s *subsonic) search2(w http.ResponseWriter, req *http.Request) {
 	for _, track := range results {
 		resp.Result.Songs = append(
 			resp.Result.Songs,
-			trackToDirChild(track, s.lastModified),
+			trackToChild(track, s.lastModified),
 		)
 	}
 
@@ -45,7 +45,7 @@ func (s *subsonic) search2(w http.ResponseWriter, req *http.Request) {
 	for _, album := range albums {
 		resp.Result.Albums = append(
 			resp.Result.Albums,
-			albumToDirChild(
+			albumToChild(
 				album,
 				0,
 				s.lastModified,
@@ -68,14 +68,7 @@ func (s *subsonic) search2(w http.ResponseWriter, req *http.Request) {
 
 		resp.Result.Artists = append(
 			resp.Result.Artists,
-			directoryEntry{
-				ID:             artistFSID(artist.ID),
-				Artist:         artist.Name,
-				Name:           artist.Name,
-				AlbumCount:     artist.AlbumCount,
-				CoverArtID:     artistCoverArtID(artist.ID),
-				ArtistImageURL: artURL.String(),
-			},
+			toXSDArtist(artist, artURL),
 		)
 	}
 
@@ -85,11 +78,5 @@ func (s *subsonic) search2(w http.ResponseWriter, req *http.Request) {
 type search2Response struct {
 	baseResponse
 
-	Result search2Result `xml:"searchResult2" json:"searchResult2"`
-}
-
-type search2Result struct {
-	Artists []directoryEntry      `xml:"artist" json:"artist"`
-	Albums  []directoryChildEntry `xml:"album" json:"album"`
-	Songs   []directoryChildEntry `xml:"song" json:"song"`
+	Result xsdSearchResult2 `xml:"searchResult2" json:"searchResult2"`
 }

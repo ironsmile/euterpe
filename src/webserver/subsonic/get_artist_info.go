@@ -37,5 +37,5 @@ type artistInfoResponse struct {
 
 	// ArtistInfo reuses the aristInfo2Element element since for the moment
 	// it is exactly the same as what would've been the artistInfoElement.
-	ArtistInfo aristInfo2Element `xml:"artistInfo"`
+	ArtistInfo xsdArtistInfoBase `xml:"artistInfo"`
 }

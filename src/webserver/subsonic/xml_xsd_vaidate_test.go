@@ -261,7 +261,7 @@ func TestSubsonicXMLResponses(t *testing.T) {
 		},
 		{
 			desc: "getMusicDirectory album",
-			url:  testURL("/getMusicDirectory?id=%d", int64(2e9+10)),
+			url:  testURL("/getMusicDirectory?id=%d", 10),
 		},
 		{
 			desc: "getArtist",
@@ -269,15 +269,15 @@ func TestSubsonicXMLResponses(t *testing.T) {
 		},
 		{
 			desc: "getAlbum",
-			url:  testURL("/getAlbum?id=%d", int64(2e9+10)),
+			url:  testURL("/getAlbum?id=%d", 10),
 		},
 		{
 			desc: "getAlbumList2",
-			url:  testURL("/getAlbumList2?type=random&id=%d", int64(2e9+10)),
+			url:  testURL("/getAlbumList2?type=random&id=%d", 10),
 		},
 		{
 			desc: "getAlbumList",
-			url:  testURL("/getAlbumList?type=random&id=%d", int64(2e9+10)),
+			url:  testURL("/getAlbumList?type=random&id=%d", 10),
 		},
 		{
 			desc: "getArtistInfo2",
@@ -293,7 +293,7 @@ func TestSubsonicXMLResponses(t *testing.T) {
 		},
 		{
 			desc: "getSong",
-			url:  testURL("/getSong?id=33"),
+			url:  testURL("/getSong?id=%d", int64(2e9+66)),
 		},
 		{
 			desc: "getGenres",
@@ -329,7 +329,7 @@ func TestSubsonicXMLResponses(t *testing.T) {
 		},
 		{
 			desc: "scrobble",
-			url:  testURL("/scrobble?id=5&time=1714834066"),
+			url:  testURL("/scrobble?id=%d&time=1714834066", int64(2e9+33)),
 		},
 	}
 
@@ -455,7 +455,7 @@ func TestSubsonicXMLErrors(t *testing.T) {
 		},
 		{
 			desc:      "invalid scrobble time",
-			url:       testURL("/scrobble?id=555&time=baba"),
+			url:       testURL("/scrobble?id=%d&time=baba", int64(2e9+555)),
 			errorCode: 0,
 		},
 		{
