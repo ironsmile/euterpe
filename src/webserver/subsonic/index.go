@@ -61,7 +61,7 @@ func (s *subsonic) initRouter() {
 	router.StrictSlash(true)
 	router.UseEncodedPath()
 
-	setUpGetHandler := func(path string, handler http.HandlerFunc, methods ...string) {
+	setUpHandler := func(path string, handler http.HandlerFunc, methods ...string) {
 		if len(methods) == 0 {
 			methods = []string{http.MethodGet, http.MethodPost}
 		}
@@ -76,30 +76,30 @@ func (s *subsonic) initRouter() {
 		).Methods(methods...)
 	}
 
-	setUpGetHandler("/ping", s.apiPing)
-	setUpGetHandler("/getLicense", s.getLicense)
-	setUpGetHandler("/getOpenSubsonicExtensions", s.getOpenSubsonicExtensions)
-	setUpGetHandler("/getMusicFolders", s.getMusicFolders)
-	setUpGetHandler("/getIndexes", s.getIndexes)
-	setUpGetHandler("/getMusicDirectory", s.getMusicDirectory)
-	setUpGetHandler("/getArtists", s.getArtists)
-	setUpGetHandler("/getAlbum", s.getAlbum)
-	setUpGetHandler("/getAlbumList", s.getAlbumList)
-	setUpGetHandler("/getAlbumList2", s.getAlbumList2)
-	setUpGetHandler("/getArtist", s.getArtist)
-	setUpGetHandler("/getArtistInfo", s.getArtistInfo)
-	setUpGetHandler("/getArtistInfo2", s.getArtistInfo2)
-	setUpGetHandler("/getCoverArt", s.getCoverArt)
-	setUpGetHandler("/stream", s.stream, "GET", "HEAD")
-	setUpGetHandler("/download", s.stream, "GET", "HEAD")
-	setUpGetHandler("/getSong", s.getSong)
-	setUpGetHandler("/getGenres", s.getGenres)
-	setUpGetHandler("/getVideos", s.getVideos)
-	setUpGetHandler("/getVideoInfo", s.getVideoInfo)
-	setUpGetHandler("/search3", s.search3)
-	setUpGetHandler("/search2", s.search2)
-	setUpGetHandler("/search", s.search)
-	setUpGetHandler("/scrobble", s.scrobble)
+	setUpHandler("/ping", s.apiPing)
+	setUpHandler("/getLicense", s.getLicense)
+	setUpHandler("/getOpenSubsonicExtensions", s.getOpenSubsonicExtensions)
+	setUpHandler("/getMusicFolders", s.getMusicFolders)
+	setUpHandler("/getIndexes", s.getIndexes)
+	setUpHandler("/getMusicDirectory", s.getMusicDirectory)
+	setUpHandler("/getArtists", s.getArtists)
+	setUpHandler("/getAlbum", s.getAlbum)
+	setUpHandler("/getAlbumList", s.getAlbumList)
+	setUpHandler("/getAlbumList2", s.getAlbumList2)
+	setUpHandler("/getArtist", s.getArtist)
+	setUpHandler("/getArtistInfo", s.getArtistInfo)
+	setUpHandler("/getArtistInfo2", s.getArtistInfo2)
+	setUpHandler("/getCoverArt", s.getCoverArt)
+	setUpHandler("/stream", s.stream, "GET", "HEAD")
+	setUpHandler("/download", s.stream, "GET", "HEAD")
+	setUpHandler("/getSong", s.getSong)
+	setUpHandler("/getGenres", s.getGenres)
+	setUpHandler("/getVideos", s.getVideos)
+	setUpHandler("/getVideoInfo", s.getVideoInfo)
+	setUpHandler("/search3", s.search3)
+	setUpHandler("/search2", s.search2)
+	setUpHandler("/search", s.search)
+	setUpHandler("/scrobble", s.scrobble)
 
 	s.mux = s.authHandler(router)
 }
