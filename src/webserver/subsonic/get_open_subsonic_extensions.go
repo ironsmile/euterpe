@@ -5,7 +5,7 @@ import "net/http"
 func (s *subsonic) getOpenSubsonicExtensions(w http.ResponseWriter, req *http.Request) {
 	resp := osExtensionsResponse{
 		baseResponse: responseOk(),
-		Extensions: []osExtensin{
+		Extensions: []osExtension{
 			{
 				Name:     "formPost",
 				Versions: []int{1},
@@ -19,10 +19,10 @@ func (s *subsonic) getOpenSubsonicExtensions(w http.ResponseWriter, req *http.Re
 type osExtensionsResponse struct {
 	baseResponse
 
-	Extensions []osExtensin `xml:"openSubsonicExtensions" json:"openSubsonicExtensions"`
+	Extensions []osExtension `xml:"openSubsonicExtensions" json:"openSubsonicExtensions"`
 }
 
-type osExtensin struct {
+type osExtension struct {
 	Name     string `xml:"name,attr" json:"name"`
 	Versions []int  `xml:"versions" json:"versions"`
 }

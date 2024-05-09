@@ -7,7 +7,7 @@
 - [x] getMusicFolders
 - [x] getIndexes
 - [x] getMusicDirectory
-- [x] getGenres - no genres saved yet
+- [x] getGenres - no genres saved in the database yet
 - [x] getArtists
 - [x] getArtist
 - [x] getAlbum
