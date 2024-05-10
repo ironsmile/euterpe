@@ -10,8 +10,12 @@ import (
 // artists from the database ordered by their name. Returns an artists slice and the
 // total count of all artists in the database.
 func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
-	page := args.Page
+	offset := uint64(args.Page * args.PerPage)
 	perPage := args.PerPage
+
+	if args.Offset > 0 {
+		offset = args.Offset
+	}
 
 	order := "ASC"
 	orderBy := "ar.name"
@@ -26,9 +30,11 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 		orderBy = "RANDOM()"
 		order = ""
 
-		// When ordering by random the page does not matter. Only the limit
+		// When ordering by random the offset does not matter. Only the limit
 		// does.
-		page = 0
+		offset = 0
+	} else if args.OrderBy == OrderByFavourites {
+		orderBy = "ars.favourite"
 	}
 
 	artistsCount := lib.getTableSize("artists")
@@ -51,7 +57,7 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 				%s %s
 			LIMIT
 				?, ?
-		`, orderBy, order), page*perPage, perPage)
+		`, orderBy, order), offset, perPage)
 
 		if err != nil {
 			return err
@@ -93,8 +99,12 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 // BrowseAlbums implements the Library interface for the local library by getting
 // albums from the database ordered by their name.
 func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
-	page := args.Page
+	offset := uint64(args.Page * args.PerPage)
 	perPage := args.PerPage
+
+	if args.Offset > 0 {
+		offset = args.Offset
+	}
 
 	var (
 		output      []Album
@@ -102,23 +112,7 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 	)
 
 	work := func(db *sql.DB) error {
-		smt, err := db.Prepare(`
-			SELECT
-				COUNT(DISTINCT tr.album_id) as cnt
-			FROM
-				tracks tr
-		`)
-
-		if err != nil {
-			log.Printf("Query for getting albums count not prepared: %s\n", err)
-		} else {
-			err = smt.QueryRow().Scan(&albumsCount)
-
-			if err != nil {
-				log.Printf("Query for getting albums count not successful: %s\n", err)
-			}
-		}
-
+		where := ""
 		order := "ASC"
 		orderBy := "al.name"
 
@@ -133,15 +127,38 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 			orderBy = "RANDOM()"
 			order = ""
 
-			// When ordering by random the page does not matter. Only the limit
+			// When ordering by random the offset does not matter. Only the limit
 			// does.
-			page = 0
+			offset = 0
 		case OrderByFrequentlyPlayed:
 			orderBy = "SUM(us.play_count)"
 		case OrderByRecentlyPlayed:
 			orderBy = "MAX(us.last_played)"
 		case OrderByArtistName:
 			orderBy = "artist_name"
+		case OrderByFavourites:
+			orderBy = "als.favourite"
+			where = "WHERE als.favourite != 0"
+		}
+
+		smt, err := db.Prepare(`
+			SELECT
+				COUNT(DISTINCT tr.album_id) as cnt
+			FROM
+				tracks tr
+				LEFT JOIN
+					albums_stats als ON als.album_id = tr.album_id
+			` + where + `
+		`)
+
+		if err != nil {
+			log.Printf("Query for getting albums count not prepared: %s\n", err)
+		} else {
+			err = smt.QueryRow().Scan(&albumsCount)
+
+			if err != nil {
+				log.Printf("Query for getting albums count not successful: %s\n", err)
+			}
 		}
 
 		rows, err := db.Query(fmt.Sprintf(`
@@ -166,13 +183,14 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 					user_stats us ON us.track_id = tr.id
 				LEFT JOIN
 					albums_stats als ON als.album_id = tr.album_id
+			%s
 			GROUP BY
 				tr.album_id
 			ORDER BY
 				%s %s
 			LIMIT
 				?, ?
-		`, orderBy, order), page*perPage, perPage)
+		`, where, orderBy, order), offset, perPage)
 
 		if err != nil {
 			return err

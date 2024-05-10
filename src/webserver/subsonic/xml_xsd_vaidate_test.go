@@ -163,10 +163,6 @@ func TestSubsonicXMLResponses(t *testing.T) {
 	}
 	browser := &libraryfakes.FakeBrowser{
 		BrowseArtistsStub: func(ba library.BrowseArgs) ([]library.Artist, int) {
-			if ba.Page > 1 {
-				return nil, 3
-			}
-
 			resp := []library.Artist{
 				{
 					ID:         1,
@@ -187,14 +183,14 @@ func TestSubsonicXMLResponses(t *testing.T) {
 				},
 			}
 
+			if ba.Page > 1 || ba.Offset >= uint64(len(resp)) { //nolint: staticcheck
+				return nil, 3
+			}
+
 			return resp, len(resp)
 		},
 
 		BrowseAlbumsStub: func(ba library.BrowseArgs) ([]library.Album, int) {
-			if ba.Page > 1 {
-				return nil, 3
-			}
-
 			resp := []library.Album{
 				{
 					ID:         1,
@@ -211,6 +207,7 @@ func TestSubsonicXMLResponses(t *testing.T) {
 					Name:      "Second Album",
 					Artist:    "Second Artist",
 					SongCount: 9,
+					Favourite: 1614856348,
 				},
 				{
 					ID:        5223,
@@ -218,6 +215,10 @@ func TestSubsonicXMLResponses(t *testing.T) {
 					Artist:    "First Artist",
 					SongCount: 22,
 				},
+			}
+
+			if ba.Page > 1 || ba.Offset > uint64(len(resp)) { //nolint: staticcheck
+				return nil, 3
 			}
 
 			return resp, len(resp)
@@ -400,6 +401,14 @@ func TestSubsonicXMLResponses(t *testing.T) {
 				"/unstar?id=%d&id=%d&id=%d&artistId=%d&albumId=%d",
 				int64(10), int64(1e9+10), int64(2e9+10), int64(1e9+11), int64(10),
 			),
+		},
+		{
+			desc: "getStarred",
+			url:  testURL("/getStarred"),
+		},
+		{
+			desc: "getStarred2",
+			url:  testURL("/getStarred2"),
 		},
 	}
 

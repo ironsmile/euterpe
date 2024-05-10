@@ -327,3 +327,15 @@ func toUnixTimeWithNull(timestamp int64) *time.Time {
 	ts := time.Unix(timestamp, 0)
 	return &ts
 }
+
+type xsdStarred struct {
+	Artists []xsdArtist `xml:"artist,omitempty" json:"artist,omitempty"`
+	Albums  []xsdChild  `xml:"album,omitempty" json:"album,omitempty"`
+	Songs   []xsdChild  `xml:"song,omitempty" json:"song,omitempty"`
+}
+
+type xsdStarred2 struct {
+	Artists []xsdArtistID3 `xml:"artist,omitempty" json:"artist,omitempty"`
+	Albums  []xsdAlbumID3  `xml:"album,omitempty" json:"album,omitempty"`
+	Songs   []xsdChild     `xml:"song,omitempty" json:"song,omitempty"`
+}

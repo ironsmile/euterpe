@@ -62,7 +62,7 @@ func (s *subsonic) getAlbumList2(w http.ResponseWriter, req *http.Request) {
 
 	offset, err := strconv.ParseUint(offsetString, 10, 32)
 	if err == nil && offset > 0 {
-		browseArgs.Page = uint(offset) / browseArgs.PerPage
+		browseArgs.Offset = offset
 	}
 
 	albums, _ := s.libBrowser.BrowseAlbums(browseArgs)

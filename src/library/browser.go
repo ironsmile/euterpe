@@ -50,12 +50,31 @@ const (
 	OrderByArtistName
 )
 
-// BrowseArgs defines all arguments one can pass to the browse methods to later its behaviour.
+// BrowseArgs defines all arguments one can pass to the browse methods to later
+// their behaviour.
 type BrowseArgs struct {
-	Page    uint
+	// Page is used for skipping to a particular multiple of "PerPage" items in the
+	// list to be returned.
+	//
+	// Page is ignored if Offset is used.
+	//
+	// Deprecated: Use Offset instead.
+	Page uint
+
+	// PerPage defines how many items to be returned from browse methods.
 	PerPage uint
-	Order   BrowseOrder
+
+	// Order defines whether items will be in ascending or descending order based
+	// on the OrderBy ordering type.
+	Order BrowseOrder
+
+	// OrderBy sets how the items to be returned will be ordered.
 	OrderBy BrowseOrderBy
+
+	// Offset is the number of items to skip before listing. If Offset is greater than
+	// zero then the value of Page is ignored. Offset allows more precise targeting of
+	// the next item.
+	Offset uint64
 }
 
 //counterfeiter:generate . Browser
