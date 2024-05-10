@@ -74,7 +74,7 @@ func (s *subsonic) getArtistDirectory(
 		AlbumCount:     int64(len(albums)),
 		CoverArtID:     artistCoverArtID(artistID),
 		ArtistImageURL: artURL.String(),
-		Starred:        artist.Favourite,
+		Starred:        toUnixTimeWithNull(artist.Favourite),
 		UserRating:     artist.Rating,
 	}
 
@@ -109,7 +109,7 @@ func (s *subsonic) getAlbumDirectory(
 		Artist:     album.Artist,
 		SongCount:  int64(len(tracks)),
 		CoverArtID: albumConverArtID(albumID),
-		Starred:    album.Favourite,
+		Starred:    toUnixTimeWithNull(album.Favourite),
 		UserRating: album.Rating,
 		Duration:   album.Duration / 1000,
 		PlayCount:  album.Plays,

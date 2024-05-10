@@ -117,6 +117,13 @@ type Album struct {
 	Rating uint8 `json:"rating,omitempty"`
 }
 
+// Favourites describes a set of favourite tracks, artists and albums.
+type Favourites struct {
+	ArtistIDs []int64
+	AlbumIDs  []int64
+	TrackIDs  []int64
+}
+
 //counterfeiter:generate . Library
 
 // Library represents the media library which is played using the HTTPMS.
@@ -178,6 +185,15 @@ type Library interface {
 	// SetArtistRating sets the rating for particular artist. Only values in the
 	// [0-5] range are accepted. 0 unsets the rating.
 	SetArtistRating(ctx context.Context, artistID int64, rating uint8) error
+
+	// RecordFavourite marks as "favourite" a variable number of tracks, albums
+	// or artists. If an item is already in the favourites the operation is a
+	// no-op and it stays there as before.
+	RecordFavourite(ctx context.Context, favs Favourites) error
+
+	// RemoveFavourite unmarks as "favourite" a variable number of tracks, albums
+	// or artists. For items which are not among the favourite nothing is done.
+	RemoveFavourite(ctx context.Context, favs Favourites) error
 
 	// Starts a full library scan. Will scan all paths if
 	// they are not scanned already.

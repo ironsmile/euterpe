@@ -29,6 +29,8 @@ func TestSubsonicXMLResponses(t *testing.T) {
 					SongCount:  8,
 					Plays:      222,
 					LastPlayed: 1714856348,
+					Favourite:  1614856248,
+					Rating:     3,
 				},
 				{
 					ID:        33,
@@ -69,6 +71,8 @@ func TestSubsonicXMLResponses(t *testing.T) {
 					TrackNumber: 2,
 					Format:      "mp3",
 					Duration:    195000,
+					Favourite:   1714856348,
+					Rating:      3,
 				},
 			}
 		},
@@ -85,6 +89,8 @@ func TestSubsonicXMLResponses(t *testing.T) {
 				Duration:    123000,
 				Plays:       333,
 				LastPlayed:  1714856348,
+				Rating:      3,
+				Favourite:   1714856348,
 			}, nil
 		},
 		SearchStub: func(sa library.SearchArgs) []library.SearchResult {
@@ -101,6 +107,8 @@ func TestSubsonicXMLResponses(t *testing.T) {
 					Duration:    162000,
 					Plays:       12,
 					LastPlayed:  1714856348,
+					Favourite:   1714856348,
+					Rating:      3,
 				},
 				{
 					ID:          12,
@@ -136,6 +144,8 @@ func TestSubsonicXMLResponses(t *testing.T) {
 					Duration:   42318473,
 					Plays:      932,
 					LastPlayed: 1714856348,
+					Rating:     3,
+					Favourite:  1714856348,
 				},
 			}
 		},
@@ -145,6 +155,8 @@ func TestSubsonicXMLResponses(t *testing.T) {
 					ID:         11,
 					Name:       "First Artist",
 					AlbumCount: 3,
+					Favourite:  1714856348,
+					Rating:     4,
 				},
 			}
 		},
@@ -160,6 +172,8 @@ func TestSubsonicXMLResponses(t *testing.T) {
 					ID:         1,
 					Name:       "First Artist",
 					AlbumCount: 2,
+					Favourite:  1714856348,
+					Rating:     2,
 				},
 				{
 					ID:         2,
@@ -189,6 +203,8 @@ func TestSubsonicXMLResponses(t *testing.T) {
 					SongCount:  5,
 					Plays:      333,
 					LastPlayed: 1714856348,
+					Favourite:  1714856348,
+					Rating:     5,
 				},
 				{
 					ID:        2,
@@ -330,6 +346,60 @@ func TestSubsonicXMLResponses(t *testing.T) {
 		{
 			desc: "scrobble",
 			url:  testURL("/scrobble?id=%d&time=1714834066", int64(2e9+33)),
+		},
+		{
+			desc: "star track",
+			url:  testURL("/star?id=%d", int64(2e9+33)),
+		},
+		{
+			desc: "star artist",
+			url:  testURL("/star?id=%d", int64(1e9+10)),
+		},
+		{
+			desc: "star artist ID3",
+			url:  testURL("/star?artistId=%d", int64(1e9+10)),
+		},
+		{
+			desc: "star album",
+			url:  testURL("/star?id=%d", int64(10)),
+		},
+		{
+			desc: "star album ID3",
+			url:  testURL("/star?albumId=%d", int64(10)),
+		},
+		{
+			desc: "star multiple values",
+			url: testURL(
+				"/star?id=%d&id=%d&id=%d&artistId=%d&albumId=%d",
+				int64(10), int64(1e9+10), int64(2e9+10), int64(1e9+11), int64(10),
+			),
+		},
+		{
+			desc: "unstar track",
+			url:  testURL("/unstar?id=%d", int64(2e9+33)),
+		},
+		{
+			desc: "unstar artist",
+			url:  testURL("/unstar?id=%d", int64(1e9+10)),
+		},
+		{
+			desc: "unstar artist ID3",
+			url:  testURL("/unstar?artistId=%d", int64(1e9+10)),
+		},
+		{
+			desc: "unstar album",
+			url:  testURL("/unstar?id=%d", int64(10)),
+		},
+		{
+			desc: "unstar album ID3",
+			url:  testURL("/unstar?albumId=%d", int64(10)),
+		},
+		{
+			desc: "unstar multiple values",
+			url: testURL(
+				"/unstar?id=%d&id=%d&id=%d&artistId=%d&albumId=%d",
+				int64(10), int64(1e9+10), int64(2e9+10), int64(1e9+11), int64(10),
+			),
 		},
 	}
 
@@ -487,6 +557,101 @@ func TestSubsonicXMLErrors(t *testing.T) {
 			desc:      "no getArtistInfo2 ID",
 			url:       testURL("/getArtistInfo2"),
 			errorCode: 70,
+		},
+		{
+			desc:      "scrobble with no track",
+			url:       testURL("/scrobble"),
+			errorCode: 10,
+		},
+		{
+			desc:      "scrobble wrong track",
+			url:       testURL("/scrobble?id=baba"),
+			errorCode: 70,
+		},
+		{
+			desc:      "scrobble track ID which is not for a track",
+			url:       testURL("/scrobble?id=10"),
+			errorCode: 70,
+		},
+		{
+			desc:      "scrobble wrong Unix time",
+			url:       testURL("/scrobble?id=%d&time=baba", int64(2e9+55)),
+			errorCode: 0,
+		},
+		{
+			desc:      "scrobble negative Unix time",
+			url:       testURL("/scrobble?id=%d&time=-50", int64(2e9+55)),
+			errorCode: 0,
+		},
+		{
+			desc:      "star wrong track ID",
+			url:       testURL("/star?id=baba"),
+			errorCode: 0,
+		},
+		{
+			desc:      "star wrong album ID",
+			url:       testURL("/star?albumId=baba"),
+			errorCode: 0,
+		},
+		{
+			desc:      "star wrong artist ID",
+			url:       testURL("/star?artistId=baba"),
+			errorCode: 0,
+		},
+		{
+			desc:      "star wrong ID type - reserved ID",
+			url:       testURL("/star?id=%d", int64(1e9)),
+			errorCode: 0,
+		},
+		{
+			desc:      "star wrong album ID type - reserved ID",
+			url:       testURL("/star?albumId=%d", int64(1e9)),
+			errorCode: 0,
+		},
+		{
+			desc:      "star wrong artist ID type - reserved ID",
+			url:       testURL("/star?artistId=%d", int64(1e9)),
+			errorCode: 0,
+		},
+		{
+			desc:      "star no arguments",
+			url:       testURL("/star"),
+			errorCode: 10,
+		},
+		{
+			desc:      "unstar wrong track ID",
+			url:       testURL("/unstar?id=baba"),
+			errorCode: 0,
+		},
+		{
+			desc:      "unstar wrong album ID",
+			url:       testURL("/unstar?albumId=baba"),
+			errorCode: 0,
+		},
+		{
+			desc:      "unstar wrong artist ID",
+			url:       testURL("/unstar?artistId=baba"),
+			errorCode: 0,
+		},
+		{
+			desc:      "unstar wrong ID type - reserved ID",
+			url:       testURL("/unstar?id=%d", int64(1e9)),
+			errorCode: 0,
+		},
+		{
+			desc:      "unstar wrong album ID type - reserved ID",
+			url:       testURL("/unstar?albumId=%d", int64(1e9)),
+			errorCode: 0,
+		},
+		{
+			desc:      "unstar wrong artist ID type - reserved ID",
+			url:       testURL("/unstar?artistId=%d", int64(1e9)),
+			errorCode: 0,
+		},
+		{
+			desc:      "unstar no arguments",
+			url:       testURL("/unstar"),
+			errorCode: 10,
 		},
 	}
 

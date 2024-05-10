@@ -8,6 +8,7 @@ import (
 	"log"
 )
 
+// SetTrackRating stores the rating for particular track into the database.
 func (lib *LocalLibrary) SetTrackRating(
 	ctx context.Context,
 	mediaID int64,
@@ -45,6 +46,7 @@ func (lib *LocalLibrary) SetTrackRating(
 	return nil
 }
 
+// SetAlbumRating stores the rating for particular album into the database.
 func (lib *LocalLibrary) SetAlbumRating(
 	ctx context.Context,
 	albumID int64,
@@ -82,6 +84,7 @@ func (lib *LocalLibrary) SetAlbumRating(
 	return nil
 }
 
+// SetArtistRating stores the rating for particular artist into the database.
 func (lib *LocalLibrary) SetArtistRating(
 	ctx context.Context,
 	artistID int64,

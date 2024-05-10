@@ -43,8 +43,8 @@
 - [x] getCoverArt
 - [ ] getLyrics
 - [ ] getAvatar
-- [ ] star
-- [ ] unstar
+- [x] star
+- [x] unstar
 - [x] setRating
 - [x] scrobble - "submission=false" is a no-op.
 - [ ] getShares

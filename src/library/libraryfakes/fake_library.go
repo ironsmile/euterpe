@@ -115,6 +115,18 @@ type FakeLibrary struct {
 	initializeReturnsOnCall map[int]struct {
 		result1 error
 	}
+	RecordFavouriteStub        func(context.Context, library.Favourites) error
+	recordFavouriteMutex       sync.RWMutex
+	recordFavouriteArgsForCall []struct {
+		arg1 context.Context
+		arg2 library.Favourites
+	}
+	recordFavouriteReturns struct {
+		result1 error
+	}
+	recordFavouriteReturnsOnCall map[int]struct {
+		result1 error
+	}
 	RecordTrackPlayStub        func(context.Context, int64, time.Time) error
 	recordTrackPlayMutex       sync.RWMutex
 	recordTrackPlayArgsForCall []struct {
@@ -126,6 +138,18 @@ type FakeLibrary struct {
 		result1 error
 	}
 	recordTrackPlayReturnsOnCall map[int]struct {
+		result1 error
+	}
+	RemoveFavouriteStub        func(context.Context, library.Favourites) error
+	removeFavouriteMutex       sync.RWMutex
+	removeFavouriteArgsForCall []struct {
+		arg1 context.Context
+		arg2 library.Favourites
+	}
+	removeFavouriteReturns struct {
+		result1 error
+	}
+	removeFavouriteReturnsOnCall map[int]struct {
 		result1 error
 	}
 	ScanStub        func()
@@ -766,6 +790,68 @@ func (fake *FakeLibrary) InitializeReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
+func (fake *FakeLibrary) RecordFavourite(arg1 context.Context, arg2 library.Favourites) error {
+	fake.recordFavouriteMutex.Lock()
+	ret, specificReturn := fake.recordFavouriteReturnsOnCall[len(fake.recordFavouriteArgsForCall)]
+	fake.recordFavouriteArgsForCall = append(fake.recordFavouriteArgsForCall, struct {
+		arg1 context.Context
+		arg2 library.Favourites
+	}{arg1, arg2})
+	stub := fake.RecordFavouriteStub
+	fakeReturns := fake.recordFavouriteReturns
+	fake.recordInvocation("RecordFavourite", []interface{}{arg1, arg2})
+	fake.recordFavouriteMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeLibrary) RecordFavouriteCallCount() int {
+	fake.recordFavouriteMutex.RLock()
+	defer fake.recordFavouriteMutex.RUnlock()
+	return len(fake.recordFavouriteArgsForCall)
+}
+
+func (fake *FakeLibrary) RecordFavouriteCalls(stub func(context.Context, library.Favourites) error) {
+	fake.recordFavouriteMutex.Lock()
+	defer fake.recordFavouriteMutex.Unlock()
+	fake.RecordFavouriteStub = stub
+}
+
+func (fake *FakeLibrary) RecordFavouriteArgsForCall(i int) (context.Context, library.Favourites) {
+	fake.recordFavouriteMutex.RLock()
+	defer fake.recordFavouriteMutex.RUnlock()
+	argsForCall := fake.recordFavouriteArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeLibrary) RecordFavouriteReturns(result1 error) {
+	fake.recordFavouriteMutex.Lock()
+	defer fake.recordFavouriteMutex.Unlock()
+	fake.RecordFavouriteStub = nil
+	fake.recordFavouriteReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeLibrary) RecordFavouriteReturnsOnCall(i int, result1 error) {
+	fake.recordFavouriteMutex.Lock()
+	defer fake.recordFavouriteMutex.Unlock()
+	fake.RecordFavouriteStub = nil
+	if fake.recordFavouriteReturnsOnCall == nil {
+		fake.recordFavouriteReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.recordFavouriteReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeLibrary) RecordTrackPlay(arg1 context.Context, arg2 int64, arg3 time.Time) error {
 	fake.recordTrackPlayMutex.Lock()
 	ret, specificReturn := fake.recordTrackPlayReturnsOnCall[len(fake.recordTrackPlayArgsForCall)]
@@ -825,6 +911,68 @@ func (fake *FakeLibrary) RecordTrackPlayReturnsOnCall(i int, result1 error) {
 		})
 	}
 	fake.recordTrackPlayReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeLibrary) RemoveFavourite(arg1 context.Context, arg2 library.Favourites) error {
+	fake.removeFavouriteMutex.Lock()
+	ret, specificReturn := fake.removeFavouriteReturnsOnCall[len(fake.removeFavouriteArgsForCall)]
+	fake.removeFavouriteArgsForCall = append(fake.removeFavouriteArgsForCall, struct {
+		arg1 context.Context
+		arg2 library.Favourites
+	}{arg1, arg2})
+	stub := fake.RemoveFavouriteStub
+	fakeReturns := fake.removeFavouriteReturns
+	fake.recordInvocation("RemoveFavourite", []interface{}{arg1, arg2})
+	fake.removeFavouriteMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeLibrary) RemoveFavouriteCallCount() int {
+	fake.removeFavouriteMutex.RLock()
+	defer fake.removeFavouriteMutex.RUnlock()
+	return len(fake.removeFavouriteArgsForCall)
+}
+
+func (fake *FakeLibrary) RemoveFavouriteCalls(stub func(context.Context, library.Favourites) error) {
+	fake.removeFavouriteMutex.Lock()
+	defer fake.removeFavouriteMutex.Unlock()
+	fake.RemoveFavouriteStub = stub
+}
+
+func (fake *FakeLibrary) RemoveFavouriteArgsForCall(i int) (context.Context, library.Favourites) {
+	fake.removeFavouriteMutex.RLock()
+	defer fake.removeFavouriteMutex.RUnlock()
+	argsForCall := fake.removeFavouriteArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeLibrary) RemoveFavouriteReturns(result1 error) {
+	fake.removeFavouriteMutex.Lock()
+	defer fake.removeFavouriteMutex.Unlock()
+	fake.RemoveFavouriteStub = nil
+	fake.removeFavouriteReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeLibrary) RemoveFavouriteReturnsOnCall(i int, result1 error) {
+	fake.removeFavouriteMutex.Lock()
+	defer fake.removeFavouriteMutex.Unlock()
+	fake.RemoveFavouriteStub = nil
+	if fake.removeFavouriteReturnsOnCall == nil {
+		fake.removeFavouriteReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.removeFavouriteReturnsOnCall[i] = struct {
 		result1 error
 	}{result1}
 }
@@ -1301,8 +1449,12 @@ func (fake *FakeLibrary) Invocations() map[string][][]interface{} {
 	defer fake.getTrackMutex.RUnlock()
 	fake.initializeMutex.RLock()
 	defer fake.initializeMutex.RUnlock()
+	fake.recordFavouriteMutex.RLock()
+	defer fake.recordFavouriteMutex.RUnlock()
 	fake.recordTrackPlayMutex.RLock()
 	defer fake.recordTrackPlayMutex.RUnlock()
+	fake.removeFavouriteMutex.RLock()
+	defer fake.removeFavouriteMutex.RUnlock()
 	fake.scanMutex.RLock()
 	defer fake.scanMutex.RUnlock()
 	fake.searchMutex.RLock()
