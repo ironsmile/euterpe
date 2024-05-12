@@ -69,7 +69,7 @@ func init() {
 			"As opposed to the bundled into the binary versions. Useful for development.")
 	flag.BoolVar(&showVersion, "v", false, "Show version and build information.")
 	flag.BoolVar(&rescanLibrary, "rescan", false,
-		"Will metadata synchronization with the source. All media in\n"+
+		"Will do metadata synchronization with the source. All media in\n"+
 			"the database will be updated. Without starting the server proper.")
 	flag.BoolVar(&generateConfig, "config-gen", false,
 		"Generates configuration file and then exits. In case there is a\n"+
