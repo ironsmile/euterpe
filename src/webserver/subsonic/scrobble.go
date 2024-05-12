@@ -28,6 +28,15 @@ func (s *subsonic) scrobble(w http.ResponseWriter, req *http.Request) {
 	for _, idString := range ids {
 		trackID, err := strconv.ParseInt(idString, 10, 64)
 		if err != nil || !isTrackID(trackID) {
+			if req.Form.Get("c") == "substreamer" {
+				// Substreamer does not handle "not found" errors well. It starts to
+				// retry the request to scrobble every second without ever stopping. No
+				// further scrobbling is done for other tasks as well, I think. So
+				// for it we ignore this type of errors and do nothing with the offending
+				// IDs.
+				continue
+			}
+
 			resp := responseError(
 				errCodeNotFound,
 				fmt.Sprintf("track ID '%s' not found", idString),
