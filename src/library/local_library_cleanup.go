@@ -330,6 +330,14 @@ func (lib *LocalLibrary) checkAndRemoveArtists(artistIDs []int64) error {
 				return err
 			}
 
+			_, err = db.Exec(`
+				DELETE FROM artists_images
+				WHERE artist_id = ?
+			`, artistID)
+			if err != nil {
+				return err
+			}
+
 			return nil
 		}); err != nil {
 			log.Printf("Error deleting artist %d: %s", artistID, err)
@@ -341,10 +349,9 @@ func (lib *LocalLibrary) checkAndRemoveArtists(artistIDs []int64) error {
 
 // checkAndRemoveTracks removes all stale tracks from the database. This might be
 //
-//	* Tracks which no longer exist on disk.
-//	* Tracks with unclean file system path. They will be inserted again
-//	  with their clean path by the normal scan.
-//
+//   - Tracks which no longer exist on disk.
+//   - Tracks with unclean file system path. They will be inserted again
+//     with their clean path by the normal scan.
 func (lib *LocalLibrary) checkAndRemoveTracks(tracks []track) error {
 	for _, track := range tracks {
 		cleanedPath := filepath.Clean(track.fsPath)
