@@ -40,18 +40,22 @@ func (bh BrowseHandler) browse(writer http.ResponseWriter, req *http.Request) er
 	orderBy := strings.TrimSpace(strings.ToLower(req.Form.Get("order-by")))
 	order := strings.TrimSpace(strings.ToLower(req.Form.Get("order")))
 
-	possibleTypes := []string{"artist", "album"}
+	possibleTypes := []string{"artist", "album", "song"}
 	if browseBy != "" && !slices.Contains(possibleTypes, browseBy) {
 		bh.badRequest(writer,
-			fmt.Sprintf("Wrong 'by' parameter. Must be one of %q", possibleTypes),
+			fmt.Sprintf(
+				"Wrong 'by' parameter. Must be one of %s",
+				strings.Join(possibleTypes, ", "),
+			),
 		)
 		return nil
 	}
 
-	possibleOrders := []string{"id", "name", "random", "playCount", "lastPlayed"}
+	possibleOrders := []string{"id", "name", "random", "frequency", "recency"}
 	if orderBy != "" && !slices.Contains(possibleOrders, orderBy) {
-		bh.badRequest(writer, "Wrong 'order-by' parameter. "+
-			fmt.Sprintf("Must be one of %q", possibleOrders))
+		bh.badRequest(writer,
+			fmt.Sprintf("Wrong 'order-by' parameter - '%s'. ", orderBy)+
+				fmt.Sprintf("Must be one of %s", strings.Join(possibleOrders, ", ")))
 		return nil
 	}
 
@@ -87,6 +91,8 @@ func (bh BrowseHandler) browse(writer http.ResponseWriter, req *http.Request) er
 
 	if browseBy == "artist" {
 		return bh.browseArtists(writer, page, perPage, orderBy, order)
+	} else if browseBy == "song" {
+		return bh.browseSongs(writer, page, perPage, orderBy, order)
 	}
 
 	return bh.browseAlbums(writer, page, perPage, orderBy, order)
@@ -97,7 +103,6 @@ func (bh BrowseHandler) browseAlbums(
 	page, perPage int,
 	orderBy, order string,
 ) error {
-
 	browseArgs := getBrowseArgs(page, perPage, orderBy, order)
 	albums, count := bh.browser.BrowseAlbums(browseArgs)
 	prevPage, nextPage := getPrevNextPageURI(
@@ -134,10 +139,12 @@ func (bh BrowseHandler) browseArtists(
 	unsupportedBrowseBy := []library.BrowseOrderBy{
 		library.OrderByRecentlyPlayed,
 		library.OrderByFrequentlyPlayed,
-		library.OrderByFavourites, //!TODO: add support for this
 	}
 	if slices.Contains(unsupportedBrowseBy, browseArgs.OrderBy) {
-		return fmt.Errorf("this type of order is not supported for artists")
+		return fmt.Errorf(
+			"this type of order (%d) is not supported for artists",
+			browseArgs.OrderBy,
+		)
 	}
 
 	artists, count := bh.browser.BrowseArtists(browseArgs)
@@ -166,6 +173,42 @@ func (bh BrowseHandler) browseArtists(
 	return enc.Encode(retData)
 }
 
+func (bh BrowseHandler) browseSongs(
+	writer http.ResponseWriter,
+	page, perPage int,
+	orderBy, order string,
+) error {
+	if orderBy == "" {
+		orderBy = "id"
+	}
+
+	browseArgs := getBrowseArgs(page, perPage, orderBy, order)
+	tracks, count := bh.browser.BrowseTracks(browseArgs)
+	prevPage, nextPage := getPrevNextPageURI(
+		"track",
+		page,
+		perPage,
+		count,
+		orderBy,
+		order,
+	)
+
+	retData := struct {
+		Data       []library.TrackInfo `json:"data"`
+		Next       string              `json:"next"`
+		Previous   string              `json:"previous"`
+		PagesCount int                 `json:"pages_count"`
+	}{
+		Data:       tracks,
+		PagesCount: int(math.Ceil(float64(count) / float64(perPage))),
+		Next:       nextPage,
+		Previous:   prevPage,
+	}
+
+	enc := json.NewEncoder(writer)
+	return enc.Encode(retData)
+}
+
 func (bh BrowseHandler) badRequest(writer http.ResponseWriter, message string) {
 	writer.WriteHeader(http.StatusBadRequest)
 	msgJSON, _ := json.Marshal(struct {
@@ -179,10 +222,12 @@ func (bh BrowseHandler) badRequest(writer http.ResponseWriter, message string) {
 }
 
 func getBrowseArgs(page, perPage int, orderBy, order string) library.BrowseArgs {
+	// In the API we count starting from 1. But actually for the library function
+	// pages are counted from 0 which is much easier for implementing.
+	browsePage := uint64(page - 1)
+
 	browseArgs := library.BrowseArgs{
-		// In the API we count starting from 1. But actually for the library function
-		// pages are counted from 0 which is much easier for implementing.
-		Page:    uint(page - 1),
+		Offset:  browsePage * uint64(perPage),
 		PerPage: uint(perPage),
 	}
 
@@ -191,9 +236,9 @@ func getBrowseArgs(page, perPage int, orderBy, order string) library.BrowseArgs 
 		browseArgs.OrderBy = library.OrderByID
 	case "random":
 		browseArgs.OrderBy = library.OrderByRandom
-	case "playCount":
+	case "frequency":
 		browseArgs.OrderBy = library.OrderByFrequentlyPlayed
-	case "lastPlayed":
+	case "recency":
 		browseArgs.OrderBy = library.OrderByRecentlyPlayed
 	default:
 		browseArgs.OrderBy = library.OrderByName

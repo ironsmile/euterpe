@@ -7,8 +7,8 @@ import (
 )
 
 // BrowseArtists implements the Library interface for the local library by getting
-// artists from the database ordered by their name. Returns an artists slice and the
-// total count of all artists in the database.
+// artists from the database. Returns an artists slice and the total count of all
+// artists in the database.
 func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 	offset := uint64(args.Page * args.PerPage)
 	perPage := args.PerPage
@@ -17,6 +17,7 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 		offset = args.Offset
 	}
 
+	where := ""
 	order := "ASC"
 	orderBy := "ar.name"
 
@@ -35,6 +36,7 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 		offset = 0
 	} else if args.OrderBy == OrderByFavourites {
 		orderBy = "ars.favourite"
+		where = "WHERE ars.favourite IS NOT NULL AND ars.favourite != 0"
 	}
 
 	artistsCount := lib.getTableSize("artists")
@@ -53,11 +55,12 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 			FROM
 				artists ar
 				LEFT JOIN artists_stats as ars ON ars.artist_id = ar.id
+			%s
 			ORDER BY
 				%s %s
 			LIMIT
 				?, ?
-		`, orderBy, order), offset, perPage)
+		`, where, orderBy, order), offset, perPage)
 
 		if err != nil {
 			return err
@@ -97,7 +100,7 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 }
 
 // BrowseAlbums implements the Library interface for the local library by getting
-// albums from the database ordered by their name.
+// albums from the database.
 func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 	offset := uint64(args.Page * args.PerPage)
 	perPage := args.PerPage
@@ -138,7 +141,7 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 			orderBy = "artist_name"
 		case OrderByFavourites:
 			orderBy = "als.favourite"
-			where = "WHERE als.favourite != 0"
+			where = "WHERE als.favourite IS NOT NULL AND als.favourite != 0"
 		}
 
 		smt, err := db.Prepare(`
@@ -228,6 +231,138 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 	}
 
 	return output, albumsCount
+}
+
+// BrowseTracks implements the Library interface for the local library by getting
+// tracks from the database.
+func (lib *LocalLibrary) BrowseTracks(args BrowseArgs) ([]TrackInfo, int) {
+	offset := uint64(args.Page * args.PerPage)
+	perPage := args.PerPage
+
+	if args.Offset > 0 {
+		offset = args.Offset
+	}
+
+	var (
+		output      []TrackInfo
+		tracksCount = lib.getTableSize("tracks")
+	)
+
+	work := func(db *sql.DB) error {
+		where := ""
+		order := "ASC"
+
+		if args.Order == OrderDesc {
+			order = "DESC"
+		}
+
+		orderBy := "t.id " + order
+
+		switch args.OrderBy {
+		case OrderByID:
+			orderBy = "t.id " + order
+		case OrderByName:
+			orderBy = "t.name " + order
+		case OrderByRandom:
+			orderBy = "RANDOM()"
+
+			// When ordering by random the offset does not matter. Only the limit
+			// does.
+			offset = 0
+		case OrderByFrequentlyPlayed:
+			orderBy = "us.play_count " + order
+		case OrderByRecentlyPlayed:
+			orderBy = "us.last_played " + order
+		case OrderByArtistName:
+			orderBy = "at.name " + order + ", t.album_id, t.number ASC"
+		case OrderByFavourites:
+			orderBy = "us.favourite " + order
+			where = "WHERE us.favourite IS NOT NULL AND us.favourite != 0"
+		}
+
+		rows, err := db.Query(
+			fmt.Sprintf(`
+				SELECT
+					t.id as track_id,
+					t.name as track,
+					al.name as album,
+					at.name as artist,
+					at.id as artist_id,
+					t.number as track_number,
+					t.album_id as album_id,
+					t.fs_path as fs_path,
+					t.duration as duration,
+					us.favourite as fav,
+					us.user_rating as rating,
+					us.last_played as last_played,
+					us.play_count as play_count
+				FROM
+					tracks as t
+						LEFT JOIN albums as al ON al.id = t.album_id
+						LEFT JOIN artists as at ON at.id = t.artist_id
+						LEFT JOIN user_stats as us ON us.track_id = t.id
+				%s
+				ORDER BY
+					%s
+				LIMIT
+					@offset, @count
+			`, where, orderBy,
+			),
+			sql.Named("offset", offset),
+			sql.Named("count", perPage),
+		)
+		if err != nil {
+			log.Printf("Query for browsing songs not successful: %s\n", err.Error())
+			return nil
+		}
+
+		defer rows.Close()
+		for rows.Next() {
+			var (
+				res TrackInfo
+
+				// nullable values from the result
+				fav        sql.NullInt64
+				rating     sql.NullInt16
+				lastPlayed sql.NullInt64
+				playCount  sql.NullInt64
+			)
+
+			err := rows.Scan(&res.ID, &res.Title, &res.Album, &res.Artist,
+				&res.ArtistID, &res.TrackNumber, &res.AlbumID, &res.Format,
+				&res.Duration, &fav, &rating, &lastPlayed, &playCount,
+			)
+			if err != nil {
+				log.Printf("Error scanning search result: %s\n", err)
+				continue
+			}
+
+			res.Format = mediaFormatFromFileName(res.Format)
+			if fav.Valid && fav.Int64 > 0 {
+				res.Favourite = fav.Int64
+			}
+			if rating.Valid && rating.Int16 >= 1 && rating.Int16 <= 5 {
+				res.Rating = uint8(rating.Int16)
+			}
+			if lastPlayed.Valid {
+				res.LastPlayed = lastPlayed.Int64
+			}
+			if playCount.Valid {
+				res.Plays = playCount.Int64
+			}
+
+			output = append(output, res)
+		}
+
+		return nil
+	}
+
+	if err := lib.executeDBJobAndWait(work); err != nil {
+		log.Printf("Error browse songs query: %s", err)
+		return output, tracksCount
+	}
+
+	return output, tracksCount
 }
 
 func (lib *LocalLibrary) getTableSize(table string) int {

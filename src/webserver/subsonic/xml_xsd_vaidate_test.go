@@ -19,6 +19,46 @@ import (
 // TestSubsonicXMLResponses checks that responses from the Subsonic
 // API methods return the XML defined in the Subsonic API XSD.
 func TestSubsonicXMLResponses(t *testing.T) {
+	libSongs := []library.SearchResult{
+		{
+			ID:          11,
+			ArtistID:    10,
+			Artist:      "First Artist",
+			AlbumID:     10,
+			Album:       "First Album",
+			Title:       "First Song",
+			TrackNumber: 1,
+			Format:      "mp3",
+			Duration:    162000,
+			Plays:       12,
+			LastPlayed:  1714856348,
+			Favourite:   1714856348,
+			Rating:      3,
+		},
+		{
+			ID:          12,
+			ArtistID:    11,
+			Artist:      "Second Artist",
+			AlbumID:     13,
+			Album:       "Second Album",
+			Title:       "Third Song",
+			TrackNumber: 5,
+			Format:      "mp3",
+			Duration:    195000,
+		},
+		{
+			ID:          13,
+			ArtistID:    11,
+			Artist:      "Second Artist",
+			AlbumID:     13,
+			Album:       "Second Album",
+			Title:       "Fourth Song",
+			TrackNumber: 6,
+			Format:      "mp3",
+			Duration:    95000,
+		},
+	}
+
 	lib := &libraryfakes.FakeLibrary{
 		GetArtistAlbumsStub: func(i int64) []library.Album {
 			return []library.Album{
@@ -94,45 +134,7 @@ func TestSubsonicXMLResponses(t *testing.T) {
 			}, nil
 		},
 		SearchStub: func(sa library.SearchArgs) []library.SearchResult {
-			return []library.SearchResult{
-				{
-					ID:          11,
-					ArtistID:    10,
-					Artist:      "First Artist",
-					AlbumID:     10,
-					Album:       "First Album",
-					Title:       "First Song",
-					TrackNumber: 1,
-					Format:      "mp3",
-					Duration:    162000,
-					Plays:       12,
-					LastPlayed:  1714856348,
-					Favourite:   1714856348,
-					Rating:      3,
-				},
-				{
-					ID:          12,
-					ArtistID:    11,
-					Artist:      "Second Artist",
-					AlbumID:     13,
-					Album:       "Second Album",
-					Title:       "Third Song",
-					TrackNumber: 5,
-					Format:      "mp3",
-					Duration:    195000,
-				},
-				{
-					ID:          13,
-					ArtistID:    11,
-					Artist:      "Second Artist",
-					AlbumID:     13,
-					Album:       "Second Album",
-					Title:       "Fourth Song",
-					TrackNumber: 6,
-					Format:      "mp3",
-					Duration:    95000,
-				},
-			}
+			return libSongs
 		},
 		SearchAlbumsStub: func(sa library.SearchArgs) []library.Album {
 			return []library.Album{
@@ -183,7 +185,7 @@ func TestSubsonicXMLResponses(t *testing.T) {
 				},
 			}
 
-			if ba.Page > 1 || ba.Offset >= uint64(len(resp)) { //nolint: staticcheck
+			if ba.Page > 0 || ba.Offset >= uint64(len(resp)) { //nolint: staticcheck
 				return nil, 3
 			}
 
@@ -217,11 +219,19 @@ func TestSubsonicXMLResponses(t *testing.T) {
 				},
 			}
 
-			if ba.Page > 1 || ba.Offset > uint64(len(resp)) { //nolint: staticcheck
+			if ba.Page > 0 || ba.Offset > uint64(len(resp)) { //nolint: staticcheck
 				return nil, 3
 			}
 
 			return resp, len(resp)
+		},
+
+		BrowseTracksStub: func(ba library.BrowseArgs) ([]library.SearchResult, int) {
+			if ba.Page > 0 || ba.Offset >= uint64(len(libSongs)) { //nolint: staticcheck
+				return nil, len(libSongs)
+			}
+
+			return libSongs, len(libSongs)
 		},
 	}
 

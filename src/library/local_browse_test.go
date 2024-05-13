@@ -405,3 +405,211 @@ func TestBrowsingAlbums(t *testing.T) {
 		)
 	}
 }
+
+// TestBrowsingTracks checks that browsing by songs works for the local library. It
+// adds a few songs into the library and then tries different types of queries against
+// it through the BrowseTracks method.
+func TestBrowsingTracks(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	lib := getPathedLibrary(ctx, t)
+	defer func() { _ = lib.Truncate() }()
+
+	tracks := []struct {
+		track MockMedia
+		path  string
+	}{
+		{
+			MockMedia{
+				artist: "Buggy Bugoff",
+				album:  "The Return Of The Bugs",
+				title:  "Payback",
+				track:  1,
+				length: 340 * time.Second,
+			},
+			"/media/return-of-the-bugs/track-1.mp3",
+		},
+		{
+			MockMedia{
+				artist: "Buggy Bugoff",
+				album:  "The Return Of The Bugs",
+				title:  "Realization",
+				track:  2,
+				length: 345 * time.Second,
+			},
+			"/media/return-of-the-bugs/track-2.mp3",
+		},
+		{
+			MockMedia{
+				artist: "Code Review",
+				album:  "The Return Of The Bugs",
+				title:  "Regression Testing",
+				track:  3,
+				length: 218 * time.Second,
+			},
+			"/media/return-of-the-bugs/track-3.mp3",
+		},
+		{
+			MockMedia{
+				artist: "Unit Tests",
+				album:  "The Return Of The Bugs",
+				title:  "Cyclomatic Complexity",
+				track:  4,
+				length: 602 * time.Second,
+			},
+			"/media/return-of-the-bugs/track-4.mp3",
+		},
+		{
+			MockMedia{
+				artist: "Two By Two",
+				album:  "Hands In Blue",
+				title:  "They Will Never Stop Coming",
+				track:  1,
+				length: 244 * time.Second,
+			},
+			"/media/two-by-two/track-3.mp3",
+		},
+		{
+			MockMedia{
+				artist: "Eriney",
+				album:  "Never To Be",
+				title:  "Totally Going To Release It",
+				track:  1,
+				length: 912 * time.Second,
+			},
+			"/media/never-to-be/track-1.mp3",
+		},
+		{
+			MockMedia{
+				artist: "Eriney",
+				album:  "Never To Be",
+				title:  "Pinky Promise",
+				track:  2,
+				length: 211 * time.Second,
+			},
+			"/media/never-to-be/track-2.mp3",
+		},
+		{
+			MockMedia{
+				artist: "Eriney",
+				album:  "Definitely Never Happening",
+				title:  "No Way",
+				track:  1,
+				length: 127 * time.Second,
+			},
+			"/media/definitely-never-happening/track-1.mp3",
+		},
+	}
+
+	tracksInfo := make(map[string]MockMedia)
+
+	for _, trackData := range tracks {
+		err := lib.insertMediaIntoDatabase(&trackData.track, trackData.path)
+
+		if err != nil {
+			t.Fatalf("Adding a media file %s failed: %s", trackData.track.Title(), err)
+		}
+
+		tracksInfo[trackData.track.title] = trackData.track
+	}
+
+	allTracksCount := len(tracks)
+
+	tests := []struct {
+		search   BrowseArgs
+		expected []string
+	}{
+		{
+			search: BrowseArgs{
+				Offset:  3,
+				PerPage: 3,
+				Order:   OrderAsc,
+				OrderBy: OrderByName,
+			},
+			expected: []string{
+				"Pinky Promise",
+				"Realization",
+				"Regression Testing",
+			},
+		},
+		{
+			search: BrowseArgs{
+				Offset:  0,
+				PerPage: 2,
+				Order:   OrderDesc,
+				OrderBy: OrderByName,
+			},
+			expected: []string{
+				"Totally Going To Release It",
+				"They Will Never Stop Coming",
+			},
+		},
+		{
+			search: BrowseArgs{
+				Offset:  0,
+				PerPage: 2,
+				Order:   OrderAsc,
+				OrderBy: OrderByArtistName,
+			},
+			expected: []string{
+				"Payback",
+				"Realization",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		browseArgs := test.search
+		expectedTracks := test.expected
+
+		foundTracks, count := lib.BrowseTracks(browseArgs)
+
+		if count != allTracksCount {
+			t.Fatalf("Expected all albums to be %d but found %d with search %+v",
+				allTracksCount, count, browseArgs)
+		}
+
+		if len(foundTracks) != len(expectedTracks) {
+			t.Fatalf("Expected returned albums to be %d but found %d for search %+v",
+				len(expectedTracks), len(foundTracks), browseArgs)
+		}
+
+		for ind, expectedName := range expectedTracks {
+			track := foundTracks[ind]
+
+			if track.Title != expectedName {
+				t.Errorf("Expected track[%d] to be '%s' for search %+v but it was '%s'",
+					ind, expectedName, browseArgs, track.Title)
+			}
+
+			trackInfo, ok := tracksInfo[track.Title]
+			if !ok {
+				t.Errorf("track info for track %s not found", track.Title)
+			}
+
+			if trackInfo.album != track.Album {
+				t.Errorf("%d: expected album `%s` but got `%s`",
+					ind, trackInfo.album, track.Album,
+				)
+			}
+
+			if trackInfo.artist != track.Artist {
+				t.Errorf("%d: expected artist `%s` but got `%s`",
+					ind, trackInfo.artist, track.Artist,
+				)
+			}
+
+			if int64(trackInfo.track) != track.TrackNumber {
+				t.Errorf("%d: expected number `%d` but got `%d`",
+					ind, trackInfo.track, track.TrackNumber,
+				)
+			}
+
+			if trackInfo.length.Milliseconds() != track.Duration {
+				t.Errorf("%d: expected duration (ms) `%d` but got `%d`",
+					ind, trackInfo.length.Milliseconds(), track.Duration,
+				)
+			}
+		}
+	}
+}

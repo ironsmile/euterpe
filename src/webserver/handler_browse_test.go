@@ -23,6 +23,7 @@ func TestBrowseHandlerArgumentParsing(t *testing.T) {
 		expectedCode       int
 		expectedArtistArgs *library.BrowseArgs
 		expectedAlbumArgs  *library.BrowseArgs
+		expectedSongsArgs  *library.BrowseArgs
 	}{
 		{
 			desc:         "default arguments",
@@ -41,7 +42,7 @@ func TestBrowseHandlerArgumentParsing(t *testing.T) {
 			expectedCode: http.StatusOK,
 			expectedAlbumArgs: &library.BrowseArgs{
 				PerPage: 5,
-				Page:    1,
+				Offset:  5,
 				OrderBy: library.OrderByID,
 				Order:   library.OrderDesc,
 			},
@@ -52,7 +53,7 @@ func TestBrowseHandlerArgumentParsing(t *testing.T) {
 			expectedCode: http.StatusOK,
 			expectedArtistArgs: &library.BrowseArgs{
 				PerPage: 5,
-				Page:    1,
+				Offset:  5,
 				OrderBy: library.OrderByID,
 				Order:   library.OrderDesc,
 			},
@@ -63,7 +64,7 @@ func TestBrowseHandlerArgumentParsing(t *testing.T) {
 			expectedCode: http.StatusOK,
 			expectedArtistArgs: &library.BrowseArgs{
 				PerPage: 10,
-				Page:    0,
+				Offset:  0,
 				OrderBy: library.OrderByName,
 				Order:   library.OrderAsc,
 			},
@@ -74,7 +75,7 @@ func TestBrowseHandlerArgumentParsing(t *testing.T) {
 			expectedCode: http.StatusOK,
 			expectedArtistArgs: &library.BrowseArgs{
 				PerPage: 10,
-				Page:    0,
+				Offset:  0,
 				OrderBy: library.OrderByRandom,
 				Order:   library.OrderAsc,
 			},
@@ -85,15 +86,54 @@ func TestBrowseHandlerArgumentParsing(t *testing.T) {
 			expectedCode: http.StatusOK,
 			expectedAlbumArgs: &library.BrowseArgs{
 				PerPage: 10,
-				Page:    0,
+				Offset:  0,
 				OrderBy: library.OrderByRandom,
 				Order:   library.OrderAsc,
 			},
 		},
 		{
-			desc:         "unsupported by argument",
+			desc:         "default args for tracks",
 			url:          "/v1/browse?by=song",
-			expectedCode: http.StatusBadRequest,
+			expectedCode: http.StatusOK,
+			expectedSongsArgs: &library.BrowseArgs{
+				PerPage: 10,
+				Offset:  0,
+				OrderBy: library.OrderByID,
+				Order:   library.OrderAsc,
+			},
+		},
+		{
+			desc:         "all the arguments for tracks",
+			url:          "/v1/browse?by=song&per-page=15&page=2&order-by=name&order=desc",
+			expectedCode: http.StatusOK,
+			expectedSongsArgs: &library.BrowseArgs{
+				PerPage: 15,
+				Offset:  15,
+				OrderBy: library.OrderByName,
+				Order:   library.OrderDesc,
+			},
+		},
+		{
+			desc:         "tracks - play count",
+			url:          "/v1/browse?by=song&per-page=30&order-by=frequency&order=desc",
+			expectedCode: http.StatusOK,
+			expectedSongsArgs: &library.BrowseArgs{
+				PerPage: 30,
+				Offset:  0,
+				OrderBy: library.OrderByFrequentlyPlayed,
+				Order:   library.OrderDesc,
+			},
+		},
+		{
+			desc:         "tracks - last played",
+			url:          "/v1/browse?by=song&per-page=30&order-by=recency&order=desc",
+			expectedCode: http.StatusOK,
+			expectedSongsArgs: &library.BrowseArgs{
+				PerPage: 30,
+				Offset:  0,
+				OrderBy: library.OrderByRecentlyPlayed,
+				Order:   library.OrderDesc,
+			},
 		},
 		{
 			desc:         "negative per-page",
@@ -165,6 +205,7 @@ func TestBrowseHandlerArgumentParsing(t *testing.T) {
 			handler.ServeHTTP(resp, req)
 
 			if test.expectedCode != resp.Code {
+				t.Logf("HTTP response: %s", resp.Body.String())
 				t.Errorf("expected HTTP code %d but got %d", test.expectedCode, resp.Code)
 			}
 
@@ -198,6 +239,21 @@ func TestBrowseHandlerArgumentParsing(t *testing.T) {
 				}
 			}
 
+			if test.expectedSongsArgs != nil {
+				if fakeBrowser.BrowseTracksCallCount() != 1 {
+					t.Fatalf(
+						"browse tracks called %d times instead of once",
+						fakeBrowser.BrowseTracksCallCount(),
+					)
+				}
+
+				expected := *test.expectedSongsArgs
+				foundArgs := fakeBrowser.BrowseTracksArgsForCall(0)
+				if foundArgs != expected {
+					t.Errorf("expected track args %+v but got %+v", expected, foundArgs)
+				}
+			}
+
 			assertContentTypeJSON(t, resp.Header().Get("Content-Type"))
 			assertResponseIsValidJSON(t, resp.Body)
 		})
@@ -213,9 +269,15 @@ func TestBrowseHandlerResponseEncoding(t *testing.T) {
 		) ([]library.Album, int) {
 			return []library.Album{
 				{
-					ID:     10,
-					Name:   "Senjutsu",
-					Artist: "Iron Maiden",
+					ID:         10,
+					Name:       "Senjutsu",
+					Artist:     "Iron Maiden",
+					SongCount:  11,
+					Duration:   5000,
+					Plays:      999231,
+					Favourite:  1715625142,
+					LastPlayed: 1715625142,
+					Rating:     5,
 				},
 				{
 					ID:     11,
@@ -230,8 +292,9 @@ func TestBrowseHandlerResponseEncoding(t *testing.T) {
 		) ([]library.Artist, int) {
 			return []library.Artist{
 				{
-					ID:   101,
-					Name: "Iron Maiden",
+					ID:         101,
+					Name:       "Iron Maiden",
+					AlbumCount: 5,
 				},
 				{
 					ID:   102,
@@ -284,9 +347,15 @@ func TestBrowseHandlerResponseEncoding(t *testing.T) {
 
 	expectedAlbums := []responseAlbumEntry{
 		{
-			ID:     10,
-			Name:   "Senjutsu",
-			Artist: "Iron Maiden",
+			ID:         10,
+			Name:       "Senjutsu",
+			Artist:     "Iron Maiden",
+			SongCount:  11,
+			Duration:   5000,
+			Plays:      999231,
+			Favourite:  1715625142,
+			LastPlayed: 1715625142,
+			Rating:     5,
 		},
 		{
 			ID:     11,
@@ -353,8 +422,9 @@ func TestBrowseHandlerResponseEncoding(t *testing.T) {
 
 	expectedArtists := []responseArtistEntry{
 		{
-			ID:   101,
-			Name: "Iron Maiden",
+			ID:         101,
+			Name:       "Iron Maiden",
+			AlbumCount: 5,
 		},
 		{
 			ID:   102,
@@ -382,14 +452,21 @@ func TestBrowseHandlerResponseEncoding(t *testing.T) {
 }
 
 type responseArtistEntry struct {
-	ID   int64  `json:"artist_id"`
-	Name string `json:"artist"`
+	ID         int64  `json:"artist_id"`
+	Name       string `json:"artist"`
+	AlbumCount int64  `json:"album_count"`
 }
 
 type responseAlbumEntry struct {
-	ID     int64  `json:"album_id"`
-	Name   string `json:"album"`
-	Artist string `json:"artist"`
+	ID         int64  `json:"album_id"`
+	Name       string `json:"album"`
+	Artist     string `json:"artist"`
+	SongCount  int64  `json:"track_count"`
+	Duration   int64  `json:"duration"`
+	Plays      int64  `json:"plays"`
+	Favourite  int64  `json:"favourite"`
+	LastPlayed int64  `json:"last_played"`
+	Rating     uint8  `json:"rating"`
 }
 
 func assertContentTypeJSON(t *testing.T, contentType string) {

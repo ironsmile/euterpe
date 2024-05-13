@@ -44,7 +44,7 @@ func (s *subsonic) getStarred(w http.ResponseWriter, req *http.Request) {
 			break
 		}
 
-		browseArgs.Offset = uint64(len(resp.Starred.Artists))
+		browseArgs.Offset += uint64(len(resp.Starred.Artists))
 	}
 
 	browseArgs.Offset = 0
@@ -71,10 +71,35 @@ func (s *subsonic) getStarred(w http.ResponseWriter, req *http.Request) {
 			break
 		}
 
-		browseArgs.Offset = uint64(len(resp.Starred.Albums))
+		browseArgs.Offset += uint64(len(resp.Starred.Albums))
 	}
 
-	//!TODO: add songs
+	browseArgs.Offset = 0
+	for {
+		tracks, _ := s.libBrowser.BrowseTracks(browseArgs)
+		if len(tracks) == 0 {
+			break
+		}
+
+		var lastStarred bool
+		for _, track := range tracks {
+			if track.Favourite == 0 {
+				lastStarred = true
+				break
+			}
+
+			resp.Starred.Songs = append(
+				resp.Starred.Songs,
+				trackToChild(track, s.getLastModified()),
+			)
+		}
+
+		if lastStarred {
+			break
+		}
+
+		browseArgs.Offset += uint64(len(resp.Starred.Songs))
+	}
 
 	encodeResponse(w, req, resp)
 }

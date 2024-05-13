@@ -90,4 +90,8 @@ type Browser interface {
 	// Returns a list of albums for particular page and the number of all albums in the
 	// library.
 	BrowseAlbums(BrowseArgs) ([]Album, int)
+
+	// BrowseTracks makes possible browsing through the library songs. Returns a list
+	// of songs, optionally sorted.
+	BrowseTracks(BrowseArgs) ([]TrackInfo, int)
 }

@@ -26,8 +26,8 @@
 - [ ] getRandomSongs
 - [ ] getSongsByGenre
 - [ ] getNowPlaying
-- [x] getStarred - does not return songs yet
-- [x] getStarred2 - does not return songs yet
+- [x] getStarred
+- [x] getStarred2
 - [x] search - `newerThan` is ignored
 - [x] search2
 - [x] search3

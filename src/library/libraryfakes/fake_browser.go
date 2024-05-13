@@ -34,6 +34,19 @@ type FakeBrowser struct {
 		result1 []library.Artist
 		result2 int
 	}
+	BrowseTracksStub        func(library.BrowseArgs) ([]library.SearchResult, int)
+	browseTracksMutex       sync.RWMutex
+	browseTracksArgsForCall []struct {
+		arg1 library.BrowseArgs
+	}
+	browseTracksReturns struct {
+		result1 []library.SearchResult
+		result2 int
+	}
+	browseTracksReturnsOnCall map[int]struct {
+		result1 []library.SearchResult
+		result2 int
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
@@ -166,6 +179,70 @@ func (fake *FakeBrowser) BrowseArtistsReturnsOnCall(i int, result1 []library.Art
 	}{result1, result2}
 }
 
+func (fake *FakeBrowser) BrowseTracks(arg1 library.BrowseArgs) ([]library.SearchResult, int) {
+	fake.browseTracksMutex.Lock()
+	ret, specificReturn := fake.browseTracksReturnsOnCall[len(fake.browseTracksArgsForCall)]
+	fake.browseTracksArgsForCall = append(fake.browseTracksArgsForCall, struct {
+		arg1 library.BrowseArgs
+	}{arg1})
+	stub := fake.BrowseTracksStub
+	fakeReturns := fake.browseTracksReturns
+	fake.recordInvocation("BrowseTracks", []interface{}{arg1})
+	fake.browseTracksMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeBrowser) BrowseTracksCallCount() int {
+	fake.browseTracksMutex.RLock()
+	defer fake.browseTracksMutex.RUnlock()
+	return len(fake.browseTracksArgsForCall)
+}
+
+func (fake *FakeBrowser) BrowseTracksCalls(stub func(library.BrowseArgs) ([]library.SearchResult, int)) {
+	fake.browseTracksMutex.Lock()
+	defer fake.browseTracksMutex.Unlock()
+	fake.BrowseTracksStub = stub
+}
+
+func (fake *FakeBrowser) BrowseTracksArgsForCall(i int) library.BrowseArgs {
+	fake.browseTracksMutex.RLock()
+	defer fake.browseTracksMutex.RUnlock()
+	argsForCall := fake.browseTracksArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeBrowser) BrowseTracksReturns(result1 []library.SearchResult, result2 int) {
+	fake.browseTracksMutex.Lock()
+	defer fake.browseTracksMutex.Unlock()
+	fake.BrowseTracksStub = nil
+	fake.browseTracksReturns = struct {
+		result1 []library.SearchResult
+		result2 int
+	}{result1, result2}
+}
+
+func (fake *FakeBrowser) BrowseTracksReturnsOnCall(i int, result1 []library.SearchResult, result2 int) {
+	fake.browseTracksMutex.Lock()
+	defer fake.browseTracksMutex.Unlock()
+	fake.BrowseTracksStub = nil
+	if fake.browseTracksReturnsOnCall == nil {
+		fake.browseTracksReturnsOnCall = make(map[int]struct {
+			result1 []library.SearchResult
+			result2 int
+		})
+	}
+	fake.browseTracksReturnsOnCall[i] = struct {
+		result1 []library.SearchResult
+		result2 int
+	}{result1, result2}
+}
+
 func (fake *FakeBrowser) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
@@ -173,6 +250,8 @@ func (fake *FakeBrowser) Invocations() map[string][][]interface{} {
 	defer fake.browseAlbumsMutex.RUnlock()
 	fake.browseArtistsMutex.RLock()
 	defer fake.browseArtistsMutex.RUnlock()
+	fake.browseTracksMutex.RLock()
+	defer fake.browseTracksMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value
