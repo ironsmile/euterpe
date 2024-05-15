@@ -18,6 +18,12 @@ func (s *subsonic) getCoverArt(w http.ResponseWriter, req *http.Request) {
     } else if strings.HasPrefix(id, coverArtistPrefix) {
         artworkHandler = s.artistArtHandler
         id = strings.TrimPrefix(id, coverArtistPrefix)
+    } else if albumID := isAlbumIDString(id); albumID != "" {
+        artworkHandler = s.albumArtHandler
+        id = albumID
+    } else if artistID := isArtistIDString(id); artistID != "" {
+        artworkHandler = s.artistArtHandler
+        id = artistID
     } else {
         w.WriteHeader(http.StatusNotFound)
         return
@@ -46,4 +52,26 @@ func (s *subsonic) getCoverArt(w http.ResponseWriter, req *http.Request) {
             log.Printf("error writing body in getCoverArt: %s", err)
         }
     }
+}
+
+func isAlbumIDString(subsonicID string) string {
+    id, err := strconv.ParseInt(subsonicID, 10, 64)
+    if err != nil {
+        return ""
+    }
+    if !isAlbumID(id) {
+        return ""
+    }
+    return strconv.FormatInt(toAlbumDBID(id), 10)
+}
+
+func isArtistIDString(subsonicID string) string {
+    id, err := strconv.ParseInt(subsonicID, 10, 64)
+    if err != nil {
+        return ""
+    }
+    if !isArtistID(id) {
+        return ""
+    }
+    return strconv.FormatInt(toArtistDBID(id), 10)
 }
