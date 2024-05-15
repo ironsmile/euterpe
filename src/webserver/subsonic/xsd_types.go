@@ -339,3 +339,7 @@ type xsdStarred2 struct {
 	Albums  []xsdAlbumID3  `xml:"album,omitempty" json:"album,omitempty"`
 	Songs   []xsdChild     `xml:"song,omitempty" json:"song,omitempty"`
 }
+
+type xsdTopSongs struct {
+	Songs []xsdChild `xml:"song,omitempty" json:"song,omitempty"`
+}

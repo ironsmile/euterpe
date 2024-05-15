@@ -75,6 +75,10 @@ type BrowseArgs struct {
 	// zero then the value of Page is ignored. Offset allows more precise targeting of
 	// the next item.
 	Offset uint64
+
+	// ArtistID may be used for filtering the results so that only results which
+	// belong this ArtistID are returned.
+	ArtistID int64
 }
 
 //counterfeiter:generate . Browser

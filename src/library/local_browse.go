@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 )
 
 // BrowseArtists implements the Library interface for the local library by getting
@@ -17,7 +18,17 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 		offset = args.Offset
 	}
 
-	where := ""
+	var (
+		queryArgs []any
+		where     []string
+		whereStr  string
+	)
+
+	if args.ArtistID > 0 {
+		where = append(where, "ar.id = @artistID")
+		queryArgs = append(queryArgs, sql.Named("artistID", args.ArtistID))
+	}
+
 	order := "ASC"
 	orderBy := "ar.name"
 
@@ -36,11 +47,21 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 		offset = 0
 	} else if args.OrderBy == OrderByFavourites {
 		orderBy = "ars.favourite"
-		where = "WHERE ars.favourite IS NOT NULL AND ars.favourite != 0"
+		where = append(where, "ars.favourite IS NOT NULL AND ars.favourite != 0")
 	}
 
 	artistsCount := lib.getTableSize("artists")
 	var output []Artist
+
+	if len(where) > 0 {
+		whereStr = "WHERE " + strings.Join(where, " AND ")
+	}
+
+	queryArgs = append(
+		queryArgs,
+		sql.Named("offset", offset),
+		sql.Named("perPage", perPage),
+	)
 
 	work := func(db *sql.DB) error {
 		rows, err := db.Query(fmt.Sprintf(`
@@ -59,8 +80,8 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 			ORDER BY
 				%s %s
 			LIMIT
-				?, ?
-		`, where, orderBy, order), offset, perPage)
+				@offset, @perPage
+		`, whereStr, orderBy, order), queryArgs...)
 
 		if err != nil {
 			return err
@@ -112,38 +133,56 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 	var (
 		output      []Album
 		albumsCount int
+
+		queryArgs []any
+		where     []string
+		whereStr  string
+	)
+
+	if args.ArtistID > 0 {
+		where = append(where, "tr.artist_id = @artistID")
+		queryArgs = append(queryArgs, sql.Named("artistID", args.ArtistID))
+	}
+
+	order := "ASC"
+	orderBy := "al.name"
+
+	if args.Order == OrderDesc {
+		order = "DESC"
+	}
+
+	switch args.OrderBy {
+	case OrderByID:
+		orderBy = "al.id"
+	case OrderByRandom:
+		orderBy = "RANDOM()"
+		order = ""
+
+		// When ordering by random the offset does not matter. Only the limit
+		// does.
+		offset = 0
+	case OrderByFrequentlyPlayed:
+		orderBy = "SUM(us.play_count)"
+	case OrderByRecentlyPlayed:
+		orderBy = "MAX(us.last_played)"
+	case OrderByArtistName:
+		orderBy = "artist_name"
+	case OrderByFavourites:
+		orderBy = "als.favourite"
+		where = append(where, "als.favourite IS NOT NULL AND als.favourite != 0")
+	}
+
+	if len(where) > 0 {
+		whereStr = "WHERE " + strings.Join(where, " AND ")
+	}
+
+	queryArgs = append(
+		queryArgs,
+		sql.Named("offset", offset),
+		sql.Named("perPage", perPage),
 	)
 
 	work := func(db *sql.DB) error {
-		where := ""
-		order := "ASC"
-		orderBy := "al.name"
-
-		if args.Order == OrderDesc {
-			order = "DESC"
-		}
-
-		switch args.OrderBy {
-		case OrderByID:
-			orderBy = "al.id"
-		case OrderByRandom:
-			orderBy = "RANDOM()"
-			order = ""
-
-			// When ordering by random the offset does not matter. Only the limit
-			// does.
-			offset = 0
-		case OrderByFrequentlyPlayed:
-			orderBy = "SUM(us.play_count)"
-		case OrderByRecentlyPlayed:
-			orderBy = "MAX(us.last_played)"
-		case OrderByArtistName:
-			orderBy = "artist_name"
-		case OrderByFavourites:
-			orderBy = "als.favourite"
-			where = "WHERE als.favourite IS NOT NULL AND als.favourite != 0"
-		}
-
 		smt, err := db.Prepare(`
 			SELECT
 				COUNT(DISTINCT tr.album_id) as cnt
@@ -151,7 +190,7 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 				tracks tr
 				LEFT JOIN
 					albums_stats als ON als.album_id = tr.album_id
-			` + where + `
+			` + whereStr + `
 		`)
 
 		if err != nil {
@@ -192,8 +231,8 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 			ORDER BY
 				%s %s
 			LIMIT
-				?, ?
-		`, where, orderBy, order), offset, perPage)
+				@offset, @perPage
+		`, whereStr, orderBy, order), queryArgs...)
 
 		if err != nil {
 			return err
@@ -246,40 +285,58 @@ func (lib *LocalLibrary) BrowseTracks(args BrowseArgs) ([]TrackInfo, int) {
 	var (
 		output      []TrackInfo
 		tracksCount = lib.getTableSize("tracks")
+
+		queryArgs []any
+		where     []string
+		whereStr  string
+	)
+
+	if args.ArtistID > 0 {
+		where = append(where, "t.artist_id = @artistID")
+		queryArgs = append(queryArgs, sql.Named("artistID", args.ArtistID))
+	}
+
+	order := "ASC"
+
+	if args.Order == OrderDesc {
+		order = "DESC"
+	}
+
+	orderBy := "t.id " + order
+
+	switch args.OrderBy {
+	case OrderByID:
+		orderBy = "t.id " + order
+	case OrderByName:
+		orderBy = "t.name " + order
+	case OrderByRandom:
+		orderBy = "RANDOM()"
+
+		// When ordering by random the offset does not matter. Only the limit
+		// does.
+		offset = 0
+	case OrderByFrequentlyPlayed:
+		orderBy = "us.play_count " + order
+	case OrderByRecentlyPlayed:
+		orderBy = "us.last_played " + order
+	case OrderByArtistName:
+		orderBy = "at.name " + order + ", t.album_id, t.number ASC"
+	case OrderByFavourites:
+		orderBy = "us.favourite " + order
+		where = append(where, "us.favourite IS NOT NULL AND us.favourite != 0")
+	}
+
+	if len(where) > 0 {
+		whereStr = "WHERE " + strings.Join(where, " AND ")
+	}
+
+	queryArgs = append(
+		queryArgs,
+		sql.Named("offset", offset),
+		sql.Named("count", perPage),
 	)
 
 	work := func(db *sql.DB) error {
-		where := ""
-		order := "ASC"
-
-		if args.Order == OrderDesc {
-			order = "DESC"
-		}
-
-		orderBy := "t.id " + order
-
-		switch args.OrderBy {
-		case OrderByID:
-			orderBy = "t.id " + order
-		case OrderByName:
-			orderBy = "t.name " + order
-		case OrderByRandom:
-			orderBy = "RANDOM()"
-
-			// When ordering by random the offset does not matter. Only the limit
-			// does.
-			offset = 0
-		case OrderByFrequentlyPlayed:
-			orderBy = "us.play_count " + order
-		case OrderByRecentlyPlayed:
-			orderBy = "us.last_played " + order
-		case OrderByArtistName:
-			orderBy = "at.name " + order + ", t.album_id, t.number ASC"
-		case OrderByFavourites:
-			orderBy = "us.favourite " + order
-			where = "WHERE us.favourite IS NOT NULL AND us.favourite != 0"
-		}
-
 		rows, err := db.Query(
 			fmt.Sprintf(`
 				SELECT
@@ -306,10 +363,9 @@ func (lib *LocalLibrary) BrowseTracks(args BrowseArgs) ([]TrackInfo, int) {
 					%s
 				LIMIT
 					@offset, @count
-			`, where, orderBy,
+			`, whereStr, orderBy,
 			),
-			sql.Named("offset", offset),
-			sql.Named("count", perPage),
+			queryArgs...,
 		)
 		if err != nil {
 			log.Printf("Query for browsing songs not successful: %s\n", err.Error())

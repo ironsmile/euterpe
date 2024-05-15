@@ -420,6 +420,10 @@ func TestSubsonicXMLResponses(t *testing.T) {
 			desc: "getStarred2",
 			url:  testURL("/getStarred2"),
 		},
+		{
+			desc: "getTopSongs",
+			url:  testURL("/getTopSongs?artist=First+Artist&count=3"),
+		},
 	}
 
 	for _, test := range tests {
@@ -671,6 +675,16 @@ func TestSubsonicXMLErrors(t *testing.T) {
 			desc:      "unstar no arguments",
 			url:       testURL("/unstar"),
 			errorCode: 10,
+		},
+		{
+			desc:      "getTopSongs no arguments",
+			url:       testURL("/getTopSongs"),
+			errorCode: 10,
+		},
+		{
+			desc:      "getTopSongs artist not found",
+			url:       testURL("/getTopSongs?artist=Not+Found"),
+			errorCode: 70,
 		},
 	}
 

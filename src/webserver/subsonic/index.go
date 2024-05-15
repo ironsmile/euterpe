@@ -105,6 +105,7 @@ func (s *subsonic) initRouter() {
 	setUpHandler("/unstar", s.unstar)
 	setUpHandler("/getStarred", s.getStarred)
 	setUpHandler("/getStarred2", s.getStarred2)
+	setUpHandler("/getTopSongs", s.getTopSongs)
 
 	s.mux = s.authHandler(router)
 }
