@@ -13,9 +13,9 @@ import (
 	"github.com/ironsmile/euterpe/src/webserver"
 )
 
-// TestAccessHandlerHidesSensitiveData makes sure that sensitive strings are not
-// stored into the access log. These are passwords and tokens.
-func TestAccessHandlerHidesSensitiveData(t *testing.T) {
+// TestAccessHandler makes sure that the access handler works and also sensitive
+// that strings are not stored into the access log. These are passwords and tokens.
+func TestAccessHandler(t *testing.T) {
 	recorder := &recordingHandler{}
 	accessHandler := webserver.NewAccessHandler(recorder)
 
