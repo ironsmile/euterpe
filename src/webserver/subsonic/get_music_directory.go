@@ -159,6 +159,7 @@ func (s *subsonic) getRootDirectory(
 				xsdChild{
 					ID:            artistFSID(artist.ID),
 					ParentID:      combinedMusicFolderID,
+					CoverArtID:    artistCoverArtID(artist.ID),
 					Name:          artist.Name,
 					Artist:        artist.Name,
 					Title:         artist.Name,

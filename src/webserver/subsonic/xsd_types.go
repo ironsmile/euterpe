@@ -59,14 +59,14 @@ type xsdChild struct {
 	CoverArtID    string     `xml:"coverArt,attr,omitempty" json:"coverArt"`
 	Track         int64      `xml:"track,attr,omitempty" json:"track,omitempty"`       // position in album, I suppose
 	Duration      int64      `xml:"duration,attr,omitempty" json:"duration,omitempty"` // in seconds
-	Year          int16      `xml:"year,attr,omitempty" json:"year,omitempty"`
+	Year          int16      `xml:"year,attr" json:"year"`
 	Genre         string     `xml:"genre,attr,omitempty" json:"gener,omitempty"`
 	Size          int64      `xml:"size,attr,omitempty" json:"size,omitempty"` // in bytes
 	ContentType   string     `xml:"contentType,attr,omitempty" json:"contentType,omitempty"`
 	PlayCount     int64      `xml:"playCount,attr,omitempty" json:"playCount,omitempty"`
 	UserRating    uint8      `xml:"userRating,attr,omitempty" json:"userRating,omitempty"`
 	Suffix        string     `xml:"suffix,attr,omitempty" json:"suffix,omitempty"`
-	BitRate       string     `xml:"bitRate,attr,omitempty" json:"bitRate,omitempty"`
+	BitRate       int        `xml:"bitRate,attr,omitempty" json:"bitRate,omitempty"`
 	Path          string     `xml:"path,attr,omitempty" json:"path,omitempty"` // on the file system I suppose
 	Created       time.Time  `xml:"created,attr,omitempty" json:"created,omitempty"`
 	Starred       *time.Time `xml:"starred,attr,omitempty" json:"starred,omitempty"`
@@ -178,7 +178,7 @@ type xsdAlbumID3 struct {
 	PlayCount  int64      `xml:"playCount,attr,omitempty" json:"playCount,omitempty"`
 	Created    time.Time  `xml:"created,attr" json:"created"`
 	Starred    *time.Time `xml:"starred,attr,omitempty" json:"starred,omitempty"`
-	Year       int16      `xml:"year,attr,omitempty" json:"year,omitempty"`
+	Year       int16      `xml:"year,attr" json:"year"`
 	Genre      string     `xml:"genre,attr,omitempty" json:"gener,omitempty"`
 }
 
