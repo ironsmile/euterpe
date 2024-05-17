@@ -16,32 +16,28 @@ func (s *subsonic) getAlbum(w http.ResponseWriter, req *http.Request) {
 
 	albumID := toAlbumDBID(subsonicID)
 
-	entry, err := s.getAlbumDirectory(req, albumID)
+	album, err := s.lib.GetAlbum(req.Context(), albumID)
 	if err != nil {
 		resp := responseError(errCodeGeneric, err.Error())
 		encodeResponse(w, req, resp)
 		return
 	}
 
-	artEtr := xsdAlbumWithSongsID3{
-		xsdAlbumID3: xsdAlbumID3{
-			ID:         entry.ID,
-			Artist:     entry.Artist,
-			ArtistID:   entry.ParentID,
-			Name:       entry.Name,
-			SongCount:  entry.SongCount,
-			CoverArtID: entry.CoverArtID,
-			Created:    s.lastModified,
-			Duration:   entry.Duration,
-			PlayCount:  entry.PlayCount,
-			Starred:    entry.Starred,
-		},
-		Children: entry.Children,
+	alEntry := xsdAlbumWithSongsID3{
+		xsdAlbumID3: dbAlbumToAlbumID3Entry(album),
+	}
+
+	tracks := s.lib.GetAlbumFiles(albumID)
+	for _, track := range tracks {
+		alEntry.Children = append(alEntry.Children, trackToChild(
+			track,
+			s.getLastModified(),
+		))
 	}
 
 	resp := albumResponse{
 		baseResponse: responseOk(),
-		Album:        artEtr,
+		Album:        alEntry,
 	}
 
 	encodeResponse(w, req, resp)
