@@ -214,12 +214,7 @@ func (srv *Server) serveGoroutine() {
 	}(handler)
 
 	if srv.cfg.AccessLog {
-		withoutAccessLog := handler
-
-		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Printf("%s %s\n", r.Method, r.URL)
-			withoutAccessLog.ServeHTTP(w, r)
-		})
+		handler = NewAccessHandler(handler)
 	}
 
 	srv.httpSrv = &http.Server{
