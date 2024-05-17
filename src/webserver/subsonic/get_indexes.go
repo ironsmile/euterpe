@@ -13,7 +13,7 @@ func (s *subsonic) getIndexes(w http.ResponseWriter, req *http.Request) {
 	musicFolderID := req.Form.Get("musicFolderId")
 	ifModifiedSince := req.Form.Get("ifModifiedSince")
 
-	if musicFolderID != "" && musicFolderExists(musicFolderID) {
+	if musicFolderID != "" && !musicFolderExists(musicFolderID) {
 		resp := responseError(errCodeNotFound, "Unknown music folder ID")
 		encodeResponse(w, req, resp)
 		return
