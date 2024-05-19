@@ -512,12 +512,15 @@ func (lib *LocalLibrary) GetArtist(
 			fav    sql.NullInt64
 			rating sql.NullInt16
 		)
-		if err := row.Scan(
+		err := row.Scan(
 			&res.Name,
 			&res.AlbumCount,
 			&fav,
 			&rating,
-		); err != nil {
+		)
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrArtistNotFound
+		} else if err != nil {
 			return fmt.Errorf("sql query for artist info failed: %w", err)
 		}
 		res.ID = artistID
@@ -577,7 +580,7 @@ func (lib *LocalLibrary) GetAlbum(
 			plays      sql.NullInt64
 			lastPlayed sql.NullInt64
 		)
-		if err := row.Scan(
+		err := row.Scan(
 			&res.Name,
 			&res.Artist,
 			&res.SongCount,
@@ -586,7 +589,10 @@ func (lib *LocalLibrary) GetAlbum(
 			&lastPlayed,
 			&fav,
 			&rating,
-		); err != nil {
+		)
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrAlbumNotFound
+		} else if err != nil {
 			return fmt.Errorf("sql query for artist info failed: %w", err)
 		}
 		res.ID = albumID

@@ -1,8 +1,11 @@
 package subsonic
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
+
+	"github.com/ironsmile/euterpe/src/library"
 )
 
 func (s *subsonic) getArtistInfo(w http.ResponseWriter, req *http.Request) {
@@ -16,14 +19,18 @@ func (s *subsonic) getArtistInfo(w http.ResponseWriter, req *http.Request) {
 
 	artistID := toArtistDBID(subsonicID)
 
-	albums := s.lib.GetArtistAlbums(req.Context(), artistID)
-	if len(albums) == 0 {
+	artist, err := s.lib.GetArtist(req.Context(), artistID)
+	if errors.Is(err, library.ErrArtistNotFound) {
 		resp := responseError(errCodeNotFound, "artist not found")
+		encodeResponse(w, req, resp)
+		return
+	} else if err != nil {
+		resp := responseError(errCodeGeneric, err.Error())
 		encodeResponse(w, req, resp)
 		return
 	}
 
-	baseArtistInfo := s.getArtistInfoBase(req, artistID)
+	baseArtistInfo := s.getArtistInfoBase(req, artist)
 	resp := artistInfoResponse{
 		baseResponse: baseArtistInfo.baseResponse,
 		ArtistInfo:   baseArtistInfo.ArtistInfo2,

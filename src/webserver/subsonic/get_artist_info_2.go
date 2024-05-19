@@ -1,9 +1,12 @@
 package subsonic
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/ironsmile/euterpe/src/library"
 )
 
 func (s *subsonic) getArtistInfo2(w http.ResponseWriter, req *http.Request) {
@@ -17,26 +20,32 @@ func (s *subsonic) getArtistInfo2(w http.ResponseWriter, req *http.Request) {
 
 	artistID := toArtistDBID(subsonicID)
 
-	albums := s.lib.GetArtistAlbums(req.Context(), artistID)
-	if len(albums) == 0 {
+	artist, err := s.lib.GetArtist(req.Context(), artistID)
+	if err != nil && errors.Is(err, library.ErrArtistNotFound) {
 		resp := responseError(errCodeNotFound, "artist not found")
+		encodeResponse(w, req, resp)
+		return
+	} else if err != nil {
+		resp := responseError(errCodeGeneric, err.Error())
 		encodeResponse(w, req, resp)
 		return
 	}
 
-	resp := s.getArtistInfoBase(req, artistID)
+	resp := s.getArtistInfoBase(req, artist)
 	encodeResponse(w, req, resp)
 }
 
 func (s *subsonic) getArtistInfoBase(
 	req *http.Request,
-	artistID int64,
+	artist library.Artist,
 ) artistInfo2Response {
-	artURL, query := s.getAristImageURL(req, artistID)
+	artURL, query := s.getAristImageURL(req, artist.ID)
 
 	resp := artistInfo2Response{
 		baseResponse: responseOk(),
-		ArtistInfo2:  xsdArtistInfoBase{},
+		ArtistInfo2: xsdArtistInfoBase{
+			LastfmURL: "https://last.fm/music/" + url.PathEscape(artist.Name),
+		},
 	}
 
 	query.Set("size", "150")

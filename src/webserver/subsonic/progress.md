@@ -16,8 +16,8 @@
 - [x] getVideoInfo - always returns "not found"
 - [x] getArtistInfo
 - [x] getArtistInfo2
-- [ ] getAlbumInfo
-- [ ] getAlbumInfo2
+- [x] getAlbumInfo
+- [x] getAlbumInfo2
 - [ ] getSimilarSongs
 - [ ] getSimilarSongs2
 - [x] getTopSongs

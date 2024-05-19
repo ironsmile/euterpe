@@ -170,6 +170,28 @@ func TestSubsonicXMLResponses(t *testing.T) {
 				},
 			}
 		},
+		GetAlbumStub: func(ctx context.Context, i int64) (library.Album, error) {
+			return library.Album{
+				ID:         44,
+				Name:       "First Albumov",
+				Artist:     "Albumov Artist",
+				SongCount:  5,
+				Duration:   23283737,
+				Plays:      932,
+				Favourite:  1714856348,
+				LastPlayed: 1714856348,
+				Rating:     3,
+			}, nil
+		},
+		GetArtistStub: func(ctx context.Context, i int64) (library.Artist, error) {
+			return library.Artist{
+				ID:         11,
+				Name:       "Artistov Epicuerus",
+				AlbumCount: 4,
+				Favourite:  1714856348,
+				Rating:     5,
+			}, nil
+		},
 	}
 	browser := &libraryfakes.FakeBrowser{
 		BrowseArtistsStub: func(ba library.BrowseArgs) ([]library.Artist, int) {
@@ -432,6 +454,14 @@ func TestSubsonicXMLResponses(t *testing.T) {
 			desc: "getTopSongs",
 			url:  testURL("/getTopSongs?artist=First+Artist&count=3"),
 		},
+		{
+			desc: "getAlbumInfo",
+			url:  testURL("/getAlbumInfo?id=55"),
+		},
+		{
+			desc: "getAlbumInfo2",
+			url:  testURL("/getAlbumInfo2?id=55"),
+		},
 	}
 
 	for _, test := range tests {
@@ -504,7 +534,14 @@ func TestSubsonicXMLResponses(t *testing.T) {
 // TestSubsonicXMLErrors checks that errors returned from the Subsonic API have the
 // correct error code and also have a valid XML.
 func TestSubsonicXMLErrors(t *testing.T) {
-	lib := &libraryfakes.FakeLibrary{}
+	lib := &libraryfakes.FakeLibrary{
+		GetAlbumStub: func(ctx context.Context, i int64) (library.Album, error) {
+			return library.Album{}, library.ErrAlbumNotFound
+		},
+		GetArtistStub: func(ctx context.Context, i int64) (library.Artist, error) {
+			return library.Artist{}, library.ErrArtistNotFound
+		},
+	}
 	browser := &libraryfakes.FakeBrowser{}
 
 	err := xsdvalidate.Init()
@@ -692,6 +729,36 @@ func TestSubsonicXMLErrors(t *testing.T) {
 		{
 			desc:      "getTopSongs artist not found",
 			url:       testURL("/getTopSongs?artist=Not+Found"),
+			errorCode: 70,
+		},
+		{
+			desc:      "getAlbumInfo strange arguments",
+			url:       testURL("/getAlbumInfo?id=Not+Found"),
+			errorCode: 70,
+		},
+		{
+			desc:      "getAlbumInfo album ID not correct range",
+			url:       testURL("/getAlbumInfo?id=%d", int64(2e9)+55),
+			errorCode: 70,
+		},
+		{
+			desc:      "getAlbumInfo album not found",
+			url:       testURL("/getAlbumInfo?id=99"),
+			errorCode: 70,
+		},
+		{
+			desc:      "getAlbumInfo2 strange arguments",
+			url:       testURL("/getAlbumInfo2?id=Not+Found"),
+			errorCode: 70,
+		},
+		{
+			desc:      "getAlbumInfo2 album ID not correct range",
+			url:       testURL("/getAlbumInfo2?id=%d", int64(2e9)+55),
+			errorCode: 70,
+		},
+		{
+			desc:      "getAlbumInfo2 album not found",
+			url:       testURL("/getAlbumInfo2?id=99"),
 			errorCode: 70,
 		},
 	}

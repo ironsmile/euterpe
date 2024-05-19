@@ -308,6 +308,16 @@ type xsdAlbumWithSongsID3 struct {
 }
 
 type xsdArtistInfoBase struct {
+	Notes          string `xml:"notes,omitempty" json:"notes,omitempty"`
+	LastfmURL      string `xml:"lastFmUrl,omitempty" json:"lastFmUrl,omitempty"`
+	SmallImageURL  string `xml:"smallImageUrl" json:"smallImageUrl"`
+	MediumImageURL string `xml:"mediumImageUrl" json:"mediumImageUrl"`
+	LargeImageURL  string `xml:"largeImageUrl" json:"largeImageUrl"`
+}
+
+type xsdAlbumInfo struct {
+	Notes          string `xml:"notes,omitempty" json:"notes,omitempty"`
+	LastfmURL      string `xml:"lastFmUrl,omitempty" json:"lastFmUrl,omitempty"`
 	SmallImageURL  string `xml:"smallImageUrl" json:"smallImageUrl"`
 	MediumImageURL string `xml:"mediumImageUrl" json:"mediumImageUrl"`
 	LargeImageURL  string `xml:"largeImageUrl" json:"largeImageUrl"`
