@@ -30,11 +30,14 @@ func (s *subsonic) search(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if trackQuery != "" {
-		results := s.lib.Search(library.SearchArgs{
-			Query:  trackQuery,
-			Offset: count,
-			Count:  offset,
-		})
+		results := s.lib.Search(
+			req.Context(),
+			library.SearchArgs{
+				Query:  trackQuery,
+				Offset: count,
+				Count:  offset,
+			},
+		)
 		for _, track := range results {
 			resp.Result.Matches = append(
 				resp.Result.Matches,
@@ -44,11 +47,14 @@ func (s *subsonic) search(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if albumQuery != "" {
-		albums := s.lib.SearchAlbums(library.SearchArgs{
-			Query:  albumQuery,
-			Offset: count,
-			Count:  offset,
-		})
+		albums := s.lib.SearchAlbums(
+			req.Context(),
+			library.SearchArgs{
+				Query:  albumQuery,
+				Offset: count,
+				Count:  offset,
+			},
+		)
 		for _, album := range albums {
 			resp.Result.Matches = append(
 				resp.Result.Matches,
@@ -62,11 +68,14 @@ func (s *subsonic) search(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if artistQuery != "" {
-		artists := s.lib.SearchArtists(library.SearchArgs{
-			Query:  artistQuery,
-			Offset: count,
-			Count:  offset,
-		})
+		artists := s.lib.SearchArtists(
+			req.Context(),
+			library.SearchArgs{
+				Query:  artistQuery,
+				Offset: count,
+				Count:  offset,
+			},
+		)
 		for _, artist := range artists {
 			artistChild := artistToChild(artist, s.lastModified)
 			resp.Result.Matches = append(resp.Result.Matches, artistChild)

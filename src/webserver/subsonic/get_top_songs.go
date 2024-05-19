@@ -19,10 +19,13 @@ func (s *subsonic) getTopSongs(w http.ResponseWriter, req *http.Request) {
 		count = 500
 	}
 
-	artists := s.lib.SearchArtists(library.SearchArgs{
-		Query: artistName,
-		Count: 10,
-	})
+	artists := s.lib.SearchArtists(
+		req.Context(),
+		library.SearchArgs{
+			Query: artistName,
+			Count: 10,
+		},
+	)
 
 	var (
 		artist library.Artist

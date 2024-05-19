@@ -22,11 +22,14 @@ func (s *subsonic) search2(w http.ResponseWriter, req *http.Request) {
 		baseResponse: responseOk(),
 	}
 
-	results := s.lib.Search(library.SearchArgs{
-		Query:  searchQuery,
-		Offset: songOffset,
-		Count:  songCount,
-	})
+	results := s.lib.Search(
+		req.Context(),
+		library.SearchArgs{
+			Query:  searchQuery,
+			Offset: songOffset,
+			Count:  songCount,
+		},
+	)
 	for _, track := range results {
 		resp.Result.Songs = append(
 			resp.Result.Songs,
@@ -37,11 +40,14 @@ func (s *subsonic) search2(w http.ResponseWriter, req *http.Request) {
 	albumCount := parseIntOrDefault(reqValues.Get("albumCount"), 20)
 	albumOffset := parseIntOrDefault(reqValues.Get("albumOffset"), 0)
 
-	albums := s.lib.SearchAlbums(library.SearchArgs{
-		Query:  searchQuery,
-		Offset: albumOffset,
-		Count:  albumCount,
-	})
+	albums := s.lib.SearchAlbums(
+		req.Context(),
+		library.SearchArgs{
+			Query:  searchQuery,
+			Offset: albumOffset,
+			Count:  albumCount,
+		},
+	)
 	for _, album := range albums {
 		resp.Result.Albums = append(
 			resp.Result.Albums,
@@ -57,11 +63,14 @@ func (s *subsonic) search2(w http.ResponseWriter, req *http.Request) {
 	artistOffset := parseIntOrDefault(reqValues.Get("artistOffset"), 0)
 
 	artURL, query := s.getAristImageURL(req, 0)
-	artists := s.lib.SearchArtists(library.SearchArgs{
-		Query:  searchQuery,
-		Offset: artistOffset,
-		Count:  artistCount,
-	})
+	artists := s.lib.SearchArtists(
+		req.Context(),
+		library.SearchArgs{
+			Query:  searchQuery,
+			Offset: artistOffset,
+			Count:  artistCount,
+		},
+	)
 	for _, artist := range artists {
 		query.Set("id", artistCoverArtID(artist.ID))
 		artURL.RawQuery = query.Encode()

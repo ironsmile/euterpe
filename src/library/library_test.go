@@ -229,7 +229,7 @@ func TestSearch(t *testing.T) {
 		_ = lib.Truncate()
 	}()
 
-	found := lib.Search(SearchArgs{
+	found := lib.Search(ctx, SearchArgs{
 		Query: "Buggy",
 	})
 
@@ -333,7 +333,7 @@ func TestAddingNewFiles(t *testing.T) {
 		t.Errorf("Expected to find 3 tracks but found %d", tracks)
 	}
 
-	found := library.Search(SearchArgs{Query: "Tittled Track"})
+	found := library.Search(ctx, SearchArgs{Query: "Tittled Track"})
 
 	if len(found) != 1 {
 		t.Fatalf("Expected to find one track but found %d", len(found))
@@ -456,7 +456,7 @@ func TestGettingAFile(t *testing.T) {
 		t.Fatalf("File not found: %s", err)
 	}
 
-	filePath := library.GetFilePath(trackID)
+	filePath := library.GetFilePath(ctx, trackID)
 
 	suffix := "/test_files/library/test_file_two.mp3"
 
@@ -501,7 +501,7 @@ func TestScaning(t *testing.T) {
 	testErrorAfter(t, 10*time.Second, ch, "Scanning library took too long")
 
 	for _, track := range []string{"Another One", "Payback", "Tittled Track"} {
-		found := lib.Search(SearchArgs{Query: track})
+		found := lib.Search(ctx, SearchArgs{Query: track})
 
 		if len(found) != 1 {
 			t.Errorf("%s was not found after the scan", track)
@@ -547,7 +547,7 @@ func TestRescanning(t *testing.T) {
 	}
 
 	for _, track := range []string{"Another One", "Payback", "Tittled Track"} {
-		found := lib.Search(SearchArgs{Query: track})
+		found := lib.Search(ctx, SearchArgs{Query: track})
 
 		if len(found) != 1 {
 			t.Errorf("%s was not found after the scan", track)
@@ -561,7 +561,9 @@ func TestSQLInjections(t *testing.T) {
 	lib := getScannedLibrary(ctx, t)
 	defer func() { _ = lib.Truncate() }()
 
-	found := lib.Search(SearchArgs{Query: `not-such-thing" OR 1=1 OR t.name="kleopatra`})
+	found := lib.Search(ctx, SearchArgs{
+		Query: `not-such-thing" OR 1=1 OR t.name="kleopatra`,
+	})
 
 	if len(found) != 0 {
 		t.Errorf("Successful sql injection in a single query")
@@ -581,7 +583,7 @@ func TestGetAlbumFiles(t *testing.T) {
 	}
 
 	albumID, _ := lib.GetAlbumID("Album Of Tests", albumPaths[0])
-	albumFiles := lib.GetAlbumFiles(albumID)
+	albumFiles := lib.GetAlbumFiles(ctx, albumID)
 
 	if len(albumFiles) != 2 {
 		t.Errorf("Expected 2 files in the album but found %d", len(albumFiles))
@@ -620,31 +622,31 @@ func TestRemoveFileFunction(t *testing.T) {
 	lib := getScannedLibrary(ctx, t)
 	defer func() { _ = lib.Truncate() }()
 
-	found := lib.Search(SearchArgs{Query: "Another One"})
+	found := lib.Search(ctx, SearchArgs{Query: "Another One"})
 
 	if len(found) != 1 {
 		t.Fatalf(`Expected searching for 'Another One' to return one `+
 			`result but they were %d`, len(found))
 	}
 
-	fsPath := lib.GetFilePath(found[0].ID)
+	fsPath := lib.GetFilePath(ctx, found[0].ID)
 
 	lib.removeFile(fsPath)
 
-	found = lib.Search(SearchArgs{Query: "Another One"})
+	found = lib.Search(ctx, SearchArgs{Query: "Another One"})
 
 	if len(found) != 0 {
 		t.Error(`Did not expect to find Another One but it was there.`)
 	}
 }
 
-func checkAddedSong(lib *LocalLibrary, t *testing.T) {
-	found := lib.Search(SearchArgs{Query: "Added Song"})
+func checkAddedSong(ctx context.Context, lib *LocalLibrary, t *testing.T) {
+	found := lib.Search(ctx, SearchArgs{Query: "Added Song"})
 
 	if len(found) != 1 {
 		filePaths := []string{}
 		for _, track := range found {
-			filePath := lib.GetFilePath(track.ID)
+			filePath := lib.GetFilePath(ctx, track.ID)
 			filePaths = append(filePaths, fmt.Sprintf("%d: %s", track.ID, filePath))
 		}
 		t.Fatalf("Expected one result, got %d for Added Song: %+v. Paths:\n%s",
@@ -670,8 +672,8 @@ func checkAddedSong(lib *LocalLibrary, t *testing.T) {
 	}
 }
 
-func checkSong(lib *LocalLibrary, song MediaFile, t *testing.T) {
-	found := lib.Search(SearchArgs{Query: song.Title()})
+func checkSong(ctx context.Context, lib *LocalLibrary, song MediaFile, t *testing.T) {
+	found := lib.Search(ctx, SearchArgs{Query: song.Title()})
 
 	if len(found) != 1 {
 		t.Fatalf("Expected one result, got %d for %s: %+v",
@@ -728,7 +730,7 @@ func TestAddingManyFilesSimultaniously(t *testing.T) {
 	}
 
 	for _, song := range mediaFiles {
-		checkSong(lib, song, t)
+		checkSong(ctx, lib, song, t)
 	}
 }
 
@@ -778,7 +780,7 @@ func TestAlbumsWithDifferentArtists(t *testing.T) {
 		}
 	}
 
-	found := lib.Search(SearchArgs{Query: "Return Of The Bugs"})
+	found := lib.Search(ctx, SearchArgs{Query: "Return Of The Bugs"})
 
 	if len(found) != 3 {
 		t.Fatalf("Expected to find 3 tracks but found %d", len(found))
@@ -855,7 +857,7 @@ func TestDifferentAlbumsWithTheSameName(t *testing.T) {
 		}
 	}
 
-	found := lib.Search(SearchArgs{Query: "Return Of The Bugs"})
+	found := lib.Search(ctx, SearchArgs{Query: "Return Of The Bugs"})
 
 	if len(found) != 3 {
 		t.Errorf("Expected to find 3 tracks but found %d", len(found))
@@ -1056,7 +1058,7 @@ func TestLocalLibraryGetArtistAlbums(t *testing.T) {
 	}
 
 	var artistID int64
-	results := lib.Search(SearchArgs{Query: artistName})
+	results := lib.Search(ctx, SearchArgs{Query: artistName})
 	for _, track := range results {
 		if track.Artist == artistName {
 			artistID = track.ArtistID
@@ -1068,7 +1070,7 @@ func TestLocalLibraryGetArtistAlbums(t *testing.T) {
 		t.Fatalf("could not find artist `%s`", artistName)
 	}
 
-	artistAlbums := lib.GetArtistAlbums(artistID)
+	artistAlbums := lib.GetArtistAlbums(ctx, artistID)
 	if len(expected) != len(artistAlbums) {
 		t.Errorf("expected %d albums but got %d", len(expected), len(artistAlbums))
 	}

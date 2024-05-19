@@ -175,10 +175,7 @@ func (lib *LocalLibrary) AddLibraryPath(path string) {
 }
 
 // Search searches in the library. Will match against the track's name, artist and album.
-func (lib *LocalLibrary) Search(args SearchArgs) []SearchResult {
-	ctx, cancel := context.WithCancel(lib.ctx) //!TODO: use request context
-	defer cancel()
-
+func (lib *LocalLibrary) Search(ctx context.Context, args SearchArgs) []SearchResult {
 	searchTerm := fmt.Sprintf("%%%s%%", args.Query)
 
 	var output []SearchResult
@@ -232,7 +229,7 @@ func (lib *LocalLibrary) Search(args SearchArgs) []SearchResult {
 
 // SearchAlbums searches the local library for albums. See Library.SearchAlbums
 // for more.
-func (lib *LocalLibrary) SearchAlbums(args SearchArgs) []Album {
+func (lib *LocalLibrary) SearchAlbums(ctx context.Context, args SearchArgs) []Album {
 	searchTerm := fmt.Sprintf("%%%s%%", args.Query)
 
 	var output []Album
@@ -242,7 +239,7 @@ func (lib *LocalLibrary) SearchAlbums(args SearchArgs) []Album {
 			limitCount = int64(args.Count)
 		}
 
-		rows, err := db.Query(`
+		rows, err := db.QueryContext(ctx, `
 			SELECT
 				t.album_id as album_id,
 				al.name as album,
@@ -323,7 +320,7 @@ func (lib *LocalLibrary) SearchAlbums(args SearchArgs) []Album {
 }
 
 // SearchArtists searches for and returns artists which match the search arguments.
-func (lib *LocalLibrary) SearchArtists(args SearchArgs) []Artist {
+func (lib *LocalLibrary) SearchArtists(ctx context.Context, args SearchArgs) []Artist {
 	searchTerm := fmt.Sprintf("%%%s%%", args.Query)
 
 	var output []Artist
@@ -333,7 +330,7 @@ func (lib *LocalLibrary) SearchArtists(args SearchArgs) []Artist {
 			limitCount = int64(args.Count)
 		}
 
-		rows, err := db.Query(`
+		rows, err := db.QueryContext(ctx, `
 			SELECT
 				ar.id,
 				ar.name,
@@ -392,10 +389,10 @@ func (lib *LocalLibrary) SearchArtists(args SearchArgs) []Artist {
 }
 
 // GetFilePath returns the filesystem path for a file specified by its ID.
-func (lib *LocalLibrary) GetFilePath(ID int64) string {
+func (lib *LocalLibrary) GetFilePath(ctx context.Context, ID int64) string {
 	var filePath string
 	work := func(db *sql.DB) error {
-		smt, err := db.Prepare(`
+		smt, err := db.PrepareContext(ctx, `
 			SELECT
 				fs_path
 			FROM
@@ -410,7 +407,7 @@ func (lib *LocalLibrary) GetFilePath(ID int64) string {
 
 		defer smt.Close()
 
-		err = smt.QueryRow(ID).Scan(&filePath)
+		err = smt.QueryRowContext(ctx, ID).Scan(&filePath)
 		if err != nil {
 			log.Printf("Error file path query row: %s\n", err)
 			return nil
@@ -426,10 +423,7 @@ func (lib *LocalLibrary) GetFilePath(ID int64) string {
 }
 
 // GetAlbumFiles satisfies the Library interface
-func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []TrackInfo {
-	ctx, cancel := context.WithCancel(lib.ctx) //!TODO: use request context
-	defer cancel()
-
+func (lib *LocalLibrary) GetAlbumFiles(ctx context.Context, albumID int64) []TrackInfo {
 	var (
 		output []TrackInfo
 
@@ -665,13 +659,16 @@ func (lib *LocalLibrary) RecordTrackPlay(
 
 // GetArtistAlbums returns all the albums which this artist has an at least
 // one track in.
-func (lib *LocalLibrary) GetArtistAlbums(artistID int64) []Album {
+func (lib *LocalLibrary) GetArtistAlbums(
+	ctx context.Context,
+	artistID int64,
+) []Album {
 	var albums []Album
 
 	work := func(db *sql.DB) error {
 		var artistName string
 
-		row := db.QueryRow(`
+		row := db.QueryRowContext(ctx, `
 			SELECT
 				name
 			FROM
@@ -683,7 +680,7 @@ func (lib *LocalLibrary) GetArtistAlbums(artistID int64) []Album {
 			return fmt.Errorf("scanning for artist name error: %w", err)
 		}
 
-		rows, err := db.Query(`
+		rows, err := db.QueryContext(ctx, `
 			SELECT
 				t.album_id,
 				a.name,

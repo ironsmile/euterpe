@@ -21,7 +21,7 @@ func (s *subsonic) stream(w http.ResponseWriter, req *http.Request) {
 	//!TODO: support maximum bitrate and and transcoding. Once done, a separate
 	// endpoint must be created for the "/download" endpoint.
 
-	filePath := s.lib.GetFilePath(toTrackDBID(trackID))
+	filePath := s.lib.GetFilePath(req.Context(), toTrackDBID(trackID))
 
 	fh, err := os.Open(filePath)
 	if err != nil {

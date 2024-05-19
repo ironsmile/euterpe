@@ -52,7 +52,7 @@ func (fh AlbumHandler) find(writer http.ResponseWriter, req *http.Request) error
 		return nil
 	}
 
-	albumFiles := fh.library.GetAlbumFiles(int64(id))
+	albumFiles := fh.library.GetAlbumFiles(req.Context(), int64(id))
 
 	if len(albumFiles) < 1 {
 		http.NotFoundHandler().ServeHTTP(writer, req)
@@ -65,7 +65,7 @@ func (fh AlbumHandler) find(writer http.ResponseWriter, req *http.Request) error
 	var files []string
 
 	for _, track := range albumFiles {
-		files = append(files, fh.library.GetFilePath(track.ID))
+		files = append(files, fh.library.GetFilePath(req.Context(), track.ID))
 	}
 
 	written, err := fh.writeZipContents(writer, files)

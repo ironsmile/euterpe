@@ -60,7 +60,7 @@ func TestSubsonicXMLResponses(t *testing.T) {
 	}
 
 	lib := &libraryfakes.FakeLibrary{
-		GetArtistAlbumsStub: func(i int64) []library.Album {
+		GetArtistAlbumsStub: func(ctx context.Context, i int64) []library.Album {
 			return []library.Album{
 				{
 					ID:         22,
@@ -86,7 +86,7 @@ func TestSubsonicXMLResponses(t *testing.T) {
 				},
 			}
 		},
-		GetAlbumFilesStub: func(i int64) []library.SearchResult {
+		GetAlbumFilesStub: func(ctx context.Context, i int64) []library.SearchResult {
 			return []library.SearchResult{
 				{
 					ID:          11,
@@ -133,10 +133,15 @@ func TestSubsonicXMLResponses(t *testing.T) {
 				Favourite:   1714856348,
 			}, nil
 		},
-		SearchStub: func(sa library.SearchArgs) []library.SearchResult {
+		SearchStub: func(
+			ctx context.Context,
+			sa library.SearchArgs,
+		) []library.SearchResult {
 			return libSongs
 		},
-		SearchAlbumsStub: func(sa library.SearchArgs) []library.Album {
+		SearchAlbumsStub: func(
+			ctx context.Context, sa library.SearchArgs,
+		) []library.Album {
 			return []library.Album{
 				{
 					ID:         10,
@@ -151,7 +156,10 @@ func TestSubsonicXMLResponses(t *testing.T) {
 				},
 			}
 		},
-		SearchArtistsStub: func(sa library.SearchArgs) []library.Artist {
+		SearchArtistsStub: func(
+			ctx context.Context,
+			sa library.SearchArgs,
+		) []library.Artist {
 			return []library.Artist{
 				{
 					ID:         11,

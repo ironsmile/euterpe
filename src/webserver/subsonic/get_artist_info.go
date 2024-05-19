@@ -16,7 +16,7 @@ func (s *subsonic) getArtistInfo(w http.ResponseWriter, req *http.Request) {
 
 	artistID := toArtistDBID(subsonicID)
 
-	albums := s.lib.GetArtistAlbums(artistID)
+	albums := s.lib.GetArtistAlbums(req.Context(), artistID)
 	if len(albums) == 0 {
 		resp := responseError(errCodeNotFound, "artist not found")
 		encodeResponse(w, req, resp)

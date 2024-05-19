@@ -27,7 +27,7 @@ func (s *subsonic) getAlbum(w http.ResponseWriter, req *http.Request) {
 		xsdAlbumID3: dbAlbumToAlbumID3Entry(album),
 	}
 
-	tracks := s.lib.GetAlbumFiles(albumID)
+	tracks := s.lib.GetAlbumFiles(req.Context(), albumID)
 	for _, track := range tracks {
 		alEntry.Children = append(alEntry.Children, trackToChild(
 			track,

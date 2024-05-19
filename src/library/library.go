@@ -139,25 +139,25 @@ type Library interface {
 	// Search the library using a search string. It will match against Artist, Album
 	// and Title. Will OR the results. So it is "return anything which Artist matches or
 	// Album matches or Title matches".
-	Search(args SearchArgs) []SearchResult
+	Search(ctx context.Context, args SearchArgs) []SearchResult
 
 	// SearchAlbums searches the library for the given terms and returns matching
 	// albums. It may look into artist names, song names and actual album names.
-	SearchAlbums(args SearchArgs) []Album
+	SearchAlbums(ctx context.Context, args SearchArgs) []Album
 
 	// SearchArtists searches the library for the given terms and returns matching
 	// artists. It looks into the artist name only.
-	SearchArtists(args SearchArgs) []Artist
+	SearchArtists(ctx context.Context, args SearchArgs) []Artist
 
 	// Returns the real filesystem path. Requires the media ID.
-	GetFilePath(mediaID int64) string
+	GetFilePath(ctx context.Context, mediaID int64) string
 
 	// Returns search result will all the files of this album.
-	GetAlbumFiles(albumID int64) []TrackInfo
+	GetAlbumFiles(ctx context.Context, albumID int64) []TrackInfo
 
 	// GetArtistAlbums returns all the albums which this artist has an at least
 	// on track in.
-	GetArtistAlbums(artistID int64) []Album
+	GetArtistAlbums(ctx context.Context, artistID int64) []Album
 
 	// GetTrack returns information for particular track identified by its
 	// media ID.

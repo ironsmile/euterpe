@@ -39,7 +39,7 @@ func (fh FileHandler) find(writer http.ResponseWriter, req *http.Request) error 
 		return fmt.Errorf("Library for FileHandler is nil")
 	}
 
-	filePath := fh.library.GetFilePath(int64(id))
+	filePath := fh.library.GetFilePath(req.Context(), int64(id))
 	fileReader, err := os.Open(filePath)
 	if err != nil {
 		http.NotFoundHandler().ServeHTTP(writer, req)

@@ -63,7 +63,7 @@ func (s *subsonic) getArtistDirectory(
 		return xsdDirectory{}, fmt.Errorf("getting artist: %w", err)
 	}
 	artistSubsonicID := artistFSID(artistID)
-	albums := s.lib.GetArtistAlbums(artistID)
+	albums := s.lib.GetArtistAlbums(req.Context(), artistID)
 
 	artURL, _ := s.getAristImageURL(req, artistID)
 
@@ -101,7 +101,7 @@ func (s *subsonic) getAlbumDirectory(
 	}
 
 	albumSubsonicID := albumFSID(albumID)
-	tracks := s.lib.GetAlbumFiles(albumID)
+	tracks := s.lib.GetAlbumFiles(req.Context(), albumID)
 
 	resp := xsdDirectory{
 		ID:         albumSubsonicID,

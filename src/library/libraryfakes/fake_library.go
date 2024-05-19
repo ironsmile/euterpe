@@ -44,10 +44,11 @@ type FakeLibrary struct {
 		result1 library.Album
 		result2 error
 	}
-	GetAlbumFilesStub        func(int64) []library.SearchResult
+	GetAlbumFilesStub        func(context.Context, int64) []library.SearchResult
 	getAlbumFilesMutex       sync.RWMutex
 	getAlbumFilesArgsForCall []struct {
-		arg1 int64
+		arg1 context.Context
+		arg2 int64
 	}
 	getAlbumFilesReturns struct {
 		result1 []library.SearchResult
@@ -69,10 +70,11 @@ type FakeLibrary struct {
 		result1 library.Artist
 		result2 error
 	}
-	GetArtistAlbumsStub        func(int64) []library.Album
+	GetArtistAlbumsStub        func(context.Context, int64) []library.Album
 	getArtistAlbumsMutex       sync.RWMutex
 	getArtistAlbumsArgsForCall []struct {
-		arg1 int64
+		arg1 context.Context
+		arg2 int64
 	}
 	getArtistAlbumsReturns struct {
 		result1 []library.Album
@@ -80,10 +82,11 @@ type FakeLibrary struct {
 	getArtistAlbumsReturnsOnCall map[int]struct {
 		result1 []library.Album
 	}
-	GetFilePathStub        func(int64) string
+	GetFilePathStub        func(context.Context, int64) string
 	getFilePathMutex       sync.RWMutex
 	getFilePathArgsForCall []struct {
-		arg1 int64
+		arg1 context.Context
+		arg2 int64
 	}
 	getFilePathReturns struct {
 		result1 string
@@ -156,10 +159,11 @@ type FakeLibrary struct {
 	scanMutex       sync.RWMutex
 	scanArgsForCall []struct {
 	}
-	SearchStub        func(library.SearchArgs) []library.SearchResult
+	SearchStub        func(context.Context, library.SearchArgs) []library.SearchResult
 	searchMutex       sync.RWMutex
 	searchArgsForCall []struct {
-		arg1 library.SearchArgs
+		arg1 context.Context
+		arg2 library.SearchArgs
 	}
 	searchReturns struct {
 		result1 []library.SearchResult
@@ -167,10 +171,11 @@ type FakeLibrary struct {
 	searchReturnsOnCall map[int]struct {
 		result1 []library.SearchResult
 	}
-	SearchAlbumsStub        func(library.SearchArgs) []library.Album
+	SearchAlbumsStub        func(context.Context, library.SearchArgs) []library.Album
 	searchAlbumsMutex       sync.RWMutex
 	searchAlbumsArgsForCall []struct {
-		arg1 library.SearchArgs
+		arg1 context.Context
+		arg2 library.SearchArgs
 	}
 	searchAlbumsReturns struct {
 		result1 []library.Album
@@ -178,10 +183,11 @@ type FakeLibrary struct {
 	searchAlbumsReturnsOnCall map[int]struct {
 		result1 []library.Album
 	}
-	SearchArtistsStub        func(library.SearchArgs) []library.Artist
+	SearchArtistsStub        func(context.Context, library.SearchArgs) []library.Artist
 	searchArtistsMutex       sync.RWMutex
 	searchArtistsArgsForCall []struct {
-		arg1 library.SearchArgs
+		arg1 context.Context
+		arg2 library.SearchArgs
 	}
 	searchArtistsReturns struct {
 		result1 []library.Artist
@@ -424,18 +430,19 @@ func (fake *FakeLibrary) GetAlbumReturnsOnCall(i int, result1 library.Album, res
 	}{result1, result2}
 }
 
-func (fake *FakeLibrary) GetAlbumFiles(arg1 int64) []library.SearchResult {
+func (fake *FakeLibrary) GetAlbumFiles(arg1 context.Context, arg2 int64) []library.SearchResult {
 	fake.getAlbumFilesMutex.Lock()
 	ret, specificReturn := fake.getAlbumFilesReturnsOnCall[len(fake.getAlbumFilesArgsForCall)]
 	fake.getAlbumFilesArgsForCall = append(fake.getAlbumFilesArgsForCall, struct {
-		arg1 int64
-	}{arg1})
+		arg1 context.Context
+		arg2 int64
+	}{arg1, arg2})
 	stub := fake.GetAlbumFilesStub
 	fakeReturns := fake.getAlbumFilesReturns
-	fake.recordInvocation("GetAlbumFiles", []interface{}{arg1})
+	fake.recordInvocation("GetAlbumFiles", []interface{}{arg1, arg2})
 	fake.getAlbumFilesMutex.Unlock()
 	if stub != nil {
-		return stub(arg1)
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
@@ -449,17 +456,17 @@ func (fake *FakeLibrary) GetAlbumFilesCallCount() int {
 	return len(fake.getAlbumFilesArgsForCall)
 }
 
-func (fake *FakeLibrary) GetAlbumFilesCalls(stub func(int64) []library.SearchResult) {
+func (fake *FakeLibrary) GetAlbumFilesCalls(stub func(context.Context, int64) []library.SearchResult) {
 	fake.getAlbumFilesMutex.Lock()
 	defer fake.getAlbumFilesMutex.Unlock()
 	fake.GetAlbumFilesStub = stub
 }
 
-func (fake *FakeLibrary) GetAlbumFilesArgsForCall(i int) int64 {
+func (fake *FakeLibrary) GetAlbumFilesArgsForCall(i int) (context.Context, int64) {
 	fake.getAlbumFilesMutex.RLock()
 	defer fake.getAlbumFilesMutex.RUnlock()
 	argsForCall := fake.getAlbumFilesArgsForCall[i]
-	return argsForCall.arg1
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeLibrary) GetAlbumFilesReturns(result1 []library.SearchResult) {
@@ -550,18 +557,19 @@ func (fake *FakeLibrary) GetArtistReturnsOnCall(i int, result1 library.Artist, r
 	}{result1, result2}
 }
 
-func (fake *FakeLibrary) GetArtistAlbums(arg1 int64) []library.Album {
+func (fake *FakeLibrary) GetArtistAlbums(arg1 context.Context, arg2 int64) []library.Album {
 	fake.getArtistAlbumsMutex.Lock()
 	ret, specificReturn := fake.getArtistAlbumsReturnsOnCall[len(fake.getArtistAlbumsArgsForCall)]
 	fake.getArtistAlbumsArgsForCall = append(fake.getArtistAlbumsArgsForCall, struct {
-		arg1 int64
-	}{arg1})
+		arg1 context.Context
+		arg2 int64
+	}{arg1, arg2})
 	stub := fake.GetArtistAlbumsStub
 	fakeReturns := fake.getArtistAlbumsReturns
-	fake.recordInvocation("GetArtistAlbums", []interface{}{arg1})
+	fake.recordInvocation("GetArtistAlbums", []interface{}{arg1, arg2})
 	fake.getArtistAlbumsMutex.Unlock()
 	if stub != nil {
-		return stub(arg1)
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
@@ -575,17 +583,17 @@ func (fake *FakeLibrary) GetArtistAlbumsCallCount() int {
 	return len(fake.getArtistAlbumsArgsForCall)
 }
 
-func (fake *FakeLibrary) GetArtistAlbumsCalls(stub func(int64) []library.Album) {
+func (fake *FakeLibrary) GetArtistAlbumsCalls(stub func(context.Context, int64) []library.Album) {
 	fake.getArtistAlbumsMutex.Lock()
 	defer fake.getArtistAlbumsMutex.Unlock()
 	fake.GetArtistAlbumsStub = stub
 }
 
-func (fake *FakeLibrary) GetArtistAlbumsArgsForCall(i int) int64 {
+func (fake *FakeLibrary) GetArtistAlbumsArgsForCall(i int) (context.Context, int64) {
 	fake.getArtistAlbumsMutex.RLock()
 	defer fake.getArtistAlbumsMutex.RUnlock()
 	argsForCall := fake.getArtistAlbumsArgsForCall[i]
-	return argsForCall.arg1
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeLibrary) GetArtistAlbumsReturns(result1 []library.Album) {
@@ -611,18 +619,19 @@ func (fake *FakeLibrary) GetArtistAlbumsReturnsOnCall(i int, result1 []library.A
 	}{result1}
 }
 
-func (fake *FakeLibrary) GetFilePath(arg1 int64) string {
+func (fake *FakeLibrary) GetFilePath(arg1 context.Context, arg2 int64) string {
 	fake.getFilePathMutex.Lock()
 	ret, specificReturn := fake.getFilePathReturnsOnCall[len(fake.getFilePathArgsForCall)]
 	fake.getFilePathArgsForCall = append(fake.getFilePathArgsForCall, struct {
-		arg1 int64
-	}{arg1})
+		arg1 context.Context
+		arg2 int64
+	}{arg1, arg2})
 	stub := fake.GetFilePathStub
 	fakeReturns := fake.getFilePathReturns
-	fake.recordInvocation("GetFilePath", []interface{}{arg1})
+	fake.recordInvocation("GetFilePath", []interface{}{arg1, arg2})
 	fake.getFilePathMutex.Unlock()
 	if stub != nil {
-		return stub(arg1)
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
@@ -636,17 +645,17 @@ func (fake *FakeLibrary) GetFilePathCallCount() int {
 	return len(fake.getFilePathArgsForCall)
 }
 
-func (fake *FakeLibrary) GetFilePathCalls(stub func(int64) string) {
+func (fake *FakeLibrary) GetFilePathCalls(stub func(context.Context, int64) string) {
 	fake.getFilePathMutex.Lock()
 	defer fake.getFilePathMutex.Unlock()
 	fake.GetFilePathStub = stub
 }
 
-func (fake *FakeLibrary) GetFilePathArgsForCall(i int) int64 {
+func (fake *FakeLibrary) GetFilePathArgsForCall(i int) (context.Context, int64) {
 	fake.getFilePathMutex.RLock()
 	defer fake.getFilePathMutex.RUnlock()
 	argsForCall := fake.getFilePathArgsForCall[i]
-	return argsForCall.arg1
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeLibrary) GetFilePathReturns(result1 string) {
@@ -1001,18 +1010,19 @@ func (fake *FakeLibrary) ScanCalls(stub func()) {
 	fake.ScanStub = stub
 }
 
-func (fake *FakeLibrary) Search(arg1 library.SearchArgs) []library.SearchResult {
+func (fake *FakeLibrary) Search(arg1 context.Context, arg2 library.SearchArgs) []library.SearchResult {
 	fake.searchMutex.Lock()
 	ret, specificReturn := fake.searchReturnsOnCall[len(fake.searchArgsForCall)]
 	fake.searchArgsForCall = append(fake.searchArgsForCall, struct {
-		arg1 library.SearchArgs
-	}{arg1})
+		arg1 context.Context
+		arg2 library.SearchArgs
+	}{arg1, arg2})
 	stub := fake.SearchStub
 	fakeReturns := fake.searchReturns
-	fake.recordInvocation("Search", []interface{}{arg1})
+	fake.recordInvocation("Search", []interface{}{arg1, arg2})
 	fake.searchMutex.Unlock()
 	if stub != nil {
-		return stub(arg1)
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
@@ -1026,17 +1036,17 @@ func (fake *FakeLibrary) SearchCallCount() int {
 	return len(fake.searchArgsForCall)
 }
 
-func (fake *FakeLibrary) SearchCalls(stub func(library.SearchArgs) []library.SearchResult) {
+func (fake *FakeLibrary) SearchCalls(stub func(context.Context, library.SearchArgs) []library.SearchResult) {
 	fake.searchMutex.Lock()
 	defer fake.searchMutex.Unlock()
 	fake.SearchStub = stub
 }
 
-func (fake *FakeLibrary) SearchArgsForCall(i int) library.SearchArgs {
+func (fake *FakeLibrary) SearchArgsForCall(i int) (context.Context, library.SearchArgs) {
 	fake.searchMutex.RLock()
 	defer fake.searchMutex.RUnlock()
 	argsForCall := fake.searchArgsForCall[i]
-	return argsForCall.arg1
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeLibrary) SearchReturns(result1 []library.SearchResult) {
@@ -1062,18 +1072,19 @@ func (fake *FakeLibrary) SearchReturnsOnCall(i int, result1 []library.SearchResu
 	}{result1}
 }
 
-func (fake *FakeLibrary) SearchAlbums(arg1 library.SearchArgs) []library.Album {
+func (fake *FakeLibrary) SearchAlbums(arg1 context.Context, arg2 library.SearchArgs) []library.Album {
 	fake.searchAlbumsMutex.Lock()
 	ret, specificReturn := fake.searchAlbumsReturnsOnCall[len(fake.searchAlbumsArgsForCall)]
 	fake.searchAlbumsArgsForCall = append(fake.searchAlbumsArgsForCall, struct {
-		arg1 library.SearchArgs
-	}{arg1})
+		arg1 context.Context
+		arg2 library.SearchArgs
+	}{arg1, arg2})
 	stub := fake.SearchAlbumsStub
 	fakeReturns := fake.searchAlbumsReturns
-	fake.recordInvocation("SearchAlbums", []interface{}{arg1})
+	fake.recordInvocation("SearchAlbums", []interface{}{arg1, arg2})
 	fake.searchAlbumsMutex.Unlock()
 	if stub != nil {
-		return stub(arg1)
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
@@ -1087,17 +1098,17 @@ func (fake *FakeLibrary) SearchAlbumsCallCount() int {
 	return len(fake.searchAlbumsArgsForCall)
 }
 
-func (fake *FakeLibrary) SearchAlbumsCalls(stub func(library.SearchArgs) []library.Album) {
+func (fake *FakeLibrary) SearchAlbumsCalls(stub func(context.Context, library.SearchArgs) []library.Album) {
 	fake.searchAlbumsMutex.Lock()
 	defer fake.searchAlbumsMutex.Unlock()
 	fake.SearchAlbumsStub = stub
 }
 
-func (fake *FakeLibrary) SearchAlbumsArgsForCall(i int) library.SearchArgs {
+func (fake *FakeLibrary) SearchAlbumsArgsForCall(i int) (context.Context, library.SearchArgs) {
 	fake.searchAlbumsMutex.RLock()
 	defer fake.searchAlbumsMutex.RUnlock()
 	argsForCall := fake.searchAlbumsArgsForCall[i]
-	return argsForCall.arg1
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeLibrary) SearchAlbumsReturns(result1 []library.Album) {
@@ -1123,18 +1134,19 @@ func (fake *FakeLibrary) SearchAlbumsReturnsOnCall(i int, result1 []library.Albu
 	}{result1}
 }
 
-func (fake *FakeLibrary) SearchArtists(arg1 library.SearchArgs) []library.Artist {
+func (fake *FakeLibrary) SearchArtists(arg1 context.Context, arg2 library.SearchArgs) []library.Artist {
 	fake.searchArtistsMutex.Lock()
 	ret, specificReturn := fake.searchArtistsReturnsOnCall[len(fake.searchArtistsArgsForCall)]
 	fake.searchArtistsArgsForCall = append(fake.searchArtistsArgsForCall, struct {
-		arg1 library.SearchArgs
-	}{arg1})
+		arg1 context.Context
+		arg2 library.SearchArgs
+	}{arg1, arg2})
 	stub := fake.SearchArtistsStub
 	fakeReturns := fake.searchArtistsReturns
-	fake.recordInvocation("SearchArtists", []interface{}{arg1})
+	fake.recordInvocation("SearchArtists", []interface{}{arg1, arg2})
 	fake.searchArtistsMutex.Unlock()
 	if stub != nil {
-		return stub(arg1)
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
@@ -1148,17 +1160,17 @@ func (fake *FakeLibrary) SearchArtistsCallCount() int {
 	return len(fake.searchArtistsArgsForCall)
 }
 
-func (fake *FakeLibrary) SearchArtistsCalls(stub func(library.SearchArgs) []library.Artist) {
+func (fake *FakeLibrary) SearchArtistsCalls(stub func(context.Context, library.SearchArgs) []library.Artist) {
 	fake.searchArtistsMutex.Lock()
 	defer fake.searchArtistsMutex.Unlock()
 	fake.SearchArtistsStub = stub
 }
 
-func (fake *FakeLibrary) SearchArtistsArgsForCall(i int) library.SearchArgs {
+func (fake *FakeLibrary) SearchArtistsArgsForCall(i int) (context.Context, library.SearchArgs) {
 	fake.searchArtistsMutex.RLock()
 	defer fake.searchArtistsMutex.RUnlock()
 	argsForCall := fake.searchArtistsArgsForCall[i]
-	return argsForCall.arg1
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeLibrary) SearchArtistsReturns(result1 []library.Artist) {
