@@ -145,32 +145,43 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 		queryArgs = append(queryArgs, sql.Named("artistID", args.ArtistID))
 	}
 
-	order := "ASC"
-	orderBy := "al.name"
+	if args.FromYear != nil {
+		where = append(where, "tr.year >= @fromYear")
+		queryArgs = append(queryArgs, sql.Named("fromYear", *args.FromYear))
+	}
 
+	if args.ToYear != nil {
+		where = append(where, "tr.year <= @toYear")
+		queryArgs = append(queryArgs, sql.Named("toYear", *args.ToYear))
+	}
+
+	order := "ASC"
 	if args.Order == OrderDesc {
 		order = "DESC"
 	}
 
+	orderBy := "al.name " + order
+
 	switch args.OrderBy {
 	case OrderByID:
-		orderBy = "al.id"
+		orderBy = "al.id " + order
 	case OrderByRandom:
 		orderBy = "RANDOM()"
-		order = ""
 
 		// When ordering by random the offset does not matter. Only the limit
 		// does.
 		offset = 0
 	case OrderByFrequentlyPlayed:
-		orderBy = "SUM(us.play_count)"
+		orderBy = "SUM(us.play_count) " + order
 	case OrderByRecentlyPlayed:
-		orderBy = "MAX(us.last_played)"
+		orderBy = "MAX(us.last_played) " + order
 	case OrderByArtistName:
-		orderBy = "artist_name"
+		orderBy = "artist_name " + order
 	case OrderByFavourites:
-		orderBy = "als.favourite"
+		orderBy = "als.favourite " + order
 		where = append(where, "als.favourite IS NOT NULL AND als.favourite != 0")
+	case OrderByYear:
+		orderBy = "tr.year " + order
 	}
 
 	if len(where) > 0 {
@@ -230,10 +241,10 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 			GROUP BY
 				tr.album_id
 			ORDER BY
-				%s %s
+				%s
 			LIMIT
 				@offset, @perPage
-		`, whereStr, orderBy, order), queryArgs...)
+		`, whereStr, orderBy), queryArgs...)
 
 		if err != nil {
 			return err
@@ -299,6 +310,16 @@ func (lib *LocalLibrary) BrowseTracks(args BrowseArgs) ([]TrackInfo, int) {
 		queryArgs = append(queryArgs, sql.Named("artistID", args.ArtistID))
 	}
 
+	if args.FromYear != nil {
+		where = append(where, "t.year >= @fromYear")
+		queryArgs = append(queryArgs, sql.Named("fromYear", *args.FromYear))
+	}
+
+	if args.ToYear != nil {
+		where = append(where, "t.year <= @toYear")
+		queryArgs = append(queryArgs, sql.Named("toYear", *args.ToYear))
+	}
+
 	order := "ASC"
 
 	if args.Order == OrderDesc {
@@ -327,6 +348,8 @@ func (lib *LocalLibrary) BrowseTracks(args BrowseArgs) ([]TrackInfo, int) {
 	case OrderByFavourites:
 		orderBy = "us.favourite " + order
 		where = append(where, "us.favourite IS NOT NULL AND us.favourite != 0")
+	case OrderByYear:
+		orderBy = "t.year " + order
 	}
 
 	queryArgs = append(

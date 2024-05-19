@@ -39,7 +39,26 @@ func (s *subsonic) getAlbumList2(w http.ResponseWriter, req *http.Request) {
 	case "alphabeticalByArtist":
 		browseArgs.OrderBy = library.OrderByArtistName
 	case "byYear":
-		fallthrough
+		fromYear, fromErr := strconv.ParseInt(req.Form.Get("fromYear"), 10, 64)
+		toYear, toErr := strconv.ParseInt(req.Form.Get("toYear"), 10, 64)
+		if fromErr != nil || toErr != nil {
+			resp := responseError(
+				errCodeMissingParameter,
+				"valid `fromYear` and `toYear` are required when type=byYear",
+			)
+			encodeResponse(w, req, resp)
+			return
+		}
+
+		browseArgs.Order = library.OrderAsc
+		browseArgs.FromYear = &fromYear
+		browseArgs.ToYear = &toYear
+
+		if fromYear > toYear {
+			browseArgs.Order = library.OrderDesc
+			browseArgs.FromYear = &toYear
+			browseArgs.ToYear = &fromYear
+		}
 	case "byGenre":
 		resp := responseError(
 			errCodeGeneric,

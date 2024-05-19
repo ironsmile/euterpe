@@ -48,6 +48,9 @@ const (
 
 	// OrderByArtistName orders lists by the artist name of its items.
 	OrderByArtistName
+
+	// OrderByYear orders the lists by the year of recording.
+	OrderByYear
 )
 
 // BrowseArgs defines all arguments one can pass to the browse methods to later
@@ -79,6 +82,14 @@ type BrowseArgs struct {
 	// ArtistID may be used for filtering the results so that only results which
 	// belong this ArtistID are returned.
 	ArtistID int64
+
+	// FromYear is the inclusive lower limit for the year of recording of the returned
+	// results.
+	FromYear *int64
+
+	// To year is the inclusive upper limit for the year of recording for the returned
+	// results.
+	ToYear *int64
 }
 
 //counterfeiter:generate . Browser
