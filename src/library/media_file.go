@@ -20,4 +20,10 @@ type MediaFile interface {
 
 	// Length returns the duration of this piece of media
 	Length() time.Duration
+
+	// Year returns the four-digit year at which this media was recorded.
+	Year() int
+
+	// Returns the bitrate of the file in kb/s.
+	Bitrate() int
 }

@@ -19,10 +19,9 @@ import (
 // TestFindAndSaveAlbumArtwork checks that album artwork is stored and then searches
 // by the following mechanism:
 //
-//	* First try the database
-//	* Then the file system
-//	* Finally make an request with the art.Finder
-//
+//   - First try the database
+//   - Then the file system
+//   - Finally make an request with the art.Finder
 func TestFindAndSaveAlbumArtwork(t *testing.T) {
 	var (
 		bigImage       = []byte("big-image-is-really-bigger-than-the-small")
@@ -141,7 +140,12 @@ func TestFindAndSaveAlbumArtwork(t *testing.T) {
 
 	lib.fs = mapfs
 
-	if err := lib.insertMediaIntoDatabase(&mediaFile, mediaFilePath); err != nil {
+	mediaFileInfo := fileInfo{
+		Size:     2473221,
+		FilePath: mediaFilePath,
+		Modified: time.Now(),
+	}
+	if err := lib.insertMediaIntoDatabase(&mediaFile, mediaFileInfo); err != nil {
 		t.Fatalf("inserting media file failed: %s", err)
 	}
 
@@ -173,7 +177,12 @@ func TestFindAndSaveAlbumArtwork(t *testing.T) {
 		track:  2,
 		length: 621,
 	}
-	if err := lib.insertMediaIntoDatabase(&secondFile, secondFilePath); err != nil {
+	secondFileInfo := fileInfo{
+		Size:     432237211,
+		FilePath: secondFilePath,
+		Modified: time.Now(),
+	}
+	if err := lib.insertMediaIntoDatabase(&secondFile, secondFileInfo); err != nil {
 		t.Fatalf("inserting second media file failed: %s", err)
 	}
 
@@ -202,7 +211,12 @@ func TestFindAndSaveAlbumArtwork(t *testing.T) {
 		track:  3,
 		length: 112,
 	}
-	if err := lib.insertMediaIntoDatabase(&thirdFile, thirdFilePath); err != nil {
+	thirdFileInfo := fileInfo{
+		Size:     23717,
+		FilePath: thirdFilePath,
+		Modified: time.Now(),
+	}
+	if err := lib.insertMediaIntoDatabase(&thirdFile, thirdFileInfo); err != nil {
 		t.Fatalf("inserting third media file failed: %s", err)
 	}
 
@@ -244,7 +258,12 @@ func TestFindAndSaveAlbumArtwork(t *testing.T) {
 		track:  4,
 		length: 113,
 	}
-	if err := lib.insertMediaIntoDatabase(&fourthFile, fourthFilePath); err != nil {
+	fourthFileInfo := fileInfo{
+		Size:     23123542,
+		FilePath: fourthFilePath,
+		Modified: time.Now(),
+	}
+	if err := lib.insertMediaIntoDatabase(&fourthFile, fourthFileInfo); err != nil {
 		t.Fatalf("inserting fourth media file failed: %s", err)
 	}
 

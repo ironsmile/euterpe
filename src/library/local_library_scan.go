@@ -129,13 +129,24 @@ func (lib *LocalLibrary) Rescan(ctx context.Context) error {
 		cursor += int64(len(mediaFiles))
 
 		for _, fileName := range mediaFiles {
+			st, err := os.Stat(fileName)
+			if err != nil {
+				log.Printf("Filesystem error (stat) for %s: %s\n", fileName, err)
+				continue
+			}
+
 			file, err := taglib.Read(fileName)
 			if err != nil {
 				log.Printf("Taglib error for %s: %s\n", fileName, err)
 				continue
 			}
 
-			if err := lib.insertMediaIntoDatabase(file, fileName); err != nil {
+			fi := fileInfo{
+				Size:     st.Size(),
+				FilePath: fileName,
+				Modified: st.ModTime(),
+			}
+			if err := lib.insertMediaIntoDatabase(file, fi); err != nil {
 				log.Printf("failed updating file %s: %s\n", fileName, err)
 			}
 			file.Close()

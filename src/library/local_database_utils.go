@@ -79,11 +79,15 @@ func scanTrack(rows scanner) (TrackInfo, error) {
 		rating     sql.NullInt16
 		lastPlayed sql.NullInt64
 		playCount  sql.NullInt64
+		year       sql.NullInt32
+		bitrate    sql.NullInt64
+		size       sql.NullInt64
+		createdAt  sql.NullInt64
 	)
 
 	err := rows.Scan(&res.ID, &res.Title, &res.Album, &res.Artist,
 		&res.ArtistID, &res.TrackNumber, &res.AlbumID, &res.Format,
-		&dur, &fav, &rating, &lastPlayed, &playCount,
+		&dur, &year, &bitrate, &size, &createdAt, &fav, &rating, &lastPlayed, &playCount,
 	)
 	if err != nil {
 		return res, err
@@ -104,6 +108,18 @@ func scanTrack(rows scanner) (TrackInfo, error) {
 	}
 	if dur.Valid {
 		res.Duration = dur.Int64
+	}
+	if year.Valid {
+		res.Year = year.Int32
+	}
+	if bitrate.Valid && bitrate.Int64 > 0 {
+		res.Bitrate = uint64(bitrate.Int64)
+	}
+	if size.Valid && size.Int64 > 0 {
+		res.Size = size.Int64
+	}
+	if createdAt.Valid {
+		res.CreatedAt = createdAt.Int64
 	}
 
 	return res, nil
@@ -127,6 +143,10 @@ var (
 		t.album_id as album_id,
 		t.fs_path as fs_path,
 		t.duration as duration,
+		t.year as year,
+		t.bitrate as bitrate,
+		t.size as file_size,
+		t.created_at as file_created_at,
 		us.favourite as fav,
 		us.user_rating as rating,
 		us.last_played as last_played,

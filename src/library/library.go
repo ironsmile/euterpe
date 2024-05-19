@@ -56,6 +56,23 @@ type SearchResult struct {
 	// Rating is the user rating given to this media file. It will be a number
 	// in the [1-5] range or 0 if no rating was given.
 	Rating uint8 `json:"rating,omitempty"`
+
+	// Year is the four digit year at which this track was recorded.
+	//
+	// Not encoded in the JSON response the API for the moment.
+	Year int32 `json:"-"`
+
+	// Bitrate is measured in bits per second.
+	Bitrate uint64 `json:"bitrate,omitempty"`
+
+	// Size is the size of the media file in bytes.
+	Size int64 `json:"size,omitempty"`
+
+	// CreatedAt is a unix timestamp of the time this track was added to the
+	// library.
+	//
+	// Not encoded in the JSON response the API for the moment.
+	CreatedAt int64 `json:"-"`
 }
 
 // SearchArgs is the input parameters for searching in the library.

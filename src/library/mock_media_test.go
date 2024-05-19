@@ -4,34 +4,54 @@ import "time"
 
 // MockMedia is a type used for testing the media insertion methods
 type MockMedia struct {
-	artist string
-	album  string
-	title  string
-	track  int
-	length time.Duration
+	artist  string
+	album   string
+	title   string
+	track   int
+	length  time.Duration
+	year    int
+	bitrate int
 }
 
-// Artist satisfiees the MediaFile interface and just returns the objec attribute
+// Artist satisfies the MediaFile interface and just returns the object attribute.
 func (m *MockMedia) Artist() string {
 	return m.artist
 }
 
-// Album satisfiees the MediaFile interface and just returns the objec attribute
+// Album satisfies the MediaFile interface and just returns the object attribute.
 func (m *MockMedia) Album() string {
 	return m.album
 }
 
-// Title satisfiees the MediaFile interface and just returns the objec attribute
+// Title satisfies the MediaFile interface and just returns the object attribute.
 func (m *MockMedia) Title() string {
 	return m.title
 }
 
-// Track satisfiees the MediaFile interface and just returns the objec attribute
+// Track satisfies the MediaFile interface and just returns the object attribute.
 func (m *MockMedia) Track() int {
 	return m.track
 }
 
-// Length satisfiees the MediaFile interface and just returns the objec attribute
+// Length satisfies the MediaFile interface and just returns the object attribute.
 func (m *MockMedia) Length() time.Duration {
 	return m.length
+}
+
+// Year satisfies the MediaFile interface. Returns the object attribute or a default
+// value if one is not set.
+func (m *MockMedia) Year() int {
+	if m.year == 0 {
+		return 1984
+	}
+	return m.year
+}
+
+// Bitrate satisfies the MediaFile interface. Returns the object attribute or a default
+// value if one is not set.
+func (m *MockMedia) Bitrate() int {
+	if m.bitrate == 0 {
+		return 256
+	}
+	return m.bitrate
 }

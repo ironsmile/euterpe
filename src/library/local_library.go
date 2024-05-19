@@ -850,52 +850,69 @@ func (lib *LocalLibrary) AddMedia(filename string) error {
 		return nil
 	}
 
-	if _, err := fs.Stat(lib.fs, filename); err != nil {
+	st, err := fs.Stat(lib.fs, filename)
+	if err != nil {
 		return err
 	}
 
 	file, err := taglib.Read(filename)
-
 	if err != nil {
 		return fmt.Errorf("Taglib error for %s: %s", filename, err.Error())
 	}
-
 	defer file.Close()
 
-	return lib.insertMediaIntoDatabase(file, filename)
+	fi := fileInfo{
+		FilePath: filename,
+		Size:     st.Size(),
+		Modified: st.ModTime(),
+	}
+	return lib.insertMediaIntoDatabase(file, fi)
+}
+
+type fileInfo struct {
+	Size     int64
+	FilePath string
+	Modified time.Time
 }
 
 // insertMediaIntoDatabase accepts an already parsed media info object, its path.
 // The method inserts this media into the library database.
-func (lib *LocalLibrary) insertMediaIntoDatabase(file MediaFile, filePath string) error {
+func (lib *LocalLibrary) insertMediaIntoDatabase(file MediaFile, info fileInfo) error {
 	artist := strings.TrimSpace(file.Artist())
 	artistID, err := lib.setArtistID(artist)
 	if err != nil {
 		return err
 	}
 
-	fileDir := filepath.Dir(filePath)
+	fileDir := filepath.Dir(info.FilePath)
 
 	album := strings.TrimSpace(file.Album())
 	albumID, err := lib.setAlbumID(album, fileDir)
-
 	if err != nil {
 		return err
 	}
 
 	trackNumber := int64(file.Track())
 	if trackNumber == 0 {
-		trackNumber = helpers.GuessTrackNumber(filePath)
+		trackNumber = helpers.GuessTrackNumber(info.FilePath)
 	}
 
 	title := strings.TrimSpace(file.Title())
+	if len(title) < 1 {
+		title = filepath.Base(info.FilePath)
+	}
+
 	_, err = lib.setTrackID(
 		title,
-		filePath,
+		info.FilePath,
 		trackNumber,
 		artistID,
 		albumID,
 		file.Length().Milliseconds(),
+		file.Year(),
+		file.Bitrate()*1024,
+		info.Size,
+		info.Modified,
 	)
 	return err
 }
@@ -1270,28 +1287,38 @@ func (lib *LocalLibrary) GetTrackID(
 // used when retrieving this particular song for playing.
 //
 // In case the track with this file system path already exists in the library it
-// is updated with new values for title, number, artist ID and album ID.
-func (lib *LocalLibrary) setTrackID(title, fsPath string,
-	trackNumber, artistID, albumID, duration int64) (int64, error) {
-
-	if len(title) < 1 {
-		title = filepath.Base(fsPath)
-	}
-
+// is updated with new values for the test of the properties.
+func (lib *LocalLibrary) setTrackID(
+	title, fsPath string,
+	trackNumber, artistID, albumID, duration int64,
+	year, bitrate int,
+	size int64,
+	lastModified time.Time,
+) (int64, error) {
 	var lastInsertID int64
 	work := func(db *sql.DB) error {
 		stmt, err := db.Prepare(`
 			INSERT INTO
-				tracks (name, album_id, artist_id, fs_path, number, duration)
+				tracks (
+					name, album_id, artist_id, fs_path, number, duration,
+					year, bitrate, size, created_at
+				)
 			VALUES
-				($1, $2, $3, $4, $5, $6)
+				(
+					@title, @albumID, @artistID, @fsPath, @trackNumber, @duration,
+					@year, @bitrate, @size, strftime('%s')
+				)
 			ON CONFLICT (fs_path) DO
 			UPDATE SET
-				name = $1,
-				album_id = $2,
-				artist_id = $3,
-				number = $5,
-				duration = $6
+				name = @title,
+				album_id = @albumID,
+				artist_id = @artistID,
+				number = @trackNumber,
+				duration = @duration,
+				year = @year,
+				size = @size,
+				bitrate = @bitrate,
+				created_at = COALESCE(created_at, @lastModified)
 		`)
 		if err != nil {
 			return err
@@ -1299,7 +1326,28 @@ func (lib *LocalLibrary) setTrackID(title, fsPath string,
 
 		defer stmt.Close()
 
-		res, err := stmt.Exec(title, albumID, artistID, fsPath, trackNumber, duration)
+		bitrateArg := sql.Named("bitrate", bitrate)
+		if bitrate == 0 {
+			bitrateArg = sql.Named("bitrate", nil)
+		}
+
+		yearArg := sql.Named("year", year)
+		if year == 0 {
+			yearArg = sql.Named("year", nil)
+		}
+
+		res, err := stmt.Exec(
+			sql.Named("title", title),
+			sql.Named("albumID", albumID),
+			sql.Named("artistID", artistID),
+			sql.Named("fsPath", fsPath),
+			sql.Named("trackNumber", trackNumber),
+			sql.Named("duration", duration),
+			yearArg,
+			sql.Named("size", size),
+			bitrateArg,
+			sql.Named("lastModified", lastModified.Unix()),
+		)
 		if err != nil {
 			return err
 		}

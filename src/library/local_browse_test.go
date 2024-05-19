@@ -73,7 +73,12 @@ func TestBrowsingArtists(t *testing.T) {
 	allArtistsCount := 4
 
 	for _, trackData := range tracks {
-		err := lib.insertMediaIntoDatabase(&trackData.track, trackData.path)
+		trackInfo := fileInfo{
+			Size:     int64(trackData.track.Length().Seconds()) * 128000,
+			FilePath: trackData.path,
+			Modified: time.Now(),
+		}
+		err := lib.insertMediaIntoDatabase(&trackData.track, trackInfo)
 
 		if err != nil {
 			t.Fatalf("Adding a media file %s failed: %s", trackData.track.Title(), err)
@@ -265,7 +270,12 @@ func TestBrowsingAlbums(t *testing.T) {
 	insertedAlbums := map[string]struct{}{}
 
 	for _, trackData := range tracks {
-		err := lib.insertMediaIntoDatabase(&trackData.track, trackData.path)
+		trackInfo := fileInfo{
+			Size:     int64(trackData.track.Length().Seconds()) * 128000,
+			FilePath: trackData.path,
+			Modified: time.Now(),
+		}
+		err := lib.insertMediaIntoDatabase(&trackData.track, trackInfo)
 
 		if err != nil {
 			t.Fatalf("Adding a media file %s failed: %s", trackData.track.Title(), err)
@@ -504,7 +514,12 @@ func TestBrowsingTracks(t *testing.T) {
 	tracksInfo := make(map[string]MockMedia)
 
 	for _, trackData := range tracks {
-		err := lib.insertMediaIntoDatabase(&trackData.track, trackData.path)
+		trackInfo := fileInfo{
+			Size:     int64(trackData.track.Length().Seconds()) * 128000,
+			FilePath: trackData.path,
+			Modified: time.Now(),
+		}
+		err := lib.insertMediaIntoDatabase(&trackData.track, trackInfo)
 
 		if err != nil {
 			t.Fatalf("Adding a media file %s failed: %s", trackData.track.Title(), err)

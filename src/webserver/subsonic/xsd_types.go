@@ -77,7 +77,12 @@ type xsdChild struct {
 	MediaType string `xml:"-" json:"mediaType"`
 }
 
-func trackToChild(track library.TrackInfo, created time.Time) xsdChild {
+func trackToChild(track library.TrackInfo, defaultCreated time.Time) xsdChild {
+	created := defaultCreated
+	if track.CreatedAt != 0 {
+		created = time.Unix(track.CreatedAt, 0)
+	}
+
 	return xsdChild{
 		ID:            trackFSID(track.ID),
 		ParentID:      albumFSID(track.AlbumID),
@@ -103,6 +108,9 @@ func trackToChild(track library.TrackInfo, created time.Time) xsdChild {
 		PlayCount:  track.Plays,
 		UserRating: track.Rating,
 		Starred:    toUnixTimeWithNull(track.Favourite),
+		Year:       int16(track.Year),
+		Size:       track.Size,
+		BitRate:    int(track.Bitrate),
 
 		// Here we take advantage of the knowledge that the track.Format is just
 		// the file name extension.

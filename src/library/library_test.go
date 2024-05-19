@@ -720,9 +720,13 @@ func TestAddingManyFilesSimultaniously(t *testing.T) {
 			track:  i,
 			length: 123 * time.Second,
 		}
-		mPath := fmt.Sprintf("/path/to/file_%d", i)
+		mInfo := fileInfo{
+			Size:     int64(m.Length().Seconds()) * 256000,
+			FilePath: fmt.Sprintf("/path/to/file_%d", i),
+			Modified: time.Now(),
+		}
 
-		if err := lib.insertMediaIntoDatabase(m, mPath); err != nil {
+		if err := lib.insertMediaIntoDatabase(m, mInfo); err != nil {
 			t.Fatalf("Error adding media into the database: %s", err)
 		}
 
@@ -770,11 +774,12 @@ func TestAlbumsWithDifferentArtists(t *testing.T) {
 	}
 
 	for _, track := range tracks {
-		err = lib.insertMediaIntoDatabase(
-			&track,
-			fmt.Sprintf("/media/return-of-the-bugs/%s.mp3", track.Title()),
-		)
-
+		trackInfo := fileInfo{
+			Size:     int64(track.Length().Seconds()) * 256000,
+			FilePath: fmt.Sprintf("/media/return-of-the-bugs/%s.mp3", track.Title()),
+			Modified: time.Now(),
+		}
+		err = lib.insertMediaIntoDatabase(&track, trackInfo)
 		if err != nil {
 			t.Fatalf("Adding a media file %s failed: %s", track.Title(), err)
 		}
@@ -850,7 +855,12 @@ func TestDifferentAlbumsWithTheSameName(t *testing.T) {
 	}
 
 	for _, trackData := range tracks {
-		err := lib.insertMediaIntoDatabase(&trackData.track, trackData.path)
+		fileInfo := fileInfo{
+			Size:     int64(trackData.track.Length().Seconds()) * 256000,
+			FilePath: trackData.path,
+			Modified: time.Now(),
+		}
+		err := lib.insertMediaIntoDatabase(&trackData.track, fileInfo)
 
 		if err != nil {
 			t.Fatalf("Adding a media file %s failed: %s", trackData.track.Title(), err)
@@ -1040,7 +1050,12 @@ func TestLocalLibraryGetArtistAlbums(t *testing.T) {
 	}
 
 	for _, trackData := range tracks {
-		err := lib.insertMediaIntoDatabase(&trackData.track, trackData.path)
+		trackInfo := fileInfo{
+			Size:     int64(trackData.track.Length().Seconds()) * 256000,
+			FilePath: trackData.path,
+			Modified: time.Now(),
+		}
+		err := lib.insertMediaIntoDatabase(&trackData.track, trackInfo)
 
 		if err != nil {
 			t.Fatalf("Adding a media file %s failed: %s", trackData.track.Title(), err)

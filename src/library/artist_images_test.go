@@ -8,6 +8,7 @@ import (
 	"io"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/ironsmile/euterpe/src/art"
 	"github.com/ironsmile/euterpe/src/art/artfakes"
@@ -87,8 +88,12 @@ func TestLocalLibraryFindAndSaveArtistImage(t *testing.T) {
 	}
 	lib.SetScaler(fakeScaler)
 
-	mediaFilePath := filepath.FromSlash("path/to/file.mp3")
-	if err := lib.insertMediaIntoDatabase(&mediaFile, mediaFilePath); err != nil {
+	mediaFileInfo := fileInfo{
+		Size:     213942,
+		FilePath: filepath.FromSlash("path/to/file.mp3"),
+		Modified: time.Now(),
+	}
+	if err := lib.insertMediaIntoDatabase(&mediaFile, mediaFileInfo); err != nil {
 		t.Fatalf("inserting media file failed: %s", err)
 	}
 
@@ -120,8 +125,12 @@ func TestLocalLibraryFindAndSaveArtistImage(t *testing.T) {
 		track:  2,
 		length: 621,
 	}
-	secondFilePath := filepath.FromSlash("path/to/file.mp3")
-	if err := lib.insertMediaIntoDatabase(&secondFile, secondFilePath); err != nil {
+	secondFileInfo := fileInfo{
+		Size:     213942,
+		FilePath: filepath.FromSlash("path/to/file.mp3"),
+		Modified: time.Now(),
+	}
+	if err := lib.insertMediaIntoDatabase(&secondFile, secondFileInfo); err != nil {
 		t.Fatalf("inserting second media file failed: %s", err)
 	}
 
@@ -168,8 +177,12 @@ func TestLocalLibraryFindAndSaveArtistImage(t *testing.T) {
 		track:  3,
 		length: 223,
 	}
-	thirdFilePath := filepath.FromSlash("path/to/not-foundouff.mp3")
-	if err := lib.insertMediaIntoDatabase(&thirdFile, thirdFilePath); err != nil {
+	thirdFileInfo := fileInfo{
+		Size:     213942,
+		FilePath: filepath.FromSlash("path/to/not-foundouff.mp3"),
+		Modified: time.Now(),
+	}
+	if err := lib.insertMediaIntoDatabase(&thirdFile, thirdFileInfo); err != nil {
 		t.Fatalf("inserting third media file failed: %s", err)
 	}
 
