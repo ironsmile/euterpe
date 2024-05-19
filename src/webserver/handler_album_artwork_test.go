@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -19,9 +20,9 @@ import (
 	"github.com/ironsmile/euterpe/src/webserver"
 )
 
-// TestAlbumArtworkHandlerGET makes sure the artwork handler is processing the HTTP
+// TestAlbumArtworkHandler makes sure the artwork handler is processing the HTTP
 // request correctly and sending the expected arguments to its artwork manager.
-func TestAlbumArtworkHandlerGET(t *testing.T) {
+func TestAlbumArtworkHandler(t *testing.T) {
 	imgBytesOriginal := []byte("album 321 image original")
 	imgBytesSmall := []byte("album 321 image small")
 
@@ -154,6 +155,26 @@ func TestAlbumArtworkHandlerGET(t *testing.T) {
 			"internal error: error not propagated to response body. It was: %s",
 			respString,
 		)
+	}
+
+	// Test the HEAD request. It should return the Content-Length and 200 for
+	// images which are present.
+	resp = httptest.NewRecorder()
+	req = httptest.NewRequest(http.MethodHead, "/v1/album/321/artwork?size=small", nil)
+	handler.ServeHTTP(resp, req)
+
+	if resp.Code != http.StatusOK {
+		t.Errorf("HEAD small: expected code %d but got %d", http.StatusOK, resp.Code)
+	}
+
+	clExpected := strconv.FormatInt(int64(len(imgBytesSmall)), 10)
+	if cl := resp.Result().Header.Get("Content-Length"); clExpected != cl {
+		t.Errorf("HEAD small: expected Content-Length `%s` but got `%s`",
+			clExpected, cl)
+	}
+	respBodySize, err := io.Copy(io.Discard, resp.Result().Body)
+	if err != nil || respBodySize != 0 {
+		t.Errorf("HEAD response should have empty body")
 	}
 }
 

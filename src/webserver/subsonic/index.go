@@ -89,7 +89,7 @@ func (s *subsonic) initRouter() {
 	setUpHandler("/getArtist", s.getArtist)
 	setUpHandler("/getArtistInfo", s.getArtistInfo)
 	setUpHandler("/getArtistInfo2", s.getArtistInfo2)
-	setUpHandler("/getCoverArt", s.getCoverArt)
+	setUpHandler("/getCoverArt", s.getCoverArt, "GET", "HEAD")
 	setUpHandler("/stream", s.stream, "GET", "HEAD")
 	setUpHandler("/download", s.stream, "GET", "HEAD")
 	setUpHandler("/getSong", s.getSong)

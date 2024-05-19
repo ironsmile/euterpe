@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -17,9 +18,9 @@ import (
 	"github.com/ironsmile/euterpe/src/webserver"
 )
 
-// TestArtstImageHandlerGET checks that the HTTP handler for GET requests is parsing
+// TestArtstImageHandler checks that the HTTP handler for GET requests is parsing
 // its arguments as expected and responds with the image found by its image manager.
-func TestArtstImageHandlerGET(t *testing.T) {
+func TestArtstImageHandler(t *testing.T) {
 	imgBytesOriginal := []byte("artist 321 image original")
 	imgBytesSmall := []byte("artist 321 image small")
 
@@ -127,6 +128,25 @@ func TestArtstImageHandlerGET(t *testing.T) {
 			"internal error: error not propagated to response body. It was: %s",
 			respString,
 		)
+	}
+
+	// Test the HEDE reqeuest.
+	resp = httptest.NewRecorder()
+	req = httptest.NewRequest(http.MethodHead, "/v1/artist/321/image?size=small", nil)
+	handler.ServeHTTP(resp, req)
+
+	if resp.Code != http.StatusOK {
+		t.Errorf("HEAD small: expected code %d but got %d", http.StatusOK, resp.Code)
+	}
+
+	clExpected := strconv.FormatInt(int64(len(imgBytesSmall)), 10)
+	if cl := resp.Result().Header.Get("Content-Length"); clExpected != cl {
+		t.Errorf("HEAD Dsmall: expected image `%s` but got `%s`",
+			clExpected, cl)
+	}
+	respBodySize, err := io.Copy(io.Discard, resp.Result().Body)
+	if err != nil || respBodySize != 0 {
+		t.Errorf("HEAD response should have empty body")
 	}
 }
 

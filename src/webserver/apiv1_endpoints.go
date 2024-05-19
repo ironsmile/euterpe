@@ -19,12 +19,16 @@ const (
 // It is an uri_path => list of HTTP methods map.
 var APIv1Methods map[string][]string = map[string][]string{
 	APIv1EndpointFile:           {http.MethodGet},
-	APIv1EndpointAlbumArtwork:   {http.MethodGet, http.MethodPut, http.MethodDelete},
 	APIv1EndpointDownloadAlbum:  {http.MethodGet},
-	APIv1EndpointArtistImage:    {http.MethodGet, http.MethodPut, http.MethodDelete},
 	APIv1EndpointBrowse:         {http.MethodGet},
 	APIv1EndpointSearchWithPath: {http.MethodGet},
 	APIv1EndpointSearch:         {http.MethodGet},
 	APIv1EndpointLoginToken:     {http.MethodPost},
 	APIv1EndpointRegisterToken:  {http.MethodPost},
+	APIv1EndpointArtistImage: {
+		http.MethodGet, http.MethodHead, http.MethodPut, http.MethodDelete,
+	},
+	APIv1EndpointAlbumArtwork: {
+		http.MethodGet, http.MethodHead, http.MethodPut, http.MethodDelete,
+	},
 }

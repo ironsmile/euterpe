@@ -77,6 +77,10 @@ func (aah AlbumArtworkHandler) Find(
 
 	if err == library.ErrArtworkNotFound || os.IsNotExist(err) {
 		writer.WriteHeader(http.StatusNotFound)
+		if req.Method == http.MethodHead {
+			return nil
+		}
+
 		notFoundImage, err := aah.rootFS.Open(aah.notFoundPath)
 		if err == nil {
 			defer notFoundImage.Close()
@@ -96,8 +100,13 @@ func (aah AlbumArtworkHandler) Find(
 	defer imgReader.Close()
 
 	writer.Header().Set("Cache-Control", "max-age=604800")
-	_, err = io.Copy(writer, imgReader)
+	if req.Method == http.MethodHead {
+		n, _ := io.Copy(io.Discard, imgReader)
+		writer.Header().Set("Content-Length", strconv.FormatInt(n, 10))
+		return nil
+	}
 
+	_, err = io.Copy(writer, imgReader)
 	if err != nil {
 		log.Printf("еrror sending HTTP data for artwork %d: %s", id, err)
 	}

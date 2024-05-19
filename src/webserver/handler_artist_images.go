@@ -74,6 +74,10 @@ func (aih ArtstImageHandler) Find(
 
 	if err == library.ErrArtworkNotFound || os.IsNotExist(err) {
 		writer.WriteHeader(http.StatusNotFound)
+		if req.Method == http.MethodHead {
+			return nil
+		}
+
 		fmt.Fprintln(writer, "404 image not found")
 		return nil
 	}
@@ -86,8 +90,13 @@ func (aih ArtstImageHandler) Find(
 	defer imgReader.Close()
 
 	writer.Header().Set("Cache-Control", "max-age=604800")
-	_, err = io.Copy(writer, imgReader)
+	if req.Method == http.MethodHead {
+		n, _ := io.Copy(io.Discard, imgReader)
+		writer.Header().Set("Content-Length", strconv.FormatInt(n, 10))
+		return nil
+	}
 
+	_, err = io.Copy(writer, imgReader)
 	if err != nil {
 		log.Printf("еrror sending HTTP data for artwork %d: %s", id, err)
 	}
