@@ -781,7 +781,7 @@ func TestAlbumsWithDifferentArtists(t *testing.T) {
 	found := lib.Search(SearchArgs{Query: "Return Of The Bugs"})
 
 	if len(found) != 3 {
-		t.Errorf("Expected to find 3 tracks but found %d", len(found))
+		t.Fatalf("Expected to find 3 tracks but found %d", len(found))
 	}
 
 	albumID := found[0].AlbumID

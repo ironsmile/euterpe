@@ -176,6 +176,9 @@ func (lib *LocalLibrary) AddLibraryPath(path string) {
 
 // Search searches in the library. Will match against the track's name, artist and album.
 func (lib *LocalLibrary) Search(args SearchArgs) []SearchResult {
+	ctx, cancel := context.WithCancel(lib.ctx) //!TODO: use request context
+	defer cancel()
+
 	searchTerm := fmt.Sprintf("%%%s%%", args.Query)
 
 	var output []SearchResult
@@ -185,73 +188,34 @@ func (lib *LocalLibrary) Search(args SearchArgs) []SearchResult {
 			limitCount = int64(args.Count)
 		}
 
-		rows, err := db.Query(`
-			SELECT
-				t.id as track_id,
-				t.name as track,
-				al.name as album,
-				at.name as artist,
-				at.id as artist_id,
-				t.number as track_number,
-				t.album_id as album_id,
-				t.fs_path as fs_path,
-				t.duration as duration,
-				us.favourite as fav,
-				us.user_rating as rating,
-				us.last_played as last_played,
-				us.play_count as play_count
-			FROM
-				tracks as t
-					LEFT JOIN albums as al ON al.id = t.album_id
-					LEFT JOIN artists as at ON at.id = t.artist_id
-					LEFT JOIN user_stats as us ON us.track_id = t.id
-			WHERE
-				t.name LIKE ? OR
-				al.name LIKE ? OR
-				at.name LIKE ?
-			ORDER BY
-				al.name, t.number
-			LIMIT
-				?, ?
-		`, searchTerm, searchTerm, searchTerm, args.Offset, limitCount)
+		orderBy := "al.name, t.number"
+		where := []string{strings.Join(
+			[]string{
+				"t.name LIKE @searchTerm",
+				"al.name LIKE @searchTerm",
+				"at.name LIKE @searchTerm",
+			},
+			" OR ",
+		)}
+
+		queryArgs := []any{
+			sql.Named("searchTerm", searchTerm),
+			sql.Named("offset", args.Offset),
+			sql.Named("count", limitCount),
+		}
+
+		rows, err := queryTracks(ctx, db, where, orderBy, queryArgs)
 		if err != nil {
-			log.Printf("Query not successful: %s\n", err.Error())
+			log.Printf("Search query not successful: %s\n", err.Error())
 			return nil
 		}
 
 		defer rows.Close()
 		for rows.Next() {
-			var (
-				res SearchResult
-
-				// nullable values from the result
-				fav        sql.NullInt64
-				rating     sql.NullInt16
-				lastPlayed sql.NullInt64
-				playCount  sql.NullInt64
-			)
-
-			err := rows.Scan(&res.ID, &res.Title, &res.Album, &res.Artist,
-				&res.ArtistID, &res.TrackNumber, &res.AlbumID, &res.Format,
-				&res.Duration, &fav, &rating, &lastPlayed, &playCount,
-			)
+			res, err := scanTrack(rows)
 			if err != nil {
 				log.Printf("Error scanning search result: %s\n", err)
 				continue
-			}
-
-			res.Format = mediaFormatFromFileName(res.Format)
-			if fav.Valid && fav.Int64 > 0 {
-				res.Favourite = fav.Int64
-			}
-			if rating.Valid && rating.Int16 >= 1 && rating.Int16 <= 5 {
-				res.Rating = uint8(rating.Int16)
-			}
-			if lastPlayed.Valid {
-				res.LastPlayed = lastPlayed.Int64
-			}
-			if playCount.Valid {
-				res.Plays = playCount.Int64
 			}
 
 			output = append(output, res)
@@ -463,79 +427,28 @@ func (lib *LocalLibrary) GetFilePath(ID int64) string {
 
 // GetAlbumFiles satisfies the Library interface
 func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []TrackInfo {
-	var output []TrackInfo
+	ctx, cancel := context.WithCancel(lib.ctx) //!TODO: use request context
+	defer cancel()
+
+	var (
+		output []TrackInfo
+
+		where     = []string{"t.album_id = @albumID"}
+		orderBy   = "al.name, t.number"
+		queryArgs = []any{sql.Named("albumID", albumID)}
+	)
 	work := func(db *sql.DB) error {
-		rows, err := db.Query(`
-			SELECT
-				t.id as track_id,
-				t.name as track,
-				al.name as album,
-				at.name as artist,
-				at.id as artist_id,
-				t.number as track_number,
-				t.album_id as album_id,
-				t.duration as duration,
-				t.fs_path as fs_path,
-				us.favourite as fav,
-				us.user_rating as rating,
-				us.last_played as last_played,
-				us.play_count as play_count
-			FROM
-				tracks as t
-					LEFT JOIN albums as al ON al.id = t.album_id
-					LEFT JOIN artists as at ON at.id = t.artist_id
-					LEFT JOIN user_stats as us ON us.track_id = t.id
-			WHERE
-				t.album_id = ?
-			ORDER BY
-				al.name, t.number
-		`, albumID)
+		rows, err := queryTracks(ctx, db, where, orderBy, queryArgs)
 		if err != nil {
-			log.Printf("Query not successful: %s\n", err.Error())
+			log.Printf("Query for getting albym files not successful: %s\n", err.Error())
 			return nil
 		}
 
 		defer rows.Close()
 		for rows.Next() {
-			var (
-				res        TrackInfo
-				dur        sql.NullInt64
-				fav        sql.NullInt64
-				rating     sql.NullInt16
-				lastPlayed sql.NullInt64
-				playCount  sql.NullInt64
-			)
-			err := rows.Scan(
-				&res.ID,
-				&res.Title,
-				&res.Album,
-				&res.Artist,
-				&res.ArtistID,
-				&res.TrackNumber,
-				&res.AlbumID,
-				&dur,
-				&res.Format, &fav, &rating, &lastPlayed, &playCount,
-			)
+			res, err := scanTrack(rows)
 			if err != nil {
 				return fmt.Errorf("scanning error: %w", err)
-			}
-
-			res.Format = mediaFormatFromFileName(res.Format)
-
-			if dur.Valid {
-				res.Duration = dur.Int64
-			}
-			if fav.Valid && fav.Int64 > 0 {
-				res.Favourite = fav.Int64
-			}
-			if rating.Valid && rating.Int16 >= 1 && rating.Int16 <= 5 {
-				res.Rating = uint8(rating.Int16)
-			}
-			if lastPlayed.Valid {
-				res.LastPlayed = lastPlayed.Int64
-			}
-			if playCount.Valid {
-				res.Plays = playCount.Int64
 			}
 
 			output = append(output, res)
@@ -555,49 +468,12 @@ func (lib *LocalLibrary) GetAlbumFiles(albumID int64) []TrackInfo {
 func (lib *LocalLibrary) GetTrack(ctx context.Context, trackID int64) (TrackInfo, error) {
 	var res TrackInfo
 	work := func(db *sql.DB) error {
-		row := db.QueryRowContext(ctx, `
-			SELECT
-				t.id as track_id,
-				t.name as track,
-				al.name as album,
-				at.name as artist,
-				at.id as artist_id,
-				t.number as track_number,
-				t.album_id as album_id,
-				t.duration as duration,
-				t.fs_path as fs_path,
-				us.favourite as fav,
-				us.user_rating as rating,
-				us.last_played as last_played,
-				us.play_count as play_count
-			FROM
-				tracks as t
-					LEFT JOIN albums as al ON al.id = t.album_id
-					LEFT JOIN artists as at ON at.id = t.artist_id
-					LEFT JOIN user_stats as us ON us.track_id = t.id
+		row := db.QueryRowContext(ctx, dbTracksQuery+`
 			WHERE
 				t.id = ?
 		`, trackID)
 
-		// nullable values from the result
-		var (
-			dur        sql.NullInt64
-			fav        sql.NullInt64
-			rating     sql.NullInt16
-			lastPlayed sql.NullInt64
-			playCount  sql.NullInt64
-		)
-		err := row.Scan(
-			&res.ID,
-			&res.Title,
-			&res.Album,
-			&res.Artist,
-			&res.ArtistID,
-			&res.TrackNumber,
-			&res.AlbumID,
-			&dur,
-			&res.Format, &fav, &rating, &lastPlayed, &playCount,
-		)
+		track, err := scanTrack(row)
 		if err != nil && errors.Is(err, sql.ErrNoRows) {
 			return ErrNotFound
 		} else if err != nil {
@@ -605,23 +481,7 @@ func (lib *LocalLibrary) GetTrack(ctx context.Context, trackID int64) (TrackInfo
 			return fmt.Errorf("getting track info error: %w", err)
 		}
 
-		res.Format = mediaFormatFromFileName(res.Format)
-
-		if dur.Valid {
-			res.Duration = dur.Int64
-		}
-		if fav.Valid && fav.Int64 > 0 {
-			res.Favourite = fav.Int64
-		}
-		if rating.Valid && rating.Int16 >= 1 && rating.Int16 <= 5 {
-			res.Rating = uint8(rating.Int16)
-		}
-		if lastPlayed.Valid {
-			res.LastPlayed = lastPlayed.Int64
-		}
-		if playCount.Valid {
-			res.Plays = playCount.Int64
-		}
+		res = track
 		return nil
 	}
 	if err := lib.executeDBJobAndWait(work); err != nil {

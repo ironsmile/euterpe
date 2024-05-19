@@ -1,6 +1,7 @@
 package library
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -275,6 +276,9 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 // BrowseTracks implements the Library interface for the local library by getting
 // tracks from the database.
 func (lib *LocalLibrary) BrowseTracks(args BrowseArgs) ([]TrackInfo, int) {
+	ctx, cancel := context.WithCancel(lib.ctx) //!TODO: use request context instead
+	defer cancel()
+
 	offset := uint64(args.Page * args.PerPage)
 	perPage := args.PerPage
 
@@ -284,11 +288,10 @@ func (lib *LocalLibrary) BrowseTracks(args BrowseArgs) ([]TrackInfo, int) {
 
 	var (
 		output      []TrackInfo
-		tracksCount = lib.getTableSize("tracks")
+		tracksCount int
 
 		queryArgs []any
 		where     []string
-		whereStr  string
 	)
 
 	if args.ArtistID > 0 {
@@ -326,47 +329,30 @@ func (lib *LocalLibrary) BrowseTracks(args BrowseArgs) ([]TrackInfo, int) {
 		where = append(where, "us.favourite IS NOT NULL AND us.favourite != 0")
 	}
 
-	if len(where) > 0 {
-		whereStr = "WHERE " + strings.Join(where, " AND ")
-	}
-
 	queryArgs = append(
 		queryArgs,
 		sql.Named("offset", offset),
 		sql.Named("count", perPage),
 	)
 
+	whereSrt := ""
+	if len(where) > 0 {
+		whereSrt = "WHERE " + strings.Join(where, " AND ")
+	}
+
 	work := func(db *sql.DB) error {
-		rows, err := db.Query(
-			fmt.Sprintf(`
-				SELECT
-					t.id as track_id,
-					t.name as track,
-					al.name as album,
-					at.name as artist,
-					at.id as artist_id,
-					t.number as track_number,
-					t.album_id as album_id,
-					t.fs_path as fs_path,
-					t.duration as duration,
-					us.favourite as fav,
-					us.user_rating as rating,
-					us.last_played as last_played,
-					us.play_count as play_count
-				FROM
-					tracks as t
-						LEFT JOIN albums as al ON al.id = t.album_id
-						LEFT JOIN artists as at ON at.id = t.artist_id
-						LEFT JOIN user_stats as us ON us.track_id = t.id
-				%s
-				ORDER BY
-					%s
-				LIMIT
-					@offset, @count
-			`, whereStr, orderBy,
-			),
-			queryArgs...,
-		)
+		row := db.QueryRowContext(ctx, fmt.Sprintf(`
+			SELECT
+				COUNT(*) as cnt
+			FROM
+				tracks t
+			%s
+		`, whereSrt), queryArgs...)
+		if err := row.Scan(&tracksCount); err != nil {
+			log.Printf("Query for getting tracks count not successful: %s\n", err)
+		}
+
+		rows, err := queryTracks(ctx, db, where, orderBy, queryArgs)
 		if err != nil {
 			log.Printf("Query for browsing songs not successful: %s\n", err.Error())
 			return nil
@@ -374,39 +360,11 @@ func (lib *LocalLibrary) BrowseTracks(args BrowseArgs) ([]TrackInfo, int) {
 
 		defer rows.Close()
 		for rows.Next() {
-			var (
-				res TrackInfo
-
-				// nullable values from the result
-				fav        sql.NullInt64
-				rating     sql.NullInt16
-				lastPlayed sql.NullInt64
-				playCount  sql.NullInt64
-			)
-
-			err := rows.Scan(&res.ID, &res.Title, &res.Album, &res.Artist,
-				&res.ArtistID, &res.TrackNumber, &res.AlbumID, &res.Format,
-				&res.Duration, &fav, &rating, &lastPlayed, &playCount,
-			)
+			res, err := scanTrack(rows)
 			if err != nil {
 				log.Printf("Error scanning search result: %s\n", err)
 				continue
 			}
-
-			res.Format = mediaFormatFromFileName(res.Format)
-			if fav.Valid && fav.Int64 > 0 {
-				res.Favourite = fav.Int64
-			}
-			if rating.Valid && rating.Int16 >= 1 && rating.Int16 <= 5 {
-				res.Rating = uint8(rating.Int16)
-			}
-			if lastPlayed.Valid {
-				res.LastPlayed = lastPlayed.Int64
-			}
-			if playCount.Valid {
-				res.Plays = playCount.Int64
-			}
-
 			output = append(output, res)
 		}
 
@@ -436,6 +394,7 @@ func (lib *LocalLibrary) getTableSize(table string) int {
 			log.Printf("Query for getting %s count not prepared: %s\n", table, err)
 			return nil
 		}
+		defer smt.Close()
 
 		err = smt.QueryRow().Scan(&count)
 

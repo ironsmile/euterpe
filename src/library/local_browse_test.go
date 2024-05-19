@@ -584,7 +584,7 @@ func TestBrowsingTracks(t *testing.T) {
 
 			trackInfo, ok := tracksInfo[track.Title]
 			if !ok {
-				t.Errorf("track info for track %s not found", track.Title)
+				t.Fatalf("track info for track '%s' not found", track.Title)
 			}
 
 			if trackInfo.album != track.Album {
