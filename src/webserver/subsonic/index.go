@@ -7,12 +7,14 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ironsmile/euterpe/src/config"
 	"github.com/ironsmile/euterpe/src/library"
+	"github.com/ironsmile/euterpe/src/radio"
 )
 
 type subsonic struct {
 	prefix     string
 	libBrowser library.Browser
 	lib        library.Library
+	radio      radio.Stations
 	needsAuth  bool
 	auth       config.Auth
 
@@ -36,6 +38,7 @@ func NewHandler(
 	prefix string,
 	lib library.Library,
 	libBrowser library.Browser,
+	stations radio.Stations,
 	cfg config.Config,
 	albumArt CoverArtHandler,
 	artistArt CoverArtHandler,
@@ -44,6 +47,7 @@ func NewHandler(
 		prefix:           prefix,
 		lib:              lib,
 		libBrowser:       libBrowser,
+		radio:            stations,
 		needsAuth:        cfg.Auth,
 		auth:             cfg.Authenticate,
 		albumArtHandler:  albumArt,
@@ -108,6 +112,11 @@ func (s *subsonic) initRouter() {
 	setUpHandler("/getTopSongs", s.getTopSongs)
 	setUpHandler("/getAlbumInfo", s.getAlbumInfo)
 	setUpHandler("/getAlbumInfo2", s.getAlbumInfo2)
+	setUpHandler("/getInternetRadioStations", s.getInternetRadionStations)
+	setUpHandler("/createInternetRadioStation", s.createInternetRadioStation)
+	setUpHandler("/updateInternetRadioStation", s.updateInternetRadioStation)
+	setUpHandler("/deleteInternetRadioStation", s.deleteInternetRadioStation)
+	setUpHandler("/getUser", s.getUser)
 
 	s.mux = s.authHandler(router)
 }

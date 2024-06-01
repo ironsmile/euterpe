@@ -108,6 +108,7 @@ func (srv *Server) serveGoroutine() {
 		subsonic.Prefix,
 		srv.library,
 		srv.library,
+		srv.library,
 		srv.cfg,
 		artoworkHandler,
 		artistImageHandler,

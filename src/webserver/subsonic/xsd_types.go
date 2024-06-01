@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ironsmile/euterpe/src/library"
+	"github.com/ironsmile/euterpe/src/radio"
 )
 
 type xsdIndexes struct {
@@ -360,4 +361,48 @@ type xsdStarred2 struct {
 
 type xsdTopSongs struct {
 	Songs []xsdChild `xml:"song,omitempty" json:"song,omitempty"`
+}
+
+type xsdInternetRadioStations struct {
+	Stations []xsdInternetRadioStation `xml:"internetRadioStation,omitempty" json:"internetRadioStation,omitempty"`
+}
+
+type xsdInternetRadioStation struct {
+	ID          int64  `xml:"id,attr" json:"id,string"`
+	Name        string `xml:"name,attr" json:"name"`
+	StreamURL   string `xml:"streamUrl,attr" json:"streamUrl"`
+	HomePageURL string `xml:"homePageUrl,attr,omitempty" json:"homePageUrl,omitempty"`
+}
+
+func fromRadioStation(station radio.Station) xsdInternetRadioStation {
+	s := xsdInternetRadioStation{
+		ID:        station.ID,
+		Name:      station.Name,
+		StreamURL: station.StreamURL.String(),
+	}
+	if station.HomePage != nil {
+		s.HomePageURL = station.HomePage.String()
+	}
+	return s
+}
+
+type xsdUser struct {
+	Folders             []int64    `xml:"folder,omitempty" json:"folder,omitempty"`
+	Username            string     `xml:"username,attr" json:"username"`
+	Email               string     `xml:"email,attr,omitempty" json:"email,omitempty"`
+	Scrobbling          bool       `xml:"scrobblingEnabled,attr" json:"scrobblingEnabled"`
+	MaxBitrate          int        `xml:"maxBitRate,attr,omitempty" json:"maxBitRate,omitempty"`
+	AdminRole           bool       `xml:"adminRole,attr" json:"adminRole"`
+	SettingsRole        bool       `xml:"settingsRole,attr" json:"settingsRole"`
+	DownloadRole        bool       `xml:"downloadRole,attr" json:"downloadRole"`
+	UploadRole          bool       `xml:"uploadRole,attr" json:"uploadRole"`
+	PlaylistRole        bool       `xml:"playlistRole,attr" json:"playlistRole"`
+	CoverArtRole        bool       `xml:"coverArtRole,attr" json:"coverArtRole"`
+	CommentRole         bool       `xml:"commentRole,attr" json:"commentRole"`
+	PodcastRole         bool       `xml:"podcastRole,attr" json:"podcastRole"`
+	StreamRole          bool       `xml:"streamRole,attr" json:"streamRole"`
+	JukeboxRole         bool       `xml:"jukeboxRole,attr" json:"jukeboxRole"`
+	ShareRole           bool       `xml:"shareRole,attr" json:"shareRole"`
+	VideoConversionRole bool       `xml:"videoConversionRole,attr" json:"videoConversionRole"`
+	AvatarLastChanged   *time.Time `xml:"avatarLastChanged,attr,omitempty" json:"avatarLastChanged,omitempty"`
 }

@@ -7,11 +7,14 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/ironsmile/euterpe/src/config"
 	"github.com/ironsmile/euterpe/src/library"
 	"github.com/ironsmile/euterpe/src/library/libraryfakes"
+	"github.com/ironsmile/euterpe/src/radio"
+	"github.com/ironsmile/euterpe/src/radio/radiofakes"
 	"github.com/ironsmile/euterpe/src/webserver/subsonic"
 	xsdvalidate "github.com/terminalstatic/go-xsd-validate"
 )
@@ -264,6 +267,28 @@ func TestSubsonicXMLResponses(t *testing.T) {
 			return libSongs, len(libSongs)
 		},
 	}
+	stations := &radiofakes.FakeStations{
+		GetAllStub: func(_ context.Context) ([]radio.Station, error) {
+			some, _ := url.Parse("https://example.com/some-radio/")
+			someHome, _ := url.Parse("https://some-radio.example.com")
+
+			other, _ := url.Parse("https://example.com/other-radio/")
+
+			return []radio.Station{
+				{
+					ID:        1,
+					Name:      "Some Radio",
+					StreamURL: *some,
+					HomePage:  someHome,
+				},
+				{
+					ID:        2,
+					Name:      "Other Radio",
+					StreamURL: *other,
+				},
+			}, nil
+		},
+	}
 
 	err := xsdvalidate.Init()
 	if err != nil {
@@ -284,7 +309,12 @@ func TestSubsonicXMLResponses(t *testing.T) {
 		subsonic.Prefix,
 		lib,
 		browser,
-		config.Config{},
+		stations,
+		config.Config{
+			Authenticate: config.Auth{
+				User: "test-user",
+			},
+		},
 		nil, nil,
 	)
 
@@ -462,6 +492,34 @@ func TestSubsonicXMLResponses(t *testing.T) {
 			desc: "getAlbumInfo2",
 			url:  testURL("/getAlbumInfo2?id=55"),
 		},
+		{
+			desc: "getInternetRadioStations",
+			url:  testURL("/getInternetRadioStations"),
+		},
+		{
+			desc: "createInternetRadioStation",
+			url: testURL(
+				"/createInternetRadioStation?name=%s&streamUrl=%s",
+				url.QueryEscape("some name"),
+				url.QueryEscape("http://some-radion.exmaple.com/streaming/"),
+			),
+		},
+		{
+			desc: "updateInternetRadioStation",
+			url: testURL(
+				"/updateInternetRadioStation?id=5&name=%s&streamUrl=%s",
+				url.QueryEscape("some name"),
+				url.QueryEscape("http://some-radion.exmaple.com/streaming/"),
+			),
+		},
+		{
+			desc: "deleteInternetRadioStation",
+			url:  testURL("/deleteInternetRadioStation?id=5"),
+		},
+		{
+			desc: "getUser",
+			url:  testURL("/getUser?username=test-user"),
+		},
 	}
 
 	for _, test := range tests {
@@ -543,6 +601,17 @@ func TestSubsonicXMLErrors(t *testing.T) {
 		},
 	}
 	browser := &libraryfakes.FakeBrowser{}
+	stations := &radiofakes.FakeStations{
+		CreateStub: func(ctx context.Context, s radio.Station) (int64, error) {
+			return 0, fmt.Errorf("testing error")
+		},
+		ReplaceStub: func(ctx context.Context, s radio.Station) error {
+			if s.ID == 12 {
+				return radio.ErrNotFound
+			}
+			return fmt.Errorf("testing error")
+		},
+	}
 
 	err := xsdvalidate.Init()
 	if err != nil {
@@ -563,6 +632,7 @@ func TestSubsonicXMLErrors(t *testing.T) {
 		subsonic.Prefix,
 		lib,
 		browser,
+		stations,
 		config.Config{},
 		nil, nil,
 	)
@@ -761,6 +831,100 @@ func TestSubsonicXMLErrors(t *testing.T) {
 			url:       testURL("/getAlbumInfo2?id=99"),
 			errorCode: 70,
 		},
+		{
+			desc:      "createInternetRadioStation missing parameters",
+			url:       testURL("/createInternetRadioStation"),
+			errorCode: 10,
+		},
+		{
+			desc: "createInternetRadioStation missing name",
+			url: testURL(
+				"/createInternetRadioStation?streamUrl=%s",
+				url.QueryEscape("http://some-station.example.com/stream/"),
+			),
+			errorCode: 10,
+		},
+		{
+			desc: "createInternetRadioStation missing stream URL",
+			url: testURL(
+				"/createInternetRadioStation?name=%s",
+				url.QueryEscape("some station"),
+			),
+			errorCode: 10,
+		},
+		{
+			desc: "createInternetRadioStation malformed stream URL",
+			url: testURL(
+				"/createInternetRadioStation?name=%s&streamUrl=%s",
+				url.QueryEscape("some station"),
+				url.QueryEscape("http://wrong\r/url"),
+			),
+			errorCode: 10,
+		},
+		{
+			desc: "createInternetRadioStation malformed home page URL",
+			url: testURL(
+				"/createInternetRadioStation?name=%s&streamUrl=%s&homepageUrl=%s",
+				url.QueryEscape("some station"),
+				url.QueryEscape("http://some-station.example.com/stream/"),
+				url.QueryEscape("http://wrong\r/url"),
+			),
+			errorCode: 10,
+		},
+		{
+			desc: "createInternetRadioStation FTP radio station URL",
+			url: testURL(
+				"/createInternetRadioStation?name=%s&streamUrl=%s",
+				url.QueryEscape("some station"),
+				url.QueryEscape("ftp://some-station.example.com/stream/"),
+			),
+			errorCode: 10,
+		},
+		{
+			desc: "createInternetRadioStation bad response for station creation",
+			url: testURL(
+				"/createInternetRadioStation?name=%s&streamUrl=%s",
+				url.QueryEscape("some station"),
+				url.QueryEscape("http://some-station.example.com/stream/"),
+			),
+			errorCode: 0,
+		},
+		{
+			desc: "updateInternetRadioStation missing ID",
+			url: testURL(
+				"/updateInternetRadioStation?name=%s&streamUrl=%s",
+				url.QueryEscape("some station"),
+				url.QueryEscape("ftp://some-station.example.com/stream/"),
+			),
+			errorCode: 10,
+		},
+		{
+			desc: "updateInternetRadioStation ID cannot be parsed",
+			url: testURL(
+				"/updateInternetRadioStation?name=%s&streamUrl=%s&id=baba",
+				url.QueryEscape("some station"),
+				url.QueryEscape("http://some-station.example.com/stream/"),
+			),
+			errorCode: 70,
+		},
+		{
+			desc: "updateInternetRadioStation internal error",
+			url: testURL(
+				"/updateInternetRadioStation?name=%s&streamUrl=%s&id=5",
+				url.QueryEscape("some station"),
+				url.QueryEscape("http://some-station.example.com/stream/"),
+			),
+			errorCode: 0,
+		},
+		{
+			desc: "updateInternetRadioStation not found error",
+			url: testURL(
+				"/updateInternetRadioStation?name=%s&streamUrl=%s&id=12",
+				url.QueryEscape("some station"),
+				url.QueryEscape("http://some-station.example.com/stream/"),
+			),
+			errorCode: 70,
+		},
 	}
 
 	for _, test := range tests {
@@ -781,6 +945,7 @@ func TestSubsonicXMLErrors(t *testing.T) {
 			}
 
 			respBody := rec.Body.String()
+			t.Logf("Response body:\n-----\n%s\n------\n", respBody)
 
 			xmlResp := errorResponse{}
 			dec := xml.NewDecoder(bytes.NewBufferString(respBody))

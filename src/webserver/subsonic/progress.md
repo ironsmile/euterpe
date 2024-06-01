@@ -59,13 +59,13 @@
 - [ ] deletePodcastEpisode
 - [ ] downloadPodcastEpisode
 - [ ] jukeboxControl
-- [ ] getInternetRadioStations
-- [ ] createInternetRadioStation
-- [ ] updateInternetRadioStation
-- [ ] deleteInternetRadioStation
+- [x] getInternetRadioStations
+- [x] createInternetRadioStation
+- [x] updateInternetRadioStation
+- [x] deleteInternetRadioStation
 - [ ] getChatMessages
 - [ ] addChatMessage
-- [ ] getUser
+- [x] getUser
 - [ ] getUsers
 - [ ] createUser
 - [ ] updateUser
