@@ -369,6 +369,8 @@ func (lib *LocalLibrary) BrowseTracks(args BrowseArgs) ([]TrackInfo, int) {
 				COUNT(*) as cnt
 			FROM
 				tracks t
+				LEFT JOIN user_stats as us ON us.track_id = t.id
+				LEFT JOIN artists as at ON at.id = t.artist_id
 			%s
 		`, whereSrt), queryArgs...)
 		if err := row.Scan(&tracksCount); err != nil {
