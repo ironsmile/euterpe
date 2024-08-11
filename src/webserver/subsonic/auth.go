@@ -23,7 +23,7 @@ func (s *subsonic) authHandler(handler http.Handler) http.Handler {
 			return
 		}
 
-		if !s.needsAuth {
+		if !s.needsAuth || r.URL.Path == "/rest/ping.view" {
 			handler.ServeHTTP(w, r)
 			return
 		}
