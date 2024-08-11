@@ -117,6 +117,7 @@ func (s *subsonic) initRouter() {
 	setUpHandler("/updateInternetRadioStation", s.updateInternetRadioStation)
 	setUpHandler("/deleteInternetRadioStation", s.deleteInternetRadioStation)
 	setUpHandler("/getUser", s.getUser)
+	setUpHandler("/getRandomSongs", s.getRandomSongs)
 
 	s.mux = s.authHandler(router)
 }

@@ -520,6 +520,10 @@ func TestSubsonicXMLResponses(t *testing.T) {
 			desc: "getUser",
 			url:  testURL("/getUser?username=test-user"),
 		},
+		{
+			desc: "getRandomSongs",
+			url:  testURL("/getRandomSongs"),
+		},
 	}
 
 	for _, test := range tests {

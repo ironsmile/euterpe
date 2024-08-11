@@ -406,3 +406,7 @@ type xsdUser struct {
 	VideoConversionRole bool       `xml:"videoConversionRole,attr" json:"videoConversionRole"`
 	AvatarLastChanged   *time.Time `xml:"avatarLastChanged,attr,omitempty" json:"avatarLastChanged,omitempty"`
 }
+
+type xsdSongs struct {
+	Songs []xsdChild `xml:"song" json:"song"`
+}

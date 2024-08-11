@@ -23,7 +23,7 @@
 - [x] getTopSongs
 - [x] getAlbumList - `byGenre` not implemented yet
 - [x] getAlbumList2 - `byGenre` not implemented yet
-- [ ] getRandomSongs
+- [x] getRandomSongs - `genre` not implemented yet
 - [ ] getSongsByGenre
 - [ ] getNowPlaying
 - [x] getStarred
