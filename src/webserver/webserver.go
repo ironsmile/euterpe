@@ -18,6 +18,7 @@ import (
 	"github.com/ironsmile/euterpe/src/config"
 	"github.com/ironsmile/euterpe/src/library"
 	"github.com/ironsmile/euterpe/src/webserver/subsonic"
+	"github.com/ironsmile/wrapfs"
 )
 
 const (
@@ -85,7 +86,9 @@ func (srv *Server) serveGoroutine() {
 		panic(err)
 	}
 
-	staticFilesHandler := http.FileServer(http.FS(srv.httpRootFS))
+	staticFilesHandler := http.FileServer(http.FS(
+		wrapfs.WithModTime(srv.httpRootFS, time.Now()),
+	))
 	searchHandler := NewSearchHandler(srv.library)
 	albumHandler := NewAlbumHandler(srv.library)
 	artoworkHandler := NewAlbumArtworkHandler(

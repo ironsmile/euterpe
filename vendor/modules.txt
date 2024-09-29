@@ -19,6 +19,9 @@ github.com/howeyc/fsnotify
 ## explicit
 github.com/ironsmile/sql-migrate
 github.com/ironsmile/sql-migrate/sqlparse
+# github.com/ironsmile/wrapfs v1.0.0
+## explicit; go 1.20.0
+github.com/ironsmile/wrapfs
 # github.com/lib/pq v1.10.4
 ## explicit; go 1.13
 # github.com/liyue201/goqr v0.0.0-20200803022322-df443203d4ea
@@ -80,8 +83,6 @@ golang.org/x/mod/semver
 # golang.org/x/sync v0.8.0
 ## explicit; go 1.18
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.23.0
-## explicit; go 1.18
 # golang.org/x/text v0.17.0
 ## explicit; go 1.18
 golang.org/x/text/transform

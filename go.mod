@@ -7,6 +7,7 @@ require (
 	github.com/gorilla/mux v1.6.2
 	github.com/howeyc/fsnotify v0.9.0
 	github.com/ironsmile/sql-migrate v0.0.0-20180302150855-e167f4809da4
+	github.com/ironsmile/wrapfs v1.0.0
 	github.com/liyue201/goqr v0.0.0-20200803022322-df443203d4ea
 	github.com/mattn/go-sqlite3 v1.14.10
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.4.1
@@ -29,7 +30,6 @@ require (
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	golang.org/x/crypto v0.26.0 // indirect
 	golang.org/x/mod v0.17.0 // indirect
-	golang.org/x/sys v0.23.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
