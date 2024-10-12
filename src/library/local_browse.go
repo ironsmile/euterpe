@@ -113,7 +113,7 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error browse artist query: %s", err)
 		return output, artistsCount
 	}
@@ -276,7 +276,7 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error browse albums query: %s", err)
 		return output, albumsCount
 	}
@@ -396,7 +396,7 @@ func (lib *LocalLibrary) BrowseTracks(args BrowseArgs) ([]TrackInfo, int) {
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error browse songs query: %s", err)
 		return output, tracksCount
 	}
@@ -431,7 +431,7 @@ func (lib *LocalLibrary) getTableSize(table string) int {
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error getting table size query: %s", err)
 		return count
 	}

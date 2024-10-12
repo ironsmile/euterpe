@@ -193,7 +193,7 @@ func (lib *LocalLibrary) artistImageFromDBForSize(
 
 		return nil
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		return nil, 0, err
 	}
 
@@ -238,7 +238,7 @@ func (lib *LocalLibrary) artistImageFromInternet(
 
 		return nil
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		return nil, err
 	}
 
@@ -298,7 +298,7 @@ func (lib *LocalLibrary) storeArtistImage(
 
 		return nil
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error executing save artist image query: %s", err)
 		return nil, size, err
 	}
@@ -328,7 +328,7 @@ func (lib *LocalLibrary) saveArtistImageNotFound(artistID int64) error {
 
 		return nil
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf(
 			"Error executing save artist image not found query: %s",
 			err,
@@ -389,7 +389,7 @@ func (lib *LocalLibrary) SaveArtistImage(
 		_, err = stmt.Exec(artistID, buff, time.Now().Unix())
 		return err
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		return err
 	}
 

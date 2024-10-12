@@ -91,7 +91,7 @@ func (lib *LocalLibrary) cleanupTracks() {
 			return nil
 		}
 
-		if err := lib.executeDBJobAndWait(getTracks); err != nil {
+		if err := lib.ExecuteDBJobAndWait(getTracks); err != nil {
 			log.Printf("Error getting tracks during cleanup: %s", err)
 			return
 		}
@@ -148,7 +148,7 @@ func (lib *LocalLibrary) cleanupAlbums() {
 			return nil
 		}
 
-		if err := lib.executeDBJobAndWait(getAlbums); err != nil {
+		if err := lib.ExecuteDBJobAndWait(getAlbums); err != nil {
 			log.Printf("Error getting albums during cleanup: %s", err)
 			return
 		}
@@ -203,7 +203,7 @@ func (lib *LocalLibrary) cleanupArtists() {
 			return nil
 		}
 
-		if err := lib.executeDBJobAndWait(getArtists); err != nil {
+		if err := lib.ExecuteDBJobAndWait(getArtists); err != nil {
 			log.Printf("Error getting albums during cleanup: %s", err)
 			return
 		}
@@ -225,7 +225,7 @@ func (lib *LocalLibrary) cleanupArtists() {
 // but not before making sure there are no tracks asscociated with them.
 func (lib *LocalLibrary) checkAndRemoveAlbums(albumIDs []int64) error {
 	for _, albumID := range albumIDs {
-		if err := lib.executeDBJobAndWait(func(db *sql.DB) error {
+		if err := lib.ExecuteDBJobAndWait(func(db *sql.DB) error {
 			var tracks int64
 
 			rows, err := db.Query(`
@@ -288,7 +288,7 @@ func (lib *LocalLibrary) checkAndRemoveAlbums(albumIDs []int64) error {
 // but not before making sure there are no tracks asscociated with them.
 func (lib *LocalLibrary) checkAndRemoveArtists(artistIDs []int64) error {
 	for _, artistID := range artistIDs {
-		if err := lib.executeDBJobAndWait(func(db *sql.DB) error {
+		if err := lib.ExecuteDBJobAndWait(func(db *sql.DB) error {
 			var tracks int64
 
 			rows, err := db.Query(`

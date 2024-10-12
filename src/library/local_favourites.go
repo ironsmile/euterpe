@@ -113,7 +113,7 @@ func (lib *LocalLibrary) RecordFavourite(ctx context.Context, favs Favourites) e
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error executing record favourites: %s", err)
 		return fmt.Errorf("storing into the database failed: %w", err)
 	}
@@ -211,7 +211,7 @@ func (lib *LocalLibrary) RemoveFavourite(ctx context.Context, favs Favourites) e
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error executing remove favourites: %s", err)
 		return fmt.Errorf("removing from the database failed: %w", err)
 	}

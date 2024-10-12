@@ -1,4 +1,4 @@
-package library
+package radio
 
 import (
 	"context"
@@ -9,12 +9,26 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/ironsmile/euterpe/src/radio"
+	"github.com/ironsmile/euterpe/src/library"
 )
 
-// GetAll implements the radio.Stations interface.
-func (lib *LocalLibrary) GetAll(ctx context.Context) ([]radio.Station, error) {
-	var stations []radio.Station
+// manager implements the Stations interface by just requiring a function for
+// sending database work.
+type manager struct {
+	executeDBJobAndWait func(library.DatabaseExecutable) error
+}
+
+// NewManager returns a Stations interface which will use the `sendDBWork` to
+// execute its database queries.
+func NewManager(sendDBWork func(library.DatabaseExecutable) error) Stations {
+	return &manager{
+		executeDBJobAndWait: sendDBWork,
+	}
+}
+
+// GetAll implements the Stations interface.
+func (lib *manager) GetAll(ctx context.Context) ([]Station, error) {
+	var stations []Station
 	query := `
 		SELECT id, name, stream_url, home_page
 		FROM radio_stations
@@ -28,7 +42,7 @@ func (lib *LocalLibrary) GetAll(ctx context.Context) ([]radio.Station, error) {
 
 		for rows.Next() {
 			var (
-				station   radio.Station
+				station   Station
 				homePage  sql.NullString
 				streamURL sql.NullString
 			)
@@ -74,8 +88,8 @@ func (lib *LocalLibrary) GetAll(ctx context.Context) ([]radio.Station, error) {
 	return stations, nil
 }
 
-// Create implements the radio.Stations interface.
-func (lib *LocalLibrary) Create(ctx context.Context, new radio.Station) (int64, error) {
+// Create implements the Stations interface.
+func (lib *manager) Create(ctx context.Context, new Station) (int64, error) {
 	if new.Name == "" {
 		return 0, fmt.Errorf("name cannot be empty")
 	}
@@ -148,8 +162,8 @@ func (lib *LocalLibrary) Create(ctx context.Context, new radio.Station) (int64, 
 	return lastInsertID, nil
 }
 
-// Replace implements the radio.Stations interface.
-func (lib *LocalLibrary) Replace(ctx context.Context, updated radio.Station) error {
+// Replace implements the Stations interface.
+func (lib *manager) Replace(ctx context.Context, updated Station) error {
 	if updated.Name == "" {
 		return fmt.Errorf("name cannot be empty")
 	}
@@ -228,8 +242,8 @@ func (lib *LocalLibrary) Replace(ctx context.Context, updated radio.Station) err
 	return nil
 }
 
-// Delete implements the radio.Stations interface.
-func (lib *LocalLibrary) Delete(ctx context.Context, stationID int64) error {
+// Delete implements the Stations interface.
+func (lib *manager) Delete(ctx context.Context, stationID int64) error {
 	query := `
 		DELETE FROM
 			radio_stations

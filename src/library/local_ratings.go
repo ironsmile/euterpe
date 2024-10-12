@@ -38,7 +38,7 @@ func (lib *LocalLibrary) SetTrackRating(
 		return err
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error executing set track rating: %s", err)
 		return fmt.Errorf("failed SQL query: %w", err)
 	}
@@ -76,7 +76,7 @@ func (lib *LocalLibrary) SetAlbumRating(
 		return err
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error executing set album rating: %s", err)
 		return fmt.Errorf("failed SQL query: %w", err)
 	}
@@ -114,7 +114,7 @@ func (lib *LocalLibrary) SetArtistRating(
 		return err
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error executing set artist rating: %s", err)
 		return fmt.Errorf("failed SQL query: %w", err)
 	}

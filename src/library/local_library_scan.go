@@ -193,7 +193,7 @@ func (lib *LocalLibrary) getMediaFilenames(
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		return files, fmt.Errorf(
 			"getting files for cursor %d and batch size %d failed: %w",
 			cursor,

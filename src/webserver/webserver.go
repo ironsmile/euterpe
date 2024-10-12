@@ -17,6 +17,7 @@ import (
 
 	"github.com/ironsmile/euterpe/src/config"
 	"github.com/ironsmile/euterpe/src/library"
+	"github.com/ironsmile/euterpe/src/radio"
 	"github.com/ironsmile/euterpe/src/webserver/subsonic"
 	"github.com/ironsmile/wrapfs"
 )
@@ -111,7 +112,7 @@ func (srv *Server) serveGoroutine() {
 		subsonic.Prefix,
 		srv.library,
 		srv.library,
-		srv.library,
+		radio.NewManager(srv.library.ExecuteDBJobAndWait),
 		srv.cfg,
 		artoworkHandler,
 		artistImageHandler,

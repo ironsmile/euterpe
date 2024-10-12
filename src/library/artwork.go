@@ -183,7 +183,7 @@ func (lib *LocalLibrary) storeAlbumArtwork(
 
 		return nil
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error executing save artwork query: %s", err)
 		return nil, size, err
 	}
@@ -213,7 +213,7 @@ func (lib *LocalLibrary) saveAlbumArtworkNotFound(albumID int64) error {
 
 		return nil
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error executing save artwork not found query: %s", err)
 		return err
 	}
@@ -289,7 +289,7 @@ func (lib *LocalLibrary) albumArtworkFromInternet(
 
 		return nil
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		return nil, err
 	}
 
@@ -395,7 +395,7 @@ func (lib *LocalLibrary) albumArtworkFromDBForSize(
 
 		return nil
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		return nil, 0, err
 	}
 
@@ -537,7 +537,7 @@ func (lib *LocalLibrary) SaveAlbumArtwork(
 		_, err = stmt.Exec(albumID, buff, time.Now().Unix())
 		return err
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		return err
 	}
 

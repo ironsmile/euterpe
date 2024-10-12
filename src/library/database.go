@@ -47,9 +47,9 @@ func (lib *LocalLibrary) executeDBJob(executable DatabaseExecutable) error {
 	}
 }
 
-// executeDBJobAndWait executes the `executable`, waits for it to finish. Then returns
+// ExecuteDBJobAndWait executes the `executable`, waits for it to finish. Then returns
 // its error.
-func (lib *LocalLibrary) executeDBJobAndWait(executable DatabaseExecutable) error {
+func (lib *LocalLibrary) ExecuteDBJobAndWait(executable DatabaseExecutable) error {
 	var executableErr error
 	done := make(chan struct{})
 	defer close(done)

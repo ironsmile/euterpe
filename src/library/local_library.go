@@ -220,7 +220,7 @@ func (lib *LocalLibrary) Search(ctx context.Context, args SearchArgs) []SearchRe
 
 		return nil
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error executing search db work: %s", err)
 		return output
 	}
@@ -312,7 +312,7 @@ func (lib *LocalLibrary) SearchAlbums(ctx context.Context, args SearchArgs) []Al
 
 		return nil
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error executing search album db work: %s", err)
 		return output
 	}
@@ -381,7 +381,7 @@ func (lib *LocalLibrary) SearchArtists(ctx context.Context, args SearchArgs) []A
 
 		return nil
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error executing search artist db work: %s", err)
 		return output
 	}
@@ -415,7 +415,7 @@ func (lib *LocalLibrary) GetFilePath(ctx context.Context, ID int64) string {
 
 		return nil
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error executing get file path db work: %s", err)
 		return filePath
 	}
@@ -450,7 +450,7 @@ func (lib *LocalLibrary) GetAlbumFiles(ctx context.Context, albumID int64) []Tra
 
 		return nil
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error executing get album files db work: %s", err)
 		return output
 	}
@@ -478,7 +478,7 @@ func (lib *LocalLibrary) GetTrack(ctx context.Context, trackID int64) (TrackInfo
 		res = track
 		return nil
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		return res, err
 	}
 	return res, nil
@@ -534,7 +534,7 @@ func (lib *LocalLibrary) GetArtist(
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		return res, err
 	}
 
@@ -612,7 +612,7 @@ func (lib *LocalLibrary) GetAlbum(
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		return res, err
 	}
 
@@ -656,7 +656,7 @@ func (lib *LocalLibrary) RecordTrackPlay(
 		return err
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		return fmt.Errorf("sql query error: %w", err)
 	}
 
@@ -755,7 +755,7 @@ func (lib *LocalLibrary) GetArtistAlbums(
 
 		return nil
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error executing get artist albums db work: %s", err)
 		return albums
 	}
@@ -786,7 +786,7 @@ func (lib *LocalLibrary) removeFile(filePath string) {
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error executing remove file db work: %s", err)
 	}
 }
@@ -809,7 +809,7 @@ func (lib *LocalLibrary) removeDirectory(dirPath string) {
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error executing remove dir db work: %s", err)
 	}
 }
@@ -955,7 +955,7 @@ func (lib *LocalLibrary) MediaExistsInLibrary(filename string) bool {
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		log.Printf("Error on executing db job: %s", err)
 	}
 
@@ -993,7 +993,7 @@ func (lib *LocalLibrary) GetArtistID(artist string) (int64, error) {
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		return 0, err
 	}
 
@@ -1035,7 +1035,7 @@ func (lib *LocalLibrary) setArtistID(artist string) (int64, error) {
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		return 0, err
 	}
 
@@ -1093,7 +1093,7 @@ func (lib *LocalLibrary) GetAlbumID(album string, fsPath string) (int64, error) 
 		albumID = id
 		return nil
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		return 0, err
 	}
 
@@ -1135,7 +1135,7 @@ func (lib *LocalLibrary) setAlbumID(album string, fsPath string) (int64, error) 
 		lastInsertID, _ = res.LastInsertId()
 		return nil
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		return 0, err
 	}
 
@@ -1196,7 +1196,7 @@ func (lib *LocalLibrary) GetAlbumFSPathByName(albumName string) ([]string, error
 		return nil
 	}
 
-	err := lib.executeDBJobAndWait(work)
+	err := lib.ExecuteDBJobAndWait(work)
 	if err != nil {
 		return paths, err
 	}
@@ -1237,7 +1237,7 @@ func (lib *LocalLibrary) GetAlbumFSPathByID(albumID int64) (string, error) {
 		return ErrAlbumNotFound
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		return "", err
 	}
 
@@ -1279,7 +1279,7 @@ func (lib *LocalLibrary) GetTrackID(
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		return 0, err
 	}
 
@@ -1362,7 +1362,7 @@ func (lib *LocalLibrary) setTrackID(
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		return 0, err
 	}
 
@@ -1393,7 +1393,7 @@ func (lib *LocalLibrary) setTrackID(
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := lib.ExecuteDBJobAndWait(work); err != nil {
 		return 0, err
 	}
 
