@@ -1,5 +1,4 @@
--- migrate Up
-
+-- +migrate Up
 CREATE TABLE IF NOT EXISTS `playlists` (
     `id` integer not null primary key,
     `name` text not null,
@@ -9,5 +8,16 @@ CREATE TABLE IF NOT EXISTS `playlists` (
     `updated_at` integer not null
 );
 
--- migrate Down
+CREATE TABLE IF NOT EXISTS `playlists_tracks` (
+    `playlist_id` integer not null,
+    `track_id` integer not null,
+    `order` integer not null default 0,
+    FOREIGN KEY(playlist_id) REFERENCES playlists(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY(track_id) REFERENCES tracks(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+create unique index if not exists playlist_pairs on `playlists_tracks` ('playlist_id', `track_id`);
+
+-- +migrate Down
 drop table if exists `playlists`;
+drop table if exists `playlists_tracks`;
