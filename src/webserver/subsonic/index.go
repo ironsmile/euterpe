@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ironsmile/euterpe/src/config"
 	"github.com/ironsmile/euterpe/src/library"
+	"github.com/ironsmile/euterpe/src/playlists"
 	"github.com/ironsmile/euterpe/src/radio"
 )
 
@@ -15,6 +16,7 @@ type subsonic struct {
 	libBrowser library.Browser
 	lib        library.Library
 	radio      radio.Stations
+	playlists  playlists.Playlister
 	needsAuth  bool
 	auth       config.Auth
 
@@ -39,6 +41,7 @@ func NewHandler(
 	lib library.Library,
 	libBrowser library.Browser,
 	stations radio.Stations,
+	playlister playlists.Playlister,
 	cfg config.Config,
 	albumArt CoverArtHandler,
 	artistArt CoverArtHandler,
@@ -48,6 +51,7 @@ func NewHandler(
 		lib:              lib,
 		libBrowser:       libBrowser,
 		radio:            stations,
+		playlists:        playlister,
 		needsAuth:        cfg.Auth,
 		auth:             cfg.Authenticate,
 		albumArtHandler:  albumArt,
@@ -119,6 +123,10 @@ func (s *subsonic) initRouter() {
 	setUpHandler("/getUser", s.getUser)
 	setUpHandler("/getRandomSongs", s.getRandomSongs)
 	setUpHandler("/createPlaylist", s.createPlaylist)
+	setUpHandler("/getPlaylist", s.getPlaylist)
+	setUpHandler("/getPlaylists", s.getPlaylists)
+	setUpHandler("/deletePlaylist", s.deletePlaylist)
+	setUpHandler("/updatePlaylist", s.updatePlaylist)
 
 	s.mux = s.authHandler(router)
 }

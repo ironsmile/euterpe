@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// queryTracks executes a database query for tracks and returns the result. The query
+// QueryTracks executes a database query for tracks and returns the result. The query
 // is written with the appropriate JOIN and following aliases are available:
 //
 // * `t` - the tracks table
@@ -26,7 +26,7 @@ import (
 //   - queryArgs - arguments to be used in the db.QueryContext call. If the two
 //     named arguments "offset" and "count", created with sql.Named(...) are set
 //     then the they will be used with LIMIT for the query.
-func queryTracks(
+func QueryTracks(
 	ctx context.Context,
 	db *sql.DB,
 	where []string,
@@ -68,8 +68,8 @@ func queryTracks(
 	)
 }
 
-// scanTrack scans a database row returned by `queryTracks` into a TrackInfo.
-func scanTrack(rows scanner) (TrackInfo, error) {
+// ScanTrack scans a database row returned by `queryTracks` into a TrackInfo.
+func ScanTrack(rows scanner) (TrackInfo, error) {
 	var (
 		res TrackInfo
 

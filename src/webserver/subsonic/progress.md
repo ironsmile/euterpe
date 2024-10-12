@@ -31,11 +31,11 @@
 - [x] search - `newerThan` is ignored
 - [x] search2
 - [x] search3
-- [ ] getPlaylists
-- [ ] getPlaylist
-- [ ] createPlaylist
-- [ ] updatePlaylist
-- [ ] deletePlaylist
+- [x] getPlaylists
+- [x] getPlaylist
+- [x] createPlaylist
+- [x] updatePlaylist
+- [x] deletePlaylist
 - [x] stream - does not do transcoding yet
 - [x] download
 - [ ] hls

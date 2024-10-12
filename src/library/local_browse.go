@@ -377,7 +377,7 @@ func (lib *LocalLibrary) BrowseTracks(args BrowseArgs) ([]TrackInfo, int) {
 			log.Printf("Query for getting tracks count not successful: %s\n", err)
 		}
 
-		rows, err := queryTracks(ctx, db, where, orderBy, queryArgs)
+		rows, err := QueryTracks(ctx, db, where, orderBy, queryArgs)
 		if err != nil {
 			log.Printf("Query for browsing songs not successful: %s\n", err.Error())
 			return nil
@@ -385,7 +385,7 @@ func (lib *LocalLibrary) BrowseTracks(args BrowseArgs) ([]TrackInfo, int) {
 
 		defer rows.Close()
 		for rows.Next() {
-			res, err := scanTrack(rows)
+			res, err := ScanTrack(rows)
 			if err != nil {
 				log.Printf("Error scanning search result: %s\n", err)
 				continue

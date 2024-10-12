@@ -10,6 +10,7 @@ import (
 
 	"github.com/ironsmile/euterpe/src/config"
 	"github.com/ironsmile/euterpe/src/library/libraryfakes"
+	"github.com/ironsmile/euterpe/src/playlists/playlistsfakes"
 	"github.com/ironsmile/euterpe/src/radio/radiofakes"
 	"github.com/ironsmile/euterpe/src/webserver/subsonic"
 )
@@ -26,12 +27,14 @@ func TestOpenSubsonicFromPostExtension(t *testing.T) {
 	lib := &libraryfakes.FakeLibrary{}
 	browser := &libraryfakes.FakeBrowser{}
 	stations := &radiofakes.FakeStations{}
+	playlister := &playlistsfakes.FakePlaylister{}
 
 	ssHandler := subsonic.NewHandler(
 		subsonic.Prefix,
 		lib,
 		browser,
 		stations,
+		playlister,
 		config.Config{
 			Auth: true,
 			Authenticate: config.Auth{

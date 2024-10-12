@@ -201,7 +201,7 @@ func (lib *LocalLibrary) Search(ctx context.Context, args SearchArgs) []SearchRe
 			sql.Named("count", limitCount),
 		}
 
-		rows, err := queryTracks(ctx, db, where, orderBy, queryArgs)
+		rows, err := QueryTracks(ctx, db, where, orderBy, queryArgs)
 		if err != nil {
 			log.Printf("Search query not successful: %s\n", err.Error())
 			return nil
@@ -209,7 +209,7 @@ func (lib *LocalLibrary) Search(ctx context.Context, args SearchArgs) []SearchRe
 
 		defer rows.Close()
 		for rows.Next() {
-			res, err := scanTrack(rows)
+			res, err := ScanTrack(rows)
 			if err != nil {
 				log.Printf("Error scanning search result: %s\n", err)
 				continue
@@ -432,7 +432,7 @@ func (lib *LocalLibrary) GetAlbumFiles(ctx context.Context, albumID int64) []Tra
 		queryArgs = []any{sql.Named("albumID", albumID)}
 	)
 	work := func(db *sql.DB) error {
-		rows, err := queryTracks(ctx, db, where, orderBy, queryArgs)
+		rows, err := QueryTracks(ctx, db, where, orderBy, queryArgs)
 		if err != nil {
 			log.Printf("Query for getting albym files not successful: %s\n", err.Error())
 			return nil
@@ -440,7 +440,7 @@ func (lib *LocalLibrary) GetAlbumFiles(ctx context.Context, albumID int64) []Tra
 
 		defer rows.Close()
 		for rows.Next() {
-			res, err := scanTrack(rows)
+			res, err := ScanTrack(rows)
 			if err != nil {
 				return fmt.Errorf("scanning error: %w", err)
 			}
@@ -467,7 +467,7 @@ func (lib *LocalLibrary) GetTrack(ctx context.Context, trackID int64) (TrackInfo
 				t.id = ?
 		`, trackID)
 
-		track, err := scanTrack(row)
+		track, err := ScanTrack(row)
 		if err != nil && errors.Is(err, sql.ErrNoRows) {
 			return ErrNotFound
 		} else if err != nil {

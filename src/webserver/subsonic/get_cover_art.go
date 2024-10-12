@@ -12,7 +12,10 @@ func (s *subsonic) getCoverArt(w http.ResponseWriter, req *http.Request) {
     size := req.Form.Get("size")
 
     var artworkHandler CoverArtHandler
-    if strings.HasPrefix(id, coverAlbumPrefix) {
+    if strings.HasPrefix(id, coverPlaylistPrefix) {
+        w.WriteHeader(http.StatusNotFound)
+        return
+    } else if strings.HasPrefix(id, coverAlbumPrefix) {
         artworkHandler = s.albumArtHandler
         id = strings.TrimPrefix(id, coverAlbumPrefix)
     } else if strings.HasPrefix(id, coverArtistPrefix) {

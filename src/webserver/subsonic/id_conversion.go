@@ -87,6 +87,7 @@ func musicFolderExists(musicFolderID string) bool {
 }
 
 const (
-	coverAlbumPrefix  = "al-"
-	coverArtistPrefix = "ar-"
+	coverAlbumPrefix    = "al-"
+	coverArtistPrefix   = "ar-"
+	coverPlaylistPrefix = "pl-"
 )

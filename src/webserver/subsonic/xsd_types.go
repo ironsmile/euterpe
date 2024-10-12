@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ironsmile/euterpe/src/library"
+	"github.com/ironsmile/euterpe/src/playlists"
 	"github.com/ironsmile/euterpe/src/radio"
 )
 
@@ -405,6 +406,66 @@ type xsdUser struct {
 	ShareRole           bool       `xml:"shareRole,attr" json:"shareRole"`
 	VideoConversionRole bool       `xml:"videoConversionRole,attr" json:"videoConversionRole"`
 	AvatarLastChanged   *time.Time `xml:"avatarLastChanged,attr,omitempty" json:"avatarLastChanged,omitempty"`
+}
+
+type xsdPlaylist struct {
+	ID         int64     `xml:"id,attr" json:"id,string"`
+	Name       string    `xml:"name,attr" json:"name"`
+	Comment    string    `xml:"comment,attr" json:"comment"`
+	Owner      string    `xml:"owner,attr" json:"owner"`
+	SongsCount int64     `xml:"songCount,attr" json:"songCount"`
+	Duration   int64     `xml:"duration,attr" json:"duration"`
+	Public     bool      `xml:"public,attr" json:"public"`
+	Created    time.Time `xml:"created,attr" json:"created"`
+	Changed    time.Time `xml:"changed,attr" json:"changed"`
+	CoverArt   string    `xml:"coverArt,attr,omitempty" json:"coverArt,omitempty"`
+
+	AllowedUsers []string `xml:"allowedUser" json:"allowedUser"`
+}
+
+func toXsdPlaylist(playlist playlists.Playlist, owner string) xsdPlaylist {
+	return xsdPlaylist{
+		ID:           playlist.ID,
+		Name:         playlist.Name,
+		Comment:      playlist.Desc,
+		Owner:        owner,
+		SongsCount:   playlist.TracksCount,
+		Public:       playlist.Public,
+		Created:      playlist.CreatedAt,
+		Changed:      playlist.UpdatedAt,
+		Duration:     int64(playlist.Duration.Seconds()),
+		AllowedUsers: []string{owner},
+		CoverArt:     fmt.Sprintf("pl-%d", playlist.ID),
+	}
+}
+
+type xsdPlaylistWithSongs struct {
+	xsdPlaylist
+
+	Entries []xsdChild `xml:"entry" json:"entry,omitempty"`
+}
+
+func toXsdPlaylistWithSongs(
+	playlist playlists.Playlist,
+	owner string,
+	defaultLastModified time.Time,
+) xsdPlaylistWithSongs {
+	xsdPlst := xsdPlaylistWithSongs{
+		xsdPlaylist: toXsdPlaylist(playlist, owner),
+	}
+
+	for _, track := range playlist.Tracks {
+		xsdPlst.Entries = append(
+			xsdPlst.Entries,
+			trackToChild(track, defaultLastModified),
+		)
+	}
+
+	return xsdPlst
+}
+
+type xsdPlaylists struct {
+	Children []xsdPlaylist `xml:"playlist" json:"playlist"`
 }
 
 type xsdSongs struct {

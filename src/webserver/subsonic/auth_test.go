@@ -12,6 +12,7 @@ import (
 
 	"github.com/ironsmile/euterpe/src/config"
 	"github.com/ironsmile/euterpe/src/library/libraryfakes"
+	"github.com/ironsmile/euterpe/src/playlists/playlistsfakes"
 	"github.com/ironsmile/euterpe/src/radio/radiofakes"
 	"github.com/ironsmile/euterpe/src/webserver/subsonic"
 	"github.com/ironsmile/euterpe/src/webserver/subsonic/subsonicfakes"
@@ -207,6 +208,7 @@ func TestAuthHandler(t *testing.T) {
 				&libraryfakes.FakeLibrary{},
 				&libraryfakes.FakeBrowser{},
 				&radiofakes.FakeStations{},
+				&playlistsfakes.FakePlaylister{},
 				cfg,
 				&subsonicfakes.FakeCoverArtHandler{},
 				&subsonicfakes.FakeCoverArtHandler{},

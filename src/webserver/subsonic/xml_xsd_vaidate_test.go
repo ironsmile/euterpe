@@ -9,10 +9,13 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/ironsmile/euterpe/src/config"
 	"github.com/ironsmile/euterpe/src/library"
 	"github.com/ironsmile/euterpe/src/library/libraryfakes"
+	"github.com/ironsmile/euterpe/src/playlists"
+	"github.com/ironsmile/euterpe/src/playlists/playlistsfakes"
 	"github.com/ironsmile/euterpe/src/radio"
 	"github.com/ironsmile/euterpe/src/radio/radiofakes"
 	"github.com/ironsmile/euterpe/src/webserver/subsonic"
@@ -290,6 +293,34 @@ func TestSubsonicXMLResponses(t *testing.T) {
 		},
 	}
 
+	playlister := &playlistsfakes.FakePlaylister{
+		GetStub: func(ctx context.Context, i int64) (playlists.Playlist, error) {
+			return playlists.Playlist{
+				ID:        5,
+				Name:      "new playlist",
+				Desc:      "some description",
+				Public:    true,
+				Duration:  20 * time.Second,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+				Tracks:    libSongs,
+			}, nil
+		},
+		GetAllStub: func(ctx context.Context) ([]playlists.Playlist, error) {
+			return []playlists.Playlist{
+				{
+					ID:        5,
+					Name:      "new playlist",
+					Desc:      "some description",
+					Public:    true,
+					Duration:  20 * time.Second,
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
+			}, nil
+		},
+	}
+
 	err := xsdvalidate.Init()
 	if err != nil {
 		t.Fatalf("failed to initialize xsdvalidate: %s", err)
@@ -310,6 +341,7 @@ func TestSubsonicXMLResponses(t *testing.T) {
 		lib,
 		browser,
 		stations,
+		playlister,
 		config.Config{
 			Authenticate: config.Auth{
 				User: "test-user",
@@ -524,6 +556,34 @@ func TestSubsonicXMLResponses(t *testing.T) {
 			desc: "getRandomSongs",
 			url:  testURL("/getRandomSongs"),
 		},
+		{
+			desc: "createPlaylist",
+			url: testURL("/createPlaylist?name=newplaylist&songId=%d&songId=%d",
+				int64(2e9+11), int64(2e9+12),
+			),
+		},
+		{
+			desc: "updatePlaylistWithCreateCall",
+			url: testURL("/createPlaylist?playlistId=5&songId=%d&songId=%d",
+				int64(2e9+11), int64(2e9+12),
+			),
+		},
+		{
+			desc: "getPlaylist",
+			url:  testURL("/getPlaylist?id=5"),
+		},
+		{
+			desc: "getPlaylists",
+			url:  testURL("/getPlaylists"),
+		},
+		{
+			desc: "deletePlaylist",
+			url:  testURL("/getPlaylists?id=5"),
+		},
+		{
+			desc: "updatePlaylist",
+			url:  testURL("/getPlaylists?playlistId=5&name=baba&songIndexToRemove=2"),
+		},
 	}
 
 	for _, test := range tests {
@@ -617,6 +677,18 @@ func TestSubsonicXMLErrors(t *testing.T) {
 		},
 	}
 
+	playlister := &playlistsfakes.FakePlaylister{
+		GetStub: func(ctx context.Context, i int64) (playlists.Playlist, error) {
+			return playlists.Playlist{}, fmt.Errorf("not found: %w", playlists.ErrNotFound)
+		},
+		DeleteStub: func(ctx context.Context, i int64) error {
+			return fmt.Errorf("not found: %w", playlists.ErrNotFound)
+		},
+		UpdateStub: func(ctx context.Context, i int64, ua playlists.UpdateArgs) error {
+			return fmt.Errorf("not found: %w", playlists.ErrNotFound)
+		},
+	}
+
 	err := xsdvalidate.Init()
 	if err != nil {
 		t.Fatalf("failed to initialize xsdvalidate: %s", err)
@@ -637,6 +709,7 @@ func TestSubsonicXMLErrors(t *testing.T) {
 		lib,
 		browser,
 		stations,
+		playlister,
 		config.Config{},
 		nil, nil,
 	)
@@ -927,6 +1000,61 @@ func TestSubsonicXMLErrors(t *testing.T) {
 				url.QueryEscape("some station"),
 				url.QueryEscape("http://some-station.example.com/stream/"),
 			),
+			errorCode: 70,
+		},
+		{
+			desc:      "deleting playlist with malformed ID",
+			url:       testURL("/deletePlaylist?id=baba"),
+			errorCode: 70,
+		},
+		{
+			desc:      "deleting playlist without ID",
+			url:       testURL("/deletePlaylist"),
+			errorCode: 10,
+		},
+		{
+			desc:      "deleting playlist which does not exist",
+			url:       testURL("/deletePlaylist?id=6"),
+			errorCode: 70,
+		},
+		{
+			desc:      "getting playlist withou ID",
+			url:       testURL("/getPlaylist"),
+			errorCode: 10,
+		},
+		{
+			desc:      "getting playlist which does not exist",
+			url:       testURL("/getPlaylist?id=6"),
+			errorCode: 70,
+		},
+		{
+			desc:      "getting playlist with malformed ID",
+			url:       testURL("/getPlaylist?id=baba"),
+			errorCode: 70,
+		},
+		{
+			desc:      "update playlist without an ID",
+			url:       testURL("/updatePlaylist"),
+			errorCode: 10,
+		},
+		{
+			desc:      "update playlist with an malformed ID",
+			url:       testURL("/updatePlaylist?playlistId=baba"),
+			errorCode: 70,
+		},
+		{
+			desc:      "update playlist with an malformed song ID",
+			url:       testURL("/updatePlaylist?playlistId=5&songIdToAdd=baba"),
+			errorCode: 0,
+		},
+		{
+			desc:      "update playlist with an malformed index ID",
+			url:       testURL("/updatePlaylist?playlistId=5&songIndexToRemove=baba"),
+			errorCode: 0,
+		},
+		{
+			desc:      "update playlist for playlist which does not exist",
+			url:       testURL("/updatePlaylist?playlistId=6"),
 			errorCode: 70,
 		},
 	}
