@@ -27,7 +27,7 @@ func NewManager(sendDBWork func(library.DatabaseExecutable) error) Stations {
 }
 
 // GetAll implements the Stations interface.
-func (lib *manager) GetAll(ctx context.Context) ([]Station, error) {
+func (m *manager) GetAll(ctx context.Context) ([]Station, error) {
 	var stations []Station
 	query := `
 		SELECT id, name, stream_url, home_page
@@ -81,7 +81,7 @@ func (lib *manager) GetAll(ctx context.Context) ([]Station, error) {
 
 		return nil
 	}
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := m.executeDBJobAndWait(work); err != nil {
 		return nil, err
 	}
 
@@ -89,7 +89,7 @@ func (lib *manager) GetAll(ctx context.Context) ([]Station, error) {
 }
 
 // Create implements the Stations interface.
-func (lib *manager) Create(ctx context.Context, new Station) (int64, error) {
+func (m *manager) Create(ctx context.Context, new Station) (int64, error) {
 	if new.Name == "" {
 		return 0, fmt.Errorf("name cannot be empty")
 	}
@@ -155,7 +155,7 @@ func (lib *manager) Create(ctx context.Context, new Station) (int64, error) {
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := m.executeDBJobAndWait(work); err != nil {
 		return 0, err
 	}
 
@@ -163,7 +163,7 @@ func (lib *manager) Create(ctx context.Context, new Station) (int64, error) {
 }
 
 // Replace implements the Stations interface.
-func (lib *manager) Replace(ctx context.Context, updated Station) error {
+func (m *manager) Replace(ctx context.Context, updated Station) error {
 	if updated.Name == "" {
 		return fmt.Errorf("name cannot be empty")
 	}
@@ -235,7 +235,7 @@ func (lib *manager) Replace(ctx context.Context, updated Station) error {
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := m.executeDBJobAndWait(work); err != nil {
 		return err
 	}
 
@@ -243,7 +243,7 @@ func (lib *manager) Replace(ctx context.Context, updated Station) error {
 }
 
 // Delete implements the Stations interface.
-func (lib *manager) Delete(ctx context.Context, stationID int64) error {
+func (m *manager) Delete(ctx context.Context, stationID int64) error {
 	query := `
 		DELETE FROM
 			radio_stations
@@ -273,7 +273,7 @@ func (lib *manager) Delete(ctx context.Context, stationID int64) error {
 		return nil
 	}
 
-	if err := lib.executeDBJobAndWait(work); err != nil {
+	if err := m.executeDBJobAndWait(work); err != nil {
 		return err
 	}
 
