@@ -147,6 +147,7 @@ func albumToChild(
 		Starred:       toUnixTimeWithNull(album.Favourite),
 		UserRating:    album.Rating,
 		PlayCount:     album.Plays,
+		Year:          int16(album.Year),
 	}
 
 	if artistID != 0 {
@@ -219,6 +220,7 @@ func dbAlbumToAlbumID3Entry(album library.Album) xsdAlbumID3 {
 		Duration:   album.Duration / 1000,
 		Starred:    toUnixTimeWithNull(album.Favourite),
 		PlayCount:  album.Plays,
+		Year:       int16(album.Year),
 	}
 }
 

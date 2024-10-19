@@ -182,6 +182,7 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 		where = append(where, "als.favourite IS NOT NULL AND als.favourite != 0")
 	case OrderByYear:
 		orderBy = "tr.year " + order
+		where = append(where, "tr.year IS NOT NULL")
 	}
 
 	if len(where) > 0 {
@@ -225,6 +226,8 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 					END AS artist_name,
 				COUNT(tr.id) as songCount,
 				SUM(tr.duration) as duration,
+				SUM(us.play_count) as plays,
+				MIN(tr.year) as year,
 				als.favourite,
 				als.user_rating
 			FROM
@@ -256,10 +259,12 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 				res    Album
 				fav    sql.NullInt64
 				rating sql.NullInt16
+				plays  sql.NullInt64
+				year   sql.NullInt32
 			)
 			if err := rows.Scan(
 				&res.ID, &res.Name, &res.Artist, &res.SongCount,
-				&res.Duration, &fav, &rating,
+				&res.Duration, &plays, &year, &fav, &rating,
 			); err != nil {
 				return fmt.Errorf("scanning db failed: %w", err)
 			}
@@ -268,6 +273,12 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 			}
 			if rating.Valid {
 				res.Rating = uint8(rating.Int16)
+			}
+			if plays.Valid {
+				res.Plays = plays.Int64
+			}
+			if year.Valid {
+				res.Year = year.Int32
 			}
 
 			output = append(output, res)
@@ -350,6 +361,7 @@ func (lib *LocalLibrary) BrowseTracks(args BrowseArgs) ([]TrackInfo, int) {
 		where = append(where, "us.favourite IS NOT NULL AND us.favourite != 0")
 	case OrderByYear:
 		orderBy = "t.year " + order
+		where = append(where, "t.year IS NOT NULL")
 	}
 
 	queryArgs = append(

@@ -58,9 +58,7 @@ type SearchResult struct {
 	Rating uint8 `json:"rating,omitempty"`
 
 	// Year is the four digit year at which this track was recorded.
-	//
-	// Not encoded in the JSON response the API for the moment.
-	Year int32 `json:"-"`
+	Year int32 `json:"year,omitempty"`
 
 	// Bitrate is measured in bits per second.
 	Bitrate uint64 `json:"bitrate,omitempty"`
@@ -132,6 +130,9 @@ type Album struct {
 	// Rating is the user rating given to this album. It will be a number
 	// in the [1-5] range or 0 if no rating was given.
 	Rating uint8 `json:"rating,omitempty"`
+
+	// Year is a four digit number for the year in which the album has been released.
+	Year int32 `json:"year,omitempty"`
 }
 
 // Favourites describes a set of favourite tracks, artists and albums.

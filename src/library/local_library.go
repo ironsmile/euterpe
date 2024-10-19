@@ -555,6 +555,7 @@ func (lib *LocalLibrary) GetAlbum(
 			END AS arist_name,
 			COUNT(tr.id) as album_songs,
 			SUM(tr.duration) as album_duration,
+			MIN(tr.year) as year,
 			SUM(us.play_count) as album_plays,
 			MAX(us.last_played) as last_played,
 			als.favourite,
@@ -579,12 +580,14 @@ func (lib *LocalLibrary) GetAlbum(
 			rating     sql.NullInt16
 			plays      sql.NullInt64
 			lastPlayed sql.NullInt64
+			year       sql.NullInt32
 		)
 		err := row.Scan(
 			&res.Name,
 			&res.Artist,
 			&res.SongCount,
 			&res.Duration,
+			&year,
 			&plays,
 			&lastPlayed,
 			&fav,
@@ -607,6 +610,9 @@ func (lib *LocalLibrary) GetAlbum(
 		}
 		if lastPlayed.Valid {
 			res.LastPlayed = lastPlayed.Int64
+		}
+		if year.Valid {
+			res.Year = year.Int32
 		}
 
 		return nil

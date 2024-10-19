@@ -297,7 +297,8 @@ which would return an JSON array with tracks. Every object in the JSON represent
       "rating": 5, // User rating in the [1-5] range.
       "favourite": 1714834066, // Unix timestamp (seconds) when the track was added to favourites.
       "bitrate": 1536000, // Bits per second of this song.
-      "size": 3303014 // Size of the track file in bytes.
+      "size": 3303014, // Size of the track file in bytes.
+      "year": 2004 // Year when this track has been included in the album.
    },
    {
       "album" : "Battlefield Vietnam",
@@ -317,7 +318,7 @@ The most important thing here is the track ID at the `id` key. It can be used fo
 
 Note that the track duration is in milliseconds.
 
-_Optional properties_: Some properties of tracks are optional and may be omitted in the response when they are not set. They may not be set because no user has performed an action which sets them or the value may not be set in the track file's metadata. E.g. playing a song for the fist time will set its `plays` property to 1. The list of optional properties is: `plays`, `favourite`, `last_played`, `rating`, `bitrate`, `size`.
+_Optional properties_: Some properties of tracks are optional and may be omitted in the response when they are not set. They may not be set because no user has performed an action which sets them or the value may not be set in the track file's metadata. E.g. playing a song for the fist time will set its `plays` property to 1. The list of optional properties is: `plays`, `favourite`, `last_played`, `rating`, `bitrate`, `size`, `year`.
 
 ### Browse
 
@@ -368,14 +369,15 @@ would result in value such as
 ```js
 {
   "album": "Battlefield Vietnam"
-  "artist": "Jefferson Airplane",
+  "artist": "Various Artists",
   "album_id": 2,
   "duration": 1953000, // In milliseconds.
   "track_count": 12, // Number of tracks (songs) which this album has.
   "plays": 2312, // Number of times a song from the album has been played.
   "favourite": 1614834066, // Unix timestamp in seconds. When it was added to favourites.
   "last_played": 1714834066, // Unix timestamp in seconds.
-  "rating": 5 // User rating in [1-5] range.
+  "rating": 5, // User rating in [1-5] range.
+  "year": 2004 // Four digit year of when this album has been released.
 }
 ```
 
@@ -405,6 +407,7 @@ _order-by_: controls how the results would be ordered. **Defaults to `name` for 
 * `random` means that the list will be randomly ordered.
 * `frequency` will order by the number of times tracks have been played. For album this is the number of times tracks in this album has been played. Only applicable when `by` is `album` or `song`.
 * `recency` will order tracks or albums by when was the last time the song or the album was played. Only applicable when `by` is `album` or `song`.
+* `year` will order tracks or albums by the year of their release. Only applicable when `by` is `album` or `song`.
 
 _order_: controls if the order would ascending (with value `asc`) or descending (with value `desc`). **Defaults to `asc`**.
 

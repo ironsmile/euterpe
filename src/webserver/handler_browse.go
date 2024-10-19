@@ -51,7 +51,7 @@ func (bh BrowseHandler) browse(writer http.ResponseWriter, req *http.Request) er
 		return nil
 	}
 
-	possibleOrders := []string{"id", "name", "random", "frequency", "recency"}
+	possibleOrders := []string{"id", "name", "random", "frequency", "recency", "year"}
 	if orderBy != "" && !slices.Contains(possibleOrders, orderBy) {
 		bh.badRequest(writer,
 			fmt.Sprintf("Wrong 'order-by' parameter - '%s'. ", orderBy)+
@@ -139,6 +139,7 @@ func (bh BrowseHandler) browseArtists(
 	unsupportedBrowseBy := []library.BrowseOrderBy{
 		library.OrderByRecentlyPlayed,
 		library.OrderByFrequentlyPlayed,
+		library.OrderByYear,
 	}
 	if slices.Contains(unsupportedBrowseBy, browseArgs.OrderBy) {
 		return fmt.Errorf(
@@ -240,6 +241,8 @@ func getBrowseArgs(page, perPage int, orderBy, order string) library.BrowseArgs 
 		browseArgs.OrderBy = library.OrderByFrequentlyPlayed
 	case "recency":
 		browseArgs.OrderBy = library.OrderByRecentlyPlayed
+	case "year":
+		browseArgs.OrderBy = library.OrderByYear
 	default:
 		browseArgs.OrderBy = library.OrderByName
 	}
