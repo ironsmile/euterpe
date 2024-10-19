@@ -148,7 +148,7 @@ location is as follows:
 
 When started for the first time Euterpe will create one for you. Here is an example:
 
-```javascript
+```js
 {
     // Address and port on which Euterpe will listen. It is in the form hostname[:port]
     // For exact explanation see the Addr field in the Go's net.http.Server
@@ -278,24 +278,26 @@ One can do a search query at the following endpoint
 GET /v1/search/?q={query}
 ```
 
-wich would return an JSON array with tracks. Every object in the JSON represents a single track which matches the `query`. Example:
+which would return an JSON array with tracks. Every object in the JSON represents a single track which matches the `query`. Example:
 
 ```js
 [
    {
-      "album" : "Battlefield Vietnam",
-      "title" : "Somebody to Love",
-      "track" : 10,
-      "artist" : "Jefferson Airplane",
-      "artist_id": 33,
-      "id" : 18,
-      "album_id" : 2,
-      "format": "mp3",
-      "duration": 180000,
-      "plays": 3,
-      "last_played": 1714834066,
-      "rating": 5,
-      "favourite": 1714834066
+      "id" : 18, // Unique identifier of the track. Used for playing it.
+      "album" : "Battlefield Vietnam", // Name of the album in which this track is found.
+      "title" : "Somebody to Love", // Name of the song.
+      "track" : 10, // Position of this track in the album.
+      "artist" : "Jefferson Airplane", // Name of the artist or band who have performed the song.
+      "artist_id": 33, // The ID of the artist who have performed the track.
+      "album_id" : 2, // ID of the album in which this track belongs.
+      "format": "mp3", // File format of this track. mp3, flac, wav, etc...
+      "duration": 180000, // Track duration in milliseconds.
+      "plays": 3, // Number of times this track has been played.
+      "last_played": 1714834066, // Unix timestamp (seconds) when the track was last played.
+      "rating": 5, // User rating in the [1-5] range.
+      "favourite": 1714834066, // Unix timestamp (seconds) when the track was added to favourites.
+      "bitrate": 1536000, // Bits per second of this song.
+      "size": 3303014 // Size of the track file in bytes.
    },
    {
       "album" : "Battlefield Vietnam",
@@ -315,7 +317,7 @@ The most important thing here is the track ID at the `id` key. It can be used fo
 
 Note that the track duration is in milliseconds.
 
-_Optional properties_: Some properties of tracks are optional and may be omitted in the response when they are not set. They may not be set because no user has performed an action which sets them. E.g. playing a song for the fist time will set its `plays` property to 1. The list of optional properties is: `plays`, `favourite`, `last_played`, `rating`.
+_Optional properties_: Some properties of tracks are optional and may be omitted in the response when they are not set. They may not be set because no user has performed an action which sets them or the value may not be set in the track file's metadata. E.g. playing a song for the fist time will set its `plays` property to 1. The list of optional properties is: `plays`, `favourite`, `last_played`, `rating`, `bitrate`, `size`.
 
 ### Browse
 
@@ -336,7 +338,7 @@ The returned JSON contains the data for the current page, the number of all page
 }
 ```
 
-For the moment there are two possible values for the `by` parameter. Consequently there are two types of `data` that can be returned: "artist" and "album" (which is the **default**).
+For the moment there are three possible values for the `by` parameter. Consequently there are two types of `data` that can be returned: "artist", "song" and "album" (which is the **default**).
 
 **by=artist**
 
@@ -346,9 +348,18 @@ would result in value such as
 {
   "artist": "Jefferson Airplane",
   "artist_id": 73,
-  "album_count": 3
+  "album_count": 3 // Number of albums from this artist in the library.
+  "favourite": 1614834066, // Unix timestamp in seconds. When it was added to favourites.
+  "rating": 5 // User rating in [1-5] range.
 }
 ```
+
+The following fields are optional and may not be set:
+
+* `favourite`
+* `rating`
+
+Missing fields mean that the artist hasn't been given rating or added to favourites.
 
 **by=album**
 
@@ -359,15 +370,23 @@ would result in value such as
   "album": "Battlefield Vietnam"
   "artist": "Jefferson Airplane",
   "album_id": 2,
-  "duration": 1953000,
-  "track_count": 12,
-  "plays": 23123429193,
-  "favourite": 1614834066,
-  "last_played": 1714834066
+  "duration": 1953000, // In milliseconds.
+  "track_count": 12, // Number of tracks (songs) which this album has.
+  "plays": 2312, // Number of times a song from the album has been played.
+  "favourite": 1614834066, // Unix timestamp in seconds. When it was added to favourites.
+  "last_played": 1714834066, // Unix timestamp in seconds.
+  "rating": 5 // User rating in [1-5] range.
 }
 ```
 
-`last_played` (optional) is a Unix timestamp at which a song from this album was last played. And `favourite` (optional) is Unix timestamp too and it shows when this album was added to the list of favourite albums. `plays` (optional) is a the number of times a song from this album has been listened to.
+The following fields are optional and may not be set:
+
+* `favourite`
+* `last_played`
+* `rating`
+
+Missing fields mean that the album hasn't been given rating, added to favourites or
+no tracks from it have ever been played.
 
 **by=song**
 
@@ -379,7 +398,13 @@ _per-page_: controls how many items would be present in the `data` field for eve
 
 _page_: the generated data would be for this page. The **default is 1**.
 
-_order-by_: controls how the results would be ordered. The value `id` means the ordering would be done by the album or artist ID, depending on the `by` argument. The same goes for the `name` value. `random` means that the list will be randmly ordered. Only when `by` is "album" then two additional `order-by` values are supported. `frequency` will order by the number of times tracks have been played. For album this is the number of times tracks in this album has been played. And `recency` will order tracks or albums by when was the last time the song or the album was played.  **Defaults to `name` for albums and artists and `id` for tracks**.
+_order-by_: controls how the results would be ordered. **Defaults to `name` for albums and artists and `id` for tracks**. The meaning for its possible values is as follows:
+
+* `id` means the ordering would be done by the song, album or artist ID, depending on the `by` argument.
+* `name` orders values by their name.
+* `random` means that the list will be randomly ordered.
+* `frequency` will order by the number of times tracks have been played. For album this is the number of times tracks in this album has been played. Only applicable when `by` is `album` or `song`.
+* `recency` will order tracks or albums by when was the last time the song or the album was played. Only applicable when `by` is `album` or `song`.
 
 _order_: controls if the order would ascending (with value `asc`) or descending (with value `desc`). **Defaults to `asc`**.
 
