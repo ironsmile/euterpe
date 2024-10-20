@@ -101,6 +101,7 @@ func (srv *Server) serveGoroutine() {
 	artistImageHandler := NewArtistImagesHandler(srv.library)
 	browseHandler := NewBrowseHandler(srv.library)
 	mediaFileHandler := NewFileHandler(srv.library)
+	aboutHandler := NewAboutHandler()
 	loginHandler := NewLoginHandler(srv.cfg.Authenticate)
 	loginTokenHandler := NewLoginTokenHandler(srv.cfg.Authenticate)
 	logoutHandler := NewLogoutHandler()
@@ -125,6 +126,9 @@ func (srv *Server) serveGoroutine() {
 	router.UseEncodedPath()
 
 	// API v1 methods.
+	router.Handle(APIv1EndpointAbout, aboutHandler).Methods(
+		APIv1Methods[APIv1EndpointAbout]...,
+	)
 	router.Handle(APIv1EndpointFile, mediaFileHandler).Methods(
 		APIv1Methods[APIv1EndpointFile]...,
 	)

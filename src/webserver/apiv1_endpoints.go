@@ -4,6 +4,7 @@ import "net/http"
 
 // The following are URL Path endpoints for certain API calls.
 const (
+	APIv1EndpointAbout          = "/v1/about"
 	APIv1EndpointFile           = "/v1/file/{fileID}"
 	APIv1EndpointAlbumArtwork   = "/v1/album/{albumID}/artwork"
 	APIv1EndpointDownloadAlbum  = "/v1/album/{albumID}"
@@ -18,6 +19,7 @@ const (
 // APIv1Methods defines on which HTTP methods APIv1 endpoints will respond to.
 // It is an uri_path => list of HTTP methods map.
 var APIv1Methods map[string][]string = map[string][]string{
+	APIv1EndpointAbout:          {http.MethodGet},
 	APIv1EndpointFile:           {http.MethodGet},
 	APIv1EndpointDownloadAlbum:  {http.MethodGet},
 	APIv1EndpointBrowse:         {http.MethodGet},

@@ -255,6 +255,7 @@ Authentication tokens can be acquired using the `/v1/login/token/` endpoint desc
 
 ### Endpoints
 
+* [About](#about)
 * [Search](#search)
 * [Browse](#browse)
 * [Play a Song](#play-a-song)
@@ -269,6 +270,25 @@ Authentication tokens can be acquired using the `/v1/login/token/` endpoint desc
     * [Remove Artist Image](#remove-artist-image)
 * [Token Request](#token-request)
 * [Register Token](#register-token)
+
+### About
+
+Query information about the server.
+
+```sh
+GET /v1/about
+```
+
+The returned response includes the server version. Example response:
+
+```js
+{
+    "server_version":"v1.5.4"
+}
+```
+
+This information could be used by clients to know what APIs are supported by the
+server.
 
 ### Search
 
