@@ -3,6 +3,7 @@ module github.com/ironsmile/euterpe
 go 1.21
 
 require (
+	github.com/dhowden/tag v0.0.0-20240417053706-3d75831295e8
 	github.com/gbrlsnchs/jwt/v3 v3.0.1
 	github.com/gorilla/mux v1.6.2
 	github.com/howeyc/fsnotify v0.9.0

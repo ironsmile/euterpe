@@ -8,8 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-
-	taglib "github.com/wtolson/go-taglib"
 )
 
 // Scan scans all of the folders in paths for media files. New files will be added to the
@@ -135,9 +133,9 @@ func (lib *LocalLibrary) Rescan(ctx context.Context) error {
 				continue
 			}
 
-			file, err := taglib.Read(fileName)
+			file, err := parseFileTags(fileName)
 			if err != nil {
-				log.Printf("Taglib error for %s: %s\n", fileName, err)
+				log.Printf("Parsing tags error for %s: %s\n", fileName, err)
 				continue
 			}
 
@@ -149,7 +147,6 @@ func (lib *LocalLibrary) Rescan(ctx context.Context) error {
 			if err := lib.insertMediaIntoDatabase(file, fi); err != nil {
 				log.Printf("failed updating file %s: %s\n", fileName, err)
 			}
-			file.Close()
 		}
 	}
 
