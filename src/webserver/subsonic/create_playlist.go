@@ -62,13 +62,7 @@ func (s *subsonic) updatePlaylistFromCreate(w http.ResponseWriter, req *http.Req
 	playlistUpdate := playlists.UpdateArgs{
 		Name:            req.Form.Get("name"),
 		RemoveAllTracks: true,
-	}
-
-	for _, trackID := range trackIDs {
-		playlistUpdate.AddTracks = append(
-			playlistUpdate.AddTracks,
-			trackID,
-		)
+		AddTracks:       trackIDs,
 	}
 
 	if err := s.playlists.Update(req.Context(), playlistID, playlistUpdate); err != nil {

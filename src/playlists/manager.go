@@ -253,14 +253,14 @@ func (m *manager) Update(ctx context.Context, id int64, args UpdateArgs) error {
 
 	if args.Public != nil {
 		var publicInt = 1
-		if *args.Public == false {
+		if !*args.Public {
 			publicInt = 0
 		}
 		updateFields = append(updateFields, "public = @public")
 		updateValues = append(updateValues, sql.Named("public", publicInt))
 	}
 
-	if len(updateFields) == 0 && args.RemoveAllTracks == false &&
+	if len(updateFields) == 0 && !args.RemoveAllTracks &&
 		len(args.AddTracks) == 0 && len(args.RemoveTracks) == 0 {
 		// nothing to do here!
 		return nil
