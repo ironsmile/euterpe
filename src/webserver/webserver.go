@@ -87,6 +87,7 @@ func (srv *Server) serveGoroutine() {
 	if err != nil {
 		panic(err)
 	}
+	playlistsManager := playlists.NewManager(srv.library.ExecuteDBJobAndWait)
 
 	staticFilesHandler := http.FileServer(http.FS(
 		wrapfs.WithModTime(srv.httpRootFS, time.Now()),
@@ -109,13 +110,14 @@ func (srv *Server) serveGoroutine() {
 	indexHandler := NewTemplateHandler(allTpls.index, "")
 	addDeviceHandler := NewTemplateHandler(allTpls.addDevice, "Add Device")
 	registerTokenHandler := NewRigisterTokenHandler()
+	playlistsHandler := NewPlaylistsHandler(playlistsManager)
 
 	subsonicHandler := subsonic.NewHandler(
 		subsonic.Prefix,
 		srv.library,
 		srv.library,
 		radio.NewManager(srv.library.ExecuteDBJobAndWait),
-		playlists.NewManager(srv.library.ExecuteDBJobAndWait),
+		playlistsManager,
 		srv.cfg,
 		artoworkHandler,
 		artistImageHandler,
@@ -155,6 +157,9 @@ func (srv *Server) serveGoroutine() {
 	)
 	router.Handle(APIv1EndpointRegisterToken, registerTokenHandler).Methods(
 		APIv1Methods[APIv1EndpointRegisterToken]...,
+	)
+	router.Handle(APIv1EndpointPlaylists, playlistsHandler).Methods(
+		APIv1Methods[APIv1EndpointPlaylists]...,
 	)
 
 	// Kept for backward compatibility with older clients created before the

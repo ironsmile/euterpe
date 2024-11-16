@@ -14,6 +14,9 @@ const (
 	APIv1EndpointSearch         = "/v1/search/"
 	APIv1EndpointLoginToken     = "/v1/login/token/"
 	APIv1EndpointRegisterToken  = "/v1/register/token/"
+
+	APIv1EndpointPlaylists = "/v1/playlists"
+	APIv1EndpointPlaylist  = "/v1/playlist/{playlistID}"
 )
 
 // APIv1Methods defines on which HTTP methods APIv1 endpoints will respond to.
@@ -32,5 +35,10 @@ var APIv1Methods map[string][]string = map[string][]string{
 	},
 	APIv1EndpointAlbumArtwork: {
 		http.MethodGet, http.MethodHead, http.MethodPut, http.MethodDelete,
+	},
+
+	APIv1EndpointPlaylists: {http.MethodGet, http.MethodPost},
+	APIv1EndpointPlaylist: {
+		http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodDelete,
 	},
 }

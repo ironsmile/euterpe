@@ -268,6 +268,9 @@ Authentication tokens can be acquired using the `/v1/login/token/` endpoint desc
     * [Get Artist Image](#get-artist-image)
     * [Upload Artist Image](#upload-artist-image)
     * [Remove Artist Image](#remove-artist-image)
+* [Playlists](#playlists)
+    * [List Playlists](#list-playlists)
+    * [Create Playlist](#create-playlist)
 * [Token Request](#token-request)
 * [Register Token](#register-token)
 
@@ -520,6 +523,67 @@ DELETE /v1/artist/{artistID}/image
 ```
 
 Will remove the artist image the server database. Note, this will not touch any files on the file system.
+
+### Playlists
+
+Euterpe supports creating and using playlists. Below you will find all supported operations
+with playlists.
+
+#### List Playlists
+
+```
+GET /v1/playlists
+```
+
+Returns all playlists in a list. This list omits the playlist tracks and returns only the basic information about each playlist. Example response:
+
+```js
+{
+  "playlists": [
+    {
+      "id": 1, // ID of the playlist which have to be used for operations with it.
+      "name": "Quiet Evening", // Display name of the playlist.
+      "description": "For one is tired of heavy metal!", // Optional longer description.
+      "tracks_count": 3, // Number of track in this playlist.
+      "duration": 488000, // Duration of the playlist in milliseconds.
+      "created_at": 1728838802, // Unix timestamp for when the playlist was created.
+      "updated_at": 1728838923 // Unix timestamp for when the playlist was last updated.
+    },
+    {
+      "id": 2,
+      "name": "Summer Hits",
+      "tracks_count": 4,
+      "duration": 435000,
+      "created_at": 1731773035,
+      "updated_at": 1731773035
+    }
+  ]
+}
+```
+
+#### Create Playlist
+
+```
+POST /v1/playlists
+{
+    "name": "Quiet Evening",
+    "add_tracks_by_id": [14, 18, 255, 99]
+}
+```
+
+Creating a playlist is done with a `POST` request with a JSON body. The body is an object
+with the following properties:
+
+* `name` (_string_) - A short name of the playlist. Used for displaying it in lists.
+* `add_tracks_by_id` (_list_ with integers) - An ordered list with track IDs which will be added in the playlist. IDs may repeat.
+
+This API method returns the ID of the newly created playlist:
+
+```js
+{
+    "created_playlsit_id": 2
+}
+```
 
 ### Token Request
 
