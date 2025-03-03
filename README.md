@@ -3,7 +3,7 @@ Euterpe
 
 <img src="images/heavy-metal-128.png" alt="Euterpe Icon" align="left" style="margin-right: 20px" title="Euterpe Icon" />
 
-Euterpe is self-hosted streaming service for music. Formerly known as "HTTPMS (HTTP Media Server)".
+Euterpe is self-hosted streaming service for music.
 
 A way to listen to your music library from everywhere. Once set up you won't need anything but a browser. Think of it as your own Spotify service over which you have full control. Euterpe will let you browse through and listen to your music over HTTP(s). Up until now I've had a really bad time listening to my music which is stored back home. I would create a mount over ftp, sshfs or something similar and point the local player to the mounted library. Every time it resulted in some upleasantries. Just imagine searching in a network mounted directory!
 
@@ -543,7 +543,7 @@ Returns all playlists in a list. This list omits the playlist tracks and returns
     {
       "id": 1, // ID of the playlist which have to be used for operations with it.
       "name": "Quiet Evening", // Display name of the playlist.
-      "description": "For one is tired of heavy metal!", // Optional longer description.
+      "description": "For when tired of heavy metal!", // Optional longer description.
       "tracks_count": 3, // Number of track in this playlist.
       "duration": 488000, // Duration of the playlist in milliseconds.
       "created_at": 1728838802, // Unix timestamp for when the playlist was created.
@@ -616,7 +616,7 @@ This endpoint registers the newly generated tokens with Euterpe. Only registered
 Media Keys Control For OSX
 ======
 
-You can control your Euterpe web interface with the media keys the same way you can control any native media player. To achieve this a third-party program is required: [BearderSpice](https://beardedspice.github.io/). Sadly, Euterpe (HTTPMS) is [not included](https://github.com/beardedspice/beardedspice/pull/684) in the default web strategies bundled-in with the program. You will have to import the [strategy](https://github.com/beardedspice/beardedspice/tree/disco-strategy-web#writing-a-media-strategy) [file](tools/bearded-spice.js) included in this repo yourself.
+You can control your Euterpe web interface with the media keys the same way you can control any native media player. To achieve this a third-party program is required: [BearderSpice](https://beardedspice.github.io/). Sadly, Euterpe is [not included](https://github.com/beardedspice/beardedspice/pull/684) in the default web strategies bundled-in with the program. You will have to import the [strategy](https://github.com/beardedspice/beardedspice/tree/disco-strategy-web#writing-a-media-strategy) [file](tools/bearded-spice.js) included in this repo yourself.
 
 How to do it:
 
@@ -650,11 +650,3 @@ You are not restricted to using the web UI. The server has a RESTful API which c
 * [euterpe-mobile](https://github.com/ironsmile/euterpe-mobile) is an iOS/Android mobile client written with React Native.
 * [euterpe-rhythmbox](https://github.com/ironsmile/euterpe-rhythmbox) is an Euterpe client plugin for Gnome's Rhythmbox.
 * [euterpe-gtk](https://github.com/ironsmile/euterpe-gtk) is a GTK client for mobile or desktop.
-
-
-Name Change
-======
-
-Euterpe was previously known as "HTTPMS" from "HTTP Media Server". This name is too generic, it proved to be very hard to remember and was all-around a bad choice. At the time I was mostly thinking about the function and not the presentation of the project. Since there are more people using it now it makes sense to improve this aspect as well.
-
-"Euterpe" was chosen because of the obvious association with the muse of music. There are still places where internally the software refers to itself as "HTTPMS" but they will go away with time. Hopefully soon.
