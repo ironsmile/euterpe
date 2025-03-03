@@ -5,7 +5,7 @@ Euterpe
 
 Euterpe is self-hosted streaming service for music.
 
-A way to listen to your music library from everywhere. Once set up you won't need anything but a browser. Think of it as your own Spotify service over which you have full control. Euterpe will let you browse through and listen to your music over HTTP(s). Up until now I've had a really bad time listening to my music which is stored back home. I would create a mount over ftp, sshfs or something similar and point the local player to the mounted library. Every time it resulted in some upleasantries. Just imagine searching in a network mounted directory!
+A way to listen to your music library from everywhere. Once set up you won't need anything but a browser. Think of it as your own Spotify service over which you have full control. Euterpe will let you browse through and listen to your music over HTTP(s). Up until now I've had a really bad time listening to my music which is stored back home. I would create a mount over ftp, sshfs or something similar and point the local player to the mounted library. Every time it resulted in some unpleasantry. Just imagine searching in a network mounted directory!
 
 No more!
 
@@ -32,7 +32,7 @@ Have a taste of how its web interface looks like
 
 ![Euterpe Screenshot](images/euterpe-preview.webp)
 
-It comes with a custom [jPlayer](https://github.com/happyworm/jPlayer) which can handle playlists with thousands of songs. Which is [an imrovement](https://github.com/jplayer/jPlayer/pull/192) over the original which never included this performance patch.
+It comes with a custom [jPlayer](https://github.com/happyworm/jPlayer) which can handle playlists with thousands of songs. Which is [an improvement](https://github.com/jplayer/jPlayer/pull/192) over the original which never included this performance patch.
 
 I feel obliged to say that the music on the screenshot is written and performed by my close friend [Velislav Ivanov](http://www.progarchives.com/artist.asp?id=4264).
 
@@ -222,12 +222,12 @@ When started for the first time Euterpe will create one for you. Here is an exam
 }
 ```
 
-List with all directives can be found in the [configration wiki](https://github.com/ironsmile/euterpe/wiki/configuration#wiki-json-directives).
+List with all directives can be found in the [configuration wiki](https://github.com/ironsmile/euterpe/wiki/configuration#wiki-json-directives).
 
 As an API
 ======
 
-You can use Euterpe as a REST API and write your own player. Or maybe a plugin for your favourite player which would use your Euterpe installation as a back-end.
+You can use Euterpe as a REST API and write your own player. Or maybe a plug-in for your favourite player which would use your Euterpe installation as a back-end.
 
 ### v1 Compatibility Promise
 
@@ -630,7 +630,7 @@ BeardedSpice Preferences:
 
 ![BS Install Step 1](images/barded-spice-install-step1.png)
 
-Select "Import" under Genral tab:
+Select "Import" under General tab:
 
 ![BS Install Step 2](images/barded-spice-install-step2.png)
 
@@ -648,5 +648,5 @@ You are not restricted to using the web UI. The server has a RESTful API which c
 
 * ~~[httpms-android](https://github.com/ironsmile/httpms-android) is a Android client for HTTPMS.~~ Long abandoned in favour of a React Native mobile client.
 * [euterpe-mobile](https://github.com/ironsmile/euterpe-mobile) is an iOS/Android mobile client written with React Native.
-* [euterpe-rhythmbox](https://github.com/ironsmile/euterpe-rhythmbox) is an Euterpe client plugin for Gnome's Rhythmbox.
+* [euterpe-rhythmbox](https://github.com/ironsmile/euterpe-rhythmbox) is an Euterpe client plug-in for Gnome's Rhythmbox.
 * [euterpe-gtk](https://github.com/ironsmile/euterpe-gtk) is a GTK client for mobile or desktop.
