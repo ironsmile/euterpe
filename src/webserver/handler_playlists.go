@@ -44,7 +44,7 @@ func (plh playlistsHandler) create(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	newID, err := plh.playlists.Create(req.Context(), listReq.Name, listReq.AddTrackByID)
+	newID, err := plh.playlists.Create(req.Context(), listReq.Name, listReq.AddTracksByID)
 	if err != nil {
 		http.Error(
 			w,
@@ -123,8 +123,16 @@ type playlist struct {
 }
 
 type playlistRequest struct {
-	Name           string  `json:"name"`
-	Desc           string  `json:"description"`
-	AddTrackByID   []int64 `json:"add_tracks_by_id"`
-	RemoveIndecies []int64 `json:"remove_indecies"`
+	Name          string              `json:"name"`
+	Desc          string              `json:"description"`
+	AddTracksByID []int64             `json:"add_tracks_by_id"`
+	RemoveIndeces []int64             `json:"remove_indeces"`
+	MoveTracks    []playlistTrackMove `json:"move_indeces"`
+}
+
+// playlistTrackMove encodes a request to move a track from a particular index to
+// another.
+type playlistTrackMove struct {
+	From uint32 `json:"from"`
+	To   uint32 `json:"to"`
 }

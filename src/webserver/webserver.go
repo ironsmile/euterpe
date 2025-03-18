@@ -111,6 +111,7 @@ func (srv *Server) serveGoroutine() {
 	addDeviceHandler := NewTemplateHandler(allTpls.addDevice, "Add Device")
 	registerTokenHandler := NewRigisterTokenHandler()
 	playlistsHandler := NewPlaylistsHandler(playlistsManager)
+	singlePlaylistHandler := NewSinglePlaylistHandler(playlistsManager)
 
 	subsonicHandler := subsonic.NewHandler(
 		subsonic.Prefix,
@@ -160,6 +161,9 @@ func (srv *Server) serveGoroutine() {
 	)
 	router.Handle(APIv1EndpointPlaylists, playlistsHandler).Methods(
 		APIv1Methods[APIv1EndpointPlaylists]...,
+	)
+	router.Handle(APIv1EndpointPlaylist, singlePlaylistHandler).Methods(
+		APIv1Methods[APIv1EndpointPlaylist]...,
 	)
 
 	// Kept for backward compatibility with older clients created before the

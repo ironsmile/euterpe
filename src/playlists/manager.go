@@ -261,7 +261,8 @@ func (m *manager) Update(ctx context.Context, id int64, args UpdateArgs) error {
 	}
 
 	if len(updateFields) == 0 && !args.RemoveAllTracks &&
-		len(args.AddTracks) == 0 && len(args.RemoveTracks) == 0 {
+		len(args.AddTracks) == 0 && len(args.RemoveTracks) == 0 &&
+		len(args.MoveTracks) == 0 {
 		// nothing to do here!
 		return nil
 	}
@@ -306,6 +307,25 @@ func (m *manager) Update(ctx context.Context, id int64, args UpdateArgs) error {
 		WHERE
 			playlist_id = @playlist_id AND
 			"index" > @track_index
+	`
+
+	const getTrackByIndexQuery = `
+		SELECT
+			track_id
+		FROM
+			playlists_tracks
+		WHERE
+			playlist_id = @playlist_id AND
+			"index" = @track_index
+	`
+
+	const createIndexGapQuery = `
+		UPDATE playlists_tracks
+		SET
+			"index" = "index" + 1
+		WHERE
+			playlist_id = @playlist_id AND
+			"index" >= @track_index
 	`
 
 	const maxIndexQuery = `
@@ -404,6 +424,68 @@ func (m *manager) Update(ctx context.Context, id int64, args UpdateArgs) error {
 			_, err = tx.ExecContext(ctx, insertSongsQuery, queryVals...)
 			if err != nil {
 				return fmt.Errorf("failed to insert songs to playlist: %w", err)
+			}
+		}
+
+		for ind, move := range args.MoveTracks {
+			if move.FromIndex == move.ToIndex {
+				continue
+			}
+
+			var trackID int64
+			row := tx.QueryRowContext(ctx, getTrackByIndexQuery,
+				sql.Named("playlist_id", id),
+				sql.Named("track_index", move.FromIndex),
+			)
+			if err := row.Scan(&trackID); err != nil {
+				return fmt.Errorf("failed to scan for track for move %d (%d->%d): %w",
+					ind, move.FromIndex, move.ToIndex, err)
+			}
+
+			var removeArgs = []any{
+				sql.Named("playlist_id", id),
+				sql.Named("track_index", move.FromIndex),
+			}
+
+			_, err = tx.ExecContext(ctx, removeTracksQuery, removeArgs...)
+			if err != nil {
+				return fmt.Errorf("failed to remove track index (moving) %d: %w",
+					move.FromIndex, err)
+			}
+
+			_, err = tx.ExecContext(ctx, updateTrackIndexesQuery, removeArgs...)
+			if err != nil {
+				return fmt.Errorf("failed to update track index (moving) %d: %w",
+					move.FromIndex, err)
+			}
+
+			var gapArgs = []any{
+				sql.Named("playlist_id", id),
+				sql.Named("track_index", move.ToIndex),
+			}
+
+			_, err = tx.ExecContext(ctx, createIndexGapQuery, gapArgs...)
+			if err != nil {
+				return fmt.Errorf("failed to create gap during move (%d): %w", ind, err)
+			}
+
+			insertMovedQuery := `
+				INSERT INTO
+					playlists_tracks (playlist_id, track_id, "index")
+				VALUES
+					(@playlist_id, @track_id, @track_index)
+			`
+
+			var insertArgs = []any{
+				sql.Named("playlist_id", id),
+				sql.Named("track_id", trackID),
+				sql.Named("track_index", move.ToIndex),
+			}
+
+			_, err = tx.ExecContext(ctx, insertMovedQuery, insertArgs...)
+			if err != nil {
+				return fmt.Errorf("failed insert track index during moving (move %d): %w",
+					ind, err)
 			}
 		}
 

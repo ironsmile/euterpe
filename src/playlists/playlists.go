@@ -70,8 +70,19 @@ type UpdateArgs struct {
 	// to be removed from it.
 	RemoveTracks []int64
 
+	// MoveTracks tracks is a list move move operations for tracks by their
+	// indexes. Moving is evaluated _after_ adding is done.
+	MoveTracks []MoveArgs
+
 	// RemoveAllTracks causes all tracks of the playlist to be removed.
 	RemoveAllTracks bool
+}
+
+// MoveArgs defines a single move of a track from one position in the playlist
+// to another. Positions are encoded as indexes in the playlist.
+type MoveArgs struct {
+	FromIndex uint32
+	ToIndex   uint32
 }
 
 // ErrNotFound is returned when a playlist was not found for a given operation.
