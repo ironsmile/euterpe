@@ -148,6 +148,13 @@ func (h *playlistHandler) deletePlaylist(
 	if errors.Is(err, playlists.ErrNotFound) {
 		http.NotFound(w, req)
 		return
+	} else if err != nil {
+		http.Error(
+			w,
+			fmt.Sprintf("error deleting a playlist: %s", err),
+			http.StatusInternalServerError,
+		)
+		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
@@ -162,6 +169,13 @@ func (h *playlistHandler) getPlaylist(
 	playlist, err := h.playlists.Get(req.Context(), playlistID)
 	if errors.Is(err, playlists.ErrNotFound) {
 		http.NotFound(w, req)
+		return
+	} else if err != nil {
+		http.Error(
+			w,
+			fmt.Sprintf("error getting a playlist: %s", err),
+			http.StatusInternalServerError,
+		)
 		return
 	}
 

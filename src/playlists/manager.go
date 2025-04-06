@@ -42,7 +42,9 @@ func (m *manager) Get(ctx context.Context, id int64) (Playlist, error) {
 	work := func(db *sql.DB) error {
 		row := db.QueryRowContext(ctx, getPlaylistQuery, sql.Named("playlist_id", id))
 		scanned, err := scanPlaylist(row)
-		if err != nil {
+		if err != nil && errors.Is(err, sql.ErrNoRows) {
+			return ErrNotFound
+		} else if err != nil {
 			return err
 		}
 
