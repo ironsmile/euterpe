@@ -82,15 +82,7 @@ func (plh playlistsHandler) listAll(w http.ResponseWriter, req *http.Request) {
 	}
 
 	for _, pl := range playlists {
-		resp.Playlists = append(resp.Playlists, playlist{
-			ID:          pl.ID,
-			Name:        pl.Name,
-			Desc:        pl.Desc,
-			TracksCount: pl.TracksCount,
-			Duration:    pl.Duration.Milliseconds(),
-			CreatedAt:   pl.CreatedAt.Unix(),
-			UpdatedAt:   pl.UpdatedAt.Unix(),
-		})
+		resp.Playlists = append(resp.Playlists, toAPIplaylist(pl))
 	}
 
 	enc := json.NewEncoder(w)
@@ -120,6 +112,21 @@ type playlist struct {
 	CreatedAt   int64               `json:"created_at"` // Unix timestamp in seconds.
 	UpdatedAt   int64               `json:"updated_at"` // Unix timestamp in seconds.
 	Tracks      []library.TrackInfo `json:"tracks,omitempty"`
+}
+
+// toAPIplaylist converts a playlists.Playlist to a playlist object suitable for
+// JSON encoding as an API response from the Euterpe APIs.
+func toAPIplaylist(pl playlists.Playlist) playlist {
+	return playlist{
+		ID:          pl.ID,
+		Name:        pl.Name,
+		Desc:        pl.Desc,
+		TracksCount: pl.TracksCount,
+		Duration:    pl.Duration.Milliseconds(),
+		CreatedAt:   pl.CreatedAt.Unix(),
+		UpdatedAt:   pl.UpdatedAt.Unix(),
+		Tracks:      pl.Tracks,
+	}
 }
 
 type playlistRequest struct {

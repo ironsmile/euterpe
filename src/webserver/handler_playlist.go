@@ -160,13 +160,12 @@ func (h *playlistHandler) deletePlaylist(
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// !TODO: try with playlist which does not exist
 func (h *playlistHandler) getPlaylist(
 	w http.ResponseWriter,
 	req *http.Request,
 	playlistID int64,
 ) {
-	playlist, err := h.playlists.Get(req.Context(), playlistID)
+	pl, err := h.playlists.Get(req.Context(), playlistID)
 	if errors.Is(err, playlists.ErrNotFound) {
 		http.NotFound(w, req)
 		return
@@ -180,7 +179,7 @@ func (h *playlistHandler) getPlaylist(
 	}
 
 	enc := json.NewEncoder(w)
-	if err := enc.Encode(playlist); err != nil {
+	if err := enc.Encode(toAPIplaylist(pl)); err != nil {
 		http.Error(
 			w,
 			fmt.Sprintf("Encoding playlist response failed: %s", err),
