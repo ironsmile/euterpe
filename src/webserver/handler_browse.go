@@ -3,7 +3,6 @@ package webserver
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"math"
 	"net/http"
 	"slices"
@@ -11,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/ironsmile/euterpe/src/library"
+	"github.com/ironsmile/euterpe/src/webserver/webutils"
 )
 
 // BrowseHandler is a http.Handler which will allow you to browse through artists or
@@ -79,13 +79,13 @@ func (bh BrowseHandler) browse(writer http.ResponseWriter, req *http.Request) er
 		perPage, err = strconv.Atoi(perPageStr)
 
 		if err != nil {
-			bh.badRequest(writer, fmt.Sprintf(`Wrong "perPage" parameter: %s`, err))
+			bh.badRequest(writer, fmt.Sprintf(`Wrong "per-page" parameter: %s`, err))
 			return nil
 		}
 	}
 
 	if page < 1 || perPage < 1 {
-		bh.badRequest(writer, `"page" and "perPage" must be integers greater than one`)
+		bh.badRequest(writer, `"page" and "per-page" must be integers greater than one`)
 		return nil
 	}
 
@@ -105,7 +105,7 @@ func (bh BrowseHandler) browseAlbums(
 ) error {
 	browseArgs := getBrowseArgs(page, perPage, orderBy, order)
 	albums, count := bh.browser.BrowseAlbums(browseArgs)
-	prevPage, nextPage := getPrevNextPageURI(
+	prevPage, nextPage := getBrowsePrevNextPageURI(
 		"album",
 		page,
 		perPage,
@@ -149,7 +149,7 @@ func (bh BrowseHandler) browseArtists(
 	}
 
 	artists, count := bh.browser.BrowseArtists(browseArgs)
-	prevPage, nextPage := getPrevNextPageURI(
+	prevPage, nextPage := getBrowsePrevNextPageURI(
 		"artist",
 		page,
 		perPage,
@@ -185,7 +185,7 @@ func (bh BrowseHandler) browseSongs(
 
 	browseArgs := getBrowseArgs(page, perPage, orderBy, order)
 	tracks, count := bh.browser.BrowseTracks(browseArgs)
-	prevPage, nextPage := getPrevNextPageURI(
+	prevPage, nextPage := getBrowsePrevNextPageURI(
 		"track",
 		page,
 		perPage,
@@ -211,15 +211,7 @@ func (bh BrowseHandler) browseSongs(
 }
 
 func (bh BrowseHandler) badRequest(writer http.ResponseWriter, message string) {
-	writer.WriteHeader(http.StatusBadRequest)
-	msgJSON, _ := json.Marshal(struct {
-		Error string `json:"error"`
-	}{
-		Error: message,
-	})
-	if _, err := writer.Write([]byte(msgJSON)); err != nil {
-		log.Printf("error writing body in browse handler: %s", err)
-	}
+	webutils.JSONError(writer, message, http.StatusBadRequest)
 }
 
 func getBrowseArgs(page, perPage int, orderBy, order string) library.BrowseArgs {
@@ -257,7 +249,7 @@ func getBrowseArgs(page, perPage int, orderBy, order string) library.BrowseArgs 
 	return browseArgs
 }
 
-func getPrevNextPageURI(
+func getBrowsePrevNextPageURI(
 	by string,
 	page, perPage, count int,
 	orderBy,

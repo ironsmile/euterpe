@@ -3,10 +3,13 @@ package webserver
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
+	"strconv"
 
 	"github.com/ironsmile/euterpe/src/library"
 	"github.com/ironsmile/euterpe/src/playlists"
+	"github.com/ironsmile/euterpe/src/webserver/webutils"
 )
 
 // playlistsHandler will list playlists (GET) and create a new one (POST).
@@ -24,19 +27,21 @@ func NewPlaylistsHandler(playlister playlists.Playlister) http.Handler {
 
 // ServeHTTP is required by the http.Handler's interface
 func (plh playlistsHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
 	if req.Method == http.MethodPost {
 		plh.create(w, req)
 		return
 	}
 
-	plh.listAll(w, req)
+	plh.list(w, req)
 }
 
 func (plh playlistsHandler) create(w http.ResponseWriter, req *http.Request) {
 	listReq := playlistRequest{}
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&listReq); err != nil {
-		http.Error(
+		webutils.JSONError(
 			w,
 			fmt.Sprintf("Cannot decode playlist JSON: %s", err),
 			http.StatusBadRequest,
@@ -46,7 +51,7 @@ func (plh playlistsHandler) create(w http.ResponseWriter, req *http.Request) {
 
 	newID, err := plh.playlists.Create(req.Context(), listReq.Name, listReq.AddTracksByID)
 	if err != nil {
-		http.Error(
+		webutils.JSONError(
 			w,
 			fmt.Sprintf("Failed to create playlist: %s", err),
 			http.StatusInternalServerError,
@@ -60,7 +65,7 @@ func (plh playlistsHandler) create(w http.ResponseWriter, req *http.Request) {
 
 	enc := json.NewEncoder(w)
 	if err := enc.Encode(resp); err != nil {
-		http.Error(
+		webutils.JSONError(
 			w,
 			fmt.Sprintf("Playlist created but cannot write response JSON: %s", err),
 			http.StatusInternalServerError,
@@ -69,11 +74,81 @@ func (plh playlistsHandler) create(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (plh playlistsHandler) listAll(w http.ResponseWriter, req *http.Request) {
-	resp := playlistsResponse{}
-	playlists, err := plh.playlists.GetAll(req.Context())
+func (plh playlistsHandler) list(w http.ResponseWriter, req *http.Request) {
+	if err := req.ParseForm(); err != nil {
+		webutils.JSONError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var page, perPage int64 = 1, 40
+	pageStr := req.Form.Get("page")
+	perPageStr := req.Form.Get("per-page")
+
+	if pageStr != "" {
+		var err error
+		page, err = strconv.ParseInt(pageStr, 10, 64)
+
+		if err != nil {
+			webutils.JSONError(
+				w,
+				fmt.Sprintf(`Wrong "page" parameter: %s`, err),
+				http.StatusBadRequest,
+			)
+			return
+		}
+	}
+
+	if perPageStr != "" {
+		var err error
+		perPage, err = strconv.ParseInt(perPageStr, 10, 64)
+
+		if err != nil {
+			webutils.JSONError(
+				w,
+				fmt.Sprintf(`Wrong "per-page" parameter: %s`, err),
+				http.StatusBadRequest,
+			)
+			return
+		}
+	}
+
+	if page < 1 || perPage < 1 {
+		webutils.JSONError(
+			w,
+			`"page" and "per-page" must be integers greater than one`,
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	playlistsCount, err := plh.playlists.Count(req.Context())
 	if err != nil {
-		http.Error(
+		webutils.JSONError(
+			w,
+			fmt.Sprintf(`Cannot determine the playlists count: %s`, err),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	prevPage, nextPage := getPlaylistsPrevNextPageURI(
+		page,
+		perPage,
+		playlistsCount,
+	)
+
+	resp := playlistsResponse{
+		PagesCount: int(math.Ceil(float64(playlistsCount) / float64(perPage))),
+		Next:       nextPage,
+		Previous:   prevPage,
+		Playlists:  []playlist{},
+	}
+	playlists, err := plh.playlists.List(req.Context(), playlists.ListArgs{
+		Offset: page - 1,
+		Count:  perPage,
+	})
+	if err != nil {
+		webutils.JSONError(
 			w,
 			fmt.Sprintf("Getting playlists failed: %s", err),
 			http.StatusInternalServerError,
@@ -87,7 +162,7 @@ func (plh playlistsHandler) listAll(w http.ResponseWriter, req *http.Request) {
 
 	enc := json.NewEncoder(w)
 	if err := enc.Encode(resp); err != nil {
-		http.Error(
+		webutils.JSONError(
 			w,
 			fmt.Sprintf("Encoding playlists response failed: %s", err),
 			http.StatusInternalServerError,
@@ -95,8 +170,33 @@ func (plh playlistsHandler) listAll(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func getPlaylistsPrevNextPageURI(page, perPage, count int64) (string, string) {
+	prevPage := ""
+	if page-1 > 0 {
+		prevPage = fmt.Sprintf(
+			"/v1/playlists?page=%d&per-page=%d",
+			page-1,
+			perPage,
+		)
+	}
+
+	nextPage := ""
+	if page*perPage < count {
+		nextPage = fmt.Sprintf(
+			"/v1/playlists?page=%d&per-page=%d",
+			page+1,
+			perPage,
+		)
+	}
+
+	return prevPage, nextPage
+}
+
 type playlistsResponse struct {
-	Playlists []playlist `json:"playlists"`
+	Playlists  []playlist `json:"playlists"`
+	Next       string     `json:"next,omitempty"`
+	Previous   string     `json:"previous,omitempty"`
+	PagesCount int        `json:"pages_count"`
 }
 
 type createPlaylistResponse struct {

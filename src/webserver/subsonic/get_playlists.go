@@ -2,6 +2,8 @@ package subsonic
 
 import (
 	"net/http"
+
+	"github.com/ironsmile/euterpe/src/playlists"
 )
 
 func (s *subsonic) getPlaylists(w http.ResponseWriter, req *http.Request) {
@@ -12,7 +14,10 @@ func (s *subsonic) getPlaylists(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	playlists, err := s.playlists.GetAll(req.Context())
+	playlists, err := s.playlists.List(req.Context(), playlists.ListArgs{
+		Offset: 0,
+		Count:  0, // 0 means "all"
+	})
 	if err != nil {
 		resp := responseError(errCodeGeneric, err.Error())
 		encodeResponse(w, req, resp)

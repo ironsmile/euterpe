@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/ironsmile/euterpe/src/playlists"
+	"github.com/ironsmile/euterpe/src/webserver/webutils"
 )
 
 // playlistHandler will handle the REST methods for a single playlist.
@@ -33,10 +34,12 @@ func NewSinglePlaylistHandler(playlister playlists.Playlister) http.Handler {
 
 // ServeHTTP is required by the http.Handler's interface
 func (h *playlistHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	w.Header().Add("Content-Type", "application/json; charset=utf-8")
+
 	vars := mux.Vars(req)
 	playlistID, err := strconv.ParseInt(vars["playlistID"], 10, 64)
 	if err != nil {
-		http.NotFound(w, req)
+		webutils.JSONError(w, "not found", http.StatusNotFound)
 		return
 	}
 
@@ -62,7 +65,7 @@ func (h *playlistHandler) replacePlaylist(
 	var params playlistRequest
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&params); err != nil {
-		http.Error(
+		webutils.JSONError(
 			w,
 			fmt.Sprintf("cannot parse request body: %s", err),
 			http.StatusBadRequest,
@@ -79,10 +82,10 @@ func (h *playlistHandler) replacePlaylist(
 
 	err := h.playlists.Update(req.Context(), playlistID, updateReq)
 	if errors.Is(err, playlists.ErrNotFound) {
-		http.NotFound(w, req)
+		webutils.JSONError(w, "not found", http.StatusNotFound)
 		return
 	} else if err != nil {
-		http.Error(
+		webutils.JSONError(
 			w,
 			fmt.Sprintf("error replacing the playlist: %s", err),
 			http.StatusInternalServerError,
@@ -101,7 +104,7 @@ func (h *playlistHandler) changePlaylist(
 	var params playlistRequest
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&params); err != nil {
-		http.Error(
+		webutils.JSONError(
 			w,
 			fmt.Sprintf("cannot parse request body: %s", err),
 			http.StatusBadRequest,
@@ -125,10 +128,10 @@ func (h *playlistHandler) changePlaylist(
 
 	err := h.playlists.Update(req.Context(), playlistID, updateReq)
 	if errors.Is(err, playlists.ErrNotFound) {
-		http.NotFound(w, req)
+		webutils.JSONError(w, "not found", http.StatusNotFound)
 		return
 	} else if err != nil {
-		http.Error(
+		webutils.JSONError(
 			w,
 			fmt.Sprintf("error updating the playlist: %s", err),
 			http.StatusInternalServerError,
@@ -146,10 +149,10 @@ func (h *playlistHandler) deletePlaylist(
 ) {
 	err := h.playlists.Delete(req.Context(), playlistID)
 	if errors.Is(err, playlists.ErrNotFound) {
-		http.NotFound(w, req)
+		webutils.JSONError(w, "not found", http.StatusNotFound)
 		return
 	} else if err != nil {
-		http.Error(
+		webutils.JSONError(
 			w,
 			fmt.Sprintf("error deleting a playlist: %s", err),
 			http.StatusInternalServerError,
@@ -167,10 +170,10 @@ func (h *playlistHandler) getPlaylist(
 ) {
 	pl, err := h.playlists.Get(req.Context(), playlistID)
 	if errors.Is(err, playlists.ErrNotFound) {
-		http.NotFound(w, req)
+		webutils.JSONError(w, "not found", http.StatusNotFound)
 		return
 	} else if err != nil {
-		http.Error(
+		webutils.JSONError(
 			w,
 			fmt.Sprintf("error getting a playlist: %s", err),
 			http.StatusInternalServerError,
@@ -180,7 +183,7 @@ func (h *playlistHandler) getPlaylist(
 
 	enc := json.NewEncoder(w)
 	if err := enc.Encode(toAPIplaylist(pl)); err != nil {
-		http.Error(
+		webutils.JSONError(
 			w,
 			fmt.Sprintf("Encoding playlist response failed: %s", err),
 			http.StatusInternalServerError,

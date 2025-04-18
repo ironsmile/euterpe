@@ -15,9 +15,13 @@ type Playlister interface {
 	// Get returns a single playlist by its ID.
 	Get(ctx context.Context, id int64) (Playlist, error)
 
-	// GetAll returns all playlists. Does not return the tracks associated with each
-	// playlist.
-	GetAll(ctx context.Context) ([]Playlist, error)
+	// List returns a list playlists. Does not return the tracks associated with each
+	// playlist. Set both [args.Count] and [args.Offset] to zero in order to
+	// list all playlists at once.
+	List(ctx context.Context, args ListArgs) ([]Playlist, error)
+
+	// Count returns the count of all playlists available.
+	Count(ctx context.Context) (int64, error)
 
 	// Create creates a new playlist with the given name. `songs` is an list
 	// of track IDs to be added in the playlist.
@@ -83,6 +87,16 @@ type UpdateArgs struct {
 type MoveArgs struct {
 	FromIndex uint32
 	ToIndex   uint32
+}
+
+// ListArgs defines what portion of the playlists list will be returned.
+type ListArgs struct {
+	// Offset is an index in the list of playlist from which to start the list.
+	Offset int64
+
+	// Count defines how many playlists to include in the response. The special value
+	// of zero means "all playlists".
+	Count int64
 }
 
 // ErrNotFound is returned when a playlist was not found for a given operation.

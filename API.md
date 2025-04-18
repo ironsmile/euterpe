@@ -305,20 +305,19 @@ Will remove the artist image the server database. Note, this will not touch any 
 
 ### Playlists
 
-Euterpe supports creating and using playlists. Below you will find all supported operations
-with playlists.
+Euterpe supports creating and using playlists. Below you will find all supported operations with playlists.
 
 #### List Playlists
 
 ```
-GET /v1/playlists
+GET /v1/playlists[?per-page={number}][&page={number}]
 ```
 
-Returns all playlists in a list. This list omits the playlist tracks and returns only the basic information about each playlist. Example response:
+Returns paginated list of playlists. This list omits the track information and returns only the basic information about each playlist. Example response:
 
 ```js
 {
-  "playlists": [
+  "playlists": [ // List with playlists.
     {
       "id": 1, // ID of the playlist which have to be used for operations with it.
       "name": "Quiet Evening", // Display name of the playlist.
@@ -336,9 +335,18 @@ Returns all playlists in a list. This list omits the playlist tracks and returns
       "created_at": 1731773035,
       "updated_at": 1731773035
     }
-  ]
+  ],
+  "previous": "/v1/playlists?page=1&per-page=2", // Next page with playlists if available
+  "next": "/v1/playlists?page=3&per-page=2", // Previous page with playlists if available
+  "pages_count": 2 // How many pages in total there are with playlists
 }
 ```
+
+**Optional parameters**
+
+_per-page_: controls how many items would be present in the `playlists` field for every particular page. The **default is 40**.
+
+_page_: the generated data would be for this page. The **default is 1**.
 
 #### Create Playlist
 

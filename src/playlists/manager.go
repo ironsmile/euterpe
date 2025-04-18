@@ -119,17 +119,57 @@ func (m *manager) Get(ctx context.Context, id int64) (Playlist, error) {
 	return playlist, nil
 }
 
-// GetAll implements Playlister.
-func (m *manager) GetAll(ctx context.Context) ([]Playlist, error) {
-	var playlists []Playlist
-
-	const getPlaylistsQuery = selectPlaylistQuery + `
-			GROUP BY
-		pl.id
-	`
+// Count implements Playlister.
+func (m *manager) Count(ctx context.Context) (int64, error) {
+	var playlistsCount int64
 
 	work := func(db *sql.DB) error {
-		rows, err := db.QueryContext(ctx, getPlaylistsQuery)
+		var count sql.NullInt64
+
+		row := db.QueryRowContext(ctx, countPlaylistsQuery)
+		if err := row.Scan(&count); err != nil {
+			return fmt.Errorf("error in SQL query for getting playlists count: %w", err)
+		}
+
+		if count.Valid {
+			playlistsCount = count.Int64
+		} else {
+			return fmt.Errorf("SQL query did not return rows for playlists count")
+		}
+
+		return nil
+	}
+
+	if err := m.executeDBJobAndWait(work); err != nil {
+		return 0, err
+	}
+
+	return playlistsCount, nil
+}
+
+// List implements Playlister.
+func (m *manager) List(ctx context.Context, args ListArgs) ([]Playlist, error) {
+	var (
+		playlists []Playlist
+		queryArgs []any
+
+		querySuffix = `
+		GROUP BY
+			pl.id
+		`
+	)
+
+	if args.Count > 0 || args.Offset > 0 {
+		querySuffix += `
+		LIMIT ?, ?
+		`
+		queryArgs = append(queryArgs, args.Offset, args.Count)
+	}
+
+	getPlaylistsQuery := selectPlaylistQuery + querySuffix
+
+	work := func(db *sql.DB) error {
+		rows, err := db.QueryContext(ctx, getPlaylistsQuery, queryArgs...)
 		if err != nil {
 			return fmt.Errorf("could not query the database: %w", err)
 		}
@@ -547,6 +587,13 @@ const selectPlaylistQuery = `
 		playlists pl
 		LEFT JOIN playlists_tracks pt ON pl.id = pt.playlist_id
 		LEFT JOIN tracks t ON pt.track_id = t.id
+`
+
+const countPlaylistsQuery = `
+	SELECT
+		COUNT(*) as cnt
+	FROM
+		playlists pl
 `
 
 func scanPlaylist(row rowScanner) (Playlist, error) {

@@ -9,6 +9,19 @@ import (
 )
 
 type FakePlaylister struct {
+	CountStub        func(context.Context) (int64, error)
+	countMutex       sync.RWMutex
+	countArgsForCall []struct {
+		arg1 context.Context
+	}
+	countReturns struct {
+		result1 int64
+		result2 error
+	}
+	countReturnsOnCall map[int]struct {
+		result1 int64
+		result2 error
+	}
 	CreateStub        func(context.Context, string, []int64) (int64, error)
 	createMutex       sync.RWMutex
 	createArgsForCall []struct {
@@ -50,16 +63,17 @@ type FakePlaylister struct {
 		result1 playlists.Playlist
 		result2 error
 	}
-	GetAllStub        func(context.Context) ([]playlists.Playlist, error)
-	getAllMutex       sync.RWMutex
-	getAllArgsForCall []struct {
+	ListStub        func(context.Context, playlists.ListArgs) ([]playlists.Playlist, error)
+	listMutex       sync.RWMutex
+	listArgsForCall []struct {
 		arg1 context.Context
+		arg2 playlists.ListArgs
 	}
-	getAllReturns struct {
+	listReturns struct {
 		result1 []playlists.Playlist
 		result2 error
 	}
-	getAllReturnsOnCall map[int]struct {
+	listReturnsOnCall map[int]struct {
 		result1 []playlists.Playlist
 		result2 error
 	}
@@ -78,6 +92,70 @@ type FakePlaylister struct {
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
+}
+
+func (fake *FakePlaylister) Count(arg1 context.Context) (int64, error) {
+	fake.countMutex.Lock()
+	ret, specificReturn := fake.countReturnsOnCall[len(fake.countArgsForCall)]
+	fake.countArgsForCall = append(fake.countArgsForCall, struct {
+		arg1 context.Context
+	}{arg1})
+	stub := fake.CountStub
+	fakeReturns := fake.countReturns
+	fake.recordInvocation("Count", []interface{}{arg1})
+	fake.countMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakePlaylister) CountCallCount() int {
+	fake.countMutex.RLock()
+	defer fake.countMutex.RUnlock()
+	return len(fake.countArgsForCall)
+}
+
+func (fake *FakePlaylister) CountCalls(stub func(context.Context) (int64, error)) {
+	fake.countMutex.Lock()
+	defer fake.countMutex.Unlock()
+	fake.CountStub = stub
+}
+
+func (fake *FakePlaylister) CountArgsForCall(i int) context.Context {
+	fake.countMutex.RLock()
+	defer fake.countMutex.RUnlock()
+	argsForCall := fake.countArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakePlaylister) CountReturns(result1 int64, result2 error) {
+	fake.countMutex.Lock()
+	defer fake.countMutex.Unlock()
+	fake.CountStub = nil
+	fake.countReturns = struct {
+		result1 int64
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakePlaylister) CountReturnsOnCall(i int, result1 int64, result2 error) {
+	fake.countMutex.Lock()
+	defer fake.countMutex.Unlock()
+	fake.CountStub = nil
+	if fake.countReturnsOnCall == nil {
+		fake.countReturnsOnCall = make(map[int]struct {
+			result1 int64
+			result2 error
+		})
+	}
+	fake.countReturnsOnCall[i] = struct {
+		result1 int64
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakePlaylister) Create(arg1 context.Context, arg2 string, arg3 []int64) (int64, error) {
@@ -278,18 +356,19 @@ func (fake *FakePlaylister) GetReturnsOnCall(i int, result1 playlists.Playlist, 
 	}{result1, result2}
 }
 
-func (fake *FakePlaylister) GetAll(arg1 context.Context) ([]playlists.Playlist, error) {
-	fake.getAllMutex.Lock()
-	ret, specificReturn := fake.getAllReturnsOnCall[len(fake.getAllArgsForCall)]
-	fake.getAllArgsForCall = append(fake.getAllArgsForCall, struct {
+func (fake *FakePlaylister) List(arg1 context.Context, arg2 playlists.ListArgs) ([]playlists.Playlist, error) {
+	fake.listMutex.Lock()
+	ret, specificReturn := fake.listReturnsOnCall[len(fake.listArgsForCall)]
+	fake.listArgsForCall = append(fake.listArgsForCall, struct {
 		arg1 context.Context
-	}{arg1})
-	stub := fake.GetAllStub
-	fakeReturns := fake.getAllReturns
-	fake.recordInvocation("GetAll", []interface{}{arg1})
-	fake.getAllMutex.Unlock()
+		arg2 playlists.ListArgs
+	}{arg1, arg2})
+	stub := fake.ListStub
+	fakeReturns := fake.listReturns
+	fake.recordInvocation("List", []interface{}{arg1, arg2})
+	fake.listMutex.Unlock()
 	if stub != nil {
-		return stub(arg1)
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
@@ -297,46 +376,46 @@ func (fake *FakePlaylister) GetAll(arg1 context.Context) ([]playlists.Playlist, 
 	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *FakePlaylister) GetAllCallCount() int {
-	fake.getAllMutex.RLock()
-	defer fake.getAllMutex.RUnlock()
-	return len(fake.getAllArgsForCall)
+func (fake *FakePlaylister) ListCallCount() int {
+	fake.listMutex.RLock()
+	defer fake.listMutex.RUnlock()
+	return len(fake.listArgsForCall)
 }
 
-func (fake *FakePlaylister) GetAllCalls(stub func(context.Context) ([]playlists.Playlist, error)) {
-	fake.getAllMutex.Lock()
-	defer fake.getAllMutex.Unlock()
-	fake.GetAllStub = stub
+func (fake *FakePlaylister) ListCalls(stub func(context.Context, playlists.ListArgs) ([]playlists.Playlist, error)) {
+	fake.listMutex.Lock()
+	defer fake.listMutex.Unlock()
+	fake.ListStub = stub
 }
 
-func (fake *FakePlaylister) GetAllArgsForCall(i int) context.Context {
-	fake.getAllMutex.RLock()
-	defer fake.getAllMutex.RUnlock()
-	argsForCall := fake.getAllArgsForCall[i]
-	return argsForCall.arg1
+func (fake *FakePlaylister) ListArgsForCall(i int) (context.Context, playlists.ListArgs) {
+	fake.listMutex.RLock()
+	defer fake.listMutex.RUnlock()
+	argsForCall := fake.listArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
 }
 
-func (fake *FakePlaylister) GetAllReturns(result1 []playlists.Playlist, result2 error) {
-	fake.getAllMutex.Lock()
-	defer fake.getAllMutex.Unlock()
-	fake.GetAllStub = nil
-	fake.getAllReturns = struct {
+func (fake *FakePlaylister) ListReturns(result1 []playlists.Playlist, result2 error) {
+	fake.listMutex.Lock()
+	defer fake.listMutex.Unlock()
+	fake.ListStub = nil
+	fake.listReturns = struct {
 		result1 []playlists.Playlist
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakePlaylister) GetAllReturnsOnCall(i int, result1 []playlists.Playlist, result2 error) {
-	fake.getAllMutex.Lock()
-	defer fake.getAllMutex.Unlock()
-	fake.GetAllStub = nil
-	if fake.getAllReturnsOnCall == nil {
-		fake.getAllReturnsOnCall = make(map[int]struct {
+func (fake *FakePlaylister) ListReturnsOnCall(i int, result1 []playlists.Playlist, result2 error) {
+	fake.listMutex.Lock()
+	defer fake.listMutex.Unlock()
+	fake.ListStub = nil
+	if fake.listReturnsOnCall == nil {
+		fake.listReturnsOnCall = make(map[int]struct {
 			result1 []playlists.Playlist
 			result2 error
 		})
 	}
-	fake.getAllReturnsOnCall[i] = struct {
+	fake.listReturnsOnCall[i] = struct {
 		result1 []playlists.Playlist
 		result2 error
 	}{result1, result2}
@@ -408,14 +487,16 @@ func (fake *FakePlaylister) UpdateReturnsOnCall(i int, result1 error) {
 func (fake *FakePlaylister) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
+	fake.countMutex.RLock()
+	defer fake.countMutex.RUnlock()
 	fake.createMutex.RLock()
 	defer fake.createMutex.RUnlock()
 	fake.deleteMutex.RLock()
 	defer fake.deleteMutex.RUnlock()
 	fake.getMutex.RLock()
 	defer fake.getMutex.RUnlock()
-	fake.getAllMutex.RLock()
-	defer fake.getAllMutex.RUnlock()
+	fake.listMutex.RLock()
+	defer fake.listMutex.RUnlock()
 	fake.updateMutex.RLock()
 	defer fake.updateMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
