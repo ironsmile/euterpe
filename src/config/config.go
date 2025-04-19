@@ -91,7 +91,7 @@ func (ss *ScanSection) UnmarshalJSON(input []byte) error {
 		InitialWait       string `json:"initial_wait_duration"`
 	}{}
 	if err := json.Unmarshal(input, ssProxy); err != nil {
-		return err
+		return fmt.Errorf("wrong JSON value: %w", err)
 	}
 
 	ss.Disable = ssProxy.Disable
@@ -100,7 +100,7 @@ func (ss *ScanSection) UnmarshalJSON(input []byte) error {
 	if ssProxy.SleepPerOperation != "" {
 		spo, err := time.ParseDuration(ssProxy.SleepPerOperation)
 		if err != nil {
-			return err
+			return fmt.Errorf("wrong value for sleep_after_operation: %w", err)
 		}
 		ss.SleepPerOperation = spo
 	}
@@ -108,7 +108,7 @@ func (ss *ScanSection) UnmarshalJSON(input []byte) error {
 	if ssProxy.InitialWait != "" {
 		iwd, err := time.ParseDuration(ssProxy.InitialWait)
 		if err != nil {
-			return err
+			return fmt.Errorf("wrong value for initial_wait_duration: %w", err)
 		}
 		ss.InitialWait = iwd
 	}
@@ -148,14 +148,14 @@ func FindAndParse(appfs afero.Fs) (Config, error) {
 
 	fh, err := appfs.Open(userCfgPath)
 	if err != nil {
-		return Config{}, fmt.Errorf("opening config: %s", err)
+		return Config{}, fmt.Errorf("opening config: %w", err)
 	}
 	defer fh.Close()
 
 	dec := json.NewDecoder(fh)
 
 	if err := dec.Decode(&cfg); err != nil {
-		return Config{}, fmt.Errorf("decoding config: %s", err)
+		return Config{}, fmt.Errorf("decoding config: %w", err)
 	}
 
 	return cfg, nil
@@ -200,7 +200,7 @@ func copyDefaultOverUser(appfs afero.Fs) error {
 
 	randBuff := make([]byte, defaultSecretBytes)
 	if _, err := rand.Read(randBuff); err != nil {
-		return fmt.Errorf("creating random secret: %s", err)
+		return fmt.Errorf("creating random secret: %w", err)
 	}
 
 	userCfg := Config{
@@ -216,14 +216,14 @@ func copyDefaultOverUser(appfs afero.Fs) error {
 	userCfgPath := UserConfigPath(appfs)
 	fh, err := appfs.Create(userCfgPath)
 	if err != nil {
-		return fmt.Errorf("create config `%s`: %s", userCfgPath, err)
+		return fmt.Errorf("create config `%s`: %w", userCfgPath, err)
 	}
 	defer fh.Close()
 
 	enc := json.NewEncoder(fh)
 	enc.SetIndent("", "  ")
 	if err := enc.Encode(&userCfg); err != nil {
-		return fmt.Errorf("encoding default config `%s`: %s", userCfgPath, err)
+		return fmt.Errorf("encoding default config `%s`: %w", userCfgPath, err)
 	}
 
 	return nil
