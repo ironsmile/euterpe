@@ -1,6 +1,6 @@
 module github.com/ironsmile/euterpe
 
-go 1.21
+go 1.24
 
 require (
 	github.com/dhowden/tag v0.0.0-20240417053706-3d75831295e8
@@ -10,7 +10,7 @@ require (
 	github.com/ironsmile/sql-migrate v0.0.0-20180302150855-e167f4809da4
 	github.com/ironsmile/wrapfs v1.0.0
 	github.com/liyue201/goqr v0.0.0-20200803022322-df443203d4ea
-	github.com/mattn/go-sqlite3 v1.14.10
+	github.com/mattn/go-sqlite3 v1.14.28
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.4.1
 	github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c
 	github.com/skip2/go-qrcode v0.0.0-20171229120447-cf5f9fa2f0d8
