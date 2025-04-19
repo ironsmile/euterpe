@@ -58,7 +58,7 @@ func getTestLibraryPath() (string, error) {
 	return filepath.Join(projRoot, "test_files", "library"), nil
 }
 
-// It is the caller's resposibility to remove the library SQLite database file
+// It is the caller's responsibility to remove the library SQLite database file
 func getLibrary(ctx context.Context, t *testing.T) *LocalLibrary {
 	lib, err := NewLocalLibrary(ctx, SQLiteMemoryFile, getTestMigrationFiles())
 
@@ -84,7 +84,7 @@ func getLibrary(ctx context.Context, t *testing.T) *LocalLibrary {
 	return lib
 }
 
-// It is the caller's resposibility to remove the library SQLite database file
+// It is the caller's responsibility to remove the library SQLite database file
 func getPathedLibrary(ctx context.Context, t *testing.T) *LocalLibrary {
 	projRoot, err := helpers.ProjectRoot()
 
@@ -111,7 +111,7 @@ func getPathedLibrary(ctx context.Context, t *testing.T) *LocalLibrary {
 	return lib
 }
 
-// It is the caller's resposibility to remove the library SQLite database file
+// It is the caller's responsibility to remove the library SQLite database file
 func getScannedLibrary(ctx context.Context, t *testing.T) *LocalLibrary {
 	lib := getPathedLibrary(ctx, t)
 
