@@ -16,7 +16,9 @@ func TestRadioManager(t *testing.T) {
 	ctx := context.Background()
 
 	lib := getLibrary(ctx, t)
-	defer lib.Truncate()
+	defer func() {
+		_ = lib.Truncate()
+	}()
 	radios := radio.NewManager(lib.ExecuteDBJobAndWait)
 
 	allRadios, err := radios.GetAll(ctx)
