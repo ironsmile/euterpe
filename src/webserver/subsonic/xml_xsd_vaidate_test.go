@@ -306,7 +306,10 @@ func TestSubsonicXMLResponses(t *testing.T) {
 				Tracks:    libSongs,
 			}, nil
 		},
-		GetAllStub: func(ctx context.Context) ([]playlists.Playlist, error) {
+		ListStub: func(
+			_ context.Context,
+			_ playlists.ListArgs,
+		) ([]playlists.Playlist, error) {
 			return []playlists.Playlist{
 				{
 					ID:        5,
