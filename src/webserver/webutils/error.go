@@ -8,7 +8,7 @@ import (
 
 // JSONError writes a JSON object with an error message and sets the HTTP status code.
 func JSONError(w http.ResponseWriter, message string, statusCode int) {
-	w.WriteHeader(http.StatusBadRequest)
+	w.WriteHeader(statusCode)
 	resp := jsonErrorMessage{
 		Error: message,
 	}
