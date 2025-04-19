@@ -56,7 +56,8 @@ jobs:
 
     - name: Generate cover profile
       run: |
-        go test -race -covermode atomic -coverprofile=covprofile ./...
+        go test -race -covermode atomic -coverprofile=covprofile.tmp ./...
+        grep -v 'fakes/' covprofile.tmp > covprofile
 
     - name: Send coverage
       uses: shogo82148/actions-goveralls@v1
