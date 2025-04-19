@@ -63,7 +63,7 @@ func getLibrary(ctx context.Context, t *testing.T) *LocalLibrary {
 	lib, err := NewLocalLibrary(ctx, SQLiteMemoryFile, getTestMigrationFiles())
 
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	err = lib.Initialize()

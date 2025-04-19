@@ -14,7 +14,7 @@ func TestLocalLibraryCleanup(t *testing.T) {
 
 	lib, err := NewLocalLibrary(ctx, SQLiteMemoryFile, getTestMigrationFiles())
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 	defer func() { _ = lib.Truncate() }()
 
