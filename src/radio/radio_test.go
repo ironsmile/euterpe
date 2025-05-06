@@ -2,6 +2,7 @@ package radio_test
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"io/fs"
 	"net/url"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/ironsmile/euterpe/src/library"
 	"github.com/ironsmile/euterpe/src/radio"
+	"github.com/mattn/go-sqlite3"
 )
 
 // TestRadioManager uses the Stations interface to test operations with the manager.
@@ -186,6 +188,72 @@ func TestRadioManagerErrors(t *testing.T) {
 	} else if !strings.Contains(err.Error(), "scheme") {
 		t.Logf("Error returned for home page URL: %s\n", err)
 		t.Errorf("Expected the error to mention that URL scheme is not supported")
+	}
+}
+
+// TestRadioManagerFaultyDB checks how the radio manager is behaving when the database
+// is not working correctly.
+func TestRadioManagerFaultyDB(t *testing.T) {
+	emptyDB, err := sql.Open("sqlite3", library.SQLiteMemoryFile)
+	if err != nil {
+		t.Fatalf("creating DB failed: %s", err)
+	}
+	defer emptyDB.Close()
+
+	var dbWorker func(work library.DatabaseExecutable) error = func(
+		work library.DatabaseExecutable,
+	) error {
+		return work(emptyDB)
+	}
+
+	ctx := context.Background()
+	playURL, _ := url.Parse("http://test-radio.example.com/play.mp3")
+	homepageURL, _ := url.Parse("http://test-radio.example.com")
+
+	goodStation := radio.Station{
+		Name:      "Test Radio",
+		StreamURL: *playURL,
+		HomePage:  homepageURL,
+	}
+
+	const radiosDBTable = "radio_stations"
+	radios := radio.NewManager(dbWorker)
+
+	_, err = radios.Create(ctx, goodStation)
+	assertNoSuchTable(t, err, radiosDBTable)
+
+	_, err = radios.GetAll(ctx)
+	assertNoSuchTable(t, err, radiosDBTable)
+
+	err = radios.Replace(ctx, goodStation)
+	assertNoSuchTable(t, err, radiosDBTable)
+
+	err = radios.Delete(ctx, 10)
+	assertNoSuchTable(t, err, radiosDBTable)
+}
+
+func assertNoSuchTable(t *testing.T, err error, tableName string) {
+	if err == nil {
+		t.Errorf("expected error when creating stations with empty db")
+		return
+	}
+
+	var sqlErr sqlite3.Error
+	if !errors.As(err, &sqlErr) {
+		t.Errorf("expected SQL error but got `%s`", err)
+		return
+	}
+
+	if sqlErr.Code != sqlite3.ErrError {
+		t.Errorf("expected 'logic error' error but got '%s'", sqlErr.Code)
+	}
+
+	errStr := sqlErr.Error()
+	if !strings.Contains(errStr, tableName) {
+		t.Errorf("expected error `%s` to mention table `%s`", err, tableName)
+	}
+	if !strings.Contains(errStr, "no such table") {
+		t.Errorf("expected `no such table` error but got `%s`", err)
 	}
 }
 
