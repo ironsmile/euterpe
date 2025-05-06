@@ -250,7 +250,7 @@ func (c *Client) getDiscogsArtistImage(
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf(
-			"artist XML API (Discogs) returned HTTP %d",
+			"artist JSON API (Discogs) returned HTTP %d",
 			resp.StatusCode,
 		)
 	}
@@ -258,7 +258,7 @@ func (c *Client) getDiscogsArtistImage(
 	var dca dcArtist
 	dec := json.NewDecoder(resp.Body)
 	if err := dec.Decode(&dca); err != nil {
-		return nil, fmt.Errorf("unrecognised JSON returned by Discogs: %w", err)
+		return nil, fmt.Errorf("cannot decode JSON returned by Discogs: %w", err)
 	}
 
 	// First search for the primary image and use it if found.
@@ -339,15 +339,17 @@ mbArtistData represents the response from the MusicBrainz artist XML. Truncated
 example:
 
 <metadata>
-    <artist id="id" type="Group" type-id="typeid">
-        <name>Iron Maiden</name>
-        <relation-list target-type="url">
-            <relation type="discogs" type-id="04a5b104-a4c2-4bac-99a1-7b837c37d9e4">
-                <target id="target-id">https://www.discogs.com/artist/251595</target>
-                <direction>forward</direction>
-            </relation>
-        </relation-list>
-    </artist>
+
+	<artist id="id" type="Group" type-id="typeid">
+	    <name>Iron Maiden</name>
+	    <relation-list target-type="url">
+	        <relation type="discogs" type-id="04a5b104-a4c2-4bac-99a1-7b837c37d9e4">
+	            <target id="target-id">https://www.discogs.com/artist/251595</target>
+	            <direction>forward</direction>
+	        </relation>
+	    </relation-list>
+	</artist>
+
 </metadata>
 */
 type mbArtistData struct {
