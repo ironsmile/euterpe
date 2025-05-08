@@ -44,17 +44,17 @@ type FakeLibrary struct {
 		result1 library.Album
 		result2 error
 	}
-	GetAlbumFilesStub        func(context.Context, int64) []library.SearchResult
+	GetAlbumFilesStub        func(context.Context, int64) []library.TrackInfo
 	getAlbumFilesMutex       sync.RWMutex
 	getAlbumFilesArgsForCall []struct {
 		arg1 context.Context
 		arg2 int64
 	}
 	getAlbumFilesReturns struct {
-		result1 []library.SearchResult
+		result1 []library.TrackInfo
 	}
 	getAlbumFilesReturnsOnCall map[int]struct {
-		result1 []library.SearchResult
+		result1 []library.TrackInfo
 	}
 	GetArtistStub        func(context.Context, int64) (library.Artist, error)
 	getArtistMutex       sync.RWMutex
@@ -94,18 +94,18 @@ type FakeLibrary struct {
 	getFilePathReturnsOnCall map[int]struct {
 		result1 string
 	}
-	GetTrackStub        func(context.Context, int64) (library.SearchResult, error)
+	GetTrackStub        func(context.Context, int64) (library.TrackInfo, error)
 	getTrackMutex       sync.RWMutex
 	getTrackArgsForCall []struct {
 		arg1 context.Context
 		arg2 int64
 	}
 	getTrackReturns struct {
-		result1 library.SearchResult
+		result1 library.TrackInfo
 		result2 error
 	}
 	getTrackReturnsOnCall map[int]struct {
-		result1 library.SearchResult
+		result1 library.TrackInfo
 		result2 error
 	}
 	InitializeStub        func() error
@@ -430,7 +430,7 @@ func (fake *FakeLibrary) GetAlbumReturnsOnCall(i int, result1 library.Album, res
 	}{result1, result2}
 }
 
-func (fake *FakeLibrary) GetAlbumFiles(arg1 context.Context, arg2 int64) []library.SearchResult {
+func (fake *FakeLibrary) GetAlbumFiles(arg1 context.Context, arg2 int64) []library.TrackInfo {
 	fake.getAlbumFilesMutex.Lock()
 	ret, specificReturn := fake.getAlbumFilesReturnsOnCall[len(fake.getAlbumFilesArgsForCall)]
 	fake.getAlbumFilesArgsForCall = append(fake.getAlbumFilesArgsForCall, struct {
@@ -456,7 +456,7 @@ func (fake *FakeLibrary) GetAlbumFilesCallCount() int {
 	return len(fake.getAlbumFilesArgsForCall)
 }
 
-func (fake *FakeLibrary) GetAlbumFilesCalls(stub func(context.Context, int64) []library.SearchResult) {
+func (fake *FakeLibrary) GetAlbumFilesCalls(stub func(context.Context, int64) []library.TrackInfo) {
 	fake.getAlbumFilesMutex.Lock()
 	defer fake.getAlbumFilesMutex.Unlock()
 	fake.GetAlbumFilesStub = stub
@@ -469,26 +469,26 @@ func (fake *FakeLibrary) GetAlbumFilesArgsForCall(i int) (context.Context, int64
 	return argsForCall.arg1, argsForCall.arg2
 }
 
-func (fake *FakeLibrary) GetAlbumFilesReturns(result1 []library.SearchResult) {
+func (fake *FakeLibrary) GetAlbumFilesReturns(result1 []library.TrackInfo) {
 	fake.getAlbumFilesMutex.Lock()
 	defer fake.getAlbumFilesMutex.Unlock()
 	fake.GetAlbumFilesStub = nil
 	fake.getAlbumFilesReturns = struct {
-		result1 []library.SearchResult
+		result1 []library.TrackInfo
 	}{result1}
 }
 
-func (fake *FakeLibrary) GetAlbumFilesReturnsOnCall(i int, result1 []library.SearchResult) {
+func (fake *FakeLibrary) GetAlbumFilesReturnsOnCall(i int, result1 []library.TrackInfo) {
 	fake.getAlbumFilesMutex.Lock()
 	defer fake.getAlbumFilesMutex.Unlock()
 	fake.GetAlbumFilesStub = nil
 	if fake.getAlbumFilesReturnsOnCall == nil {
 		fake.getAlbumFilesReturnsOnCall = make(map[int]struct {
-			result1 []library.SearchResult
+			result1 []library.TrackInfo
 		})
 	}
 	fake.getAlbumFilesReturnsOnCall[i] = struct {
-		result1 []library.SearchResult
+		result1 []library.TrackInfo
 	}{result1}
 }
 
@@ -681,7 +681,7 @@ func (fake *FakeLibrary) GetFilePathReturnsOnCall(i int, result1 string) {
 	}{result1}
 }
 
-func (fake *FakeLibrary) GetTrack(arg1 context.Context, arg2 int64) (library.SearchResult, error) {
+func (fake *FakeLibrary) GetTrack(arg1 context.Context, arg2 int64) (library.TrackInfo, error) {
 	fake.getTrackMutex.Lock()
 	ret, specificReturn := fake.getTrackReturnsOnCall[len(fake.getTrackArgsForCall)]
 	fake.getTrackArgsForCall = append(fake.getTrackArgsForCall, struct {
@@ -707,7 +707,7 @@ func (fake *FakeLibrary) GetTrackCallCount() int {
 	return len(fake.getTrackArgsForCall)
 }
 
-func (fake *FakeLibrary) GetTrackCalls(stub func(context.Context, int64) (library.SearchResult, error)) {
+func (fake *FakeLibrary) GetTrackCalls(stub func(context.Context, int64) (library.TrackInfo, error)) {
 	fake.getTrackMutex.Lock()
 	defer fake.getTrackMutex.Unlock()
 	fake.GetTrackStub = stub
@@ -720,28 +720,28 @@ func (fake *FakeLibrary) GetTrackArgsForCall(i int) (context.Context, int64) {
 	return argsForCall.arg1, argsForCall.arg2
 }
 
-func (fake *FakeLibrary) GetTrackReturns(result1 library.SearchResult, result2 error) {
+func (fake *FakeLibrary) GetTrackReturns(result1 library.TrackInfo, result2 error) {
 	fake.getTrackMutex.Lock()
 	defer fake.getTrackMutex.Unlock()
 	fake.GetTrackStub = nil
 	fake.getTrackReturns = struct {
-		result1 library.SearchResult
+		result1 library.TrackInfo
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeLibrary) GetTrackReturnsOnCall(i int, result1 library.SearchResult, result2 error) {
+func (fake *FakeLibrary) GetTrackReturnsOnCall(i int, result1 library.TrackInfo, result2 error) {
 	fake.getTrackMutex.Lock()
 	defer fake.getTrackMutex.Unlock()
 	fake.GetTrackStub = nil
 	if fake.getTrackReturnsOnCall == nil {
 		fake.getTrackReturnsOnCall = make(map[int]struct {
-			result1 library.SearchResult
+			result1 library.TrackInfo
 			result2 error
 		})
 	}
 	fake.getTrackReturnsOnCall[i] = struct {
-		result1 library.SearchResult
+		result1 library.TrackInfo
 		result2 error
 	}{result1, result2}
 }
