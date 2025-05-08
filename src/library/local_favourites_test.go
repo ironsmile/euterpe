@@ -13,7 +13,7 @@ import (
 // favourites works.
 func TestFavouritesTracks(t *testing.T) {
 	ctx := context.Background()
-	lib := setUpLibForFavoutites(t)
+	lib := setUpLibForFavRatingsTesting(t)
 	defer func() { _ = lib.Truncate() }()
 
 	classicalSearch := SearchArgs{Query: "Classical Bugs", Count: 10}
@@ -93,7 +93,7 @@ func TestFavouritesTracks(t *testing.T) {
 // TestFavouritesAlbums checks that adding albums to favourites work.
 func TestFavouritesAlbums(t *testing.T) {
 	ctx := context.Background()
-	lib := setUpLibForFavoutites(t)
+	lib := setUpLibForFavRatingsTesting(t)
 	defer func() { _ = lib.Truncate() }()
 
 	classicalSearch := SearchArgs{Query: "Classical Bugs", Count: 10}
@@ -170,7 +170,7 @@ func TestFavouritesAlbums(t *testing.T) {
 // TestFavouritesArtists checks that adding artists to the favourites works.
 func TestFavouritesArtists(t *testing.T) {
 	ctx := context.Background()
-	lib := setUpLibForFavoutites(t)
+	lib := setUpLibForFavRatingsTesting(t)
 	defer func() { _ = lib.Truncate() }()
 
 	stackSearchArgs := SearchArgs{Query: "Stack Overflow", Count: 10}
@@ -241,7 +241,9 @@ func TestFavouritesArtists(t *testing.T) {
 	}
 }
 
-func setUpLibForFavoutites(t *testing.T) *LocalLibrary {
+// setUpLibForFavRatingsTesting returns a library which already has some media files
+// included. It is suitable for testing of the favourites and ratings.
+func setUpLibForFavRatingsTesting(t *testing.T) *LocalLibrary {
 	ctx := context.Background()
 	lib, err := NewLocalLibrary(ctx, SQLiteMemoryFile, getTestMigrationFiles())
 	if err != nil {
