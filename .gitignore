@@ -42,3 +42,5 @@ dist/*
 # OSX bullshits
 **/.DS_Store
 
+# Artifacts from test coverage
+/covprofile
