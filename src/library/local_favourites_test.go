@@ -320,7 +320,7 @@ func setUpLibForFavoutites(t *testing.T) *LocalLibrary {
 		err := lib.insertMediaIntoDatabase(&trackData.track, fileInfo)
 
 		if err != nil {
-			lib.Truncate()
+			_ = lib.Truncate()
 			t.Fatalf("Adding a media file %s failed: %s", trackData.track.Title(), err)
 		}
 	}
