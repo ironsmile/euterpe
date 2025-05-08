@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -22,21 +23,11 @@ import (
 var testTimeout = 40 * time.Second
 
 func contains(heystack []string, needle string) bool {
-	for _, val := range heystack {
-		if needle == val {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(heystack, needle)
 }
 
 func containsInt64(heystack []int64, needle int64) bool {
-	for _, val := range heystack {
-		if needle == val {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(heystack, needle)
 }
 
 func init() {
