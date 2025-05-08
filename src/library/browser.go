@@ -97,16 +97,17 @@ type BrowseArgs struct {
 // Browser defines the methods for browsing a library.
 type Browser interface {
 	// BrowseArtists makes it possible to browse through the library artists page by page.
-	// Returns a list of artists for particular page and the number of all artists in the
-	// library.
+	// Returns a list of artists for particular page and the number of all artists who
+	// match the browsing criteria.
 	BrowseArtists(BrowseArgs) ([]Artist, int)
 
 	// BrowseAlbums makes it possible to browse through the library albums page by page.
-	// Returns a list of albums for particular page and the number of all albums in the
-	// library.
+	// Returns a list of albums for particular page and the number of all albums which
+	// match the browsing criteria.
 	BrowseAlbums(BrowseArgs) ([]Album, int)
 
 	// BrowseTracks makes possible browsing through the library songs. Returns a list
-	// of songs, optionally sorted.
+	// of songs (optionally sorted) and the number of songs which match the browsing
+	// criteria.
 	BrowseTracks(BrowseArgs) ([]TrackInfo, int)
 }

@@ -253,7 +253,7 @@ func (lib *LocalLibrary) SearchAlbums(ctx context.Context, args SearchArgs) []Al
 				SUM(us.play_count) as play_count,
 				asr.favourite,
 				asr.user_rating,
-				MAX(t.year) as album_year
+				MIN(t.year) as album_year
 			FROM
 				tracks as t
 					LEFT JOIN albums as al ON al.id = t.album_id
@@ -707,7 +707,7 @@ func (lib *LocalLibrary) GetArtistAlbums(
 				SUM(us.play_count) as play_count,
 				als.favourite,
 				als.user_rating,
-				MAX(t.year) as album_year
+				MIN(t.year) as album_year
 			FROM
 				tracks t
 					LEFT JOIN albums a ON a.id = t.album_id

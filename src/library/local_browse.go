@@ -51,20 +51,34 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 		where = append(where, "ars.favourite IS NOT NULL AND ars.favourite != 0")
 	}
 
-	artistsCount := lib.getTableSize("artists")
-	var output []Artist
-
 	if len(where) > 0 {
 		whereStr = "WHERE " + strings.Join(where, " AND ")
 	}
 
-	queryArgs = append(
-		queryArgs,
-		sql.Named("offset", offset),
-		sql.Named("perPage", perPage),
+	var (
+		output       []Artist
+		artistsCount int
 	)
 
 	work := func(db *sql.DB) error {
+		countRow := db.QueryRow(fmt.Sprintf(`
+			SELECT
+				COUNT(DISTINCT ar.id) as cnt
+			FROM
+				artists ar
+				LEFT JOIN artists_stats as ars ON ars.artist_id = ar.id
+			%s;
+		`, whereStr), queryArgs...)
+		if err := countRow.Scan(&artistsCount); err != nil {
+			log.Printf("Query for getting artists count not successful: %s\n", err)
+		}
+
+		queryArgs = append(
+			queryArgs,
+			sql.Named("offset", offset),
+			sql.Named("perPage", perPage),
+		)
+
 		rows, err := db.Query(fmt.Sprintf(`
 			SELECT
 				ar.id,
@@ -189,12 +203,6 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 		whereStr = "WHERE " + strings.Join(where, " AND ")
 	}
 
-	queryArgs = append(
-		queryArgs,
-		sql.Named("offset", offset),
-		sql.Named("perPage", perPage),
-	)
-
 	work := func(db *sql.DB) error {
 		smt, err := db.Prepare(`
 			SELECT
@@ -205,16 +213,22 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 					albums_stats als ON als.album_id = tr.album_id
 			` + whereStr + `
 		`)
-
 		if err != nil {
 			log.Printf("Query for getting albums count not prepared: %s\n", err)
 		} else {
-			err = smt.QueryRow().Scan(&albumsCount)
+			defer smt.Close()
 
+			err = smt.QueryRow(queryArgs...).Scan(&albumsCount)
 			if err != nil {
 				log.Printf("Query for getting albums count not successful: %s\n", err)
 			}
 		}
+
+		queryArgs = append(
+			queryArgs,
+			sql.Named("offset", offset),
+			sql.Named("perPage", perPage),
+		)
 
 		rows, err := db.Query(fmt.Sprintf(`
 			SELECT
