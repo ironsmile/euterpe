@@ -251,7 +251,8 @@ func (lib *LocalLibrary) SearchAlbums(ctx context.Context, args SearchArgs) []Al
 				MAX(us.last_played) as last_played,
 				SUM(us.play_count) as play_count,
 				asr.favourite,
-				asr.user_rating
+				asr.user_rating,
+				MAX(t.year) as album_year
 			FROM
 				tracks as t
 					LEFT JOIN albums as al ON al.id = t.album_id
@@ -282,12 +283,13 @@ func (lib *LocalLibrary) SearchAlbums(ctx context.Context, args SearchArgs) []Al
 				playCount  sql.NullInt64
 				fav        sql.NullInt64
 				rating     sql.NullInt16
+				year       sql.NullInt32
 			)
 
 			err := rows.Scan(
 				&res.ID, &res.Name, &res.Artist,
 				&res.SongCount, &res.Duration, &lastPlayed,
-				&playCount, &fav, &rating,
+				&playCount, &fav, &rating, &year,
 			)
 			if err != nil {
 				log.Printf("Error scanning search album result: %s\n", err)
@@ -304,6 +306,9 @@ func (lib *LocalLibrary) SearchAlbums(ctx context.Context, args SearchArgs) []Al
 			}
 			if rating.Valid {
 				res.Rating = uint8(rating.Int16)
+			}
+			if year.Valid {
+				res.Year = year.Int32
 			}
 
 			output = append(output, res)
@@ -700,7 +705,8 @@ func (lib *LocalLibrary) GetArtistAlbums(
 				MAX(us.last_played) as last_played,
 				SUM(us.play_count) as play_count,
 				als.favourite,
-				als.user_rating
+				als.user_rating,
+				MAX(t.year) as album_year
 			FROM
 				tracks t
 					LEFT JOIN albums a ON a.id = t.album_id
@@ -727,6 +733,7 @@ func (lib *LocalLibrary) GetArtistAlbums(
 				playCount  sql.NullInt64
 				fav        sql.NullInt64
 				rating     sql.NullInt16
+				year       sql.NullInt32
 			)
 
 			err := rows.Scan(
@@ -738,6 +745,7 @@ func (lib *LocalLibrary) GetArtistAlbums(
 				&playCount,
 				&fav,
 				&rating,
+				&year,
 			)
 			if err != nil {
 				return fmt.Errorf("scanning for GetArtistAlbums error: %w", err)
@@ -753,6 +761,9 @@ func (lib *LocalLibrary) GetArtistAlbums(
 			}
 			if rating.Valid {
 				res.Rating = uint8(rating.Int16)
+			}
+			if year.Valid {
+				res.Year = year.Int32
 			}
 
 			albums = append(albums, res)
