@@ -302,3 +302,67 @@ func TestAddingNonRelatedFile(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 	testLibFiles()
 }
+
+// TestDisablingWatcher makes sure that when the watcher is disabled the server will
+// not react to changes in the library.
+func TestDisablingWatcher(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	lib := getLibraryDisabledWatching(ctx, t)
+	defer func() { _ = lib.Truncate() }()
+	projRoot, _ := helpers.ProjectRoot()
+	testFiles := filepath.Join(projRoot, "test_files")
+
+	testMp3 := filepath.Join(testFiles, "more_mp3s", "test_file_added.mp3")
+	toBeMoved := filepath.Join(testFiles, "more_mp3s", "test_file_moved.mp3")
+	newFile := filepath.Join(testFiles, "library", "test_file_added.mp3")
+
+	if err := copyFile(testMp3, toBeMoved); err != nil {
+		t.Fatalf("Copying file to library faild: %s", err)
+	}
+
+	if err := os.Rename(toBeMoved, newFile); err != nil {
+		os.Remove(toBeMoved)
+		t.Fatalf("Was not able to move new file into library: %s", err)
+	}
+
+	defer os.Remove(newFile)
+
+	time.Sleep(100 * time.Millisecond)
+
+	found := lib.Search(ctx, SearchArgs{Query: "Added Song"})
+	if len(found) != 0 {
+		t.Errorf("Did not expect to find any songs bout found `%s`", found[0].Title)
+	}
+}
+
+func getLibraryDisabledWatching(ctx context.Context, t *testing.T) *LocalLibrary {
+	projRoot, err := helpers.ProjectRoot()
+
+	if err != nil {
+		t.Fatalf("Was not able to find test_files directory: %s", err)
+	}
+
+	testLibraryPath := filepath.Join(projRoot, "test_files", "library")
+
+	lib, err := NewLocalLibrary(ctx, SQLiteMemoryFile, getTestMigrationFiles())
+	if err != nil {
+		t.Fatal(err)
+	}
+	lib.DisableWatching()
+
+	err = lib.Initialize()
+
+	if err != nil {
+		t.Fatalf("Initializing library: %s", err)
+	}
+
+	lib.AddLibraryPath(testLibraryPath)
+
+	waitForLibraryScan(t, lib)
+	return lib
+}

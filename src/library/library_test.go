@@ -105,7 +105,11 @@ func getPathedLibrary(ctx context.Context, t *testing.T) *LocalLibrary {
 // It is the caller's responsibility to remove the library SQLite database file
 func getScannedLibrary(ctx context.Context, t *testing.T) *LocalLibrary {
 	lib := getPathedLibrary(ctx, t)
+	waitForLibraryScan(t, lib)
+	return lib
+}
 
+func waitForLibraryScan(t *testing.T, lib *LocalLibrary) {
 	ch := make(chan int)
 	go func() {
 		lib.Scan()
@@ -113,8 +117,6 @@ func getScannedLibrary(ctx context.Context, t *testing.T) *LocalLibrary {
 	}()
 
 	testErrorAfter(t, 10*time.Second, ch, "Scanning library took too long")
-
-	return lib
 }
 
 func testErrorAfter(t *testing.T, dur time.Duration, done chan int, message string) {
