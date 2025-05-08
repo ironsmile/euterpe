@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/howeyc/fsnotify"
+	taglib "github.com/wtolson/go-taglib"
 
 	// Blind import is the way a SQL driver is imported. This is the proposed way
 	// from the golang documentation.
@@ -877,7 +878,7 @@ func (lib *LocalLibrary) AddMedia(filename string) error {
 		return err
 	}
 
-	file, err := parseFileTags(filename)
+	file, err := parseFileTags(taglib.Read, filename)
 	if err != nil {
 		return fmt.Errorf("parsing tags error for %s: %s", filename, err.Error())
 	}

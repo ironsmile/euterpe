@@ -35,9 +35,12 @@ type MediaFile interface {
 	Bitrate() int
 }
 
+// TaglibRead is a function which uses taglib to read a file.
+type TaglibRead func(filename string) (*taglib.File, error)
+
 // parseFileTags reads a file and returns its metadata tags as a MediaFile object.
-func parseFileTags(fileName string) (MediaFile, error) {
-	file, tglErr := taglib.Read(fileName)
+func parseFileTags(readFunc TaglibRead, fileName string) (MediaFile, error) {
+	file, tglErr := readFunc(fileName)
 	if tglErr == nil {
 		defer file.Close()
 		return medaFileFromTaglib(file), nil
