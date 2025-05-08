@@ -25,9 +25,8 @@ func (lib *LocalLibrary) initializeWatcher() {
 
 	newWatcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Printf("Directory watcher was not initialized properly. ")
-		log.Printf("New files will not be added to the library. Reason: ")
-		log.Println(err)
+		log.Printf("Directory watcher was not initialized properly. "+
+			"New files will not be added to the library. Reason: %s\n", err)
 		return
 	}
 	lib.watch = newWatcher
@@ -73,12 +72,12 @@ func (lib *LocalLibrary) watchEventRoutine() {
 }
 
 // Deals with the watcher events.
-//  * new directories should be watched and they themselves scanned
-//  * new files should be added to the library
-//  * deleted files should be removed from the library
-//  * deleted directories should be unwatched
-//  * modfied files should be updated in the database
-//  * renamed ...
+//   - new directories should be watched and they themselves scanned
+//   - new files should be added to the library
+//   - deleted files should be removed from the library
+//   - deleted directories should be unwatched
+//   - modfied files should be updated in the database
+//   - renamed ...
 func (lib *LocalLibrary) handleWatchEvent(event *fsnotify.FileEvent) {
 
 	if event.IsAttrib() {
