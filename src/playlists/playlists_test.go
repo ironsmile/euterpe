@@ -50,6 +50,7 @@ func TestPlaylistsManager(t *testing.T) {
 	}
 
 	playlist, err := manager.Get(ctx, id)
+	assert.NilErr(t, err, "getting a single playlist")
 	assertPlaylist(t, expected, playlist)
 
 	expected.Name = "new name for empty"
@@ -70,6 +71,7 @@ func TestPlaylistsManager(t *testing.T) {
 
 	// Get it again from the database and assert it has the new values.
 	playlist, err = manager.Get(ctx, playlist.ID)
+	assert.NilErr(t, err, "getting a single playlist")
 	assertPlaylist(t, expected, playlist)
 
 	count, err = manager.Count(ctx)
