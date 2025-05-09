@@ -72,6 +72,17 @@ func TestPlaylistsManager(t *testing.T) {
 	playlist, err = manager.Get(ctx, playlist.ID)
 	assertPlaylist(t, expected, playlist)
 
+	count, err = manager.Count(ctx)
+	assert.NilErr(t, err, "getting playlists count")
+	assert.Equal(t, 1, count, "number of playlists in the database")
+
+	allPlaylists, err = manager.List(ctx, playlists.ListArgs{
+		Count: 100,
+	})
+	assert.NilErr(t, err, "getting a list of playlists")
+	assert.Equal(t, 1, len(allPlaylists), "wrong number of returned playlists")
+	assertPlaylist(t, expected, allPlaylists[0])
+
 	err = manager.Delete(ctx, playlist.ID)
 	assert.NilErr(t, err, "while deleting a playlist")
 
@@ -117,6 +128,7 @@ func assertPlaylist(t *testing.T, expected, actual playlists.Playlist) {
 	assert.Equal(t, expected.CreatedAt, actual.CreatedAt, "wrong created at")
 	assert.Equal(t, expected.UpdatedAt, actual.UpdatedAt, "wrong updated at")
 	assert.Equal(t, expected.Public, actual.Public, "wrong public flag")
+	assert.Equal(t, expected.Duration, actual.Duration, "wrong playlist duration")
 }
 
 // getTestMigrationFiles returns the SQLs directory used by the application itself
