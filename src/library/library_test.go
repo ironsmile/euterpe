@@ -357,6 +357,8 @@ func TestSearch(t *testing.T) {
 // assertTrack checks that expected is the same as actual but skips
 // checking for the actual track ID as it may not be known beforehand.
 func assertTrack(t *testing.T, expected, actual TrackInfo) {
+	t.Helper()
+
 	if actual.Artist != expected.Artist {
 		t.Errorf("Expected Artist `%s` but found `%s`",
 			expected.Artist, actual.Artist)
@@ -394,6 +396,8 @@ func assertTrack(t *testing.T, expected, actual TrackInfo) {
 
 // assertAlbum asserts that `actual` is the same as `expected`.
 func assertAlbum(t *testing.T, expected, actual Album) {
+	t.Helper()
+
 	assert.Equal(t, expected.Name, actual.Name, "album name")
 	assert.Equal(t, expected.ID, actual.ID, "album ID")
 	assert.Equal(t, expected.Artist, actual.Artist, "album artist")
@@ -408,6 +412,8 @@ func assertAlbum(t *testing.T, expected, actual Album) {
 
 // assertArtist asserts that `actual` is the same as `expected`.
 func assertArtist(t *testing.T, expected, actual Artist) {
+	t.Helper()
+
 	assert.Equal(t, expected.Name, actual.Name, "artist name")
 	assert.Equal(t, expected.ID, actual.ID, "artist ID")
 	assert.Equal(t, expected.AlbumCount, actual.AlbumCount, "albums count")

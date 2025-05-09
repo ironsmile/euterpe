@@ -10,6 +10,7 @@ import "fmt"
 // testing.T, testing.TB and similar.
 type TestingErrf interface {
 	Errorf(format string, args ...any)
+	Helper()
 }
 
 func fromMsgAndArgs(msgAndArgs ...any) string {
@@ -22,5 +23,5 @@ func fromMsgAndArgs(msgAndArgs ...any) string {
 		panic("The first argument in msgAndArgs must be a string format value.")
 	}
 
-	return fmt.Sprintf("\n("+fmtStr+")", msgAndArgs[1:]...)
+	return fmt.Sprintf(" ("+fmtStr+")", msgAndArgs[1:]...)
 }

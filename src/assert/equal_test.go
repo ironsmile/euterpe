@@ -17,6 +17,9 @@ func TestEqual(t *testing.T) {
 	if fakeT.ErrorfCallCount() != 0 {
 		t.Errorf("expected Errorf not to be called for int64 and const expression")
 	}
+	if fakeT.HelperCallCount() != 1 {
+		t.Errorf("expected Helper() to be called on the testing type")
+	}
 
 	assert.Equal(fakeT, 10, actual)
 	if fakeT.ErrorfCallCount() != 1 {

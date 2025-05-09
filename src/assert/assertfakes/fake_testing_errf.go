@@ -14,6 +14,10 @@ type FakeTestingErrf struct {
 		arg1 string
 		arg2 []any
 	}
+	HelperStub        func()
+	helperMutex       sync.RWMutex
+	helperArgsForCall []struct {
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
@@ -51,11 +55,37 @@ func (fake *FakeTestingErrf) ErrorfArgsForCall(i int) (string, []any) {
 	return argsForCall.arg1, argsForCall.arg2
 }
 
+func (fake *FakeTestingErrf) Helper() {
+	fake.helperMutex.Lock()
+	fake.helperArgsForCall = append(fake.helperArgsForCall, struct {
+	}{})
+	stub := fake.HelperStub
+	fake.recordInvocation("Helper", []interface{}{})
+	fake.helperMutex.Unlock()
+	if stub != nil {
+		fake.HelperStub()
+	}
+}
+
+func (fake *FakeTestingErrf) HelperCallCount() int {
+	fake.helperMutex.RLock()
+	defer fake.helperMutex.RUnlock()
+	return len(fake.helperArgsForCall)
+}
+
+func (fake *FakeTestingErrf) HelperCalls(stub func()) {
+	fake.helperMutex.Lock()
+	defer fake.helperMutex.Unlock()
+	fake.HelperStub = stub
+}
+
 func (fake *FakeTestingErrf) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
 	fake.errorfMutex.RLock()
 	defer fake.errorfMutex.RUnlock()
+	fake.helperMutex.RLock()
+	defer fake.helperMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value
