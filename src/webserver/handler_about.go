@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/ironsmile/euterpe/src/version"
+	"github.com/ironsmile/euterpe/src/webserver/webutils"
 )
 
 type aboutHandler struct {
@@ -22,13 +23,12 @@ func NewAboutHandler() http.Handler {
 	}
 }
 
-func (h *aboutHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
-	writer.Header().Add("Content-Type", "application/json; charset=utf-8")
-	enc := json.NewEncoder(writer)
+func (h *aboutHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	w.Header().Add("Content-Type", "application/json; charset=utf-8")
+	enc := json.NewEncoder(w)
 	if err := enc.Encode(h.resp); err != nil {
-		writer.Header().Set("Content-Type", "plain/text; charset=utf-8")
 		msg := fmt.Sprintf("Failed to encode JSON response: %s", err)
-		http.Error(writer, msg, http.StatusInternalServerError)
+		webutils.JSONError(w, msg, http.StatusInternalServerError)
 		return
 	}
 }
