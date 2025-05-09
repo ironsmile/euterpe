@@ -13,6 +13,15 @@ type TestingErrf interface {
 	Helper()
 }
 
+//counterfeiter:generate . TestingFatalf
+
+// TestingFatalf is an which supports reporting fatal errors in testing types such as
+// testing.T, testing.TB and similar.
+type TestingFatalf interface {
+	Fatalf(format string, args ...any)
+	Helper()
+}
+
 func fromMsgAndArgs(msgAndArgs ...any) string {
 	if len(msgAndArgs) == 0 {
 		return ""
