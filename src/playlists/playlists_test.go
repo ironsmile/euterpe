@@ -5,17 +5,19 @@ import (
 	"errors"
 	"io/fs"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/ironsmile/euterpe/src/assert"
+	"github.com/ironsmile/euterpe/src/helpers"
 	"github.com/ironsmile/euterpe/src/library"
 	"github.com/ironsmile/euterpe/src/playlists"
 )
 
-// TestPlaylistsManager checks that the playlists manager performs all of the
-// basic operations it is designed to do.
-func TestPlaylistsManager(t *testing.T) {
+// TestPlaylistsManagerCRUD checks that the playlists manager performs all of the
+// basic operations related to creating, updating and removing playlists.
+func TestPlaylistsManagerCRUD(t *testing.T) {
 	ctx := t.Context()
 
 	lib := getLibrary(ctx, t)
@@ -85,6 +87,12 @@ func TestPlaylistsManager(t *testing.T) {
 	assert.Equal(t, 1, len(allPlaylists), "wrong number of returned playlists")
 	assertPlaylist(t, expected, allPlaylists[0])
 
+	for _, playlist := range allPlaylists {
+		assert.Equal(t, 0, len(playlist.Tracks),
+			"tracks should have been omitted from lists with playlists",
+		)
+	}
+
 	err = manager.Delete(ctx, playlist.ID)
 	assert.NilErr(t, err, "while deleting a playlist")
 
@@ -119,6 +127,170 @@ func TestPlaylistsManagerNotFoundErrors(t *testing.T) {
 	}
 }
 
+// TestPlaylistsManagerSongOperations checks that adding, moving and removing
+// songs from a playlist work.
+func TestPlaylistsManagerSongOperations(t *testing.T) {
+	ctx := t.Context()
+
+	lib := getLibrary(ctx, t)
+	defer func() {
+		_ = lib.Truncate()
+	}()
+
+	projRoot, err := helpers.ProjectRoot()
+	assert.NilErr(t, err, "getting the repository root directory")
+
+	lib.AddLibraryPath(filepath.Join(projRoot, "test_files", "library"))
+
+	ch := make(chan struct{})
+	go func() {
+		lib.Scan()
+		close(ch)
+	}()
+
+	select {
+	case <-ch:
+	case <-time.After(5 * time.Second):
+		t.Fatal("timed out after waiting for library scan to complete")
+	}
+
+	manager := playlists.NewManager(lib.ExecuteDBJobAndWait)
+	allTracks := lib.Search(ctx, library.SearchArgs{Query: "", Count: 100})
+	trackIDs := make([]int64, 0, len(allTracks))
+	for _, track := range allTracks {
+		trackIDs = append(trackIDs, track.ID)
+	}
+
+	if len(trackIDs) < 3 {
+		t.Fatalf("not enough tracks found in the library for working with playlists")
+	}
+
+	playlistID, err := manager.Create(ctx, "Testing Playlist", trackIDs)
+	assert.NilErr(t, err, "failed while creating a playlist with all tracks")
+
+	playlist, err := manager.Get(ctx, playlistID)
+	assert.NilErr(t, err, "failed while getting newly inserted playlist")
+	assertTracks(t, trackIDs, playlist)
+
+	// Removing all tracks and make sure they are gone.
+	err = manager.Update(ctx, playlist.ID, playlists.UpdateArgs{
+		RemoveAllTracks: true,
+	})
+	assert.NilErr(t, err, "removing all tracks from a playlist")
+
+	playlist, err = manager.Get(ctx, playlistID)
+	assert.NilErr(t, err, "getting playlist after tracks removal")
+	assert.Equal(t, 0, len(playlist.Tracks), "wrong number of tracks after removal")
+	assert.Equal(t, 0, playlist.TracksCount, "inconsistent .TracksCount")
+
+	// Add the tracks again.
+	err = manager.Update(ctx, playlist.ID, playlists.UpdateArgs{
+		AddTracks: trackIDs,
+	})
+	assert.NilErr(t, err, "adding tracks with .Update()")
+
+	playlist, err = manager.Get(ctx, playlistID)
+	assert.NilErr(t, err, "failed while getting newly updated playlist")
+	assertTracks(t, trackIDs, playlist)
+
+	// Remove tracks from the playlist.
+
+	// currentTracks is a list of trackIDs which will represent the internal
+	// state of the playlist in the database from now on.
+	currentTracks := append([]int64{}, trackIDs[:1]...)
+	currentTracks = append(currentTracks, trackIDs[2:]...)
+
+	err = manager.Update(ctx, playlistID, playlists.UpdateArgs{
+		RemoveTracks: []int64{1},
+	})
+	assert.NilErr(t, err, "removing a single track from the library")
+	playlist, err = manager.Get(ctx, playlistID)
+	assert.NilErr(t, err, "failed while getting playlist after removing tracks")
+	assertTracks(t, currentTracks, playlist)
+
+	// Move tracks around.
+	currentTracks[0], currentTracks[1] = currentTracks[1], currentTracks[0]
+	err = manager.Update(ctx, playlistID, playlists.UpdateArgs{
+		MoveTracks: []playlists.MoveArgs{
+			{
+				FromIndex: 0,
+				ToIndex:   1,
+			},
+		},
+	})
+	assert.NilErr(t, err, "while moving tracks around")
+	playlist, err = manager.Get(ctx, playlistID)
+	assert.NilErr(t, err, "failed while getting playlist after moving tracks")
+	assertTracks(t, currentTracks, playlist)
+
+	// Make sure empty update operation is a no-opt.
+	err = manager.Update(ctx, playlistID, playlists.UpdateArgs{})
+	assert.NilErr(t, err, "while doing a no-opt")
+	playlist, err = manager.Get(ctx, playlistID)
+	assert.NilErr(t, err, "failed while getting playlist after no-opt update")
+	assertTracks(t, currentTracks, playlist)
+
+	// Make sure moving to the same index is a no-opt.
+	err = manager.Update(ctx, playlistID, playlists.UpdateArgs{
+		MoveTracks: []playlists.MoveArgs{
+			{
+				FromIndex: 1,
+				ToIndex:   1,
+			},
+		},
+	})
+	assert.NilErr(t, err, "while doing moving from index to the same index")
+	playlist, err = manager.Get(ctx, playlistID)
+	assert.NilErr(t, err, "failed while getting playlist after moving tracks")
+	assertTracks(t, currentTracks, playlist)
+
+	// Try appending tracks
+	newTracks := []int64{currentTracks[0], trackIDs[1]}
+	currentTracks = append(currentTracks, newTracks...)
+	err = manager.Update(ctx, playlistID, playlists.UpdateArgs{
+		AddTracks: newTracks,
+	})
+	assert.NilErr(t, err, "while appending a track to the end of the list")
+
+	playlist, err = manager.Get(ctx, playlistID)
+	assert.NilErr(t, err, "failed while getting playlist after moving tracks")
+	assertTracks(t, currentTracks, playlist)
+}
+
+// TestPlaylistsManagerErrors checks for some expected errors when dealing with
+// playlists.
+func TestPlaylistsManagerErrors(t *testing.T) {
+	ctx := t.Context()
+
+	lib := getLibrary(ctx, t)
+	defer func() {
+		_ = lib.Truncate()
+	}()
+	manager := playlists.NewManager(lib.ExecuteDBJobAndWait)
+
+	_, err := manager.Create(ctx, "", []int64{})
+	assert.NotNilErr(t, err,
+		"creating a playlist with empty name should have been an error",
+	)
+}
+
+func assertTracks(t *testing.T, expectedIDs []int64, playlist playlists.Playlist) {
+	t.Helper()
+
+	assert.Equal(t, len(expectedIDs), len(playlist.Tracks),
+		"playlist had different number of tracks than expected",
+	)
+	assert.Equal(t, int64(len(playlist.Tracks)), playlist.TracksCount,
+		"mismatch between track count in .Tracks slice and .TracksCount",
+	)
+
+	for ind, trackID := range expectedIDs {
+		assert.Equal(t, trackID, playlist.Tracks[ind].ID,
+			"mismatch for track at index %d", ind,
+		)
+	}
+}
+
 func assertPlaylist(t *testing.T, expected, actual playlists.Playlist) {
 	t.Helper()
 
@@ -142,7 +314,8 @@ func getTestMigrationFiles() fs.FS {
 
 // It is the caller's responsibility to remove the library SQLite database file
 func getLibrary(ctx context.Context, t *testing.T) *library.LocalLibrary {
-	lib, err := library.NewLocalLibrary(ctx, library.SQLiteMemoryFile, getTestMigrationFiles())
+	migrationsFS := getTestMigrationFiles()
+	lib, err := library.NewLocalLibrary(ctx, library.SQLiteMemoryFile, migrationsFS)
 	if err != nil {
 		t.Fatal(err.Error())
 	}

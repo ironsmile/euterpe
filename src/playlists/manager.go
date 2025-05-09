@@ -50,10 +50,7 @@ func (m *manager) Get(ctx context.Context, id int64) (Playlist, error) {
 
 		playlist = scanned
 
-		var (
-			playlistTracks []any
-			trackOrder     = map[int64]int64{}
-		)
+		var playlistTracks []int64
 		res, err := db.QueryContext(ctx, getTrackIDsQuery, sql.Named("playlist_id", id))
 		if err != nil {
 			return fmt.Errorf("failed to get track IDs: %w", err)
@@ -69,46 +66,55 @@ func (m *manager) Get(ctx context.Context, id int64) (Playlist, error) {
 			}
 
 			playlistTracks = append(playlistTracks, trackID)
-			trackOrder[trackID] = index
 		}
 
 		if len(playlistTracks) == 0 {
 			return nil
 		}
 
+		tracksQueryArg := make([]any, 0, len(playlistTracks))
+		tracksSet := make(map[int64]struct{})
+		for _, trackID := range playlistTracks {
+			if _, found := tracksSet[trackID]; found {
+				continue
+			}
+
+			tracksSet[trackID] = struct{}{}
+			tracksQueryArg = append(tracksQueryArg, trackID)
+		}
+
 		queryTracksWhere := []string{
 			"t.id IN (" + strings.TrimSuffix(
-				strings.Repeat("?,", len(playlistTracks)),
+				strings.Repeat("?,", len(tracksQueryArg)),
 				",",
 			) + ")",
 		}
 
-		rows, err := library.QueryTracks(ctx, db, queryTracksWhere, "", playlistTracks)
+		rows, err := library.QueryTracks(ctx, db, queryTracksWhere, "", tracksQueryArg)
 		if err != nil {
 			return fmt.Errorf("error selecting tracks for playlist: %w", err)
 		}
 
-		var tracks []library.TrackInfo
+		// tracks is a map from track ID => track info.
+		tracks := make(map[int64]library.TrackInfo, len(playlistTracks))
 		for rows.Next() {
 			track, err := library.ScanTrack(rows)
 			if err != nil {
 				return fmt.Errorf("error while scanning a track: %w", err)
 			}
 
-			tracks = append(tracks, track)
+			tracks[track.ID] = track
 		}
 
-		slices.SortFunc(tracks, func(a library.TrackInfo, b library.TrackInfo) int {
-			if trackOrder[a.ID] < trackOrder[b.ID] {
-				return -1
-			} else if trackOrder[a.ID] > trackOrder[b.ID] {
-				return 1
+		for _, trackID := range playlistTracks {
+			trackInfo, found := tracks[trackID]
+			if !found {
+				// Something fishy is going on!
+				continue
 			}
 
-			return 0
-		})
-
-		playlist.Tracks = tracks
+			playlist.Tracks = append(playlist.Tracks, trackInfo)
+		}
 
 		return nil
 	}
