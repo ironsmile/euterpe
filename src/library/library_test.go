@@ -3,6 +3,7 @@ package library
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"io/fs"
 	"log"
@@ -16,6 +17,7 @@ import (
 	// Needed for tests as the go-sqlite3 must be imported during tests too.
 	_ "github.com/mattn/go-sqlite3"
 
+	"github.com/ironsmile/euterpe/src/assert"
 	"github.com/ironsmile/euterpe/src/helpers"
 )
 
@@ -214,20 +216,45 @@ func TestTruncate(t *testing.T) {
 	}
 }
 
+// TestSearch checks that searching for tracks, albums and artists
+// populate all of their fields.
 func TestSearch(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	ctx, cancel := context.WithTimeout(t.Context(), testTimeout)
 	defer cancel()
 	lib := getLibrary(ctx, t)
 	defer func() {
 		_ = lib.Truncate()
 	}()
 
-	found := lib.Search(ctx, SearchArgs{
+	tracks := lib.Search(ctx, SearchArgs{
 		Query: "Buggy",
 	})
 
-	if len(found) != 1 {
-		t.Fatalf("Expected 1 result but got %d", len(found))
+	if len(tracks) != 1 {
+		t.Fatalf("Expected 1 result but got %d", len(tracks))
+	}
+
+	now := time.Now()
+	favs := Favourites{TrackIDs: []int64{tracks[0].ID}}
+	if err := lib.RecordFavourite(ctx, favs); err != nil {
+		t.Fatalf("Cannot set track favourite: %s", err)
+	}
+
+	if err := lib.RecordTrackPlay(ctx, tracks[0].ID, now); err != nil {
+		t.Fatalf("Failed to record playing time: %s", err)
+	}
+
+	if err := lib.SetTrackRating(ctx, tracks[0].ID, 3); err != nil {
+		t.Fatalf("Failed to set track rating: %s", err)
+	}
+
+	// Search for the track again once its attributes have been updated.
+	tracks = lib.Search(ctx, SearchArgs{
+		Query: "Buggy",
+	})
+
+	if len(tracks) != 1 {
+		t.Fatalf("Expected 1 result but got %d", len(tracks))
 	}
 
 	expected := SearchResult{
@@ -235,32 +262,270 @@ func TestSearch(t *testing.T) {
 		Album:       "Return Of The Bugs",
 		Title:       "Payback",
 		TrackNumber: 1,
+		Year:        2013,
+		Format:      "mp3",
+		Duration:    1000,
+		Bitrate:     0x20c00,
+		Size:        17314,
+		Favourite:   now.Unix(),
+		LastPlayed:  now.Unix(),
+		Rating:      3,
+		Plays:       1,
 	}
 
-	if found[0].Artist != expected.Artist {
+	assertTrack(t, expected, tracks[0])
+
+	// Now test the SearchAlbums function.
+	albums := lib.SearchAlbums(ctx, SearchArgs{Query: "Return Of The Bugs"})
+	if len(albums) != 1 {
+		t.Fatalf("Expected one album but got %d", len(albums))
+	}
+
+	expectedAlbum := Album{
+		Name:       expected.Album,
+		ID:         tracks[0].AlbumID,
+		Artist:     expected.Artist,
+		SongCount:  1,
+		Duration:   expected.Duration,
+		Plays:      expected.Plays,
+		LastPlayed: expected.LastPlayed,
+		Year:       expected.Year,
+		Favourite:  0,
+		Rating:     0,
+	}
+
+	assertAlbum(t, expectedAlbum, albums[0])
+
+	// Rate album and add it to favourites and try again.
+	now = time.Now()
+	favs = Favourites{AlbumIDs: []int64{albums[0].ID}}
+	if err := lib.RecordFavourite(ctx, favs); err != nil {
+		t.Errorf("Failed to mark album as favourite: %s", err)
+	}
+	expectedAlbum.Favourite = now.Unix()
+
+	expectedAlbum.Rating = 4
+	if err := lib.SetAlbumRating(ctx, albums[0].ID, expectedAlbum.Rating); err != nil {
+		t.Errorf("Failed to set album rating: %s", err)
+	}
+
+	// Get the latest data for the album from the database.
+	albums = lib.SearchAlbums(ctx, SearchArgs{Query: "Return Of The Bugs"})
+	if len(albums) != 1 {
+		t.Fatalf("Expected one album but got %d", len(albums))
+	}
+
+	assertAlbum(t, expectedAlbum, albums[0])
+
+	// Now search for the artist.
+	artists := lib.SearchArtists(ctx, SearchArgs{Query: "Bugoff"})
+	if len(artists) != 1 {
+		t.Fatalf("Expected to get one artist but got %d", len(artists))
+	}
+
+	expectedArtist := Artist{
+		ID:         tracks[0].ArtistID,
+		Name:       tracks[0].Artist,
+		AlbumCount: 1,
+		Favourite:  0,
+		Rating:     0,
+	}
+
+	assertArtist(t, expectedArtist, artists[0])
+
+	// Set artist ratings and mark as favourite and then search again.
+	now = time.Now()
+	favs = Favourites{ArtistIDs: []int64{artists[0].ID}}
+	if err := lib.RecordFavourite(ctx, favs); err != nil {
+		t.Errorf("Failed to mark artist as favourite: %s", err)
+	}
+	expectedArtist.Favourite = now.Unix()
+
+	expectedArtist.Rating = 2
+	if err := lib.SetArtistRating(ctx, artists[0].ID, expectedArtist.Rating); err != nil {
+		t.Errorf("Failed to set artist rating: %s", err)
+	}
+
+	artists = lib.SearchArtists(ctx, SearchArgs{Query: artists[0].Name})
+	if len(artists) != 1 {
+		t.Fatalf("Expected to get one artist but got %d", len(artists))
+	}
+
+	assertArtist(t, expectedArtist, artists[0])
+}
+
+// assertTrack checks that expected is the same as actual but skips
+// checking for the actual track ID as it may not be known beforehand.
+func assertTrack(t *testing.T, expected, actual TrackInfo) {
+	if actual.Artist != expected.Artist {
 		t.Errorf("Expected Artist `%s` but found `%s`",
-			expected.Artist, found[0].Artist)
+			expected.Artist, actual.Artist)
 	}
 
-	if found[0].Title != expected.Title {
+	if actual.Title != expected.Title {
 		t.Errorf("Expected Title `%s` but found `%s`",
-			expected.Title, found[0].Title)
+			expected.Title, actual.Title)
 	}
 
-	if found[0].Album != expected.Album {
+	if actual.Album != expected.Album {
 		t.Errorf("Expected Album `%s` but found `%s`",
-			expected.Album, found[0].Album)
+			expected.Album, actual.Album)
 	}
 
-	if found[0].TrackNumber != expected.TrackNumber {
+	if actual.TrackNumber != expected.TrackNumber {
 		t.Errorf("Expected TrackNumber `%d` but found `%d`",
-			expected.TrackNumber, found[0].TrackNumber)
+			expected.TrackNumber, actual.TrackNumber)
 	}
 
-	if found[0].AlbumID < 1 {
-		t.Errorf("AlbumID was below 1: `%d`", found[0].AlbumID)
+	if actual.AlbumID < 1 {
+		t.Errorf("AlbumID was below 1: `%d`", actual.AlbumID)
 	}
 
+	assert.Equal(t, expected.Year, actual.Year, "track year")
+	assert.Equal(t, expected.Format, actual.Format, "file format")
+	assert.Equal(t, expected.Duration, actual.Duration, "track duration")
+	assert.Equal(t, expected.LastPlayed, actual.LastPlayed, "track last played at")
+	assert.Equal(t, expected.Plays, actual.Plays, "track plays")
+	assert.Equal(t, expected.Favourite, actual.Favourite, "track favourite date")
+	assert.Equal(t, expected.Bitrate, actual.Bitrate, "track bitrate")
+	assert.Equal(t, expected.Rating, actual.Rating, "track rating")
+	assert.Equal(t, expected.Size, actual.Size, "track file size")
+}
+
+// assertAlbum asserts that `actual` is the same as `expected`.
+func assertAlbum(t *testing.T, expected, actual Album) {
+	assert.Equal(t, expected.Name, actual.Name, "album name")
+	assert.Equal(t, expected.ID, actual.ID, "album ID")
+	assert.Equal(t, expected.Artist, actual.Artist, "album artist")
+	assert.Equal(t, expected.SongCount, actual.SongCount, "album tracks count")
+	assert.Equal(t, expected.Duration, actual.Duration, "album duration")
+	assert.Equal(t, expected.Plays, actual.Plays, "album play count")
+	assert.Equal(t, expected.LastPlayed, actual.LastPlayed, "album last played")
+	assert.Equal(t, expected.Year, actual.Year, "album year")
+	assert.Equal(t, expected.Favourite, actual.Favourite, "album favourite status")
+	assert.Equal(t, expected.Rating, actual.Rating, "album rating")
+}
+
+// assertArtist asserts that `actual` is the same as `expected`.
+func assertArtist(t *testing.T, expected, actual Artist) {
+	assert.Equal(t, expected.Name, actual.Name, "artist name")
+	assert.Equal(t, expected.ID, actual.ID, "artist ID")
+	assert.Equal(t, expected.AlbumCount, actual.AlbumCount, "albums count")
+	assert.Equal(t, expected.Favourite, actual.Favourite, "artist favourites status")
+	assert.Equal(t, expected.Rating, actual.Rating, "artist ratings")
+}
+
+// TestNotFoundErrors checks that "not found" errors are returned while trying
+// to get albums, artists and tracks which do not exist.
+func TestNotFoundErrors(t *testing.T) {
+	ctx, cancel := context.WithTimeout(t.Context(), testTimeout)
+	defer cancel()
+	lib := getLibrary(ctx, t)
+	defer func() {
+		_ = lib.Truncate()
+	}()
+
+	if _, err := lib.GetTrack(ctx, 98234); !errors.Is(err, ErrNotFound) {
+		t.Errorf("Expected 'not found' error for track but got: %s", err)
+	}
+
+	if _, err := lib.GetAlbum(ctx, 827362); !errors.Is(err, ErrNotFound) {
+		t.Errorf("Expected 'not found' error for album but got: %s", err)
+	}
+
+	if _, err := lib.GetArtist(ctx, 8173); !errors.Is(err, ErrNotFound) {
+		t.Errorf("Expected 'not found' error for artist but got: %s", err)
+	}
+}
+
+// TestGettingSpecificData checks that getting tracks, albums and artists
+// by their ID is populating all of their properties.
+func TestGettingSpecificData(t *testing.T) {
+	ctx, cancel := context.WithTimeout(t.Context(), testTimeout)
+	defer cancel()
+	lib := getLibrary(ctx, t)
+	defer func() {
+		_ = lib.Truncate()
+	}()
+
+	tracks := lib.Search(ctx, SearchArgs{
+		Query: "Buggy",
+	})
+
+	if len(tracks) != 1 {
+		t.Fatalf("Expected 1 result but got %d", len(tracks))
+	}
+
+	now := time.Now()
+	favs := Favourites{
+		TrackIDs:  []int64{tracks[0].ID},
+		ArtistIDs: []int64{tracks[0].ArtistID},
+		AlbumIDs:  []int64{tracks[0].AlbumID},
+	}
+	if err := lib.RecordFavourite(ctx, favs); err != nil {
+		t.Fatalf("Cannot set track favourite: %s", err)
+	}
+
+	if err := lib.RecordTrackPlay(ctx, tracks[0].ID, now); err != nil {
+		t.Fatalf("Failed to record playing time: %s", err)
+	}
+
+	if err := lib.SetTrackRating(ctx, tracks[0].ID, 3); err != nil {
+		t.Fatalf("Failed to set track rating: %s", err)
+	}
+
+	if err := lib.SetAlbumRating(ctx, tracks[0].AlbumID, 4); err != nil {
+		t.Fatalf("Failed to set album rating: %s", err)
+	}
+
+	if err := lib.SetArtistRating(ctx, tracks[0].ArtistID, 1); err != nil {
+		t.Fatalf("Failed to set artist rating: %s", err)
+	}
+
+	expectedTrack := tracks[0]
+	expectedTrack.Rating = 3
+	expectedTrack.Favourite = now.Unix()
+	expectedTrack.Plays = 1
+	expectedTrack.LastPlayed = now.Unix()
+
+	track, err := lib.GetTrack(ctx, tracks[0].ID)
+	if err != nil {
+		t.Fatalf("Failed to get track by ID: %s", err)
+	}
+	assertTrack(t, expectedTrack, track)
+
+	expectedAlbum := Album{
+		ID:         track.AlbumID,
+		Name:       track.Album,
+		Artist:     track.Artist,
+		SongCount:  1,
+		Duration:   track.Duration,
+		Plays:      1,
+		Favourite:  now.Unix(),
+		LastPlayed: now.Unix(),
+		Rating:     4,
+		Year:       track.Year,
+	}
+
+	album, err := lib.GetAlbum(ctx, track.AlbumID)
+	if err != nil {
+		t.Errorf("Failed to get album by ID: %s", err)
+	}
+	assertAlbum(t, expectedAlbum, album)
+
+	expectedArtist := Artist{
+		ID:         track.ArtistID,
+		Name:       track.Artist,
+		AlbumCount: 1,
+		Favourite:  now.Unix(),
+		Rating:     1,
+	}
+
+	artist, err := lib.GetArtist(ctx, track.ArtistID)
+	if err != nil {
+		t.Errorf("Failed to get artist by ID: %s", err)
+	}
+	assertArtist(t, expectedArtist, artist)
 }
 
 func TestAddingNewFiles(t *testing.T) {

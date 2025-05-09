@@ -648,14 +648,16 @@ func (lib *LocalLibrary) RecordTrackPlay(
 				last_played = @unixTime,
 				play_count = play_count + 1
 			WHERE
-				last_played + (
-					SELECT
-						duration / 1000 as dur
-					FROM
-						tracks
-					WHERE
-						id = @mediaID
-				) / 3 < @unixTime;
+				last_played IS NULL OR (
+					last_played + (
+						SELECT
+							duration / 1000 as dur
+						FROM
+							tracks
+						WHERE
+							id = @mediaID
+					) / 3 < @unixTime
+				);
 		`
 		unixTime := atTime.Unix()
 
