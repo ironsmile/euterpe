@@ -2,7 +2,6 @@ package library
 
 import (
 	"database/sql"
-	"fmt"
 	"io/fs"
 	"log"
 	"os"
@@ -228,7 +227,7 @@ func (lib *LocalLibrary) checkAndRemoveAlbums(albumIDs []int64) error {
 		if err := lib.ExecuteDBJobAndWait(func(db *sql.DB) error {
 			var tracks int64
 
-			rows, err := db.Query(`
+			row := db.QueryRow(`
 				SELECT
 					COUNT(*) as cnt
 				FROM
@@ -236,20 +235,8 @@ func (lib *LocalLibrary) checkAndRemoveAlbums(albumIDs []int64) error {
 				WHERE
 					album_id = ?
 			`, albumID)
-			if err != nil {
-				return err
-			}
 
-			if !rows.Next() {
-				return fmt.Errorf(
-					"rows.Next returned false for COUNT SELECT query",
-				)
-			}
-
-			err = rows.Scan(&tracks)
-			rows.Close()
-
-			if err != nil {
+			if err := row.Scan(&tracks); err != nil {
 				return err
 			}
 
@@ -259,7 +246,7 @@ func (lib *LocalLibrary) checkAndRemoveAlbums(albumIDs []int64) error {
 				return nil
 			}
 
-			_, err = db.Exec(`
+			_, err := db.Exec(`
 				DELETE FROM albums
 				WHERE id = ?
 			`, albumID)
@@ -291,7 +278,7 @@ func (lib *LocalLibrary) checkAndRemoveArtists(artistIDs []int64) error {
 		if err := lib.ExecuteDBJobAndWait(func(db *sql.DB) error {
 			var tracks int64
 
-			rows, err := db.Query(`
+			row := db.QueryRow(`
 				SELECT
 					COUNT(*) as cnt
 				FROM
@@ -299,20 +286,8 @@ func (lib *LocalLibrary) checkAndRemoveArtists(artistIDs []int64) error {
 				WHERE
 					artist_id = ?
 			`, artistID)
-			if err != nil {
-				return err
-			}
 
-			if !rows.Next() {
-				return fmt.Errorf(
-					"rows.Next returned false for COUNT SELECT query",
-				)
-			}
-
-			err = rows.Scan(&tracks)
-			rows.Close()
-
-			if err != nil {
+			if err := row.Scan(&tracks); err != nil {
 				return err
 			}
 
@@ -322,7 +297,7 @@ func (lib *LocalLibrary) checkAndRemoveArtists(artistIDs []int64) error {
 				return nil
 			}
 
-			_, err = db.Exec(`
+			_, err := db.Exec(`
 				DELETE FROM artists
 				WHERE id = ?
 			`, artistID)
