@@ -357,7 +357,7 @@ func (lib *LocalLibrary) checkAndRemoveTracks(tracks []track) error {
 		cleanedPath := filepath.Clean(track.fsPath)
 		if cleanedPath != track.fsPath {
 			log.Printf("Removing duplicate %d - '%s'\n", track.id, track.fsPath)
-			lib.removeFile(track.fsPath)
+			lib.removeFileExact(track.fsPath)
 			continue
 		}
 

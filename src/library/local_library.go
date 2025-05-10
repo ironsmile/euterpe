@@ -787,19 +787,22 @@ func (lib *LocalLibrary) GetArtistAlbums(
 func (lib *LocalLibrary) removeFile(filePath string) {
 
 	fullPath, err := filepath.Abs(filePath)
-
 	if err != nil {
 		log.Printf("Error removing %s: %s\n", filePath, err.Error())
 		return
 	}
 
+	lib.removeFileExact(fullPath)
+}
+
+func (lib *LocalLibrary) removeFileExact(filePath string) {
 	work := func(db *sql.DB) error {
 		_, err := db.Exec(`
 			DELETE FROM tracks
 			WHERE fs_path = ?
-		`, fullPath)
+		`, filePath)
 		if err != nil {
-			log.Printf("Error removing %s: %s\n", fullPath, err.Error())
+			log.Printf("Error removing %s: %s\n", filePath, err.Error())
 		}
 
 		return nil

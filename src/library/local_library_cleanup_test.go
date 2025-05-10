@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 	"testing/fstest"
+	"time"
 )
 
 // TestLocalLibraryCleanup inserts dangling albums and artists and checks that they
@@ -22,7 +23,15 @@ func TestLocalLibraryCleanup(t *testing.T) {
 		t.Fatalf("Initializing library: %s", err)
 	}
 
-	lib.fs = fstest.MapFS{}
+	testFS := fstest.MapFS{
+		"/does/exist/not-clean.mp3": &fstest.MapFile{
+			Data:    []byte("some-file"),
+			Mode:    0644,
+			ModTime: time.Now(),
+		},
+	}
+
+	lib.fs = testFS
 
 	dbc := lib.db
 
@@ -48,7 +57,8 @@ func TestLocalLibraryCleanup(t *testing.T) {
 		INSERT INTO tracks (name, album_id, artist_id, number, fs_path, duration)
 		VALUES
 			('First Track', $1, $2, 1, $3, 100),
-			('Second Track', $1, $2, 2, $4, 255)
+			('Second Track', $1, $2, 2, $4, 255),
+			('Third Track', $1, $2, 3, $5, 123)
 	`)
 	if err != nil {
 		t.Fatalf("error preparing track insert: %s", err)
@@ -56,7 +66,8 @@ func TestLocalLibraryCleanup(t *testing.T) {
 
 	path1 := filepath.FromSlash("/does/not/exist/first.mp3")
 	path2 := filepath.FromSlash("/does/not/exist/second.mp3")
-	if _, err := stmt.Exec(albumID, artistID, path1, path2); err != nil {
+	path3 := filepath.FromSlash("/does/./exist/but/../not-clean.mp3")
+	if _, err := stmt.Exec(albumID, artistID, path1, path2, path3); err != nil {
 		t.Fatalf("error inserting tracks: %s", err)
 	}
 	_ = stmt.Close()
