@@ -295,15 +295,7 @@ func TestPlaylistGettingSingle(t *testing.T) {
 		t.Fatalf("failed to decode playlist response: %s", err)
 	}
 
-	assert.Equal(t, expected.ID, actual.ID, "playlist ID")
-	assert.Equal(t, expected.Name, actual.Name, "playlist name")
-	assert.Equal(t, expected.Desc, actual.Desc, "playlist description")
-	assert.Equal(t, expected.TracksCount, actual.TracksCount, "tracks count")
-	assert.Equal(t, expected.Duration.Milliseconds(), actual.Duration, "playlist duration")
-	assert.Equal(t, expected.CreatedAt.Unix(), actual.CreatedAt, "created timestamp")
-	assert.Equal(t, expected.UpdatedAt.Unix(), actual.UpdatedAt, "updated timestamp")
-	assert.Equal(t, len(expected.Tracks), len(actual.Tracks), "tracks slice len mismatch")
-
+	assertPlaylist(t, expected, actual)
 	for ind, expectedTrack := range expected.Tracks {
 		assertTrack(t, expectedTrack, actual.Tracks[ind])
 	}
@@ -476,4 +468,18 @@ func assertTrack(t *testing.T, expected, actual library.TrackInfo) {
 	assert.Equal(t, expected.Bitrate, actual.Bitrate, "track bitrate")
 	assert.Equal(t, expected.Rating, actual.Rating, "track rating")
 	assert.Equal(t, expected.Size, actual.Size, "track file size")
+}
+
+func assertPlaylist(t *testing.T, expected playlists.Playlist, actual apiPlaylist) {
+	t.Helper()
+
+	assert.Equal(t, expected.ID, actual.ID, "playlist ID")
+	assert.Equal(t, expected.Name, actual.Name, "playlist name")
+	assert.Equal(t, expected.Desc, actual.Desc, "playlist description")
+	assert.Equal(t, expected.TracksCount, actual.TracksCount, "tracks count")
+	assert.Equal(t, expected.Duration.Milliseconds(), actual.Duration, "playlist duration")
+	assert.Equal(t, expected.CreatedAt.Unix(), actual.CreatedAt, "created timestamp")
+	assert.Equal(t, expected.UpdatedAt.Unix(), actual.UpdatedAt, "updated timestamp")
+	assert.Equal(t, len(expected.Tracks), len(actual.Tracks), "tracks slice len mismatch")
+
 }

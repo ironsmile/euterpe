@@ -144,7 +144,7 @@ func (plh playlistsHandler) list(w http.ResponseWriter, req *http.Request) {
 		Playlists:  []playlist{},
 	}
 	playlists, err := plh.playlists.List(req.Context(), playlists.ListArgs{
-		Offset: page - 1,
+		Offset: (page - 1) * perPage,
 		Count:  perPage,
 	})
 	if err != nil {
