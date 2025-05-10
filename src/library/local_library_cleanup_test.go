@@ -3,6 +3,7 @@ package library
 import (
 	"context"
 	"path/filepath"
+	"sync"
 	"testing"
 	"testing/fstest"
 	"time"
@@ -75,7 +76,16 @@ func TestLocalLibraryCleanup(t *testing.T) {
 	}
 	_ = stmt.Close()
 
-	lib.cleanUpDatabase()
+	// Make sure running the cleanup multiple times concurrently is safe.
+	var wg sync.WaitGroup
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			lib.cleanUpDatabase()
+		}()
+	}
+	wg.Wait()
 
 	rows, err := dbc.Query(`
 		SELECT name FROM artists
