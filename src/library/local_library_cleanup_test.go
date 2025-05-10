@@ -37,7 +37,9 @@ func TestLocalLibraryCleanup(t *testing.T) {
 
 	res, err := dbc.Exec(`
 		INSERT INTO albums (name, fs_path)
-		VALUES ('Lonely Album', '$1')
+		VALUES
+			('Lonely Album', '$1'),
+			('The Other Album', '$1')
 	`, filepath.FromSlash("/path/to/no/tracks"))
 	if err != nil {
 		t.Fatalf("error inserting album: %s", err)
@@ -46,7 +48,8 @@ func TestLocalLibraryCleanup(t *testing.T) {
 
 	res, err = dbc.Exec(`
 		INSERT INTO artists (name)
-		VALUES ('Fruitless Fellow')
+		VALUES ('Fruitless Fellow'),
+				('The Other Guy')
 	`)
 	if err != nil {
 		t.Fatalf("error inserting artist: %s", err)
@@ -74,7 +77,11 @@ func TestLocalLibraryCleanup(t *testing.T) {
 
 	lib.cleanUpDatabase()
 
-	rows, err := dbc.Query(`SELECT name FROM artists WHERE name = 'Fruitless Fellow'`)
+	rows, err := dbc.Query(`
+		SELECT name FROM artists
+		WHERE name = 'Fruitless Fellow' OR
+			name = 'The Other Guy'
+	`)
 	if err != nil {
 		t.Fatalf("error querying for cleaned up artist: %s", err)
 	}
@@ -93,7 +100,11 @@ func TestLocalLibraryCleanup(t *testing.T) {
 		t.Errorf("expected dangling artist to have been cleaned up but it was not")
 	}
 
-	rows, err = dbc.Query(`SELECT name FROM albums WHERE name = 'Lonely Album'`)
+	rows, err = dbc.Query(`
+		SELECT name FROM albums
+		WHERE name = 'Lonely Album' OR
+			name = 'The Other Album'
+	`)
 	if err != nil {
 		t.Fatalf("error querying for cleaned up album: %s", err)
 	}
