@@ -958,7 +958,7 @@ func TestBrowsingTracks(t *testing.T) {
 			expected: []string{
 				"No Way",
 			},
-			total: allTracksCount,
+			total: 7, // one track does not have an year
 		},
 	}
 

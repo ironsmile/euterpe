@@ -1254,6 +1254,7 @@ func TestLocalLibraryGetArtistAlbums(t *testing.T) {
 		albumName       = "Return Of The Bugs"
 		secondAlbumName = "Return Of The Bugs II Deluxe 3000"
 		artistName      = "Buggy Bugoff"
+		albumYear       = 2014
 	)
 
 	tracks := []struct {
@@ -1267,6 +1268,7 @@ func TestLocalLibraryGetArtistAlbums(t *testing.T) {
 				title:  "Payback",
 				track:  1,
 				length: 340 * time.Second,
+				year:   albumYear,
 			},
 			path: "/media/return-of-the-bugs/track-1.mp3",
 		},
@@ -1277,6 +1279,7 @@ func TestLocalLibraryGetArtistAlbums(t *testing.T) {
 				title:  "Realization",
 				track:  2,
 				length: 345 * time.Second,
+				year:   albumYear,
 			},
 			path: "/media/return-of-the-bugs/track-2.mp3",
 		},
@@ -1306,6 +1309,7 @@ func TestLocalLibraryGetArtistAlbums(t *testing.T) {
 		albumName: {
 			Name:   albumName,
 			Artist: artistName,
+			Year:   albumYear,
 		},
 		secondAlbumName: {
 			Name:   secondAlbumName,
@@ -1335,6 +1339,39 @@ func TestLocalLibraryGetArtistAlbums(t *testing.T) {
 
 		expected[al.Name] = al
 	}
+
+	// Record some plays, set favourite and rating for an album.
+	toRecordTracks := lib.Search(ctx, SearchArgs{Query: "Index By Index"})
+	if len(toRecordTracks) != 1 {
+		t.Fatalf("could not find album to record plays to")
+	}
+
+	recordTime := time.Now()
+	favs := Favourites{
+		AlbumIDs: []int64{toRecordTracks[0].AlbumID},
+	}
+	if err := lib.RecordFavourite(ctx, favs); err != nil {
+		t.Fatalf("failed to set album '%s' as favourite: %s",
+			toRecordTracks[0].Album, err,
+		)
+	}
+	if err := lib.RecordTrackPlay(ctx, toRecordTracks[0].ID, recordTime); err != nil {
+		t.Fatalf("failed to record play for track: %s", err)
+	}
+	if err := lib.SetAlbumRating(ctx, toRecordTracks[0].AlbumID, 3); err != nil {
+		t.Fatalf("failed to set album rating: %s", err)
+	}
+
+	secAlbum, ok := expected[secondAlbumName]
+	if !ok {
+		t.Fatalf("wrong test, `%s` is missing from expected", secondAlbumName)
+	}
+
+	secAlbum.Favourite = recordTime.Unix()
+	secAlbum.LastPlayed = recordTime.Unix()
+	secAlbum.Plays = 1
+	secAlbum.Rating = 3
+	expected[secondAlbumName] = secAlbum
 
 	var artistID int64
 	results := lib.Search(ctx, SearchArgs{Query: artistName})
@@ -1377,6 +1414,21 @@ func TestLocalLibraryGetArtistAlbums(t *testing.T) {
 					album.Duration,
 				)
 			}
+			assert.Equal(t, expectedAlbum.LastPlayed, album.LastPlayed,
+				"album `%s` last played timestamp", album.Name,
+			)
+			assert.Equal(t, expectedAlbum.Plays, album.Plays,
+				"album `%s` plays count", album.Name,
+			)
+			assert.Equal(t, expectedAlbum.Favourite, album.Favourite,
+				"album `%s` favourite timestamp", album.Name,
+			)
+			assert.Equal(t, expectedAlbum.Rating, album.Rating,
+				"album `%s` rating", album.Name,
+			)
+			assert.Equal(t, expectedAlbum.Year, album.Year,
+				"album `%s` year", album.Name,
+			)
 		}
 
 		if !found {

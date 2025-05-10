@@ -41,9 +41,6 @@ func (m *MockMedia) Length() time.Duration {
 // Year satisfies the MediaFile interface. Returns the object attribute or a default
 // value if one is not set.
 func (m *MockMedia) Year() int {
-	if m.year == 0 {
-		return 1984
-	}
 	return m.year
 }
 
