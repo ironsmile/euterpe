@@ -8,7 +8,7 @@ func NilErr(t TestingFatalf, val error, msgAndArgs ...any) {
 		return
 	}
 
-	t.Fatalf("expected nil but got `%#v`%s", val, fromMsgAndArgs(msgAndArgs...))
+	t.Fatalf("expected nil but got `%s`%s", val, fromMsgAndArgs(msgAndArgs...))
 }
 
 // NotNilErr checks that `val` is not nil. Causes a fatal error otherwise.

@@ -11,10 +11,10 @@ import (
 
 // TestEqual makes sure that the Equal function works for various types of arguments.
 func TestEqual(t *testing.T) {
-	fakeT := &assertfakes.FakeTestingErrf{}
+	fakeT := &assertfakes.FakeTestingFatalf{}
 	actual := int64(5)
 	assert.Equal(fakeT, 5, actual)
-	if fakeT.ErrorfCallCount() != 0 {
+	if fakeT.FatalfCallCount() != 0 {
 		t.Errorf("expected Errorf not to be called for int64 and const expression")
 	}
 	if fakeT.HelperCallCount() != 1 {
@@ -22,17 +22,17 @@ func TestEqual(t *testing.T) {
 	}
 
 	assert.Equal(fakeT, 10, actual)
-	if fakeT.ErrorfCallCount() != 1 {
+	if fakeT.FatalfCallCount() != 1 {
 		t.Errorf("expected Errorf to be called for different int64 values")
 	}
 
-	fakeT = &assertfakes.FakeTestingErrf{}
+	fakeT = &assertfakes.FakeTestingFatalf{}
 	var (
 		actualStr   string = "test val"
 		expectedStr string = "test val"
 	)
 	assert.Equal(fakeT, expectedStr, actualStr)
-	if fakeT.ErrorfCallCount() != 0 {
+	if fakeT.FatalfCallCount() != 0 {
 		t.Errorf("expected Errorf not to be called for two string values")
 	}
 
@@ -40,14 +40,14 @@ func TestEqual(t *testing.T) {
 		formatting   = `test formatting: %d`
 		formattedVal = 123
 	)
-	fakeT = &assertfakes.FakeTestingErrf{}
+	fakeT = &assertfakes.FakeTestingFatalf{}
 	assert.Equal(fakeT, 10, 12, formatting, formattedVal)
-	if fakeT.ErrorfCallCount() != 1 {
+	if fakeT.FatalfCallCount() != 1 {
 		t.Errorf("expected Errorf to be called for two different integers")
 	}
 
 	expectedMessage := fmt.Sprintf(formatting, formattedVal)
-	errorFormat, args := fakeT.ErrorfArgsForCall(0)
+	errorFormat, args := fakeT.FatalfArgsForCall(0)
 
 	loggedMessage := fmt.Sprintf(errorFormat, args...)
 	if !strings.Contains(loggedMessage, expectedMessage) {
@@ -84,6 +84,6 @@ func TestEqualPanicsOnWrongArgs(t *testing.T) {
 		}
 	}()
 
-	fakeT := &assertfakes.FakeTestingErrf{}
+	fakeT := &assertfakes.FakeTestingFatalf{}
 	assert.Equal(fakeT, 5, 12, 123, "baba")
 }

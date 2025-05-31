@@ -4,15 +4,6 @@ import "fmt"
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
 
-//counterfeiter:generate . TestingErrf
-
-// TestingErrf is an which supports reporting errors in testing types such as
-// testing.T, testing.TB and similar.
-type TestingErrf interface {
-	Errorf(format string, args ...any)
-	Helper()
-}
-
 //counterfeiter:generate . TestingFatalf
 
 // TestingFatalf is an which supports reporting fatal errors in testing types such as
