@@ -1,20 +1,24 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 
 cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 cd ..
 
+make_action=release
+arch="amd64"
 os='unknown'
+
 unamestr=`uname`
-if [[ "$unamestr" == 'Linux' ]]; then
-   os='linux'
-elif [[ "$unamestr" == 'FreeBSD' ]]; then
-   os='freebsd'
-elif [[ "$unamestr" == 'Darwin' ]]; then
-    os='darwin'
+if [[ "$unamestr" == "Linux" ]]; then
+   os="linux"
+elif [[ "$unamestr" == "FreeBSD" ]]; then
+   os="freebsd"
+elif [[ "$unamestr" == "Darwin" ]]; then
+    os="darwin"
+    make_action="release-no-upx"
+    arch="arm64"
 fi
 
-arch="amd64"
 version=`git describe --tags --always`
 
 if [[ $# -gt 0 ]]; then
@@ -32,7 +36,7 @@ echo "Making dist directory..."
 mkdir -p dist/euterpe
 
 echo "Building binaries..."
-make release
+make "${make_action}"
 mv euterpe dist/euterpe/euterpe
 
 for file in README.md API.md CHANGELOG.md
