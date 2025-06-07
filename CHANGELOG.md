@@ -1,5 +1,45 @@
 # Change Log
 
+## v1.6.0 - 2025-06-07
+
+This one of the biggest improvements of Euterpe so far. As always, it retains API backwards compatibility with older Euterpe versions.
+
+**Subsonic API**
+
+This release adds preliminary support of the [Subsonic API](https://www.subsonic.org/pages/api.jsp) v1.16.1. More specifically its [Open Subsonic](https://opensubsonic.netlify.app/) flavour. The API implementation is not complete yet but is comprehensive enough for everyday use. What's not yet ready is podcasts, public shares, bookmarks and some small API endpoints. Keep up with the implementation progress by watching the `src/webserver/subsonic/progress.md` file.
+
+The server has been tested with numerous Subsonic clients and the following have been vetted to work with the current state of the implementation:
+
+* Supersonic (Linux, Mac, Windows)
+* play:Sub (iOS)
+* Amperify (iOS)
+* Substreamer (iOS)
+
+**What is New**
+
+* Browsing the library by songs is now possible via the API.
+* The API now returns much more data for albums, artists and tracks:
+	- Number of plays
+	- Time of the last play
+	- User rating
+	- When an item has been added to a favourites list
+	- Track bitrate and album average bitrate
+	- Release year for albums and tracks
+	- Track size in bytes
+* New ways for ordering tracks, albums an artists while browsing:
+	- By year when applicable
+	- By play frequency
+	- By play recency
+* A new API endpoints for playlists management have been added
+* A new API endpoint /v1/about. It includes information about the Euterpe server version.
+
+**Bug Fixes**
+
+* Artist images are now cleaned up from the database as well when an artist entry has been removed.
+* The web UI will now properly take advantage of browser caches for its static files.
+* Improved media tag reading, especially for Vorbis.
+* There was a bug which caused some tracks to never be removed from the database even though they're no longer on disk. This has been fixed.
+
 ## v1.5.4 - 2023-04-02
 
 Another release mainly focused on bug fixes.
