@@ -35,7 +35,7 @@ echo "Building binaries..."
 make release
 mv euterpe dist/euterpe/euterpe
 
-for file in README.md
+for file in README.md API.md CHANGELOG.md
 do
     echo "Copying $file..."
     cp "$file" dist/euterpe
