@@ -12,11 +12,11 @@ func (s *subsonic) createPlaylist(w http.ResponseWriter, req *http.Request) {
 	if playlistID := req.Form.Get("playlistId"); playlistID != "" {
 		s.updatePlaylistFromCreate(w, req)
 	} else {
-		s.creteNewPlaylist(w, req)
+		s.createNewPlaylist(w, req)
 	}
 }
 
-func (s *subsonic) creteNewPlaylist(w http.ResponseWriter, req *http.Request) {
+func (s *subsonic) createNewPlaylist(w http.ResponseWriter, req *http.Request) {
 	name := req.Form.Get("name")
 	if name == "" {
 		resp := responseError(errCodeMissingParameter, "playlist name is required")
