@@ -408,6 +408,7 @@ func assertAlbum(t *testing.T, expected, actual Album) {
 	assert.Equal(t, expected.Year, actual.Year, "album year")
 	assert.Equal(t, expected.Favourite, actual.Favourite, "album favourite status")
 	assert.Equal(t, expected.Rating, actual.Rating, "album rating")
+	assert.Equal(t, expected.AvgBitrate, actual.AvgBitrate, "album avg bitrate")
 }
 
 // assertArtist asserts that `actual` is the same as `expected`.
@@ -511,6 +512,7 @@ func TestGettingSpecificData(t *testing.T) {
 		LastPlayed: now.Unix(),
 		Rating:     4,
 		Year:       track.Year,
+		AvgBitrate: 134144,
 	}
 
 	album, err := lib.GetAlbum(ctx, track.AlbumID)

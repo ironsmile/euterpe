@@ -133,6 +133,10 @@ type Album struct {
 
 	// Year is a four digit number for the year in which the album has been released.
 	Year int32 `json:"year,omitempty"`
+
+	// AvgBitrate is the average bitrate of the songs in the album. Measured in
+	// bits per second.
+	AvgBitrate uint64 `json:"avg_bitrate,omitempty"`
 }
 
 // Favourites describes a set of favourite tracks, artists and albums.

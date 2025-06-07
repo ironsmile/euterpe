@@ -238,12 +238,13 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 					THEN ar.name
 					ELSE "Various Artists"
 					END AS artist_name,
-				COUNT(tr.id) as songCount,
+				COUNT(tr.id) as song_count,
 				SUM(tr.duration) as duration,
 				SUM(us.play_count) as plays,
 				MIN(tr.year) as year,
 				als.favourite,
-				als.user_rating
+				als.user_rating,
+				SUM(tr.bitrate) / COUNT(tr.id) as avg_bitrate
 			FROM
 				tracks tr
 				LEFT JOIN
@@ -275,10 +276,11 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 				rating sql.NullInt16
 				plays  sql.NullInt64
 				year   sql.NullInt32
+				avgBr  sql.NullInt64
 			)
 			if err := rows.Scan(
 				&res.ID, &res.Name, &res.Artist, &res.SongCount,
-				&res.Duration, &plays, &year, &fav, &rating,
+				&res.Duration, &plays, &year, &fav, &rating, &avgBr,
 			); err != nil {
 				return fmt.Errorf("scanning db failed: %w", err)
 			}
@@ -293,6 +295,9 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 			}
 			if year.Valid {
 				res.Year = year.Int32
+			}
+			if avgBr.Valid && avgBr.Int64 > 0 {
+				res.AvgBitrate = uint64(avgBr.Int64)
 			}
 
 			output = append(output, res)

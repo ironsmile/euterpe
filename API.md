@@ -179,7 +179,8 @@ would result in value such as
   "favourite": 1614834066, // Unix timestamp in seconds. When it was added to favourites.
   "last_played": 1714834066, // Unix timestamp in seconds.
   "rating": 5, // User rating in [1-5] range.
-  "year": 2004 // Four digit year of when this album has been released.
+  "year": 2004, // Four digit year of when this album has been released.
+  "avg_bitrate": 1536000 // Average bitrate of the songs in this album.
 }
 ```
 

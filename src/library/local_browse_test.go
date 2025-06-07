@@ -298,12 +298,13 @@ func TestBrowsingAlbums(t *testing.T) {
 		},
 		{
 			track: MockMedia{
-				artist: "Eriney",
-				album:  neverToBe,
-				title:  "Totally Going To Release It",
-				track:  1,
-				length: 912 * time.Second,
-				year:   2022,
+				artist:  "Eriney",
+				album:   neverToBe,
+				title:   "Totally Going To Release It",
+				track:   1,
+				length:  912 * time.Second,
+				year:    2022,
+				bitrate: 128,
 			},
 			path:      "/media/never-to-be/track-1.mp3",
 			plays:     5,
@@ -311,12 +312,13 @@ func TestBrowsingAlbums(t *testing.T) {
 		},
 		{
 			track: MockMedia{
-				artist: "Eriney",
-				album:  neverToBe,
-				title:  "Pinky Promise",
-				track:  2,
-				length: 211 * time.Second,
-				year:   2022,
+				artist:  "Eriney",
+				album:   neverToBe,
+				title:   "Pinky Promise",
+				track:   2,
+				length:  211 * time.Second,
+				year:    2022,
+				bitrate: 320,
 			},
 			path:      "/media/never-to-be/track-2.mp3",
 			plays:     5,
@@ -611,7 +613,7 @@ func TestBrowsingAlbums(t *testing.T) {
 			browseArgs.PerPage, len(foundAlbums))
 	}
 
-	// Make sure song count and album duration are properly set.
+	// Make sure song count, album duration and average bitrate are properly set.
 	browseArgs = BrowseArgs{
 		Page:    0,
 		PerPage: uint(allAlbumsCount),
@@ -630,6 +632,7 @@ func TestBrowsingAlbums(t *testing.T) {
 	}
 
 	var (
+		neverToBeBitrate  uint64
 		neverToBeDuration time.Duration
 		neverToBeTracks   int
 	)
@@ -638,8 +641,10 @@ func TestBrowsingAlbums(t *testing.T) {
 			continue
 		}
 		neverToBeDuration += mockTrack.track.length
+		neverToBeBitrate += uint64(mockTrack.track.bitrate) * 1024
 		neverToBeTracks++
 	}
+	neverToBeBitrate = uint64(float64(neverToBeBitrate) / float64(neverToBeTracks))
 
 	if notGonnaHappen.SongCount != int64(neverToBeTracks) {
 		t.Errorf("wrong number of tracks. Expected %d but got %d",
@@ -652,6 +657,13 @@ func TestBrowsingAlbums(t *testing.T) {
 		t.Errorf("wrong duration. Expected  %dms but got %dms",
 			neverToBeDuration.Milliseconds(),
 			notGonnaHappen.Duration,
+		)
+	}
+
+	if notGonnaHappen.AvgBitrate != neverToBeBitrate {
+		t.Errorf("wrong average bitrate. Expected %d but got %d",
+			neverToBeBitrate,
+			notGonnaHappen.AvgBitrate,
 		)
 	}
 }

@@ -555,16 +555,17 @@ func (lib *LocalLibrary) GetAlbum(
 		SELECT
 			al.name as album_name,
 			CASE WHEN COUNT(DISTINCT tr.artist_id) = 1
-			THEN ar.name
-			ELSE "Various Artists"
-			END AS arist_name,
+				THEN ar.name
+				ELSE "Various Artists"
+				END AS arist_name,
 			COUNT(tr.id) as album_songs,
 			SUM(tr.duration) as album_duration,
 			MIN(tr.year) as year,
 			SUM(us.play_count) as album_plays,
 			MAX(us.last_played) as last_played,
 			als.favourite,
-			als.user_rating
+			als.user_rating,
+			SUM(tr.bitrate) / COUNT(tr.id) as avg_bitrate
 		FROM tracks tr
 			LEFT JOIN artists as ar ON ar.id = tr.artist_id
 			LEFT JOIN albums_stats as als ON als.album_id = tr.album_id
@@ -586,6 +587,7 @@ func (lib *LocalLibrary) GetAlbum(
 			plays      sql.NullInt64
 			lastPlayed sql.NullInt64
 			year       sql.NullInt32
+			avgBr      sql.NullInt64
 		)
 		err := row.Scan(
 			&res.Name,
@@ -597,6 +599,7 @@ func (lib *LocalLibrary) GetAlbum(
 			&lastPlayed,
 			&fav,
 			&rating,
+			&avgBr,
 		)
 		if errors.Is(err, sql.ErrNoRows) {
 			return ErrAlbumNotFound
@@ -618,6 +621,9 @@ func (lib *LocalLibrary) GetAlbum(
 		}
 		if year.Valid {
 			res.Year = year.Int32
+		}
+		if avgBr.Valid && avgBr.Int64 > 0 {
+			res.AvgBitrate = uint64(avgBr.Int64)
 		}
 
 		return nil
@@ -709,7 +715,8 @@ func (lib *LocalLibrary) GetArtistAlbums(
 				SUM(us.play_count) as play_count,
 				als.favourite,
 				als.user_rating,
-				MIN(t.year) as album_year
+				MIN(t.year) as album_year,
+				SUM(t.bitrate) / COUNT(t.id) as avg_bitrate
 			FROM
 				tracks t
 					LEFT JOIN albums a ON a.id = t.album_id
@@ -737,6 +744,7 @@ func (lib *LocalLibrary) GetArtistAlbums(
 				fav        sql.NullInt64
 				rating     sql.NullInt16
 				year       sql.NullInt32
+				avgBr      sql.NullInt64
 			)
 
 			err := rows.Scan(
@@ -749,6 +757,7 @@ func (lib *LocalLibrary) GetArtistAlbums(
 				&fav,
 				&rating,
 				&year,
+				&avgBr,
 			)
 			if err != nil {
 				return fmt.Errorf("scanning for GetArtistAlbums error: %w", err)
@@ -767,6 +776,9 @@ func (lib *LocalLibrary) GetArtistAlbums(
 			}
 			if year.Valid {
 				res.Year = year.Int32
+			}
+			if avgBr.Valid && avgBr.Int64 > 0 {
+				res.AvgBitrate = uint64(avgBr.Int64)
 			}
 
 			albums = append(albums, res)
