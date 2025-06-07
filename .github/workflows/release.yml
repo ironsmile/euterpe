@@ -1,4 +1,4 @@
-name: Create Release
+  name: Create Release
 
 on:
   push:
@@ -30,7 +30,7 @@ jobs:
         ./tools/build
 
     - name: Upload Linux (amd64) Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: linux-amd64
         path: dist/euterpe_*.tar.gz
@@ -60,7 +60,7 @@ jobs:
         ./tools/build
 
     - name: Upload macOS (amd64) Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: macos-amd64
         path: dist/euterpe_*.tar.gz
@@ -97,12 +97,12 @@ jobs:
       # Use download-artifact: https://github.com/actions/download-artifact
 
       - name: Download Linux (amd64) Build
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: linux-amd64
 
       - name: Download macOS (amd64) Build
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: macos-amd64
 
