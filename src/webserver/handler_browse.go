@@ -186,7 +186,7 @@ func (bh BrowseHandler) browseSongs(
 	browseArgs := getBrowseArgs(page, perPage, orderBy, order)
 	tracks, count := bh.browser.BrowseTracks(browseArgs)
 	prevPage, nextPage := getBrowsePrevNextPageURI(
-		"track",
+		"song",
 		page,
 		perPage,
 		count,

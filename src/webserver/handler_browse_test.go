@@ -263,6 +263,38 @@ func TestBrowseHandlerArgumentParsing(t *testing.T) {
 // TestBrowseHandlerResponseEncoding checks the returned response from the handler. It
 // makes sure the returned JSON is the same as the one advertised in the API docs.
 func TestBrowseHandlerResponseEncoding(t *testing.T) {
+	songsResponse := []library.TrackInfo{
+		{
+			ID:          5,
+			ArtistID:    10,
+			Artist:      "Iron Maiden",
+			AlbumID:     10,
+			Album:       "Senjutsu",
+			Title:       "The Writing On The Wall",
+			TrackNumber: 3,
+			Format:      "flac",
+			Duration:    (5*60 + 58) * 1000,
+			Plays:       846726,
+			Favourite:   1234231234,
+			LastPlayed:  1234231234,
+			Rating:      5,
+			Year:        2021,
+			Bitrate:     337023,
+			Size:        5231235,
+		},
+		{
+			ID:          6,
+			ArtistID:    10,
+			Artist:      "Iron Maiden",
+			AlbumID:     10,
+			Album:       "Senjutsu",
+			Title:       "Lost In A Lost World",
+			TrackNumber: 4,
+			Format:      "flac",
+			Duration:    (5*60 + 58) * 1000,
+		},
+	}
+
 	fakeBrowser := libraryfakes.FakeBrowser{
 		BrowseAlbumsStub: func(
 			args library.BrowseArgs,
@@ -301,6 +333,12 @@ func TestBrowseHandlerResponseEncoding(t *testing.T) {
 					Name: "David Bowie",
 				},
 			}, 4
+		},
+
+		BrowseTracksStub: func(
+			args library.BrowseArgs,
+		) ([]library.TrackInfo, int) {
+			return songsResponse, 4
 		},
 	}
 
@@ -446,6 +484,64 @@ func TestBrowseHandlerResponseEncoding(t *testing.T) {
 			t.Errorf(
 				"expected artist %d to be `%+v` but it was `%+v`",
 				i, artist, respArtist,
+			)
+		}
+	}
+
+	// Try songs response.
+	req = httptest.NewRequest(
+		http.MethodGet,
+		"/v1/browse?by=song&page=2&per-page=2&order=asc&order-by=id",
+		nil,
+	)
+	resp = httptest.NewRecorder()
+	handler.ServeHTTP(resp, req)
+
+	assertContentTypeJSON(t, resp.Header().Get("Content-Type"))
+	var decSongs struct {
+		PageCount uint32              `json:"pages_count"`
+		Next      string              `json:"next"`
+		Previvous string              `json:"previous"`
+		Songs     []library.TrackInfo `json:"data"`
+	}
+	dec = json.NewDecoder(resp.Body)
+	if err := dec.Decode(&decSongs); err != nil {
+		t.Fatalf("decoding artist JSON response: %s", err)
+	}
+
+	if decSongs.PageCount != 2 {
+		t.Errorf("expected artist page_count to be 2 but it was %d", decSongs.PageCount)
+	}
+
+	if decSongs.Next != "" {
+		t.Errorf("expected next to be empty but it was `%s`", decSongs.Next)
+	}
+
+	const prevSongsPage = "/v1/browse?by=song&page=1&per-page=2&order=asc&order-by=id"
+	if decSongs.Previvous != prevSongsPage {
+		t.Errorf(
+			"expected prev to be `%s` but it was `%s`",
+			prevSongsPage,
+			decSongs.Previvous,
+		)
+	}
+
+	expectedSongs := songsResponse
+
+	if len(expectedSongs) != len(decSongs.Songs) {
+		t.Fatalf(
+			"songs response expected `%+v` but got `%+v`",
+			expectedSongs,
+			decSongs.Songs,
+		)
+	}
+
+	for i, song := range expectedSongs {
+		respSong := decSongs.Songs[i]
+		if respSong != song {
+			t.Errorf(
+				"expected song %d to be `%+v` but it was `%+v`",
+				i, song, respSong,
 			)
 		}
 	}
