@@ -40,7 +40,7 @@ func TestPlaylistsManagerCRUD(t *testing.T) {
 	const playlistName = "empty playlist"
 
 	now := time.Now()
-	id, err := manager.Create(ctx, playlistName, []int64{})
+	id, err := manager.Create(ctx, playlists.CreateArgs{Name: playlistName})
 	assert.NilErr(t, err, "creating empty playlist")
 
 	expected := playlists.Playlist{
@@ -98,6 +98,27 @@ func TestPlaylistsManagerCRUD(t *testing.T) {
 
 	_, err = manager.Get(ctx, playlist.ID)
 	assert.NotNilErr(t, err, "expected 'not found' error for deleted playlist")
+
+	const listDescription = "some playlist description"
+	now = time.Now()
+	id, err = manager.Create(ctx, playlists.CreateArgs{
+		Name:        playlistName,
+		Description: listDescription,
+	})
+	assert.NilErr(t, err, "creating empty playlist with description")
+
+	expected = playlists.Playlist{
+		Name:      playlistName,
+		Desc:      listDescription,
+		ID:        id,
+		Public:    true,
+		CreatedAt: time.Unix(now.Unix(), 0), // seconds precision in the db
+		UpdatedAt: time.Unix(now.Unix(), 0), // seconds precision in the db
+	}
+
+	playlist, err = manager.Get(ctx, id)
+	assert.NilErr(t, err, "getting a single playlist with description")
+	assertPlaylist(t, expected, playlist)
 }
 
 // TestPlaylistsManagerNotFoundErrors makes sure that the playlists manager returns
@@ -165,7 +186,8 @@ func TestPlaylistsManagerSongOperations(t *testing.T) {
 		t.Fatalf("not enough tracks found in the library for working with playlists")
 	}
 
-	playlistID, err := manager.Create(ctx, "Testing Playlist", trackIDs)
+	createArgs := playlists.CreateArgs{Name: "Testing Playlist", Tracks: trackIDs}
+	playlistID, err := manager.Create(ctx, createArgs)
 	assert.NilErr(t, err, "failed while creating a playlist with all tracks")
 
 	playlist, err := manager.Get(ctx, playlistID)
@@ -268,7 +290,7 @@ func TestPlaylistsManagerErrors(t *testing.T) {
 	}()
 	manager := playlists.NewManager(lib.ExecuteDBJobAndWait)
 
-	_, err := manager.Create(ctx, "", []int64{})
+	_, err := manager.Create(ctx, playlists.CreateArgs{})
 	assert.NotNilErr(t, err,
 		"creating a playlist with empty name should have been an error",
 	)

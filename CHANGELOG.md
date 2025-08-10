@@ -1,5 +1,9 @@
 # Change Log
 
+## v1.6.2 - 2025-08-10
+
+Fixes a bug where the description was ignored when set in the API request for creating a brand new playlist.
+
 ## v1.6.0 - 2025-06-07
 
 This one of the biggest improvements of Euterpe so far. As always, it retains API backwards compatibility with older Euterpe versions.

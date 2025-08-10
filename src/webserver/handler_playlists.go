@@ -38,9 +38,9 @@ func (plh playlistsHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 }
 
 func (plh playlistsHandler) create(w http.ResponseWriter, req *http.Request) {
-	listReq := playlistRequest{}
+	createReq := playlistRequest{}
 	dec := json.NewDecoder(req.Body)
-	if err := dec.Decode(&listReq); err != nil {
+	if err := dec.Decode(&createReq); err != nil {
 		webutils.JSONError(
 			w,
 			fmt.Sprintf("Cannot decode playlist JSON: %s", err),
@@ -49,7 +49,11 @@ func (plh playlistsHandler) create(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	newID, err := plh.playlists.Create(req.Context(), listReq.Name, listReq.AddTracksByID)
+	newID, err := plh.playlists.Create(req.Context(), playlists.CreateArgs{
+		Name:        createReq.Name,
+		Description: createReq.Desc,
+		Tracks:      createReq.AddTracksByID,
+	})
 	if err != nil {
 		webutils.JSONError(
 			w,

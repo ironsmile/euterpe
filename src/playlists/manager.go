@@ -201,10 +201,9 @@ func (m *manager) List(ctx context.Context, args ListArgs) ([]Playlist, error) {
 // Create implements Playlister.
 func (m *manager) Create(
 	ctx context.Context,
-	name string,
-	tracks []int64,
+	args CreateArgs,
 ) (int64, error) {
-	if name == "" {
+	if args.Name == "" {
 		return 0, fmt.Errorf("name cannot be empty")
 	}
 
@@ -212,9 +211,9 @@ func (m *manager) Create(
 
 	insertPlaylistQuery := `
 		INSERT INTO
-			playlists (name, public, created_at, updated_at)
+			playlists (name, description, public, created_at, updated_at)
 		VALUES
-			(@name, 1, @current_time, @current_time)
+			(@name, @description, 1, @current_time, @current_time)
 	`
 
 	insertSongsQuery := `
@@ -238,9 +237,15 @@ func (m *manager) Create(
 			}
 		}()
 
+		descVal := sql.Named("description", nil)
+		if args.Description != "" {
+			descVal = sql.Named("description", args.Description)
+		}
+
 		res, err := tx.ExecContext(ctx, insertPlaylistQuery,
-			sql.Named("name", name),
+			sql.Named("name", args.Name),
 			sql.Named("current_time", time.Now().Unix()),
+			descVal,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to insert playlist: %w", err)
@@ -252,18 +257,18 @@ func (m *manager) Create(
 		}
 
 		lastInsertID = id
-		if len(tracks) == 0 {
+		if len(args.Tracks) == 0 {
 			return nil
 		}
 
 		insertSongsQuery += strings.TrimSuffix(strings.Repeat(
-			"(@playlist_id, ?, ?),", len(tracks),
+			"(@playlist_id, ?, ?),", len(args.Tracks),
 		), ",")
 
 		queryVals := []any{
 			sql.Named("playlist_id", lastInsertID),
 		}
-		for index, trackID := range tracks {
+		for index, trackID := range args.Tracks {
 			queryVals = append(queryVals, trackID, index)
 		}
 

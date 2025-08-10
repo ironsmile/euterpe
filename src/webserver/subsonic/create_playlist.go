@@ -31,7 +31,11 @@ func (s *subsonic) createNewPlaylist(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	id, err := s.playlists.Create(req.Context(), name, trackIDs)
+	createArgs := playlists.CreateArgs{
+		Name:   name,
+		Tracks: trackIDs,
+	}
+	id, err := s.playlists.Create(req.Context(), createArgs)
 	if err != nil {
 		resp := responseError(
 			errCodeGeneric,

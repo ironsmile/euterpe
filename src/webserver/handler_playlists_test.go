@@ -24,6 +24,7 @@ func TestPlaylistsCreation(t *testing.T) {
 	const (
 		expectedID   = 10
 		expectedName = "new playlist"
+		expectedDesc = "some description"
 	)
 	var expectedTracks = []int64{4, 8}
 
@@ -36,6 +37,7 @@ func TestPlaylistsCreation(t *testing.T) {
 
 	body := bytes.NewBufferString(`{
 		"name": "new playlist",
+		"description": "some description",
 		"add_tracks_by_id": [4, 8]
 	}`)
 	req := httptest.NewRequest(http.MethodPost, "/v1/playlists", body)
@@ -47,11 +49,12 @@ func TestPlaylistsCreation(t *testing.T) {
 	assertJSONContentType(t, result)
 
 	assert.Equal(t, 1, fakeplay.CreateCallCount(), "unexpected number of Create calls")
-	_, actualName, actualTracks := fakeplay.CreateArgsForCall(0)
-	assert.Equal(t, expectedName, actualName, "wrong name during creation")
-	assert.Equal(t, len(expectedTracks), len(actualTracks), "wrong number of tracks")
+	_, actualArgs := fakeplay.CreateArgsForCall(0)
+	assert.Equal(t, expectedName, actualArgs.Name, "wrong name during creation")
+	assert.Equal(t, expectedDesc, actualArgs.Description, "wrong description")
+	assert.Equal(t, len(expectedTracks), len(actualArgs.Tracks), "wrong number of tracks")
 	for ind, trackID := range expectedTracks {
-		assert.Equal(t, trackID, actualTracks[ind], "track at index %s mismatch", ind)
+		assert.Equal(t, trackID, actualArgs.Tracks[ind], "track at index %s mismatch", ind)
 	}
 
 	respJSON := struct {

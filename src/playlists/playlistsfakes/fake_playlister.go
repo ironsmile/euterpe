@@ -22,12 +22,11 @@ type FakePlaylister struct {
 		result1 int64
 		result2 error
 	}
-	CreateStub        func(context.Context, string, []int64) (int64, error)
+	CreateStub        func(context.Context, playlists.CreateArgs) (int64, error)
 	createMutex       sync.RWMutex
 	createArgsForCall []struct {
 		arg1 context.Context
-		arg2 string
-		arg3 []int64
+		arg2 playlists.CreateArgs
 	}
 	createReturns struct {
 		result1 int64
@@ -158,25 +157,19 @@ func (fake *FakePlaylister) CountReturnsOnCall(i int, result1 int64, result2 err
 	}{result1, result2}
 }
 
-func (fake *FakePlaylister) Create(arg1 context.Context, arg2 string, arg3 []int64) (int64, error) {
-	var arg3Copy []int64
-	if arg3 != nil {
-		arg3Copy = make([]int64, len(arg3))
-		copy(arg3Copy, arg3)
-	}
+func (fake *FakePlaylister) Create(arg1 context.Context, arg2 playlists.CreateArgs) (int64, error) {
 	fake.createMutex.Lock()
 	ret, specificReturn := fake.createReturnsOnCall[len(fake.createArgsForCall)]
 	fake.createArgsForCall = append(fake.createArgsForCall, struct {
 		arg1 context.Context
-		arg2 string
-		arg3 []int64
-	}{arg1, arg2, arg3Copy})
+		arg2 playlists.CreateArgs
+	}{arg1, arg2})
 	stub := fake.CreateStub
 	fakeReturns := fake.createReturns
-	fake.recordInvocation("Create", []interface{}{arg1, arg2, arg3Copy})
+	fake.recordInvocation("Create", []interface{}{arg1, arg2})
 	fake.createMutex.Unlock()
 	if stub != nil {
-		return stub(arg1, arg2, arg3)
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
@@ -190,17 +183,17 @@ func (fake *FakePlaylister) CreateCallCount() int {
 	return len(fake.createArgsForCall)
 }
 
-func (fake *FakePlaylister) CreateCalls(stub func(context.Context, string, []int64) (int64, error)) {
+func (fake *FakePlaylister) CreateCalls(stub func(context.Context, playlists.CreateArgs) (int64, error)) {
 	fake.createMutex.Lock()
 	defer fake.createMutex.Unlock()
 	fake.CreateStub = stub
 }
 
-func (fake *FakePlaylister) CreateArgsForCall(i int) (context.Context, string, []int64) {
+func (fake *FakePlaylister) CreateArgsForCall(i int) (context.Context, playlists.CreateArgs) {
 	fake.createMutex.RLock()
 	defer fake.createMutex.RUnlock()
 	argsForCall := fake.createArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakePlaylister) CreateReturns(result1 int64, result2 error) {

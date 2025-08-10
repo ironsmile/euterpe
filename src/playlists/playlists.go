@@ -23,11 +23,10 @@ type Playlister interface {
 	// Count returns the count of all playlists available.
 	Count(ctx context.Context) (int64, error)
 
-	// Create creates a new playlist with the given name. `songs` is an list
-	// of track IDs to be added in the playlist.
+	// Create creates a new playlist with the given create arguments.
 	//
 	// Returns the unique ID of the newly created playlist.
-	Create(ctx context.Context, name string, tracks []int64) (int64, error)
+	Create(ctx context.Context, args CreateArgs) (int64, error)
 
 	// Update updates the playlist with ID `id` with the values
 	// given in `args`. Note that everything in args is optional
@@ -57,6 +56,18 @@ type Playlist struct {
 	// Tracks is the which are added to this playlist. The slice is ordered by
 	// the tracks' explicit order in the playlist.
 	Tracks []library.TrackInfo
+}
+
+// CreateArgs are the arguments needed for creating a playlist.
+type CreateArgs struct {
+	Name string // Name is the short name of the playlist. Required.
+
+	// Description is an optional short text which explains more about the playlist.
+	Description string
+
+	// Tracks is an list of track IDs to be added in the playlist. May be left
+	// empty.
+	Tracks []int64
 }
 
 // UpdateArgs is all the possible arguments which could be updated
