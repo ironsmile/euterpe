@@ -1,5 +1,9 @@
 # Change Log
 
+## v1.6.3 - 2026-01-01
+
+This version fixes a bug with listing when an album has no tracks.
+
 ## v1.6.2 - 2025-08-10
 
 Fixes a bug where the description was ignored when set in the API request for creating a brand new playlist.
