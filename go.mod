@@ -1,6 +1,6 @@
 module github.com/ironsmile/euterpe
 
-go 1.24
+go 1.24.0
 
 require (
 	github.com/dhowden/tag v0.0.0-20240417053706-3d75831295e8
@@ -18,7 +18,7 @@ require (
 	github.com/terminalstatic/go-xsd-validate v0.1.5
 	github.com/wtolson/go-taglib v0.0.0-20180718000046-586eb63c2628
 	golang.org/x/image v0.19.0
-	golang.org/x/sync v0.13.0
+	golang.org/x/sync v0.18.0
 	gopkg.in/mineo/gocaa.v1 v1.0.0-20180225115936-2500f801cd83
 )
 
@@ -29,10 +29,10 @@ require (
 	github.com/lib/pq v1.10.4 // indirect
 	github.com/magefile/mage v1.12.1 // indirect
 	github.com/ziutek/mymysql v1.5.4 // indirect
-	golang.org/x/crypto v0.37.0 // indirect
-	golang.org/x/mod v0.17.0 // indirect
-	golang.org/x/text v0.24.0 // indirect
-	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
+	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/mod v0.29.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/tools v0.38.0 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gopkg.in/gorp.v1 v1.7.1 // indirect
 )
