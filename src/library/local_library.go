@@ -582,6 +582,7 @@ func (lib *LocalLibrary) GetAlbum(
 		row := db.QueryRowContext(ctx, query, albumID)
 
 		var (
+			dur        sql.NullInt64
 			fav        sql.NullInt64
 			rating     sql.NullInt16
 			plays      sql.NullInt64
@@ -593,7 +594,7 @@ func (lib *LocalLibrary) GetAlbum(
 			&res.Name,
 			&res.Artist,
 			&res.SongCount,
-			&res.Duration,
+			&dur,
 			&year,
 			&plays,
 			&lastPlayed,
@@ -607,6 +608,9 @@ func (lib *LocalLibrary) GetAlbum(
 			return fmt.Errorf("sql query for artist info failed: %w", err)
 		}
 		res.ID = albumID
+		if dur.Valid {
+			res.Duration = dur.Int64
+		}
 		if fav.Valid {
 			res.Favourite = fav.Int64
 		}

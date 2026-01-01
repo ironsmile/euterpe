@@ -272,6 +272,7 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 		for rows.Next() {
 			var (
 				res    Album
+				dur    sql.NullInt64
 				fav    sql.NullInt64
 				rating sql.NullInt16
 				plays  sql.NullInt64
@@ -280,9 +281,12 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 			)
 			if err := rows.Scan(
 				&res.ID, &res.Name, &res.Artist, &res.SongCount,
-				&res.Duration, &plays, &year, &fav, &rating, &avgBr,
+				&dur, &plays, &year, &fav, &rating, &avgBr,
 			); err != nil {
 				return fmt.Errorf("scanning db failed: %w", err)
+			}
+			if dur.Valid {
+				res.Duration = dur.Int64
 			}
 			if fav.Valid {
 				res.Favourite = fav.Int64
