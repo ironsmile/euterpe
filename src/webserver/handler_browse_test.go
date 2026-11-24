@@ -31,7 +31,7 @@ func TestBrowseHandlerArgumentParsing(t *testing.T) {
 			expectedCode: http.StatusOK,
 			expectedAlbumArgs: &library.BrowseArgs{
 				PerPage: 10,
-				Page:    0,
+				Offset:  0,
 				OrderBy: library.OrderByName,
 				Order:   library.OrderAsc,
 			},

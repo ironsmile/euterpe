@@ -100,7 +100,7 @@ func (fh AlbumHandler) writeZipContents(writer io.Writer, files []string) (int64
 			return written, err
 		}
 
-		defer fh.Close()
+		defer fh.Close() //nolint:errcheck
 
 		zfh, err := zipWriter.Create(filepath.Base(file))
 		if err != nil {

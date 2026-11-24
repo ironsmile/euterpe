@@ -34,7 +34,7 @@ func TestOsFSOpen(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error opening temporary file with osFS: %s", err)
 	}
-	defer fh.Close()
+	defer fh.Close() //nolint:errcheck
 
 	foundContents, err := io.ReadAll(fh)
 	if err != nil {

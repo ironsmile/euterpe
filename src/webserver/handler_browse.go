@@ -33,7 +33,7 @@ func (bh BrowseHandler) browse(writer http.ResponseWriter, req *http.Request) er
 		return nil
 	}
 
-	var page, perPage int = 1, 10
+	var page, perPage = 1, 10
 	pageStr := req.Form.Get("page")
 	perPageStr := req.Form.Get("per-page")
 	browseBy := req.Form.Get("by")

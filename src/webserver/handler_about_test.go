@@ -21,7 +21,7 @@ func TestAboutHandler(t *testing.T) {
 	resp := httptest.NewRecorder()
 
 	aboutHandler.ServeHTTP(resp, req)
-	defer resp.Result().Body.Close()
+	defer resp.Result().Body.Close() //nolint:errcheck
 
 	assert.Equal(t, http.StatusOK, resp.Result().StatusCode)
 	if !strings.Contains(resp.Result().Header.Get("Content-Type"), "application/json") {

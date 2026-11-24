@@ -48,7 +48,7 @@ func (lib *LocalLibrary) watchEventRoutine() {
 
 	defer func() {
 		lib.watchLock.Lock()
-		lib.watch.Close()
+		_ = lib.watch.Close()
 		lib.watchLock.Unlock()
 	}()
 

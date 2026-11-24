@@ -102,7 +102,7 @@ func (lib *LocalLibrary) BrowseArtists(args BrowseArgs) ([]Artist, int) {
 			return err
 		}
 
-		defer rows.Close()
+		defer rows.Close() //nolint:errcheck
 		for rows.Next() {
 			var (
 				res    Artist
@@ -216,7 +216,7 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 		if err != nil {
 			log.Printf("Query for getting albums count not prepared: %s\n", err)
 		} else {
-			defer smt.Close()
+			defer smt.Close() //nolint:errcheck
 
 			err = smt.QueryRow(queryArgs...).Scan(&albumsCount)
 			if err != nil {
@@ -268,7 +268,7 @@ func (lib *LocalLibrary) BrowseAlbums(args BrowseArgs) ([]Album, int) {
 			return err
 		}
 
-		defer rows.Close()
+		defer rows.Close() //nolint:errcheck
 		for rows.Next() {
 			var (
 				res    Album
@@ -418,7 +418,7 @@ func (lib *LocalLibrary) BrowseTracks(args BrowseArgs) ([]TrackInfo, int) {
 			return nil
 		}
 
-		defer rows.Close()
+		defer rows.Close() //nolint:errcheck
 		for rows.Next() {
 			res, err := ScanTrack(rows)
 			if err != nil {
@@ -454,7 +454,7 @@ func (lib *LocalLibrary) getTableSize(table string) int {
 			log.Printf("Query for getting %s count not prepared: %s\n", table, err)
 			return nil
 		}
-		defer smt.Close()
+		defer smt.Close() //nolint:errcheck
 
 		err = smt.QueryRow().Scan(&count)
 

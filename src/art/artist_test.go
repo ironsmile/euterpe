@@ -39,7 +39,7 @@ func TestClientGetArtistImage(t *testing.T) {
 		_, _ = w.Write(imageBytes)
 	}
 	imgServer := httptest.NewServer(http.HandlerFunc(imgHandler))
-	defer imgServer.Close()
+	defer imgServer.Close() //nolint:errcheck
 
 	mbrainzHandler := func(w http.ResponseWriter, req *http.Request) {
 		mbzHandlerCalled = true
@@ -159,7 +159,7 @@ func TestClientGetArtistImage(t *testing.T) {
 		}
 	}
 	mbrainz := httptest.NewServer(http.HandlerFunc(mbrainzHandler))
-	defer mbrainz.Close()
+	defer mbrainz.Close() //nolint:errcheck
 
 	discogsHandler := func(w http.ResponseWriter, req *http.Request) {
 		dscHandlerCalled = true
@@ -210,7 +210,7 @@ func TestClientGetArtistImage(t *testing.T) {
 		}`, imgServer.URL)
 	}
 	discogs := httptest.NewServer(http.HandlerFunc(discogsHandler))
-	defer discogs.Close()
+	defer discogs.Close() //nolint:errcheck
 
 	c := art.NewClient(userAgent, 0, discogsToken)
 	c.SetMusicBrainzAPIURL(mbrainz.URL)
@@ -304,7 +304,7 @@ func TestClientGetArtistImageErrors(t *testing.T) {
 		_, _ = w.Write([]byte("some image, promise"))
 	}
 	imgServerSuccess := httptest.NewServer(http.HandlerFunc(imgHandlerSuccess))
-	defer imgServerSuccess.Close()
+	defer imgServerSuccess.Close() //nolint:errcheck
 
 	discogsHandlerSuccess := func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, `{
@@ -481,7 +481,7 @@ func TestClientGetArtistImageErrors(t *testing.T) {
 			}
 
 			mbrainz := httptest.NewServer(http.HandlerFunc(mbHandler))
-			defer mbrainz.Close()
+			defer mbrainz.Close() //nolint:errcheck
 
 			discogsHandler := discogsHandlerSuccess
 			if test.discogsHandler != nil {
@@ -489,7 +489,7 @@ func TestClientGetArtistImageErrors(t *testing.T) {
 			}
 
 			discogs := httptest.NewServer(http.HandlerFunc(discogsHandler))
-			defer discogs.Close()
+			defer discogs.Close() //nolint:errcheck
 
 			c := art.NewClient("euterpe/testing-errors", 0, "discogsToken")
 			c.SetMusicBrainzAPIURL(mbrainz.URL)

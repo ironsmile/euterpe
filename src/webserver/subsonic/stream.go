@@ -28,7 +28,7 @@ func (s *subsonic) stream(w http.ResponseWriter, req *http.Request) {
 		http.NotFoundHandler().ServeHTTP(w, req)
 		return
 	}
-	defer fh.Close()
+	defer fh.Close() //nolint:errcheck
 
 	modTime := time.Time{}
 	st, err := fh.Stat()

@@ -150,7 +150,7 @@ func FindAndParse(appfs afero.Fs) (Config, error) {
 	if err != nil {
 		return Config{}, fmt.Errorf("opening config: %w", err)
 	}
-	defer fh.Close()
+	defer fh.Close() //nolint:errcheck
 
 	dec := json.NewDecoder(fh)
 
@@ -218,7 +218,7 @@ func copyDefaultOverUser(appfs afero.Fs) error {
 	if err != nil {
 		return fmt.Errorf("create config `%s`: %w", userCfgPath, err)
 	}
-	defer fh.Close()
+	defer fh.Close() //nolint:errcheck
 
 	enc := json.NewEncoder(fh)
 	enc.SetIndent("", "  ")

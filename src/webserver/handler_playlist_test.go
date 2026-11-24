@@ -195,7 +195,7 @@ func TestPlaylistHandlerErrors(t *testing.T) {
 			handler.ServeHTTP(resp, req)
 
 			result := resp.Result()
-			defer result.Body.Close()
+			defer result.Body.Close() //nolint:errcheck
 
 			assert.Equal(t, test.expectedCode, result.StatusCode,
 				"HTTP error response mismatch",

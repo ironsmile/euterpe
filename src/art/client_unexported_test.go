@@ -101,7 +101,7 @@ func TestClientGettingMusicBrainzAristIDs(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			mbrainz := httptest.NewServer(test.handler)
-			defer mbrainz.Close()
+			defer mbrainz.Close() //nolint:errcheck
 
 			c := NewClient("user-agent/testing", 0, "")
 			c.musicBrainzAPIHost = mbrainz.URL

@@ -76,7 +76,7 @@ func TestClientGetFrontImage(t *testing.T) {
 		`)
 	}
 	mbrainz := httptest.NewServer(http.HandlerFunc(mbrainzHandler))
-	defer mbrainz.Close()
+	defer mbrainz.Close() //nolint:errcheck
 
 	artCli := art.NewClient("euterpe/testing", 0, "")
 	artCli.SetMusicBrainzAPIURL(mbrainz.URL)
@@ -212,7 +212,7 @@ func TestClientGetFrontImageErrors(t *testing.T) {
 		`)
 	}
 	mbrainz := httptest.NewServer(http.HandlerFunc(mbrainzHandler))
-	defer mbrainz.Close()
+	defer mbrainz.Close() //nolint:errcheck
 
 	artCli := art.NewClient("euterpe/testing", 0, "")
 	artCli.SetMusicBrainzAPIURL(mbrainz.URL)

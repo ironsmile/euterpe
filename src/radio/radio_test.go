@@ -198,9 +198,9 @@ func TestRadioManagerFaultyDB(t *testing.T) {
 	if err != nil {
 		t.Fatalf("creating DB failed: %s", err)
 	}
-	defer emptyDB.Close()
+	defer emptyDB.Close() //nolint:errcheck
 
-	var dbWorker func(work library.DatabaseExecutable) error = func(
+	var dbWorker = func(
 		work library.DatabaseExecutable,
 	) error {
 		return work(emptyDB)

@@ -62,24 +62,24 @@ var (
 	ErrNotFound = errors.New("not found")
 
 	// ErrAlbumNotFound is returned when no album could be found for particular operation.
-	ErrAlbumNotFound = fmt.Errorf("Album: %w", ErrNotFound)
+	ErrAlbumNotFound = fmt.Errorf("album: %w", ErrNotFound)
 
 	// ErrArtistNotFound is returned when no artist could be found for particular operation.
-	ErrArtistNotFound = fmt.Errorf("Artist: %w", ErrNotFound)
+	ErrArtistNotFound = fmt.Errorf("artist: %w", ErrNotFound)
 
 	// ErrArtworkNotFound is returned when no artwork can be found for particular album.
-	ErrArtworkNotFound = NewArtworkError(fmt.Errorf("Artwork: %w", ErrNotFound))
+	ErrArtworkNotFound = NewArtworkError(fmt.Errorf("artwork: %w", ErrNotFound))
 
 	// ErrCachedArtworkNotFound is returned when the database has been queried and
 	// its cache says the artwork was not found in the recent past. No need to continue
 	// searching further once you receive this error.
 	ErrCachedArtworkNotFound = NewArtworkError(
-		fmt.Errorf("Artwork (cached): %w", ErrNotFound),
+		fmt.Errorf("artwork (cached): %w", ErrNotFound),
 	)
 
 	// ErrArtworkTooBig is returned from operation when the artwork is too big for it to
 	// handle.
-	ErrArtworkTooBig = NewArtworkError(errors.New("Artwork Is Too Big"))
+	ErrArtworkTooBig = NewArtworkError(errors.New("artwork is too big"))
 )
 
 // ArtworkError represents some kind of artwork error.
@@ -160,7 +160,9 @@ type LocalLibrary struct {
 // Close closes the database connection. It is safe to call it as many times as you want.
 func (lib *LocalLibrary) Close() {
 	lib.ctxCancelFunc()
-	lib.db.Close()
+	if err := lib.db.Close(); err != nil {
+		log.Printf("failed to close the database: %s", err)
+	}
 }
 
 // AddLibraryPath adds a library directory to the list of libraries which will be
@@ -207,7 +209,7 @@ func (lib *LocalLibrary) Search(ctx context.Context, args SearchArgs) []SearchRe
 			return nil
 		}
 
-		defer rows.Close()
+		defer rows.Close() //nolint:errcheck
 		for rows.Next() {
 			res, err := ScanTrack(rows)
 			if err != nil {
@@ -276,7 +278,7 @@ func (lib *LocalLibrary) SearchAlbums(ctx context.Context, args SearchArgs) []Al
 			return nil
 		}
 
-		defer rows.Close()
+		defer rows.Close() //nolint:errcheck
 		for rows.Next() {
 			var (
 				res        Album
@@ -359,7 +361,7 @@ func (lib *LocalLibrary) SearchArtists(ctx context.Context, args SearchArgs) []A
 			return nil
 		}
 
-		defer rows.Close()
+		defer rows.Close() //nolint:errcheck
 		for rows.Next() {
 			var (
 				res    Artist
@@ -410,7 +412,7 @@ func (lib *LocalLibrary) GetFilePath(ctx context.Context, ID int64) string {
 			return nil
 		}
 
-		defer smt.Close()
+		defer smt.Close() //nolint:errcheck
 
 		err = smt.QueryRowContext(ctx, ID).Scan(&filePath)
 		if err != nil {
@@ -443,7 +445,7 @@ func (lib *LocalLibrary) GetAlbumFiles(ctx context.Context, albumID int64) []Tra
 			return nil
 		}
 
-		defer rows.Close()
+		defer rows.Close() //nolint:errcheck
 		for rows.Next() {
 			res, err := ScanTrack(rows)
 			if err != nil {
@@ -736,7 +738,7 @@ func (lib *LocalLibrary) GetArtistAlbums(
 			return nil
 		}
 
-		defer rows.Close()
+		defer rows.Close() //nolint:errcheck
 		for rows.Next() {
 			res := Album{
 				Artist: artistName,
@@ -978,7 +980,7 @@ func (lib *LocalLibrary) MediaExistsInLibrary(filename string) bool {
 			res = false
 			return fmt.Errorf("could not prepare sql statement: %s", err)
 		}
-		defer smt.Close()
+		defer smt.Close() //nolint:errcheck
 
 		var count int
 		err = smt.QueryRow(filename).Scan(&count)
@@ -1017,7 +1019,7 @@ func (lib *LocalLibrary) GetArtistID(artist string) (int64, error) {
 			return err
 		}
 
-		defer smt.Close()
+		defer smt.Close() //nolint:errcheck
 
 		var id int64
 		err = smt.QueryRow(artist).Scan(&id)
@@ -1061,7 +1063,7 @@ func (lib *LocalLibrary) setArtistID(artist string) (int64, error) {
 			return err
 		}
 
-		defer stmt.Close()
+		defer stmt.Close() //nolint:errcheck
 
 		res, err := stmt.Exec(artist)
 		if err != nil {
@@ -1119,7 +1121,7 @@ func (lib *LocalLibrary) GetAlbumID(album string, fsPath string) (int64, error) 
 			return err
 		}
 
-		defer smt.Close()
+		defer smt.Close() //nolint:errcheck
 
 		var id int64
 		err = smt.QueryRow(album, fsPath).Scan(&id)
@@ -1162,7 +1164,7 @@ func (lib *LocalLibrary) setAlbumID(album string, fsPath string) (int64, error) 
 			return err
 		}
 
-		defer stmt.Close()
+		defer stmt.Close() //nolint:errcheck
 
 		res, err := stmt.Exec(album, fsPath)
 		if err != nil {
@@ -1220,7 +1222,7 @@ func (lib *LocalLibrary) GetAlbumFSPathByName(albumName string) ([]string, error
 			return err
 		}
 
-		defer row.Close()
+		defer row.Close() //nolint:errcheck
 
 		var albumPath string
 		for row.Next() {
@@ -1262,7 +1264,7 @@ func (lib *LocalLibrary) GetAlbumFSPathByID(albumID int64) (string, error) {
 			return err
 		}
 
-		defer row.Close()
+		defer row.Close() //nolint:errcheck
 
 		if row.Next() {
 			if err := row.Scan(&path); err != nil {
@@ -1304,7 +1306,7 @@ func (lib *LocalLibrary) GetTrackID(
 			return err
 		}
 
-		defer smt.Close()
+		defer smt.Close() //nolint:errcheck
 
 		var id int64
 		err = smt.QueryRow(title, artistID, albumID).Scan(&id)
@@ -1367,7 +1369,7 @@ func (lib *LocalLibrary) setTrackID(
 			return err
 		}
 
-		defer stmt.Close()
+		defer stmt.Close() //nolint:errcheck
 
 		bitrateArg := sql.Named("bitrate", bitrate)
 		if bitrate == 0 {
@@ -1423,7 +1425,7 @@ func (lib *LocalLibrary) setTrackID(
 			return err
 		}
 
-		defer smt.Close()
+		defer smt.Close() //nolint:errcheck
 
 		var id int64
 		err = smt.QueryRow(fsPath).Scan(&id)
@@ -1509,7 +1511,7 @@ func (lib *LocalLibrary) readSchema() (string, error) {
 			err,
 		)
 	}
-	defer out.Close()
+	defer out.Close() //nolint:errcheck
 
 	schema, err := io.ReadAll(out)
 	if err != nil {

@@ -50,7 +50,7 @@ func (s *subsonic) getIndexes(w http.ResponseWriter, req *http.Request) {
 	)
 	for {
 		artists, totalCount := s.libBrowser.BrowseArtists(library.BrowseArgs{
-			Page:    page,
+			Page:    page, //nolint:staticcheck
 			PerPage: 500,
 			Order:   library.OrderAsc,
 			OrderBy: library.OrderByName,

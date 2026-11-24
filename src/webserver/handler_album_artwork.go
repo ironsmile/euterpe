@@ -37,7 +37,7 @@ func (aah AlbumArtworkHandler) ServeHTTP(writer http.ResponseWriter, req *http.R
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(writer, "Bad request. Parsing albumID: %s\n", err)
+		_, _ = fmt.Fprintf(writer, "Bad request. Parsing albumID: %s\n", err)
 		return
 	}
 
@@ -83,11 +83,11 @@ func (aah AlbumArtworkHandler) Find(
 
 		notFoundImage, err := aah.rootFS.Open(aah.notFoundPath)
 		if err == nil {
-			defer notFoundImage.Close()
+			defer notFoundImage.Close() //nolint:errcheck
 			_, _ = io.Copy(writer, notFoundImage)
 		} else {
 			log.Printf("Error opening not-found image: %s\n", err)
-			fmt.Fprintln(writer, "404 image not found")
+			_, _ = fmt.Fprintln(writer, "404 image not found")
 		}
 		return nil
 	}
@@ -97,7 +97,7 @@ func (aah AlbumArtworkHandler) Find(
 		return err
 	}
 
-	defer imgReader.Close()
+	defer imgReader.Close() //nolint:errcheck
 
 	writer.Header().Set("Cache-Control", "max-age=604800")
 	if req.Method == http.MethodHead {

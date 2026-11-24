@@ -70,11 +70,7 @@ func (h *loginHandler) respondCorrect(
 	r *http.Request,
 	returnTo string,
 ) {
-	sessionCookie := true
-
-	if r.PostFormValue("remember_me") == "on" {
-		sessionCookie = false
-	}
+	sessionCookie := r.PostFormValue("remember_me") != "on"
 
 	var expiresAt time.Time
 	now := time.Now()

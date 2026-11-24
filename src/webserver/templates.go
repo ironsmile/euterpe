@@ -48,7 +48,7 @@ func (t *FSTemplates) All() (*AllTemplates, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not find player.html template: %s", err)
 	}
-	defer pfh.Close()
+	defer pfh.Close() //nolint:errcheck
 	tplContents, err := io.ReadAll(pfh)
 	if err != nil {
 		return nil, fmt.Errorf("error reading player.html: %s", err)
@@ -63,7 +63,7 @@ func (t *FSTemplates) All() (*AllTemplates, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not find add_device.html template: %s", err)
 	}
-	defer adfh.Close()
+	defer adfh.Close() //nolint:errcheck
 	tplContents, err = io.ReadAll(adfh)
 	if err != nil {
 		return nil, fmt.Errorf("error reading add_device.html: %s", err)

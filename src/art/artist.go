@@ -109,7 +109,7 @@ func (c *Client) getMusicBrainzArtistID(
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf(
@@ -177,7 +177,7 @@ func (c *Client) getDiscogsArtistID(
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf(
@@ -246,7 +246,7 @@ func (c *Client) getDiscogsArtistImage(
 	if err != nil {
 		return nil, fmt.Errorf("request to Discogs API failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf(
@@ -299,7 +299,7 @@ func (c *Client) downloadDiscogsImage(
 	if err != nil {
 		return nil, fmt.Errorf("request for Discogs image failed: %w", err)
 	}
-	defer imgResp.Body.Close()
+	defer imgResp.Body.Close() //nolint:errcheck
 
 	if imgResp.StatusCode != http.StatusOK {
 		return nil, ErrImageNotFound

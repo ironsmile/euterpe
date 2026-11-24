@@ -1,0 +1,13 @@
+version: "2"
+
+linters:
+  exclusions:
+    rules:
+      # Exclude some linters from running on tests files.
+      - path: _test\.go
+        linters:
+          - errcheck # Many tests just close writers or readers.
+
+      - linters:
+          - staticcheck
+        text: "QF1003:" # I _could_ use tagged switch but I don't want to.

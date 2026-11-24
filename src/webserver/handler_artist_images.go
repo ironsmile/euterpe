@@ -34,7 +34,7 @@ func (aih ArtstImageHandler) ServeHTTP(writer http.ResponseWriter, req *http.Req
 	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(writer, "Bad request. Parsing artistID: %s\n", err)
+		_, _ = fmt.Fprintf(writer, "Bad request. Parsing artistID: %s\n", err)
 		return
 	}
 
@@ -78,7 +78,7 @@ func (aih ArtstImageHandler) Find(
 			return nil
 		}
 
-		fmt.Fprintln(writer, "404 image not found")
+		_, _ = fmt.Fprintln(writer, "404 image not found")
 		return nil
 	}
 
@@ -87,7 +87,7 @@ func (aih ArtstImageHandler) Find(
 		return err
 	}
 
-	defer imgReader.Close()
+	defer imgReader.Close() //nolint:errcheck
 
 	writer.Header().Set("Cache-Control", "max-age=604800")
 	if req.Method == http.MethodHead {

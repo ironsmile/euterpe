@@ -215,7 +215,7 @@ func TestAuthHandler(t *testing.T) {
 			)
 
 			srv := httptest.NewServer(sh)
-			defer srv.Close()
+			defer srv.Close() //nolint:errcheck
 
 			reqURL, err := url.Parse(srv.URL)
 			if err != nil {
@@ -244,7 +244,7 @@ func TestAuthHandler(t *testing.T) {
 			if err != nil {
 				t.Fatalf("HTTP request failed: %s", err)
 			}
-			defer resp.Body.Close()
+			defer resp.Body.Close() //nolint:errcheck
 
 			if test.Success {
 				checkSuccess(t, resp)

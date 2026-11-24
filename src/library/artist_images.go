@@ -181,7 +181,7 @@ func (lib *LocalLibrary) artistImageFromDBForSize(
 			log.Printf("could not prepare album artwork sql statement: %s", err)
 			return err
 		}
-		defer smt.Close()
+		defer smt.Close() //nolint:errcheck
 
 		err = smt.QueryRowContext(ctx, artistID).Scan(&buff, &unixTime)
 		if err == sql.ErrNoRows {
@@ -225,7 +225,7 @@ func (lib *LocalLibrary) artistImageFromInternet(
 		}
 
 		defer func(row *sql.Rows) {
-			row.Close()
+			_ = row.Close()
 		}(row)
 
 		if !row.Next() {
@@ -258,7 +258,7 @@ func (lib *LocalLibrary) storeArtistImage(
 	image io.ReadCloser,
 	size ImageSize,
 ) (io.ReadCloser, ImageSize, error) {
-	defer image.Close()
+	defer image.Close() //nolint:errcheck
 
 	buff, err := io.ReadAll(image)
 	if err != nil {
@@ -288,7 +288,7 @@ func (lib *LocalLibrary) storeArtistImage(
 			return err
 		}
 
-		defer stmt.Close()
+		defer stmt.Close() //nolint:errcheck
 
 		_, err = stmt.Exec(albumID, buff, time.Now().Unix())
 
@@ -319,7 +319,7 @@ func (lib *LocalLibrary) saveArtistImageNotFound(artistID int64) error {
 			return err
 		}
 
-		defer stmt.Close()
+		defer stmt.Close() //nolint:errcheck
 
 		_, err = stmt.Exec(artistID, time.Now().Unix())
 		if err != nil {
@@ -384,7 +384,7 @@ func (lib *LocalLibrary) SaveArtistImage(
 			return err
 		}
 
-		defer stmt.Close()
+		defer stmt.Close() //nolint:errcheck
 
 		_, err = stmt.Exec(artistID, buff, time.Now().Unix())
 		return err

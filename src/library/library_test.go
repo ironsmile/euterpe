@@ -143,7 +143,7 @@ func TestInitialize(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	defer lib.Close()
+	defer lib.Close() //nolint:errcheck
 
 	err = lib.Initialize()
 
@@ -170,7 +170,7 @@ func TestInitialize(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer db.Close() //nolint:errcheck
 
 	var queries = []string{
 		"SELECT count(id) as cnt FROM albums",
@@ -183,7 +183,7 @@ func TestInitialize(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer row.Close()
+		defer row.Close() //nolint:errcheck
 	}
 }
 
@@ -551,7 +551,7 @@ func TestAddingNewFiles(t *testing.T) {
 			t.Fatal(err)
 			return 0
 		}
-		defer rows.Close()
+		defer rows.Close() //nolint:errcheck
 
 		var count int
 

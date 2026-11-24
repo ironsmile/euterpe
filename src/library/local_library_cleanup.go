@@ -78,7 +78,7 @@ func (lib *LocalLibrary) cleanupTracks() {
 			if err != nil {
 				return err
 			}
-			defer rows.Close()
+			defer rows.Close() //nolint:errcheck
 
 			for rows.Next() {
 				if err := rows.Scan(&tr.id, &tr.fsPath); err != nil {
@@ -136,7 +136,7 @@ func (lib *LocalLibrary) cleanupAlbums() {
 			if err != nil {
 				return err
 			}
-			defer rows.Close()
+			defer rows.Close() //nolint:errcheck
 
 			for rows.Next() {
 				if err := rows.Scan(&albumID); err != nil {
@@ -192,7 +192,7 @@ func (lib *LocalLibrary) cleanupArtists() {
 			if err != nil {
 				return err
 			}
-			defer rows.Close()
+			defer rows.Close() //nolint:errcheck
 
 			for rows.Next() {
 				if err := rows.Scan(&artistID); err != nil {

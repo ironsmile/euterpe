@@ -82,7 +82,7 @@ func (c *Client) getMusicBrainzReleaseID(
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("music brainz XML API returned HTTP %d", resp.StatusCode)

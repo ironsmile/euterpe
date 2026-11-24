@@ -28,8 +28,8 @@ func TestEqual(t *testing.T) {
 
 	fakeT = &assertfakes.FakeTestingFatalf{}
 	var (
-		actualStr   string = "test val"
-		expectedStr string = "test val"
+		actualStr   = "test val"
+		expectedStr = "test val"
 	)
 	assert.Equal(fakeT, expectedStr, actualStr)
 	if fakeT.FatalfCallCount() != 0 {

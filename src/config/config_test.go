@@ -154,7 +154,7 @@ func TestFindAndParse(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error setting up test, config file create: %s", err)
 		}
-		defer fh.Close()
+		defer fh.Close() //nolint:errcheck
 
 		fmt.Fprintf(fh, `{
 			"listen": "%s",

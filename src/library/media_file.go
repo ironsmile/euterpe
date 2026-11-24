@@ -42,7 +42,7 @@ type TaglibRead func(filename string) (*taglib.File, error)
 func parseFileTags(readFunc TaglibRead, fileName string) (MediaFile, error) {
 	file, tglErr := readFunc(fileName)
 	if tglErr == nil {
-		defer file.Close()
+		defer file.Close() //nolint:errcheck
 		return medaFileFromTaglib(file), nil
 	}
 
@@ -93,7 +93,7 @@ func mediaFileFromTag(fileName string) (MediaFile, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
-	defer fh.Close()
+	defer fh.Close() //nolint:errcheck
 
 	md, err := tag.ReadFrom(fh)
 	if err != nil {

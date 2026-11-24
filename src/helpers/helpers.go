@@ -94,13 +94,13 @@ func SetUpPidFile(appfs afero.Fs, PidFile string) error {
 		return err
 	}
 
-	if _, err = fh.WriteString(fmt.Sprintf("%d", os.Getpid())); err != nil {
-		fh.Close()
+	if _, err = fmt.Fprintf(fh, "%d", os.Getpid()); err != nil {
+		_ = fh.Close()
 		_ = appfs.Remove(PidFile)
 		return err
 	}
 
-	fh.Close()
+	_ = fh.Close()
 	return nil
 }
 

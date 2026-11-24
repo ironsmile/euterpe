@@ -36,7 +36,7 @@ func (fh FileHandler) find(writer http.ResponseWriter, req *http.Request) error 
 	}
 
 	if fh.library == nil {
-		return fmt.Errorf("Library for FileHandler is nil")
+		return fmt.Errorf("library for FileHandler is nil")
 	}
 
 	filePath := fh.library.GetFilePath(req.Context(), int64(id))
@@ -45,7 +45,7 @@ func (fh FileHandler) find(writer http.ResponseWriter, req *http.Request) error 
 		http.NotFoundHandler().ServeHTTP(writer, req)
 		return nil
 	}
-	defer fileReader.Close()
+	defer fileReader.Close() //nolint:errcheck
 
 	modTime := time.Time{}
 	st, err := fileReader.Stat()

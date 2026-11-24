@@ -149,7 +149,7 @@ func TestStaticFilesServing(t *testing.T) {
 		t.Error(err)
 	}
 
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode != 200 {
 		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
@@ -244,7 +244,7 @@ func TestUserAuthentication(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode != 401 {
 		t.Errorf("Expected 401 but got: %d", resp.StatusCode)
@@ -258,7 +258,7 @@ func TestUserAuthentication(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode != 200 {
 		t.Errorf("Expected 200 but got: %d", resp.StatusCode)
@@ -271,7 +271,7 @@ func TestUserAuthentication(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode != 401 {
 		t.Errorf("Expected 401 but got: %d", resp.StatusCode)
@@ -330,7 +330,7 @@ func TestSearchUrl(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		defer resp.Body.Close()
+		defer resp.Body.Close() //nolint:errcheck
 
 		if resp.StatusCode != 200 {
 			t.Errorf("Unexpected response status code: %d", resp.StatusCode)
@@ -374,7 +374,7 @@ func TestSearchUrl(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode != 200 {
 		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
@@ -421,7 +421,7 @@ func TestGetFileURL(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
@@ -464,7 +464,7 @@ func TestGzipEncoding(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			defer resp.Body.Close()
+			defer resp.Body.Close() //nolint:errcheck
 
 			contentEncoding := resp.Header.Get("Content-Encoding")
 			if contentEncoding != expected {
@@ -478,7 +478,7 @@ func TestGzipEncoding(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				defer reader.Close()
+				defer reader.Close() //nolint:errcheck
 				bodyReader = reader
 			} else {
 				bodyReader = resp.Body
@@ -544,7 +544,7 @@ func TestFileNameHeaders(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode != 200 {
 		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
@@ -581,7 +581,7 @@ func TestAlbumHandlerOverHTTP(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
@@ -608,7 +608,7 @@ func TestAlbumHandlerOverHTTP(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode != http.StatusNotFound {
 		t.Errorf("Unexpected response status code: %d", resp.StatusCode)
@@ -620,7 +620,7 @@ func TestAlbumHandlerOverHTTP(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Errorf("Unexpected status code for bogus request: %d", resp.StatusCode)
@@ -671,9 +671,9 @@ func TestAlbumHandlerZipFunction(t *testing.T) {
 			continue
 		}
 
-		if zippedFile.FileHeader.UncompressedSize64 != uint64(st.Size()) {
+		if zippedFile.UncompressedSize64 != uint64(st.Size()) {
 			t.Errorf("Zipped file %s was incorrect size: %d. Expected %d",
-				zippedFile.Name, zippedFile.FileHeader.UncompressedSize64, st.Size())
+				zippedFile.Name, zippedFile.UncompressedSize64, st.Size())
 		}
 	}
 }
