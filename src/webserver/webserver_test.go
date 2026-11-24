@@ -30,7 +30,8 @@ func testURL() string {
 	return fmt.Sprintf("http://127.0.0.1:%d/", testPort)
 }
 
-func testErrorAfter(seconds time.Duration, message string) chan int {
+func testErrorAfter(t *testing.T, seconds time.Duration, message string) chan int {
+	t.Helper()
 	ch := make(chan int)
 
 	go func() {
@@ -40,8 +41,7 @@ func testErrorAfter(seconds time.Duration, message string) chan int {
 			return
 		case <-time.After(seconds * time.Second):
 			close(ch)
-			println(message)
-			os.Exit(1)
+			t.Error(message)
 		}
 	}()
 
@@ -64,9 +64,11 @@ func setUpServer() *Server {
 	return NewServer(context.Background(), wsCfg, nil, httpFS, templatesFS)
 }
 
-func tearDownServer(srv *Server) {
+func tearDownServer(t *testing.T, srv *Server) {
+	t.Helper()
+
 	srv.Stop()
-	ch := testErrorAfter(2, "Web server did not stop in time")
+	ch := testErrorAfter(t, 2, "Web server did not stop in time")
 	srv.Wait()
 	ch <- 42
 
@@ -80,8 +82,8 @@ func tearDownServer(srv *Server) {
 	_, err := http.Get(url)
 
 	if err == nil {
-		println("Web server did not stop")
-		os.Exit(1)
+		t.Logf("Web server did not stop")
+		t.Fail()
 	}
 }
 
@@ -115,7 +117,7 @@ func getLibraryServer(t *testing.T) (*Server, library.Library) {
 
 	lib.AddLibraryPath(filepath.Join(projRoot, "test_files", "library"))
 
-	ch := testErrorAfter(5, "Library in TestGetFileUrl did not finish scaning on time")
+	ch := testErrorAfter(t, 5, "Library in TestGetFileUrl did not finish scaning on time")
 	lib.Scan()
 	ch <- 42
 
@@ -138,7 +140,7 @@ func getLibraryServer(t *testing.T) (*Server, library.Library) {
 func TestStaticFilesServing(t *testing.T) {
 	srv := setUpServer()
 	srv.Serve()
-	defer tearDownServer(srv)
+	defer tearDownServer(t, srv)
 
 	url := fmt.Sprintf("http://127.0.0.1:%d/index.html", testPort)
 	resp, err := http.Get(url)
@@ -177,7 +179,7 @@ func TestStartAndStop(t *testing.T) {
 
 	srv.Stop()
 
-	ch := testErrorAfter(2, "Web server did not stop in time")
+	ch := testErrorAfter(t, 2, "Web server did not stop in time")
 	srv.Wait()
 	ch <- 42
 
@@ -208,7 +210,7 @@ func TestSSL(t *testing.T) {
 	srv := NewServer(context.Background(), wsCfg, nil, httpFS, templatesFS)
 	srv.Serve()
 
-	defer tearDownServer(srv)
+	defer tearDownServer(t, srv)
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -235,7 +237,7 @@ func TestUserAuthentication(t *testing.T) {
 	httpFS, templatesFS := getTestFileSystems()
 	srv := NewServer(context.Background(), wsCfg, nil, httpFS, templatesFS)
 	srv.Serve()
-	defer tearDownServer(srv)
+	defer tearDownServer(t, srv)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -291,7 +293,7 @@ func TestSearchUrl(t *testing.T) {
 
 	lib.AddLibraryPath(filepath.Join(projRoot, "test_files", "library"))
 
-	ch := testErrorAfter(5, "Library in TestSearchUrl did not finish scaning on time")
+	ch := testErrorAfter(t, 5, "Library in TestSearchUrl did not finish scaning on time")
 	lib.Scan()
 	ch <- 42
 
@@ -301,7 +303,7 @@ func TestSearchUrl(t *testing.T) {
 	httpFS, templatesFS := getTestFileSystems()
 	srv := NewServer(context.Background(), wsCfg, lib, httpFS, templatesFS)
 	srv.Serve()
-	defer tearDownServer(srv)
+	defer tearDownServer(t, srv)
 
 	/*
 		The expected
@@ -401,7 +403,7 @@ func TestSearchUrl(t *testing.T) {
 func TestGetFileURL(t *testing.T) {
 	srv, lib := getLibraryServer(t)
 	defer func() { _ = lib.Truncate() }()
-	defer tearDownServer(srv)
+	defer tearDownServer(t, srv)
 
 	found := lib.Search(context.Background(), library.SearchArgs{Query: "Buggy Bugoff"})
 
@@ -505,12 +507,12 @@ func TestGzipEncoding(t *testing.T) {
 
 	testGzipResponse(tests)
 
-	tearDownServer(srv)
+	tearDownServer(t, srv)
 
 	wsCfg.Gzip = false
 	srv = NewServer(context.Background(), wsCfg, nil, httpFS, templatesFS)
 	srv.Serve()
-	defer tearDownServer(srv)
+	defer tearDownServer(t, srv)
 
 	tests = [][2]string{
 		{"gzip, deflate", ""},
@@ -524,7 +526,7 @@ func TestGzipEncoding(t *testing.T) {
 func TestFileNameHeaders(t *testing.T) {
 	srv, lib := getLibraryServer(t)
 	defer func() { _ = lib.Truncate() }()
-	defer tearDownServer(srv)
+	defer tearDownServer(t, srv)
 
 	found := lib.Search(context.Background(), library.SearchArgs{Query: "Buggy Bugoff"})
 
@@ -561,7 +563,7 @@ func TestFileNameHeaders(t *testing.T) {
 func TestAlbumHandlerOverHTTP(t *testing.T) {
 	srv, lib := getLibraryServer(t)
 	defer func() { _ = lib.Truncate() }()
-	defer tearDownServer(srv)
+	defer tearDownServer(t, srv)
 
 	albumPaths, err := lib.(*library.LocalLibrary).GetAlbumFSPathByName("Album Of Tests")
 
