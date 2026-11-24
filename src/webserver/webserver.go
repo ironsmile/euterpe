@@ -323,14 +323,14 @@ func (srv *Server) listenAndServeTLS(certFile, keyFile string) error {
 	return srv.httpSrv.Serve(tlsListener)
 }
 
-// Stop stops the webserver
+// Stop stops the webserver.
 func (srv *Server) Stop() {
 	srv.Lock()
 	defer srv.Unlock()
-	if srv.listener != nil {
-		srv.listener.Close()
-		srv.listener = nil
-	}
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancelCtx()
+	_ = srv.httpSrv.Shutdown(ctx)
+	srv.listener = nil
 }
 
 // Wait syncs whoever called this with the server's stop
