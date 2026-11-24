@@ -4,7 +4,7 @@ jobs:
 
   build:
     name: Build, test and lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
 
     - name: Check out code
@@ -41,7 +41,7 @@ jobs:
 
   cover:
     name: Code Test Coverage
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
 
     - name: Check out code
