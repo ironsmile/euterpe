@@ -13,7 +13,8 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version-file: 'go.mod'
+        go-version: 'stable'
+        check-latest: true
       id: go
 
     - name: Install OS dependencies
@@ -49,7 +50,8 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version-file: 'go.mod'
+        go-version: 'stable'
+        check-latest: true
 
     - name: Install OS dependencies
       run: sudo apt-get install libtagc0-dev upx-ucl
