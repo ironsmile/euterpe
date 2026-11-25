@@ -1,5 +1,6 @@
 # xsdvalidate
 [![GoDoc](https://godoc.org/github.com/terminalstatic/go-xsd-validate?status.svg)](https://godoc.org/github.com/terminalstatic/go-xsd-validate)
+[![Go Version](https://img.shields.io/badge/Go-1.17-00ADD8?style=flat&logo=go&logoColor=white)](https://go.dev)
 
 The goal of this package is to preload xsd files into memory and to validate xml (fast) using libxml2, like post bodys of xml service endpoints or api routers. At the time of writing, similar packages I found on github either didn't provide error details or got stuck under load. In addition to providing error strings it also exposes some fields of libxml2 return structs. 
 

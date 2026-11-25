@@ -1,6 +1,6 @@
 // Package xsdvalidate is a go package for xsd validation that utilizes libxml2.
 
-//The goal of this package is to preload xsd files into memory and to validate xml (fast) using libxml2, like post bodys of xml service endpoints or api routers. At the time of writing, similar packages I found on github either didn't provide error details or got stuck under load. In addition to providing error strings it also exposes some fields of libxml2 return structs.
+// The goal of this package is to preload xsd files into memory and to validate xml (fast) using libxml2, like post bodys of xml service endpoints or api routers. At the time of writing, similar packages I found on github either didn't provide error details or got stuck under load. In addition to providing error strings it also exposes some fields of libxml2 return structs.
 package xsdvalidate
 
 import "C"
@@ -40,6 +40,7 @@ type Options uint8
 const (
 	ParsErrDefault Options = 1 << iota // Default parser error output
 	ParsErrVerbose                     // Verbose parser error output, considerably slower!
+	ParsXmlHuge                        // Enable XML_PARSE_HUGE. Disables libxml2 parser safety limits; use only for trusted large XML.
 )
 
 // Validation options for possible future enhancements.
@@ -65,7 +66,9 @@ func Init() error {
 // InitWithGc initializes lbxml2 with a goroutine that runs the go gc every d duration.
 // Not required but might help to keep the memory footprint at bay when doing tons of validations.
 func InitWithGc(d time.Duration) {
-	Init()
+	if err := Init(); err != nil {
+		return
+	}
 	quit = make(chan struct{})
 	go gcTicker(d, quit)
 }

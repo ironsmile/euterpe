@@ -13,6 +13,7 @@ package xsdvalidate
 #define GO_ERR_INIT 1024
 #define P_ERR_DEFAULT 1
 #define P_ERR_VERBOSE 2
+#define P_XML_HUGE 4
 #define LIBXML_STATIC
 #define NOOP ((void)0)
 
@@ -113,7 +114,9 @@ static void init() {
 }
 
 static void cleanup() {
+#if LIBXML_VERSION < 21000
     xmlSchemaCleanupTypes();
+#endif
     xmlCleanupParser();
 }
 
@@ -141,7 +144,14 @@ static void genErrorCallback(void* ctx, const char* message, ...) {
     free(newLine);
 }
 
-static void simpleStructErrorCallback(void* ctx, xmlErrorPtr p) {
+static void simpleStructErrorCallback(
+    void* ctx,
+#if LIBXML_VERSION >= 21200
+    const xmlError *p
+#else
+    xmlErrorPtr p
+#endif
+) {
     errArray* sErrArr = ctx;
 
     struct simpleXmlError sErr;
@@ -183,7 +193,6 @@ static void simpleStructErrorCallback(void* ctx, xmlErrorPtr p) {
 static struct xsdParserResult parseSchema(
                                           xmlSchemaParserCtxtPtr schemaParserCtxt,
                                           const short int options) {
-    xmlLineNumbersDefault(1);
     bool err = false;
     struct xsdParserResult parserResult;
     errCtx ectx = initErrCtx(1, GO_ERR_INIT);
@@ -241,10 +250,19 @@ static struct xsdParserResult cParseMemSchema(const void* xsd,
     return parseSchema(schemaParserCtxt, options);
 }
 
+static int getLibxmlOptions(short int options) {
+    int xmlParserOptions = 0;
+
+    if (options & P_XML_HUGE) {
+        xmlParserOptions |= XML_PARSE_HUGE;
+    }
+
+    return xmlParserOptions;
+}
+
 static struct xmlParserResult cParseDoc(const void* goXmlSource,
                                         const int goXmlSourceLen,
                                         const short int options) {
-    xmlLineNumbersDefault(1);
     bool err = false;
     struct xmlParserResult parserResult;
     errCtx ectx = initErrCtx(1, GO_ERR_INIT);
@@ -275,7 +293,8 @@ static struct xmlParserResult cParseDoc(const void* goXmlSource,
                 xmlSetGenericErrorFunc(NULL, noOutputCallback);
             }
 
-            doc = xmlParseMemory(goXmlSource, goXmlSourceLen);
+            int xmlParserOptions = getLibxmlOptions(options);
+            doc = xmlCtxtReadMemory(xmlParserCtxt, goXmlSource, goXmlSourceLen, NULL, NULL, xmlParserOptions);
 
             xmlFreeParserCtxt(xmlParserCtxt);
             if (doc == NULL) {
@@ -297,8 +316,6 @@ static struct xmlParserResult cParseDoc(const void* goXmlSource,
 }
 
 static errArray cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
-    xmlLineNumbersDefault(1);
-
     errArray errArr = initErrArray();
 
     struct simpleXmlError simpleError;
@@ -350,8 +367,6 @@ static errArray cValidateBuf(const void* goXmlSource,
                              const int goXmlSourceLen,
                              const short int xmlParserOptions,
                              const xmlSchemaPtr schema) {
-    xmlLineNumbersDefault(1);
-
     errArray errArr = initErrArray();
 
     struct simpleXmlError simpleError;
@@ -482,12 +497,24 @@ func handleErrArray(errSlice []C.struct_simpleXmlError) ValidationError {
 
 }
 
+const maxSimpleXmlErrors = 1 << 20
+
+func simpleXmlErrorSlice(errArr C.errArray) ([]C.struct_simpleXmlError, error) {
+	if errArr.len > maxSimpleXmlErrors {
+		return nil, Libxml2Error{errorMessage{"too many validation errors"}}
+	}
+	return unsafe.Slice(errArr.data, errArr.len), nil
+}
+
 // Helper function for validating given an xml document
 func validateWithXsd(xmlHandler *XmlHandler, xsdHandler *XsdHandler) error {
 	sErr, err := C.cValidate(xmlHandler.docPtr, xsdHandler.schemaPtr)
 	defer C.freeErrArray(&sErr)
 	if err != nil {
-		errSlice := (*[1 << 30]C.struct_simpleXmlError)(unsafe.Pointer(sErr.data))[:sErr.len:sErr.len]
+		errSlice, sliceErr := simpleXmlErrorSlice(sErr)
+		if sliceErr != nil {
+			return sliceErr
+		}
 		return handleErrArray(errSlice)
 	}
 	return nil
@@ -500,7 +527,10 @@ func validateBufWithXsd(inXml []byte, options Options, xsdHandler *XsdHandler) e
 	sErr, err := C.cValidateBuf(strXml, C.int(len(inXml)), C.short(options), xsdHandler.schemaPtr)
 	defer C.freeErrArray(&sErr)
 	if err != nil {
-		errSlice := (*[1 << 30]C.struct_simpleXmlError)(unsafe.Pointer(sErr.data))[:sErr.len:sErr.len]
+		errSlice, sliceErr := simpleXmlErrorSlice(sErr)
+		if sliceErr != nil {
+			return sliceErr
+		}
 		switch errSlice[0]._type {
 		case C.VALIDATION_ERROR:
 			return handleErrArray(errSlice)
@@ -520,15 +550,17 @@ func validateBufWithXsd(inXml []byte, options Options, xsdHandler *XsdHandler) e
 
 // Wrapper for the xmlSchemaFree function
 func freeSchemaPtr(xsdHandler *XsdHandler) {
-	if xsdHandler.schemaPtr != nil {
+	if xsdHandler != nil && xsdHandler.schemaPtr != nil {
 		C.xmlSchemaFree(xsdHandler.schemaPtr)
+		xsdHandler.schemaPtr = nil
 	}
 }
 
 // Wrapper for the xmlFreeDoc function
 func freeDocPtr(xmlHandler *XmlHandler) {
-	if xmlHandler.docPtr != nil {
+	if xmlHandler != nil && xmlHandler.docPtr != nil {
 		C.xmlFreeDoc(xmlHandler.docPtr)
+		xmlHandler.docPtr = nil
 	}
 }
 

@@ -1,1 +1,4 @@
 *.go_
+Makefile
+docker/test.Dockerfile
+TESTING.local.md

@@ -15,7 +15,7 @@ require (
 	github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c
 	github.com/skip2/go-qrcode v0.0.0-20171229120447-cf5f9fa2f0d8
 	github.com/spf13/afero v1.6.0
-	github.com/terminalstatic/go-xsd-validate v0.1.5
+	github.com/terminalstatic/go-xsd-validate v0.1.8
 	github.com/wtolson/go-taglib v0.0.0-20180718000046-586eb63c2628
 	golang.org/x/image v0.45.0
 	golang.org/x/sync v0.25.0
