@@ -1,5 +1,9 @@
 # Change Log
 
+## v1.6.4 - 2026-11-25
+
+This version updates dependencies which have been discovered to have security vulnerabilities.
+
 ## v1.6.3 - 2026-01-01
 
 This version fixes a bug with listing when an album has no tracks.
